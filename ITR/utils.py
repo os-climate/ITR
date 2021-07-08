@@ -9,7 +9,7 @@ from ITR.interfaces import IDataProviderTarget, IDataProviderCompany
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
 from .target_validation import TargetProtocol
 
-from .temperature_score import Scenario, TemperatureScore
+from .temperature_score import TemperatureScore
 from .portfolio_aggregation import PortfolioAggregationMethod
 
 from . import data
@@ -176,7 +176,7 @@ def get_data(data_providers: List[data.DataProvider], portfolio: List[PortfolioC
 
 
 def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_method: PortfolioAggregationMethod,
-              grouping: Optional[List[str]], scenario: Optional[Scenario], time_frames: List[ETimeFrames],
+              grouping: Optional[List[str]], time_frames: List[ETimeFrames],
               scopes: List[EScope], anonymize: bool, aggregate: bool = True) -> Tuple[pd.DataFrame,
                                                                                       Optional[ScoreAggregations]]:
     """
@@ -188,12 +188,11 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_m
     :param time_frames: The time frames that the temperature scores should be calculated for  (None to calculate all)
     :param scopes: The scopes that the temperature scores should be calculated for (None to calculate all)
     :param grouping: The names of the columns to group on
-    :param scenario: The scenario to play
     :param anonymize: Whether to anonymize the resulting data set or not
     :param aggregate: Whether to aggregate the scores or not
     :return: The scores, the aggregations and the column distribution (if a
     """
-    ts = TemperatureScore(time_frames=time_frames, scopes=scopes, fallback_score=fallback_score, scenario=scenario,
+    ts = TemperatureScore(time_frames=time_frames, scopes=scopes, fallback_score=fallback_score,
                           grouping=grouping, aggregation_method=aggregation_method)
 
     scores = ts.calculate(portfolio_data)

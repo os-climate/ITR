@@ -1,5 +1,4 @@
 import unittest
-from unittest.case import SkipTest
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
@@ -8,11 +7,10 @@ from ITR.interfaces import (
     PortfolioCompany,
 )
 
-from ITR.temperature_score import EngagementType, Scenario, ScenarioType, TemperatureScore
+from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 import copy
 import ITR
-from typing import List
 from ITR.data.data_provider import DataProvider
 from typing import List
 from ITR.interfaces import IDataProviderCompany,IDataProviderTarget
@@ -35,12 +33,11 @@ class TestDataProvider(DataProvider):
         return self.companies
 
 
-
 class EndToEndTest(unittest.TestCase):
     """
     This class is containing a set of end to end tests:
     - basic flow from creating companies/targets up to calculating aggregated values
-    - edge cases for scenarios and grouping
+    - edge cases for grouping
     - high load tests (>1000 targets)
     - testing of all different input values and running thru the whole process (tbd)
     """
@@ -83,6 +80,7 @@ class EndToEndTest(unittest.TestCase):
             investment_value=100,
             company_isin=company_id,
         )
+
 
     def test_basic(self):
         """
@@ -289,16 +287,10 @@ class EndToEndTest(unittest.TestCase):
         companies, targets, pf_companies = self.create_base_companies(["A"])
         data_provider = TestDataProvider(companies=companies, targets=targets)
 
-        # add a Scenario that will trigger the score cap function
-        scenario = Scenario()
-        scenario.engagement_type = EngagementType.SET_TARGETS
-        scenario.scenario_type = ScenarioType.APPROVED_TARGETS
-
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.MID],
             scopes=[EScope.S1S2],
-            aggregation_method=PortfolioAggregationMethod.WATS,
-            scenario=scenario
+            aggregation_method=PortfolioAggregationMethod.WATS
         )
 
         portfolio_data = ITR.utils.get_data([data_provider], pf_companies)

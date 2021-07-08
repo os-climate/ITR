@@ -3,6 +3,8 @@ from typing import Optional, Dict, List
 import pandas as pd
 from pydantic import BaseModel, validator, Field
 
+from ITR.configs import ControlsConfig
+
 
 class AggregationContribution(BaseModel):
     company_name: str
@@ -84,6 +86,25 @@ class IDataProviderCompany(BaseModel):
     sbti_validated: bool = Field(False, description='True if the SBTi target status is "Target set", false otherwise')
 
 
+class IBudgetCompany(BaseModel):
+    company_name: str
+    company_id: int
+    company_isin: str
+    investment_value: float
+
+    cumulative_budget: float
+    cumulative_trajectory: float
+    cumulative_target: float
+
+    trajectory_overshoot_ratio: float
+    target_overshoot_ratio: float
+
+    target_probability: float = ControlsConfig.TARGET_PROBABILITY
+    target_temperature_score: float
+    trajectory_temp_score: float
+    temp_score: float
+
+
 class SortableEnum(Enum):
     def __str__(self):
         return self.name
@@ -159,3 +180,9 @@ class IDataProviderTarget(BaseModel):
         if val == "" or val == "nan" or pd.isnull(val):
             return None
         return val
+
+
+class ECarbonBudgetScenario(Enum):
+    P25 = "25 percentile"
+    P75 = "75 percentile"
+    MEAN = "Average"

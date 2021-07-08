@@ -4,7 +4,7 @@ from typing import Optional, Tuple, Type, List
 import pandas as pd
 import numpy as np
 
-from .interfaces import ScenarioInterface, EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
+from .interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
 from .configs import TemperatureScoreConfig
@@ -22,20 +22,16 @@ class TemperatureScore(PortfolioAggregation):
     """
 
     def __init__(self, time_frames: List[ETimeFrames], scopes: List[EScope], fallback_score: float = 3.2,
-                 model: int = 4, scenario: Optional[Scenario] = None,
+                 model: int = 4,
                  aggregation_method: PortfolioAggregationMethod = PortfolioAggregationMethod.WATS,
                  grouping: Optional[List] = None, config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(config)
         self.model = model
         self.c: Type[TemperatureScoreConfig] = config
-        self.scenario: Optional[Scenario] = scenario
         self.fallback_score = fallback_score
 
         self.time_frames = time_frames
         self.scopes = scopes
-
-        if self.scenario is not None:
-            self.fallback_score = self.scenario.get_fallback_score(self.fallback_score)
 
         self.aggregation_method: PortfolioAggregationMethod = aggregation_method
         self.grouping: list = []
