@@ -13,6 +13,9 @@ class ControlsConfig:
     SCENARIO_TARGET_TEMPERATURE = 1.5
     TARGET_PROBABILITY = 0.4286
 
+    CARBON_BUDGET = 678  # TODO: is dependent on BASE_YEAR - fix
+    CURRENT_TEMPERATURE = (SCENARIO_TARGET_TEMPERATURE / TCRE_MULTIPLIER - CARBON_BUDGET) * TCRE_MULTIPLIER
+
 
 class ColumnsConfig:
     # Define a constant for each column used in the
