@@ -2,10 +2,6 @@
 This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
 the module, extend the respective config class and pass it to the class as the "constants" parameter.
 """
-import os
-
-from ITR.interfaces import ETimeFrames, EScope, ECarbonBudgetScenario
-
 
 class ControlsConfig:
     BASE_YEAR = 2019
@@ -16,7 +12,6 @@ class ControlsConfig:
     TCRE_MULTIPLIER = 0.000545
     SCENARIO_TARGET_TEMPERATURE = 1.5
     TARGET_PROBABILITY = 0.4286
-    REMAINING_CARBON_BUDGET_SCENARIO = ECarbonBudgetScenario.P75
 
 
 class ColumnsConfig:

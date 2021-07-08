@@ -38,11 +38,6 @@ class TemperatureScore(PortfolioAggregation):
         if grouping is not None:
             self.grouping = grouping
 
-        # Load the mappings from industry to SR15 goal
-        self.mapping = pd.read_excel(self.c.FILE_SR15_MAPPING, header=0)
-        self.regression_model = pd.read_excel(self.c.FILE_REGRESSION_MODEL_SUMMARY, header=0)
-        self.regression_model = self.regression_model[self.regression_model[self.c.COLS.MODEL] == self.model]
-
     def get_target_mapping(self, target: pd.Series) -> Optional[str]:
         """
         Map the target onto an SR15 target (None if not available).

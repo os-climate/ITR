@@ -58,7 +58,6 @@ class PortfolioCompany(BaseModel):
     company_id: str
     company_isin: Optional[str]
     investment_value: float
-    engagement_target: Optional[bool] = False
     user_fields: Optional[dict]
 
 
@@ -152,8 +151,9 @@ class EScope(SortableEnum):
 
 
 class ETimeFrames(SortableEnum):
-    SHORT = "short"
-    MID = "mid"
+    """
+    TODO: add support for multiple timeframes. Long currently corresponds to 2050.
+    """
     LONG = "long"
 
 
