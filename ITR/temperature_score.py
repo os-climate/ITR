@@ -38,20 +38,6 @@ class TemperatureScore(PortfolioAggregation):
         if grouping is not None:
             self.grouping = grouping
 
-    def get_target_mapping(self, target: pd.Series) -> Optional[str]:
-        """
-        Map the target onto an SR15 target (None if not available).
-
-        :param target: The target as a row of a dataframe
-        :return: The mapped SR15 target
-        """
-        if target[self.c.COLS.TARGET_REFERENCE_NUMBER].strip().lower().startswith(self.c.VALUE_TARGET_REFERENCE_INTENSITY_BASE):
-            return self.c.INTENSITY_MAPPINGS.get((target[self.c.COLS.INTENSITY_METRIC], target[self.c.COLS.SCOPE]), None)
-        else:
-            # Only first 3 characters of ISIC code are relevant for the absolute mappings
-            return self.c.ABSOLUTE_MAPPINGS.get((target[self.c.COLS.COMPANY_ISIC][:3], target[self.c.COLS.SCOPE]), 
-                                                self.c.ABSOLUTE_MAPPINGS.get(("other", target[self.c.COLS.SCOPE])))
-
     def get_annual_reduction_rate(self, target: pd.Series) -> Optional[float]:
         """
         Get the annual reduction rate (or None if not available).
@@ -69,42 +55,6 @@ class TemperatureScore(PortfolioAggregation):
             raise ValueError("Couldn't calculate the annual reduction rate because the start and target year are the "
                              "same")
 
-    def get_regression(self, target: pd.Series) -> Tuple[Optional[float], Optional[float]]:
-        """
-        Get the regression parameter and intercept from the model's output.
-
-        :param target: The target as a row of a dataframe
-        :return: The regression parameter and intercept
-        """
-        if pd.isnull(target[self.c.COLS.SR15]):
-            return None, None
-
-        regression = self.regression_model[
-            (self.regression_model[self.c.COLS.VARIABLE] == target[self.c.COLS.SR15]) &
-            (self.regression_model[self.c.COLS.SLOPE] == self.c.SLOPE_MAP[target[self.c.COLS.TIME_FRAME]])]
-        if len(regression) == 0:
-            return None, None
-        elif len(regression) > 1:
-            # There should never be more than one potential mapping
-            raise ValueError("There is more than one potential regression parameter for this SR15 goal.")
-        else:
-            return regression.iloc[0][self.c.COLS.PARAM], regression.iloc[0][self.c.COLS.INTERCEPT]
-
-    def _merge_regression(self, data: pd.DataFrame):
-        """
-        Merge the data with the regression parameters from the SBTi model.
-
-        :param data: The data to merge
-        :return: The data set, amended with the regression parameters
-        """
-        data[self.c.COLS.SLOPE] = data.apply(
-            lambda row: self.c.SLOPE_MAP.get(row[self.c.COLS.TIME_FRAME], None),
-            axis=1)
-        return pd.merge(left=data, right=self.regression_model,
-                        left_on=[self.c.COLS.SLOPE, self.c.COLS.SR15],
-                        right_on=[self.c.COLS.SLOPE, self.c.COLS.VARIABLE],
-                        how="left")
-
     def get_score(self, target: pd.Series) -> Tuple[float, float]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
@@ -112,16 +62,18 @@ class TemperatureScore(PortfolioAggregation):
         :param target: The target as a row of a data frame
         :return: The temperature score
         """
-        if pd.isnull(target[self.c.COLS.REGRESSION_PARAM]) or pd.isnull(target[self.c.COLS.REGRESSION_INTERCEPT]) \
-                or pd.isnull(target[self.c.COLS.ANNUAL_REDUCTION_RATE]):
-            return self.fallback_score, 1
+        # if pd.isnull(target[self.c.COLS.ANNUAL_REDUCTION_RATE]):
+        #     return self.fallback_score, 1
 
-        ts = max(target[self.c.COLS.REGRESSION_PARAM] * target[self.c.COLS.ANNUAL_REDUCTION_RATE] * 100 + target[
-            self.c.COLS.REGRESSION_INTERCEPT], 0)
-        if target[self.c.COLS.SBTI_VALIDATED]:
-            return ts, 0
-        else:
-            return ts * self.c.SBTI_FACTOR + self.fallback_score * (1 - self.c.SBTI_FACTOR), 0
+        target_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TARGET] / target[self.c.COLS.CUMULATIVE_BUDGET]
+        trajectory_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TRAJECTORY] / target[self.c.COLS.CUMULATIVE_BUDGET]
+
+        target_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
+                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * target_overshoot_ratio * self.c.CONTROLS_CONFIG.TCRE)
+        trajectory_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
+                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * trajectory_overshoot_ratio * self.c.CONTROLS_CONFIG.TCRE)
+        return target_temperature_score * target[self.c.COLS.TARGET_PROBABILITY] + \
+                trajectory_temperature_score * (1 - target[self.c.COLS.TARGET_PROBABILITY]), 0
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[float, float]:
         """
@@ -178,12 +130,7 @@ class TemperatureScore(PortfolioAggregation):
 
         data = data[data[self.c.COLS.SCOPE].isin(scopes) & data[self.c.COLS.TIME_FRAME].isin(self.time_frames)].copy()
 
-        data[self.c.COLS.TARGET_REFERENCE_NUMBER] = data[self.c.COLS.TARGET_REFERENCE_NUMBER].replace(
-            {np.nan: self.c.VALUE_TARGET_REFERENCE_ABSOLUTE}
-        )
-        data[self.c.COLS.SR15] = data.apply(lambda row: self.get_target_mapping(row), axis=1)
         data[self.c.COLS.ANNUAL_REDUCTION_RATE] = data.apply(lambda row: self.get_annual_reduction_rate(row), axis=1)
-        data = self._merge_regression(data)
         # TODO: Move temperature result to cols
         data[self.c.COLS.TEMPERATURE_SCORE], data[self.c.TEMPERATURE_RESULTS] = zip(*data.apply(
             lambda row: self.get_score(row), axis=1))

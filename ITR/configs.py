@@ -9,12 +9,11 @@ class ControlsConfig:
     PROJECTION_START_YEAR = 2010
     PROJECTION_END_YEAR = 2019
 
-    TCRE_MULTIPLIER = 0.000545
+    TCRE = 0.000545
     SCENARIO_TARGET_TEMPERATURE = 1.5
-    TARGET_PROBABILITY = 0.4286
 
-    CARBON_BUDGET = 678  # TODO: is dependent on BASE_YEAR - fix
-    CURRENT_TEMPERATURE = (SCENARIO_TARGET_TEMPERATURE / TCRE_MULTIPLIER - CARBON_BUDGET) * TCRE_MULTIPLIER
+    GLOBAL_BUDGET = 678  # TODO: is dependent on BASE_YEAR - fix
+    CURRENT_TEMPERATURE = (SCENARIO_TARGET_TEMPERATURE / TCRE - GLOBAL_BUDGET) * TCRE
 
 
 class ColumnsConfig:
@@ -31,7 +30,6 @@ class ColumnsConfig:
     COMPANY_TOTAL_ASSETS = "company_total_assets"
     TARGET_REFERENCE_NUMBER = "target_type"
     SCOPE = "scope"
-    SR15 = "sr15"
     REDUCTION_FROM_BASE_YEAR = "reduction_from_base_year"
     START_YEAR = "start_year"
     VARIABLE = "variable"
@@ -73,7 +71,10 @@ class ColumnsConfig:
     BASEYEAR_GHG_S3 = 'base_year_ghg_s3'
     REGION = 'region'
     ENGAGEMENT_TARGET = 'engagement_target'
-
+    CUMULATIVE_BUDGET = 'cumulative_budget'
+    CUMULATIVE_TRAJECTORY = 'cumulative_trajectory'
+    CUMULATIVE_TARGET = 'cumulative_target'
+    TARGET_PROBABILITY = 'target_probability'
 
     # Output columns
     WEIGHTED_TEMPERATURE_SCORE = "weighted_temperature_score"
@@ -94,5 +95,6 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
 
     TEMPERATURE_RESULTS = 'temperature_results'
     INVESTMENT_VALUE = "investment_value"
+    CONTROLS_CONFIG = ControlsConfig
 
 

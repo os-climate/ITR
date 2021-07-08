@@ -102,4 +102,12 @@ class TargetProtocol:
         -- If all else is equal: average the ambition of targets
         """
 
-        return
+        grid_columns = [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]
+        companies = self.company_data[self.c.COLS.COMPANY_ID].unique()
+        scopes = [EScope.S1S2]
+        empty_columns = [column for column in self.target_data.columns if column not in grid_columns]
+        extended_data = pd.DataFrame(
+            list(itertools.product(*[companies, ETimeFrames, scopes] + [[None]] * len(empty_columns))),
+            columns=grid_columns + empty_columns)
+        target_columns = extended_data.columns
+        self.data = extended_data.apply(lambda row: self._find_target(row, target_columns), axis=1)

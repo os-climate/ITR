@@ -85,8 +85,7 @@ class IDataProviderCompany(BaseModel):
     cumulative_budget: float
     cumulative_trajectory: float
     cumulative_target: float
-
-    target_probability: float = ControlsConfig.TARGET_PROBABILITY
+    target_probability: float
 
 
 class SortableEnum(Enum):
