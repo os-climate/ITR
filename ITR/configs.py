@@ -89,8 +89,6 @@ class PortfolioAggregationConfig:
 class TemperatureScoreConfig(PortfolioAggregationConfig):
 
     """
-    This factor determines what part of the temperature for a not SBTi-validated company should be the TS and what part
-    should be the default score.
     """
 
     TEMPERATURE_RESULTS = 'temperature_results'

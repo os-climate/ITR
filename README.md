@@ -3,7 +3,7 @@ This Python module implements the ITR methodology.
 
 
 ## Getting started for Contributors:
-if you use Anadonca environments:
+if you use Anadonda environments:
 ```
 conda env create -f environment.yml
 conda activate itr_env

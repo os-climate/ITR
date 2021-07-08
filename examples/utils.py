@@ -24,13 +24,6 @@ def print_percentage_default_scores(aggregations):
                     print("{:<10s} {:<10s} {:.2f}".format(time_frame, scope, scope_values['influence_percentage']))
 
 
-def print_scenario_gain(actual_aggregations, scenario_aggregations):
-    print("Actual portfolio temperature score")
-    print_aggregations(actual_aggregations)
-    print()
-    print("Scenario portfolio temperature score")
-    print_aggregations(scenario_aggregations)
-
 
 def print_grouped_scores(aggregations):
     aggregations = aggregations.dict()
