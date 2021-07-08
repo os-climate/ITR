@@ -83,15 +83,6 @@ class IDataProviderCompany(BaseModel):
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
 
-    sbti_validated: bool = Field(False, description='True if the SBTi target status is "Target set", false otherwise')
-
-
-class IBudgetCompany(BaseModel):
-    company_name: str
-    company_id: int
-    company_isin: str
-    investment_value: float
-
     cumulative_budget: float
     cumulative_trajectory: float
     cumulative_target: float
