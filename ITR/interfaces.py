@@ -101,8 +101,8 @@ class IBudgetCompany(BaseModel):
 
     target_probability: float = ControlsConfig.TARGET_PROBABILITY
     target_temperature_score: float
-    trajectory_temp_score: float
-    temp_score: float
+    trajectory_temperature_score: float
+    temperature_score: float
 
 
 class SortableEnum(Enum):
