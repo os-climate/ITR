@@ -82,26 +82,11 @@ class IDataProviderCompany(BaseModel):
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
 
-    sbti_validated: bool = Field(False, description='True if the SBTi target status is "Target set", false otherwise')
-
-
-class IBudgetCompany(BaseModel):
-    company_name: str
-    company_id: int
-    company_isin: str
-    investment_value: float
-
     cumulative_budget: float
     cumulative_trajectory: float
     cumulative_target: float
 
-    trajectory_overshoot_ratio: float
-    target_overshoot_ratio: float
-
     target_probability: float = ControlsConfig.TARGET_PROBABILITY
-    target_temperature_score: float
-    trajectory_temp_score: float
-    temp_score: float
 
 
 class SortableEnum(Enum):
