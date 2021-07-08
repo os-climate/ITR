@@ -96,13 +96,7 @@ class IBudgetCompany(BaseModel):
     cumulative_trajectory: float
     cumulative_target: float
 
-    trajectory_overshoot_ratio: float
-    target_overshoot_ratio: float
-
     target_probability: float = ControlsConfig.TARGET_PROBABILITY
-    target_temperature_score: float
-    trajectory_temperature_score: float
-    temperature_score: float
 
 
 class SortableEnum(Enum):
