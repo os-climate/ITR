@@ -62,18 +62,20 @@ class TemperatureScore(PortfolioAggregation):
         :param target: The target as a row of a data frame
         :return: The temperature score
         """
-        # if pd.isnull(target[self.c.COLS.ANNUAL_REDUCTION_RATE]):
-        #     return self.fallback_score, 1
-
         target_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TARGET] / target[self.c.COLS.CUMULATIVE_BUDGET]
         trajectory_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TRAJECTORY] / target[self.c.COLS.CUMULATIVE_BUDGET]
 
         target_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
-                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * target_overshoot_ratio * self.c.CONTROLS_CONFIG.TCRE)
+                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * (target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.TCRE)
         trajectory_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
-                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * trajectory_overshoot_ratio * self.c.CONTROLS_CONFIG.TCRE)
-        return target_temperature_score * target[self.c.COLS.TARGET_PROBABILITY] + \
-                trajectory_temperature_score * (1 - target[self.c.COLS.TARGET_PROBABILITY]), 0
+                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * (trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.TCRE)
+        score = target_temperature_score * target[self.c.COLS.TARGET_PROBABILITY] + \
+                trajectory_temperature_score * (1 - target[self.c.COLS.TARGET_PROBABILITY])
+
+        # If score is NaN due to missing data assign default score.
+        if np.isnan(score):
+            return self.get_default_score(target), 1
+        return score, 0
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[float, float]:
         """
@@ -102,17 +104,12 @@ class TemperatureScore(PortfolioAggregation):
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
 
-    def get_default_score(self, target: pd.Series) -> int:
+    def get_default_score(self, target: pd.Series) -> float:
         """
-        Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
-
         :param target: The target as a row of a dataframe
         :return: The temperature score
         """
-        if pd.isnull(target[self.c.COLS.REGRESSION_PARAM]) or pd.isnull(target[self.c.COLS.REGRESSION_INTERCEPT]) \
-                or pd.isnull(target[self.c.COLS.ANNUAL_REDUCTION_RATE]):
-            return 1
-        return 0
+        return self.fallback_score
 
     def _prepare_data(self, data: pd.DataFrame):
         """
