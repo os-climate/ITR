@@ -39,17 +39,6 @@ class DataProvider(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def get_sbti_targets(self, companies: list) -> list:
-        """
-        For each of the companies, get the status of their target (Target set, Committed or No target) as it's known to
-        the SBTi.
-
-        :param companies: A list of companies. Each company should be a dict with a "company_name" and "company_id"
-                            field.
-        :return: The original list, enriched with a field called "sbti_target_status"
-        """
-        raise NotImplementedError
 
 
 class CompanyNotFoundException(Exception):

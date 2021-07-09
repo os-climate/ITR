@@ -23,9 +23,6 @@ class TestDataProvider(DataProvider):
         self.targets = targets
         self.companies = companies
 
-    def get_sbti_targets(self, companies: list) -> list:
-        return []
-
     def get_targets(self, company_ids: List[str]) -> List[IDataProviderTarget]:
         return self.targets
 
@@ -44,7 +41,7 @@ class EndToEndTest(unittest.TestCase):
 
     def setUp(self):
         company_id = "BaseCompany"
-        self.BASE_COMP_SCORE = 0.43
+        self.BASE_COMP_SCORE = 3.63
         self.company_base = IDataProviderCompany(
             company_name=company_id,
             company_id=company_id,
@@ -55,11 +52,15 @@ class EndToEndTest(unittest.TestCase):
             company_enterprise_value=100,
             company_total_assets=100,
             company_cash_equivalents=100,
+            cumulative_budget=345325664.840567,
+            cumulative_trajectory=3745094638.52858,
+            cumulative_target=3769096510.09909,
+            target_probability=0.428571428571428,
             isic='A12'
         )
         # define targets
         self.target_base = IDataProviderTarget(
-            company_id="blablabla", #"ompany_id,
+            company_id=company_id,
             target_type="abs",
             scope=EScope.S1S2,
             coverage_s1=0.95,
@@ -89,12 +90,12 @@ class EndToEndTest(unittest.TestCase):
 
         # Setup test provider
         company = copy.deepcopy(self.company_base)
-        target = None #copy.deepcopy(self.target_base)
+        target = copy.deepcopy(self.target_base)
         data_provider = TestDataProvider(companies=[company], targets=[target])
 
-        # Calculat4e Temp Scores
+        # Calculate Temp Scores
         temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.MID, ETimeFrames.SHORT, ETimeFrames.LONG],
+            time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
@@ -106,7 +107,7 @@ class EndToEndTest(unittest.TestCase):
         # Verify data
         scores = temp_score.calculate(portfolio_data)
         self.assertIsNotNone(scores)
-        self.assertEqual(len(scores.index), 3)
+        self.assertEqual(len(scores.index), 1)
 
     def test_chaos(self):
         # TODO: go thru lots of different parameters on company & target level and try to break it
@@ -134,7 +135,7 @@ class EndToEndTest(unittest.TestCase):
 
         target = copy.deepcopy(self.target_base)
         target.company_id = 'B'
-        target.scope = EScope.S3
+        target.scope = EScope.S1S2
         target.coverage_s1 = 0.75
         target.coverage_s2 = 0.75
         target.coverage_s3 = 0.49
@@ -142,7 +143,7 @@ class EndToEndTest(unittest.TestCase):
 
         target = copy.deepcopy(self.target_base)
         target.company_id = 'B'
-        target.scope = EScope.S3
+        target.scope = EScope.S1S2
         target.coverage_s1 = 0.99
         target.coverage_s2 = 0.99
         target.coverage_s3 = 0.49
@@ -161,8 +162,8 @@ class EndToEndTest(unittest.TestCase):
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.MID],
-            scopes=[EScope.S1S2, EScope.S1S2S3],
+            time_frames=[ETimeFrames.LONG],
+            scopes=[EScope.S1S2],
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
@@ -171,7 +172,7 @@ class EndToEndTest(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.mid.S1S2.all.score, self.BASE_COMP_SCORE, places=4)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=4)
 
     def test_basic_flow(self):
         """
@@ -184,8 +185,8 @@ class EndToEndTest(unittest.TestCase):
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.MID],
-            scopes=[EScope.S1S2, EScope.S1S2S3],
+            time_frames=[ETimeFrames.LONG],
+            scopes=[EScope.S1S2],
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
@@ -194,7 +195,7 @@ class EndToEndTest(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify that results exist
-        self.assertEqual(agg_scores.mid.S1S2.all.score, self.BASE_COMP_SCORE)
+        self.assertEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE)
 
     # Run some regression tests
     # @unittest.skip("only run for longer test runs")
@@ -232,7 +233,7 @@ class EndToEndTest(unittest.TestCase):
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.MID],
+            time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
@@ -241,7 +242,7 @@ class EndToEndTest(unittest.TestCase):
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
-        self.assertAlmostEqual(agg_scores.mid.S1S2.all.score, self.BASE_COMP_SCORE)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE)
 
     def test_grouping(self):
         """
@@ -269,7 +270,7 @@ class EndToEndTest(unittest.TestCase):
         data_provider = TestDataProvider(companies=companies_all, targets=targets_all)
 
         temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.MID],
+            time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],
             aggregation_method=PortfolioAggregationMethod.WATS,
             grouping=["industry_level_1"]
@@ -280,7 +281,7 @@ class EndToEndTest(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         for ind_level in industry_levels:
-            self.assertAlmostEqual(agg_scores.mid.S1S2.grouped[ind_level].score, self.BASE_COMP_SCORE)
+            self.assertAlmostEqual(agg_scores.long.S1S2.grouped[ind_level].score, self.BASE_COMP_SCORE)
 
     def test_score_cap(self):
 
@@ -288,7 +289,7 @@ class EndToEndTest(unittest.TestCase):
         data_provider = TestDataProvider(companies=companies, targets=targets)
 
         temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.MID],
+            time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],
             aggregation_method=PortfolioAggregationMethod.WATS
         )
