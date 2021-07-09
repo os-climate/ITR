@@ -138,6 +138,8 @@ class ETimeFrames(SortableEnum):
     """
     TODO: add support for multiple timeframes. Long currently corresponds to 2050.
     """
+    SHORT = "short"
+    MID = "mid"
     LONG = "long"
 
 

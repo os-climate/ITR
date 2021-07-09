@@ -25,7 +25,7 @@ class TestTemperatureScore(unittest.TestCase):
                                              "data_test_temperature_score.csv"))
         scope_map = {"S1+S2": EScope.S1S2, "S3": EScope.S3, "S1+S2+S3": EScope.S1S2S3}
         self.data[ColumnsConfig.SCOPE] = self.data[ColumnsConfig.SCOPE].map(scope_map)
-        time_frame_map = {"long": ETimeFrames.LONG}
+        time_frame_map = {"short": ETimeFrames.SHORT, "mid": ETimeFrames.MID, "long": ETimeFrames.LONG}
         self.data[ColumnsConfig.TIME_FRAME] = self.data[ColumnsConfig.TIME_FRAME].map(time_frame_map)
 
     def test_temp_score(self) -> None:
