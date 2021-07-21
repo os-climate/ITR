@@ -22,7 +22,7 @@ class TestTemperatureScore(unittest.TestCase):
         """
         self.temperature_score = TemperatureScore(time_frames=list(ETimeFrames), scopes=EScope.get_result_scopes())
         self.data = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "inputs",
-                                             "data_test_temperature_score.csv"))
+                                             "data_test_temperature_score.csv"), sep=";")
         scope_map = {"S1+S2": EScope.S1S2, "S3": EScope.S3, "S1+S2+S3": EScope.S1S2S3}
         self.data[ColumnsConfig.SCOPE] = self.data[ColumnsConfig.SCOPE].map(scope_map)
         time_frame_map = {"short": ETimeFrames.SHORT, "mid": ETimeFrames.MID, "long": ETimeFrames.LONG}

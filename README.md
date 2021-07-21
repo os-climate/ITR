@@ -11,11 +11,13 @@ conda activate itr_env
 
 For virtual environments:
 ```
-TODO:
+virtualenv venv
+./venv/Scripts/activate.ps1
+pip install -r 'requirements.txt'
 ```
 
 ## Development
-For development purposes, install the SBTi package using the following command:
+For development purposes, install the ITR package using the following command:
 ```bash
 pip install -e .[dev]
 ``` 
