@@ -2,11 +2,15 @@
 name: Notebooks
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Run treebeard
+    name: Check example notebooks
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
