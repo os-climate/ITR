@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 import numpy as np
 from ITR.data.data_provider import DataProvider
-from ITR.configs import ColumnsConfig, TabsConfig, ControlsConfig, SectorsConfig
+from ITR.configs import ColumnsConfig
 from ITR.interfaces import IDataProviderCompany, IDataProviderTarget
 
 
@@ -52,43 +52,6 @@ class ExcelProvider(DataProvider):
                 pass
         return model_targets
 
-    def get_projected_ei(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        """
-        projected_ei = self.data[TabsConfig.PROJECTED_EI]
-        projected_ei = projected_ei.reset_index().set_index(ColumnsConfig.COMPANY_ID)
-
-        assert all(company_id in projected_ei.index for company_id in company_ids), \
-            f"company ids missing in {TabsConfig.PROJECTED_EI}"
-
-        projected_ei = projected_ei.loc[company_ids, :]
-        projected_ei.loc[projected_ei.loc[:, ColumnsConfig.SECTOR] == SectorsConfig.ELECTRICITY,
-                         range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
-
-        projected_ei = projected_ei.loc[:, range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
-        projected_ei = projected_ei.groupby(level=0, sort=False).sum()
-        return projected_ei
-
-    def get_projected_production(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        """
-        projected_production = self.data[TabsConfig.PROJECTED_PRODUCTION]
-        projected_production = projected_production.reset_index().set_index(ColumnsConfig.COMPANY_ID)
-
-        assert all(company_id in projected_production.index for company_id in company_ids), \
-            f"company ids missing in {TabsConfig.PROJECTED_PRODUCTION}"
-
-        projected_production = projected_production.loc[company_ids,
-                                                        range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
-        return projected_production
-
-    def get_cumulative_targets(self, company_ids: List[str]):
-        """
-        TODO
-        """
-        return (self.get_projected_ei(company_ids) *
-                self.get_projected_production(company_ids)).sum(axis=1).to_numpy()
-
     def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
         """
         Get all relevant data for a list of company ids (ISIN). This method should return a list of IDataProviderCompany
@@ -97,16 +60,10 @@ class ExcelProvider(DataProvider):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data
         """
-        data_company = self.data[TabsConfig.FUNDAMENTAL]
-
-        data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
-
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self.get_cumulative_targets(company_ids)
-
+        data_company = self.data['fundamental_data']
         companies = data_company.to_dict(orient="records")
-
         model_companies: List[IDataProviderCompany] = [IDataProviderCompany.parse_obj(company) for company in companies]
-
+        model_companies = [target for target in model_companies if target.company_id in company_ids]
         return model_companies
 
     def get_sbti_targets(self, companies: list) -> list:

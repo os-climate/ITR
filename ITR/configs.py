@@ -86,9 +86,6 @@ class ColumnsConfig:
     CONTRIBUTION_RELATIVE = "contribution_relative"
     CONTRIBUTION = "contribution"
 
-class SectorsConfig:
-    STEEL = "Steel"
-    ELECTRICITY = "Electricity Utilities"
 
 class PortfolioAggregationConfig:
     COLS = ColumnsConfig

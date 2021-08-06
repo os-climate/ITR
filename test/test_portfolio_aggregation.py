@@ -25,6 +25,7 @@ class TestPortfolioAggregation(unittest.TestCase):
         self.data.loc[:, ColumnsConfig.GHG_SCOPE3] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.CASH_EQUIVALENTS] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = [1.0, 2.0, 3.0]
 
     def test_is_emissions_based(self):
