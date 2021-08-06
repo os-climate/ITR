@@ -15,6 +15,11 @@ class ControlsConfig:
     GLOBAL_BUDGET = 396  # TODO: is dependent on BASE_YEAR - fix
     CURRENT_TEMPERATURE = SCENARIO_TARGET_TEMPERATURE
 
+class TabsConfig:
+    FUNDAMENTAL = "fundamental_data"
+    TARGET = "target_data"
+    PROJECTED_EI = "Projected EI in Wh"
+    PROJECTED_PRODUCTION = "Projected production"
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -81,6 +86,9 @@ class ColumnsConfig:
     CONTRIBUTION_RELATIVE = "contribution_relative"
     CONTRIBUTION = "contribution"
 
+class SectorsConfig:
+    STEEL = "Steel"
+    ELECTRICITY = "Electricity Utilities"
 
 class PortfolioAggregationConfig:
     COLS = ColumnsConfig
