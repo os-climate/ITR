@@ -18,8 +18,9 @@ class ControlsConfig:
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
     TARGET = "target_data"
-    PROJECTED_EI = "Projected EI in Wh"
-    PROJECTED_PRODUCTION = "Projected production"
+    PROJECTED_EI = "projected_ei_in_Wh"
+    PROJECTED_PRODUCTION = "projected_production"
+    PROJECTED_TARGET = "projected_target"
 
 class ColumnsConfig:
     # Define a constant for each column used in the

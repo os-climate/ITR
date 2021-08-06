@@ -82,11 +82,34 @@ class ExcelProvider(DataProvider):
                                                         range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
         return projected_production
 
-    def get_cumulative_targets(self, company_ids: List[str]):
+    def get_cumulative_trajectory(self, company_ids: List[str]):
         """
         TODO
         """
         return (self.get_projected_ei(company_ids) *
+                self.get_projected_production(company_ids)).sum(axis=1).to_numpy()
+
+    def get_projected_target(self, company_ids: List[str]):
+        """
+        """
+        projected_target = self.data[TabsConfig.PROJECTED_TARGET]
+        projected_target = projected_target.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+
+        assert all(company_id in projected_target.index for company_id in company_ids), \
+            f"company ids missing in {TabsConfig.PROJECTED_TARGET}"
+
+        projected_target = projected_target.loc[company_ids, :]
+        projected_target.loc[projected_target.loc[:, ColumnsConfig.SECTOR] == SectorsConfig.ELECTRICITY,
+                             range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
+
+        projected_target = projected_target.loc[:, range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
+        projected_target = projected_target.groupby(level=0, sort=False).sum()
+        return projected_target
+
+    def get_cumulative_target(self, company_ids: List[str]):
+        """
+        """
+        return (self.get_projected_target(company_ids) *
                 self.get_projected_production(company_ids)).sum(axis=1).to_numpy()
 
     def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
@@ -101,7 +124,8 @@ class ExcelProvider(DataProvider):
 
         data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self.get_cumulative_targets(company_ids)
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self.get_cumulative_trajectory(company_ids)
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self.get_cumulative_target(company_ids)
 
         companies = data_company.to_dict(orient="records")
 
