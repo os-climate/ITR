@@ -20,7 +20,6 @@ class TabsConfig:
     TARGET = "target_data"
     PROJECTED_EI = "Projected EI in Wh"
     PROJECTED_PRODUCTION = "Projected production"
-    PROJECTED_EI_SCOPES = "final_data"
 
 class ColumnsConfig:
     # Define a constant for each column used in the

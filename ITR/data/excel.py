@@ -55,7 +55,7 @@ class ExcelProvider(DataProvider):
     def get_projected_ei(self, company_ids: List[str]) -> pd.DataFrame:
         """
         """
-        projected_ei = self.data[TabsConfig.PROJECTED_EI_SCOPES]
+        projected_ei = self.data[TabsConfig.PROJECTED_EI]
         projected_ei = projected_ei.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
         assert all(company_id in projected_ei.index for company_id in company_ids), \
