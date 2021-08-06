@@ -3,7 +3,6 @@ from pydantic import ValidationError
 import logging
 
 import pandas as pd
-import numpy as np
 from ITR.data.data_provider import DataProvider
 from ITR.configs import ColumnsConfig, TabsConfig, ControlsConfig, SectorsConfig
 from ITR.interfaces import IDataProviderCompany, IDataProviderTarget
@@ -16,9 +15,10 @@ class ExcelProvider(DataProvider):
     :param config: A dictionary containing a "path" field that leads to the path of the CSV file
     """
 
-    def __init__(self, path: str, config: Type[ColumnsConfig] = ColumnsConfig):
+    def __init__(self, company_path: str, sector_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__()
-        self.data = pd.read_excel(path, sheet_name=None, skiprows=0)
+        self.company_data = pd.read_excel(company_path, sheet_name=None, skiprows=0)
+        self.sector_data = pd.read_excel(sector_path, sheet_name=None, skiprows=0)
         self.c = config
 
     def get_targets(self, company_ids: List[str]) -> List[IDataProviderTarget]:
@@ -29,7 +29,7 @@ class ExcelProvider(DataProvider):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the targets
         """
-        model_targets = self._target_df_to_model(self.data['target_data'])
+        model_targets = self._target_df_to_model(self.company_data['target_data'])
         model_targets = [target for target in model_targets if target.company_id in company_ids]
         return model_targets
 
@@ -52,65 +52,43 @@ class ExcelProvider(DataProvider):
                 pass
         return model_targets
 
-    def get_projected_ei(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_projected_value(self, company_ids: List[str], variable_name: str):
         """
         """
-        projected_ei = self.data[TabsConfig.PROJECTED_EI]
-        projected_ei = projected_ei.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+        projected_values = self.company_data[variable_name]
+        projected_values = projected_values.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
-        assert all(company_id in projected_ei.index for company_id in company_ids), \
+        assert all(company_id in projected_values.index for company_id in company_ids), \
             f"company ids missing in {TabsConfig.PROJECTED_EI}"
 
-        projected_ei = projected_ei.loc[company_ids, :]
-        projected_ei.loc[projected_ei.loc[:, ColumnsConfig.SECTOR] == SectorsConfig.ELECTRICITY,
-                         range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
+        projected_values = projected_values.loc[company_ids, :]
+        if variable_name == TabsConfig.PROJECTED_TARGET or variable_name == TabsConfig.PROJECTED_EI:
+            projected_values.loc[self.get_value(company_ids, ColumnsConfig.SECTOR) == SectorsConfig.ELECTRICITY,
+                                 range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
 
-        projected_ei = projected_ei.loc[:, range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
-        projected_ei = projected_ei.groupby(level=0, sort=False).sum()
-        return projected_ei
+        projected_values = projected_values.loc[:, range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
 
-    def get_projected_production(self, company_ids: List[str]) -> pd.DataFrame:
+        if variable_name == TabsConfig.PROJECTED_TARGET or variable_name == TabsConfig.PROJECTED_EI:
+            projected_values = projected_values.groupby(level=0, sort=False).sum()
+
+        return projected_values
+
+    def get_benchmark_value(self, company_ids: List[str], variable_name: str):
         """
         """
-        projected_production = self.data[TabsConfig.PROJECTED_PRODUCTION]
-        projected_production = projected_production.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+        projected_benchmark = self.sector_data[variable_name]
+        sectors = self.get_value(company_ids, ColumnsConfig.SECTOR)
+        regions = self.get_value(company_ids, ColumnsConfig.REGION)
+        regions.loc[~regions.isin(projected_benchmark[ColumnsConfig.REGION])] = "Global"
+        projected_benchmark = projected_benchmark.reset_index().set_index([ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
-        assert all(company_id in projected_production.index for company_id in company_ids), \
-            f"company ids missing in {TabsConfig.PROJECTED_PRODUCTION}"
+        return projected_benchmark.loc[list(zip(sectors, regions)),
+                                       range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)].to_numpy()
 
-        projected_production = projected_production.loc[company_ids,
-                                                        range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
-        return projected_production
-
-    def get_cumulative_trajectory(self, company_ids: List[str]):
-        """
-        TODO
-        """
-        return (self.get_projected_ei(company_ids) *
-                self.get_projected_production(company_ids)).sum(axis=1).to_numpy()
-
-    def get_projected_target(self, company_ids: List[str]):
+    def get_cumulative_value(self, projected_emission: pd.Series, projected_production: pd.Series):
         """
         """
-        projected_target = self.data[TabsConfig.PROJECTED_TARGET]
-        projected_target = projected_target.reset_index().set_index(ColumnsConfig.COMPANY_ID)
-
-        assert all(company_id in projected_target.index for company_id in company_ids), \
-            f"company ids missing in {TabsConfig.PROJECTED_TARGET}"
-
-        projected_target = projected_target.loc[company_ids, :]
-        projected_target.loc[projected_target.loc[:, ColumnsConfig.SECTOR] == SectorsConfig.ELECTRICITY,
-                             range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
-
-        projected_target = projected_target.loc[:, range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
-        projected_target = projected_target.groupby(level=0, sort=False).sum()
-        return projected_target
-
-    def get_cumulative_target(self, company_ids: List[str]):
-        """
-        """
-        return (self.get_projected_target(company_ids) *
-                self.get_projected_production(company_ids)).sum(axis=1).to_numpy()
+        return (projected_emission * projected_production).sum(axis=1).to_numpy()
 
     def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
         """
@@ -120,18 +98,34 @@ class ExcelProvider(DataProvider):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data
         """
-        data_company = self.data[TabsConfig.FUNDAMENTAL]
+        data_company = self.company_data[TabsConfig.FUNDAMENTAL]
 
         data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self.get_cumulative_trajectory(company_ids)
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self.get_cumulative_target(company_ids)
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self.get_cumulative_value(
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_EI),
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION))
+
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self.get_cumulative_value(
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_TARGET),
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION))
+
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self.get_cumulative_value(
+            self.get_benchmark_value(company_ids, variable_name=TabsConfig.PROJECTED_EI),
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION))
 
         companies = data_company.to_dict(orient="records")
 
         model_companies: List[IDataProviderCompany] = [IDataProviderCompany.parse_obj(company) for company in companies]
 
         return model_companies
+
+    def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
+        """
+        """
+        company_data = self.company_data[TabsConfig.FUNDAMENTAL]
+        company_data = company_data.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+        return company_data.loc[company_ids, variable_name]
 
     def get_sbti_targets(self, companies: list) -> list:
         """
