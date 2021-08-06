@@ -82,8 +82,7 @@ class ExcelProvider(DataProvider):
                                                         range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
         return projected_production
 
-
-    def get_cumulative_targets(self, company_ids: List[str]) -> np.array:
+    def get_cumulative_targets(self, company_ids: List[str]):
         """
         TODO
         """
