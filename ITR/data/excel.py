@@ -18,8 +18,28 @@ class ExcelProvider(DataProvider):
     def __init__(self, company_path: str, sector_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__()
         self.company_data = pd.read_excel(company_path, sheet_name=None, skiprows=0)
+        self.check_company_data()
         self.sector_data = pd.read_excel(sector_path, sheet_name=None, skiprows=0)
         self.c = config
+
+    def check_company_data(self) -> None:
+        """
+        Checks if the company data excel contains the data in the right format
+
+        :return: None
+        """
+        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.TARGET, TabsConfig.PROJECTED_TARGET,
+                          TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
+            self.company_data.keys()).all(), "some tabs are missing in the company data excel"
+
+    def check_sector_data(self) -> None:
+        """
+        Checks if the sector data excel contains the data in the right format
+
+        :return: None
+        """
+        assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
+            self.sector_data.keys()).all(), "some tabs are missing in the sector data excel"
 
     def get_targets(self, company_ids: List[str]) -> List[IDataProviderTarget]:
         """
@@ -33,7 +53,7 @@ class ExcelProvider(DataProvider):
         model_targets = [target for target in model_targets if target.company_id in company_ids]
         return model_targets
 
-    def _target_df_to_model(self, df_targets):
+    def _target_df_to_model(self, df_targets: pd.DataFrame) -> List[IDataProviderTarget]:
         """
         transforms target Dataframe into list of IDataProviderTarget instances
 
@@ -52,8 +72,23 @@ class ExcelProvider(DataProvider):
                 pass
         return model_targets
 
-    def get_projected_value(self, company_ids: List[str], variable_name: str):
+    def _unit_of_measure_correction(self, company_ids: List[str], projected_values: pd.Series) -> pd.Series:
         """
+
+        :param company_ids: list of company ids
+        :param projected_values: series of projected values
+        :return: series of projected values corrected for unit of measure
+        """
+        projected_values.loc[self.get_value(company_ids, ColumnsConfig.SECTOR) == SectorsConfig.ELECTRICITY,
+                             range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
+        return projected_values
+
+    def get_projected_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
+        """
+        get the projected value of a variable for list of companies
+        :param company_ids: list of company ids
+        :param variable_name: variable name of the projected feature
+        :return: series of projected values
         """
         projected_values = self.company_data[variable_name]
         projected_values = projected_values.reset_index().set_index(ColumnsConfig.COMPANY_ID)
@@ -62,9 +97,9 @@ class ExcelProvider(DataProvider):
             f"company ids missing in {TabsConfig.PROJECTED_EI}"
 
         projected_values = projected_values.loc[company_ids, :]
+
         if variable_name == TabsConfig.PROJECTED_TARGET or variable_name == TabsConfig.PROJECTED_EI:
-            projected_values.loc[self.get_value(company_ids, ColumnsConfig.SECTOR) == SectorsConfig.ELECTRICITY,
-                                 range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
+            projected_values = self._unit_of_measure_correction(company_ids, projected_values)
 
         projected_values = projected_values.loc[:, range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
 
@@ -73,8 +108,13 @@ class ExcelProvider(DataProvider):
 
         return projected_values
 
-    def get_benchmark_value(self, company_ids: List[str], variable_name: str):
+    def get_benchmark_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
         """
+        get the benchmark value for a list of companies. The benchmark corresponds to the projected value of the sector.
+        If there is no data for the sector, then it will be replaced by the global value
+        :param company_ids: list of company ids
+        :param variable_name: variable name of the projected feature
+        :return: series of projected values for the benchmark
         """
         projected_benchmark = self.sector_data[variable_name]
         sectors = self.get_value(company_ids, ColumnsConfig.SECTOR)
@@ -85,10 +125,14 @@ class ExcelProvider(DataProvider):
         return projected_benchmark.loc[list(zip(sectors, regions)),
                                        range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)].to_numpy()
 
-    def get_cumulative_value(self, projected_emission: pd.Series, projected_production: pd.Series):
+    def get_cumulative_value(self, projected_emission: pd.Series, projected_production: pd.Series) -> pd.Series:
         """
+        get the weighted sum of the projected emission times the projected production
+        :param projected_emission: series of projected emission values
+        :param projected_production: series of projected production series
+        :return: weighted sum of production and emission
         """
-        return (projected_emission * projected_production).sum(axis=1).to_numpy()
+        return (projected_emission * projected_production).sum(axis=1)
 
     def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
         """
@@ -100,19 +144,22 @@ class ExcelProvider(DataProvider):
         """
         data_company = self.company_data[TabsConfig.FUNDAMENTAL]
 
+        assert pd.Series(company_ids).isin(data_company.loc[:, ColumnsConfig.COMPANY_ID]).all(), \
+            "some of the company ids are not included in the fundamental data"
+
         data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self.get_cumulative_value(
             self.get_projected_value(company_ids, TabsConfig.PROJECTED_EI),
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION))
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self.get_cumulative_value(
             self.get_projected_value(company_ids, TabsConfig.PROJECTED_TARGET),
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION))
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self.get_cumulative_value(
             self.get_benchmark_value(company_ids, variable_name=TabsConfig.PROJECTED_EI),
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION))
+            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         companies = data_company.to_dict(orient="records")
 
@@ -122,6 +169,10 @@ class ExcelProvider(DataProvider):
 
     def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
         """
+        get the value of a variable of a list of companies
+        :param company_ids: list of company ids
+        :param variable_name: variable name of the projected feature
+        :return: series of values
         """
         company_data = self.company_data[TabsConfig.FUNDAMENTAL]
         company_data = company_data.reset_index().set_index(ColumnsConfig.COMPANY_ID)
