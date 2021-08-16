@@ -83,7 +83,7 @@ class ExcelProvider(DataProvider):
                              range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
         return projected_values
 
-    def get_projected_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
+    def get_projected_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
         """
         get the projected value of a variable for list of companies
         :param company_ids: list of company ids
@@ -94,7 +94,7 @@ class ExcelProvider(DataProvider):
         projected_values = projected_values.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
         assert all(company_id in projected_values.index for company_id in company_ids), \
-            f"company ids missing in {TabsConfig.PROJECTED_EI}"
+            f"company ids missing in {variable_name}"
 
         projected_values = projected_values.loc[company_ids, :]
 
@@ -108,7 +108,7 @@ class ExcelProvider(DataProvider):
 
         return projected_values
 
-    def get_benchmark_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
+    def get_benchmark_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
         """
         get the benchmark value for a list of companies. The benchmark corresponds to the projected value of the sector.
         If there is no data for the sector, then it will be replaced by the global value
@@ -123,7 +123,7 @@ class ExcelProvider(DataProvider):
         projected_benchmark = projected_benchmark.reset_index().set_index([ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
         return projected_benchmark.loc[list(zip(sectors, regions)),
-                                       range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)].to_numpy()
+                                       range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
 
     def get_cumulative_value(self, projected_emission: pd.Series, projected_production: pd.Series) -> pd.Series:
         """
@@ -132,7 +132,7 @@ class ExcelProvider(DataProvider):
         :param projected_production: series of projected production series
         :return: weighted sum of production and emission
         """
-        return (projected_emission * projected_production).sum(axis=1)
+        return (projected_emission.to_numpy() * projected_production).sum(axis=1)
 
     def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
         """
