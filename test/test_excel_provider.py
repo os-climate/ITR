@@ -1,3 +1,4 @@
+import os
 import unittest
 
 import pandas as pd
@@ -14,8 +15,9 @@ class TestExcelProvider(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        self.company_data_path = "inputs/test_data_company.xlsx"
-        self.sector_data_path = "inputs/test_data_sector.xlsx"
+        self.root = os.path.dirname(os.path.abspath(__file__))
+        self.company_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
+        self.sector_data_path = os.path.join(self.root, "inputs", "test_data_sector.xlsx")
         self.excel_provider = ExcelProvider(company_path=self.company_data_path,
                                             sector_path=self.sector_data_path)
         self.company_ids = ["US0079031078",

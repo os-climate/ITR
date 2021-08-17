@@ -15,7 +15,7 @@ information, refer to the methodology `here <https://sciencebasedtargets.org/wp-
 Time Frames
 ~~~~~~~~~~~
 
-By default, the SBTi temperature scoring tool reports temperature scores
+By default, the ITR temperature scoring tool reports temperature scores
 on the mid-term time frames (i.e. based on emissions reduction targets
 aimed at 5-15 years into the future). However, it is also possible to
 inspect short (less than 5 years) and long-term time frames (15 to 30
@@ -24,7 +24,7 @@ years).
 Scopes
 ~~~~~~
 
-SBTi temperature scoring tool reports on the scores for Scope 1+2 and
+ITR temperature scoring tool reports on the scores for Scope 1+2 and
 Scope 1+2+3, however it is also possible to inspect the Scope 3 score
 individually.
 
@@ -57,7 +57,7 @@ Grouping data
 
 This functionality enables the user to analyze (for examples see Jupyter
 notebook
-`analysis_example <https://github.com/OFBDABV/SBTi/blob/master/examples/1_analysis_example.ipynb>`__\ **)**
+`analysis_example <https://github.com/OFBDABV/ITR/blob/master/examples/1_analysis_example.ipynb>`__\ **)**
 the temperature score of the portfolio in depth by slicing and dicing
 through the portfolio. By choosing to “group by” a certain field (for
 example region or sector), the user receives output of temperature
@@ -70,7 +70,7 @@ portfolio data.
 Choose fields to show
 ~~~~~~~~~~~~~~~~~~~~~
 
-By default, the SBTi temperature scoring tool reports Company name,
+By default, the ITR temperature scoring tool reports Company name,
 Company ID, Scope, Time frame and Temperature score for each individual
 combination. However, using this option allows the user to add
 additional columns to the output. It is possible to add all fields
@@ -118,12 +118,6 @@ The possible scenarios are:
    -  Scenario 4b: All companies that are marked as engagement targets
       set WB2C targets.
 
-Portfolio coverage
-------------------
-
-The portfolio coverage calculates the percentage of the portfolio that
-is covered by companies with an approved SBTi target. This coverage is
-calculated using one of the aggregation methods above.
 
 Output options
 --------------
@@ -171,5 +165,3 @@ underlying data.
    (LAR), mapped regression scenario, and parameters for the formula to
    calculate the temperature score.
 
-Finally, it is possible to anonymize all names and identifiers, e.g. for
-submission to the SBTi Target Validation Team for approval.
