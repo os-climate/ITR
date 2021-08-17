@@ -93,6 +93,11 @@ class ColumnsConfig:
 class SectorsConfig:
     STEEL = "Steel"
     ELECTRICITY = "Electricity Utilities"
+    INFORMATION_TECHNOLOGY = "Information Technology"
+    INDUSTRIALS = "Industrials"
+    FINANCIALS = "Financials"
+    HEALTH_CARE = "Health Care"
+
     CORRECTION_SECTORS = [ELECTRICITY]
 
 
