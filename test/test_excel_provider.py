@@ -20,8 +20,7 @@ class TestExcelProvider(unittest.TestCase):
                                             sector_path=self.sector_data_path)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
-                            "FR0000125338",
-                            ]
+                            "FR0000125338"]
 
     def test_get_targets(self):
         target_1 = self.excel_provider.get_targets(self.company_ids)[0]
@@ -86,8 +85,8 @@ class TestExcelProvider(unittest.TestCase):
                                        0.062450199, 0.056927654]],
                                      columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1),
                                      index=self.company_ids)
-        pd.testing.assert_frame_equal(self.excel_provider._get_projected_value(self.company_ids,
-                                                                               TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_provider._get_projected_emission(self.company_ids,
+                                                                                  TabsConfig.PROJECTED_EI),
                                       expected_data, check_names=False)
 
     def test_get_benchmark(self):
@@ -117,8 +116,8 @@ class TestExcelProvider(unittest.TestCase):
                                                                      names=['sector', 'region']),
                                      columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1))
 
-        pd.testing.assert_frame_equal(self.excel_provider._get_benchmark_value(self.company_ids,
-                                                                               variable_name=TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_provider._get_sector_emission(self.company_ids,
+                                                                               emission_type=TabsConfig.PROJECTED_EI),
                                       expected_data)
 
     def test_get_cumulative_value(self):
@@ -126,8 +125,8 @@ class TestExcelProvider(unittest.TestCase):
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]])
         expected_data = pd.Series([10.0, 50.0])
         pd.testing.assert_series_equal(
-            self.excel_provider._get_cumulative_value(projected_emission=projected_emission,
-                                                      projected_production=projected_production), expected_data)
+            self.excel_provider._get_cumulative_emission(projected_emission_intensity=projected_emission,
+                                                         projected_production=projected_production), expected_data)
 
     def test_get_company_data(self):
         company_1 = self.excel_provider.get_company_data(self.company_ids)[0]

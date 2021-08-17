@@ -72,67 +72,72 @@ class ExcelProvider(DataProvider):
                 pass
         return model_targets
 
-    def _unit_of_measure_correction(self, company_ids: List[str], projected_values: pd.DataFrame) -> pd.DataFrame:
+    def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
         """
 
         :param company_ids: list of company ids
-        :param projected_values: series of projected values
-        :return: series of projected values corrected for unit of measure
+        :param projected_emission: series of projected emissions
+        :return: series of projected emissions corrected for unit of measure
         """
-        projected_values.loc[self.get_value(company_ids, ColumnsConfig.SECTOR) == SectorsConfig.ELECTRICITY,
-                             range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
-        return projected_values
+        projected_emission.loc[self.get_value(company_ids, ColumnsConfig.SECTOR).isin(SectorsConfig.CORRECTION_SECTORS),
+                               range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= \
+            ControlsConfig.UNIT_OF_MEASUREMENT_FACTOR
+        return projected_emission
 
-    def _get_projected_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
+    def _get_projected_emission(self, company_ids: List[str], emission_type: str) -> pd.DataFrame:
         """
-        get the projected value of a variable for list of companies
+        get the projected emissions for list of companies
         :param company_ids: list of company ids
-        :param variable_name: variable name of the projected feature
-        :return: series of projected values
+        :param emission_type: variable name of the projected feature
+        :return: series of projected emissions
         """
-        projected_values = self.company_data[variable_name]
-        projected_values = projected_values.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+        projected_emissions = self.company_data[emission_type]
+        projected_emissions = projected_emissions.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
-        assert all(company_id in projected_values.index for company_id in company_ids), \
-            f"company ids missing in {variable_name}"
+        assert all(company_id in projected_emissions.index for company_id in company_ids), \
+            f"company ids missing in {emission_type}"
 
-        projected_values = projected_values.loc[company_ids, :]
+        projected_emissions = projected_emissions.loc[company_ids, :]
 
-        if variable_name == TabsConfig.PROJECTED_TARGET or variable_name == TabsConfig.PROJECTED_EI:
-            projected_values = self._unit_of_measure_correction(company_ids, projected_values)
+        if emission_type == TabsConfig.PROJECTED_TARGET or emission_type == TabsConfig.PROJECTED_EI:
+            projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
 
-        projected_values = projected_values.loc[:, range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
+        projected_emissions = projected_emissions.loc[:, range(ControlsConfig.BASE_YEAR,
+                                                               ControlsConfig.TARGET_END_YEAR + 1)]
 
-        if variable_name == TabsConfig.PROJECTED_TARGET or variable_name == TabsConfig.PROJECTED_EI:
-            projected_values = projected_values.groupby(level=0, sort=False).sum()
+        if emission_type == TabsConfig.PROJECTED_TARGET or emission_type == TabsConfig.PROJECTED_EI:
+            projected_emissions = projected_emissions.groupby(level=0, sort=False).sum()
 
-        return projected_values
+        return projected_emissions
 
-    def _get_benchmark_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
+    def _get_sector_emission(self, company_ids: List[str], emission_type: str) -> pd.DataFrame:
         """
-        get the benchmark value for a list of companies. The benchmark corresponds to the projected value of the sector.
+        get the sector emissions for a list of companies.
         If there is no data for the sector, then it will be replaced by the global value
         :param company_ids: list of company ids
-        :param variable_name: variable name of the projected feature
-        :return: series of projected values for the benchmark
+        :param emission_type: variable name of the projected feature
+        :return: series of projected emissions for the sector
         """
-        projected_benchmark = self.sector_data[variable_name]
+        projected_sector_emission = self.sector_data[emission_type]
         sectors = self.get_value(company_ids, ColumnsConfig.SECTOR)
         regions = self.get_value(company_ids, ColumnsConfig.REGION)
-        regions.loc[~regions.isin(projected_benchmark[ColumnsConfig.REGION])] = "Global"
-        projected_benchmark = projected_benchmark.reset_index().set_index([ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+        regions.loc[~regions.isin(projected_sector_emission[ColumnsConfig.REGION])] = "Global"
+        projected_sector_emission = projected_sector_emission.reset_index().set_index([ColumnsConfig.SECTOR,
+                                                                                       ColumnsConfig.REGION])
 
-        return projected_benchmark.loc[list(zip(sectors, regions)),
-                                       range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
+        return projected_sector_emission.loc[list(zip(sectors, regions)),
+                                             range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
 
-    def _get_cumulative_value(self, projected_emission: pd.DataFrame, projected_production: pd.DataFrame) -> pd.Series:
+    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
+                                 ) -> pd.Series:
         """
         get the weighted sum of the projected emission times the projected production
-        :param projected_emission: series of projected emission values
+        :param projected_emission_intensity: series of projected emissions
         :param projected_production: series of projected production series
         :return: weighted sum of production and emission
         """
-        return (projected_emission.to_numpy() * projected_production).sum(axis=1)
+        return projected_emission_intensity.reset_index(drop=True).multiply(projected_production.reset_index(
+            drop=True)).sum(axis=1)
 
     def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
         """
@@ -149,17 +154,17 @@ class ExcelProvider(DataProvider):
 
         data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_value(
-            self._get_projected_value(company_ids, TabsConfig.PROJECTED_EI),
-            self._get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
+            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_EI),
+            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self._get_cumulative_value(
-            self._get_projected_value(company_ids, TabsConfig.PROJECTED_TARGET),
-            self._get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self._get_cumulative_emission(
+            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_TARGET),
+            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_value(
-            self._get_benchmark_value(company_ids, variable_name=TabsConfig.PROJECTED_EI),
-            self._get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
+            self._get_sector_emission(company_ids, emission_type=TabsConfig.PROJECTED_EI),
+            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         companies = data_company.to_dict(orient="records")
 
