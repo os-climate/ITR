@@ -1,9 +1,11 @@
 import unittest
 
 import pandas as pd
+import numpy as np
 
 from ITR.data.excel import ExcelProvider
-from ITR.configs import ColumnsConfig, TabsConfig
+from ITR.configs import ColumnsConfig, TabsConfig, ControlsConfig
+from ITR.interfaces import EScope
 
 
 class TestExcelProvider(unittest.TestCase):
@@ -18,16 +20,38 @@ class TestExcelProvider(unittest.TestCase):
                                             sector_path=self.sector_data_path)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
-                            "FR0000125338"]
+                            "FR0000125338",
+                            ]
 
     def test_get_targets(self):
-        pass
+        target_1 = self.excel_provider.get_targets(self.company_ids)[0]
+        target_2 = self.excel_provider.get_targets(self.company_ids)[1]
+
+        self.assertEqual(target_1.company_id, "US0079031078")
+        self.assertEqual(target_2.company_id, "US0079031078")
+        self.assertEqual(target_1.target_type, "Absolute")
+        self.assertEqual(target_2.target_type, "Intensity")
+        self.assertEqual(target_1.intensity_metric, "nan")
+        self.assertEqual(target_2.intensity_metric, "Revenue")
+        self.assertEqual(target_1.scope, EScope.S1S2)
+        self.assertEqual(target_2.scope, EScope.S2)
+        self.assertEqual(target_1.base_year_ghg_s1, 11000)
+        self.assertEqual(target_2.base_year_ghg_s1, 1558)
 
     def test_target_df_to_model(self):
         pass
 
     def test_unit_of_measure_correction(self):
-        pass
+        company_ids = self.company_ids + ["US6293775085"]
+        projected_values = pd.DataFrame(np.ones((4, 32)),
+                                        columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1),
+                                        index=company_ids)
+        expected_data = pd.DataFrame(np.ones((4, 32)),
+                                     columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1),
+                                     index=company_ids)
+        expected_data.iloc[0:3, :] = 3.6
+        pd.testing.assert_frame_equal(self.excel_provider._unit_of_measure_correction(company_ids, projected_values),
+                                      expected_data)
 
     def test_get_projected_value(self):
         expected_data = pd.DataFrame([[1.698247435, 1.698247435, 1.590828573, 1.492707987, 1.403890821, 1.325025884,
@@ -48,10 +72,10 @@ class TestExcelProvider(unittest.TestCase):
                                        0.212192429, 0.193616639, 0.175038148, 0.157423255, 0.141276866, 0.12676707,
                                        0.113867496, 0.102458357, 0.092385201, 0.083489223, 0.0756213, 0.068647473,
                                        0.062450199, 0.056927654]],
-                                     columns=range(2019, 2050 + 1),
+                                     columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1),
                                      index=self.company_ids)
-        pd.testing.assert_frame_equal(self.excel_provider.get_projected_value(self.company_ids,
-                                                                              TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_provider._get_projected_value(self.company_ids,
+                                                                               TabsConfig.PROJECTED_EI),
                                       expected_data, check_names=False)
 
     def test_get_benchmark(self):
@@ -79,14 +103,19 @@ class TestExcelProvider(unittest.TestCase):
                                                                       ('Electricity Utilities', 'North America'),
                                                                       ('Electricity Utilities',        'Europe')],
                                                                      names=['sector', 'region']),
-                                     columns=range(2019, 2050 + 1))
+                                     columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1))
 
-        pd.testing.assert_frame_equal(self.excel_provider.get_benchmark_value(self.company_ids,
-                                                                              variable_name=TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_provider._get_benchmark_value(self.company_ids,
+                                                                               variable_name=TabsConfig.PROJECTED_EI),
                                       expected_data)
 
     def test_get_cumulative_value(self):
-        pass
+        projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]])
+        projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]])
+        expected_data = pd.Series([10.0, 50.0])
+        pd.testing.assert_series_equal(
+            self.excel_provider._get_cumulative_value(projected_emission=projected_emission,
+                                                      projected_production=projected_production), expected_data)
 
     def test_get_company_data(self):
         company_1 = self.excel_provider.get_company_data(self.company_ids)[0]

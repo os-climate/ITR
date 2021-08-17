@@ -18,11 +18,11 @@ class ExcelProvider(DataProvider):
     def __init__(self, company_path: str, sector_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__()
         self.company_data = pd.read_excel(company_path, sheet_name=None, skiprows=0)
-        self.check_company_data()
+        self._check_company_data()
         self.sector_data = pd.read_excel(sector_path, sheet_name=None, skiprows=0)
         self.c = config
 
-    def check_company_data(self) -> None:
+    def _check_company_data(self) -> None:
         """
         Checks if the company data excel contains the data in the right format
 
@@ -32,7 +32,7 @@ class ExcelProvider(DataProvider):
                           TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
             self.company_data.keys()).all(), "some tabs are missing in the company data excel"
 
-    def check_sector_data(self) -> None:
+    def _check_sector_data(self) -> None:
         """
         Checks if the sector data excel contains the data in the right format
 
@@ -72,7 +72,7 @@ class ExcelProvider(DataProvider):
                 pass
         return model_targets
 
-    def _unit_of_measure_correction(self, company_ids: List[str], projected_values: pd.Series) -> pd.Series:
+    def _unit_of_measure_correction(self, company_ids: List[str], projected_values: pd.DataFrame) -> pd.DataFrame:
         """
 
         :param company_ids: list of company ids
@@ -83,7 +83,7 @@ class ExcelProvider(DataProvider):
                              range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= 3.6
         return projected_values
 
-    def get_projected_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
+    def _get_projected_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
         """
         get the projected value of a variable for list of companies
         :param company_ids: list of company ids
@@ -108,7 +108,7 @@ class ExcelProvider(DataProvider):
 
         return projected_values
 
-    def get_benchmark_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
+    def _get_benchmark_value(self, company_ids: List[str], variable_name: str) -> pd.DataFrame:
         """
         get the benchmark value for a list of companies. The benchmark corresponds to the projected value of the sector.
         If there is no data for the sector, then it will be replaced by the global value
@@ -125,7 +125,7 @@ class ExcelProvider(DataProvider):
         return projected_benchmark.loc[list(zip(sectors, regions)),
                                        range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
 
-    def get_cumulative_value(self, projected_emission: pd.Series, projected_production: pd.Series) -> pd.Series:
+    def _get_cumulative_value(self, projected_emission: pd.DataFrame, projected_production: pd.DataFrame) -> pd.Series:
         """
         get the weighted sum of the projected emission times the projected production
         :param projected_emission: series of projected emission values
@@ -149,17 +149,17 @@ class ExcelProvider(DataProvider):
 
         data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self.get_cumulative_value(
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_EI),
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_value(
+            self._get_projected_value(company_ids, TabsConfig.PROJECTED_EI),
+            self._get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self.get_cumulative_value(
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_TARGET),
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self._get_cumulative_value(
+            self._get_projected_value(company_ids, TabsConfig.PROJECTED_TARGET),
+            self._get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self.get_cumulative_value(
-            self.get_benchmark_value(company_ids, variable_name=TabsConfig.PROJECTED_EI),
-            self.get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+        data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_value(
+            self._get_benchmark_value(company_ids, variable_name=TabsConfig.PROJECTED_EI),
+            self._get_projected_value(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         companies = data_company.to_dict(orient="records")
 
