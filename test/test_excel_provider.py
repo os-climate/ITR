@@ -39,7 +39,19 @@ class TestExcelProvider(unittest.TestCase):
         self.assertEqual(target_2.base_year_ghg_s1, 1558)
 
     def test_target_df_to_model(self):
-        pass
+        targets = self.excel_provider.company_data[TabsConfig.TARGET]
+        target_1 = self.excel_provider._target_df_to_model(targets)[0]
+        target_2 = self.excel_provider._target_df_to_model(targets)[1]
+        self.assertEqual(target_1.company_id, "US0079031078")
+        self.assertEqual(target_2.company_id, "US0079031078")
+        self.assertEqual(target_1.target_type, "Absolute")
+        self.assertEqual(target_2.target_type, "Intensity")
+        self.assertEqual(target_1.intensity_metric, "nan")
+        self.assertEqual(target_2.intensity_metric, "Revenue")
+        self.assertEqual(target_1.scope, EScope.S1S2)
+        self.assertEqual(target_2.scope, EScope.S2)
+        self.assertEqual(target_1.base_year_ghg_s1, 11000)
+        self.assertEqual(target_2.base_year_ghg_s1, 1558)
 
     def test_unit_of_measure_correction(self):
         company_ids = self.company_ids + ["US6293775085"]
