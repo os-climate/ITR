@@ -15,7 +15,7 @@ class ControlsConfig:
     GLOBAL_BUDGET = 396  # TODO: is dependent on BASE_YEAR - fix
     CURRENT_TEMPERATURE = SCENARIO_TARGET_TEMPERATURE
 
-    UNIT_OF_MEASUREMENT_FACTOR = 3.6
+    ENERGY_UNIT_CONVERSION_FACTOR = 3.6
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"

@@ -81,52 +81,51 @@ class ExcelProvider(DataProvider):
         """
         projected_emission.loc[self.get_value(company_ids, ColumnsConfig.SECTOR).isin(SectorsConfig.CORRECTION_SECTORS),
                                range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= \
-            ControlsConfig.UNIT_OF_MEASUREMENT_FACTOR
+            ControlsConfig.ENERGY_UNIT_CONVERSION_FACTOR
         return projected_emission
 
-    def _get_projected_emission(self, company_ids: List[str], emission_type: str) -> pd.DataFrame:
+    def _get_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
         """
         get the projected emissions for list of companies
         :param company_ids: list of company ids
-        :param emission_type: variable name of the projected feature
+        :param feature: name of the projected feature
         :return: series of projected emissions
         """
-        projected_emissions = self.company_data[emission_type]
+        projected_emissions = self.company_data[feature]
         projected_emissions = projected_emissions.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
         assert all(company_id in projected_emissions.index for company_id in company_ids), \
-            f"company ids missing in {emission_type}"
+            f"company ids missing in {feature}"
 
         projected_emissions = projected_emissions.loc[company_ids, :]
 
-        if emission_type == TabsConfig.PROJECTED_TARGET or emission_type == TabsConfig.PROJECTED_EI:
+        if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
             projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
 
         projected_emissions = projected_emissions.loc[:, range(ControlsConfig.BASE_YEAR,
                                                                ControlsConfig.TARGET_END_YEAR + 1)]
 
-        if emission_type == TabsConfig.PROJECTED_TARGET or emission_type == TabsConfig.PROJECTED_EI:
+        if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
             projected_emissions = projected_emissions.groupby(level=0, sort=False).sum()
 
         return projected_emissions
 
-    def _get_sector_emission(self, company_ids: List[str], emission_type: str) -> pd.DataFrame:
+    def _get_sector_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
         """
         get the sector emissions for a list of companies.
         If there is no data for the sector, then it will be replaced by the global value
         :param company_ids: list of company ids
-        :param emission_type: variable name of the projected feature
+        :param feature: name of the projected feature
         :return: series of projected emissions for the sector
         """
-        projected_sector_emission = self.sector_data[emission_type]
+        sector_projection = self.sector_data[feature]
         sectors = self.get_value(company_ids, ColumnsConfig.SECTOR)
         regions = self.get_value(company_ids, ColumnsConfig.REGION)
-        regions.loc[~regions.isin(projected_sector_emission[ColumnsConfig.REGION])] = "Global"
-        projected_sector_emission = projected_sector_emission.reset_index().set_index([ColumnsConfig.SECTOR,
-                                                                                       ColumnsConfig.REGION])
+        regions.loc[~regions.isin(sector_projection[ColumnsConfig.REGION])] = "Global"
+        sector_projection = sector_projection.reset_index().set_index([ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
-        return projected_sector_emission.loc[list(zip(sectors, regions)),
-                                             range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
+        return sector_projection.loc[list(zip(sectors, regions)),
+                                     range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
 
     def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
                                  ) -> pd.Series:
@@ -155,16 +154,16 @@ class ExcelProvider(DataProvider):
         data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
-            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_EI),
-            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+            projected_emission_intensity=self._get_projection(company_ids, TabsConfig.PROJECTED_EI),
+            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self._get_cumulative_emission(
-            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_TARGET),
-            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+            projected_emission_intensity=self._get_projection(company_ids, TabsConfig.PROJECTED_TARGET),
+            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
-            self._get_sector_emission(company_ids, emission_type=TabsConfig.PROJECTED_EI),
-            self._get_projected_emission(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+            projected_emission_intensity=self._get_sector_projection(company_ids, TabsConfig.PROJECTED_EI),
+            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
 
         companies = data_company.to_dict(orient="records")
 
