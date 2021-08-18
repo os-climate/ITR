@@ -11,4 +11,4 @@ openpyxl==3.0.7
 matplotlib==3.2.2
 jupyter==1.0.0
 chardet==4.0.0
-numpy=1.21.1
+numpy==1.21.1
