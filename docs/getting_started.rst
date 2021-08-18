@@ -4,7 +4,7 @@ Getting Started Using Python
 The most fundamental part of the project is the Python module, which takes care of all the heavy lifting. 
 You can install it easily through PIP. There are a couple ways to get started using the module. 
 The easiest option is to run our getting started notebook on `Google Colab <https://colab.research.google.com/>`__.
-Alternatively, you can also run the `notebooks <https://github.com/OFBDABV/SBTi/tree/master/examples>`__ locally or start from scratch using the API reference.
+Alternatively, you can also run the `notebooks <https://github.com/OFBDABV/ITR/tree/master/examples>`__ locally or start from scratch using the API reference.
 
 .. note:: This page focuses on the Python module. The getting started documentation for the REST API can be found on its `dedicated page <https://os-c.github.io/ITR/rest_api.html>`__. For a distinction between the different parts of the project, have a look at `the homepage <https://os-c.github.io/ITR/index.html>`__.
 
@@ -16,7 +16,7 @@ There are five notebooks that go through the process step-by-step:
 
 We recommend that you start with notebook 2 analysis example, especially
 if you are new to Python
-1. `Quick temperature calculation <https://colab.research.google.com/github/OFBDABV/SBTi/blob/master/examples/2_quick_temp_score_calculation.ipynb>`__
+1. `Quick temperature calculation <https://colab.research.google.com/github/OFBDABV/ITR/blob/master/examples/2_quick_temp_score_calculation.ipynb>`__
 
 Jupyter Notebooks
 -----------------
@@ -33,11 +33,11 @@ Python code
 ---------------------
 If you are starting from scratch, you can install the latest version of the package directly from Github as follows::
 
-    pip install git+git://github.com/OFBDABV/SBTi
+    pip install git+git://github.com/OFBDABV/ITR
 
 Or you can install the latest stable release from PyPi
 
-    pip install sbti
+    pip install itr
 
 The `API reference <https://os-c.github.io/ITR/autoapi/index.html>`_ should provide a clear overview of the module's API and its usage.
 

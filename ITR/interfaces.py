@@ -1,9 +1,7 @@
 from enum import Enum
 from typing import Optional, Dict, List
 import pandas as pd
-from pydantic import BaseModel, validator, Field
-
-from ITR.configs import ControlsConfig
+from pydantic import BaseModel, validator
 
 
 class AggregationContribution(BaseModel):

@@ -62,8 +62,12 @@ class TemperatureScore(PortfolioAggregation):
         :param target: The target as a row of a data frame
         :return: The temperature score
         """
-        target_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TARGET] / target[self.c.COLS.CUMULATIVE_BUDGET]
-        trajectory_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TRAJECTORY] / target[self.c.COLS.CUMULATIVE_BUDGET]
+        if target[self.c.COLS.CUMULATIVE_BUDGET] > 0:
+            target_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TARGET] / target[self.c.COLS.CUMULATIVE_BUDGET]
+            trajectory_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TRAJECTORY] / target[self.c.COLS.CUMULATIVE_BUDGET]
+        else:
+            target_overshoot_ratio = 0
+            trajectory_overshoot_ratio = 0
 
         target_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
                        (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * (target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.TCRE)
