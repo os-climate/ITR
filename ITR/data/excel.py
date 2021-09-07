@@ -4,7 +4,7 @@ import logging
 
 import pandas as pd
 from ITR.data.data_provider import DataProvider
-from ITR.configs import ColumnsConfig, TabsConfig, ControlsConfig, SectorsConfig
+from ITR.configs import ColumnsConfig, TabsConfig, TemperatureScoreConfig, SectorsConfig
 from ITR.interfaces import IDataProviderCompany, IDataProviderTarget
 
 
@@ -80,8 +80,9 @@ class ExcelProvider(DataProvider):
         :return: series of projected emissions corrected for unit of measure
         """
         projected_emission.loc[self.get_value(company_ids, ColumnsConfig.SECTOR).isin(SectorsConfig.CORRECTION_SECTORS),
-                               range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= \
-            ControlsConfig.ENERGY_UNIT_CONVERSION_FACTOR
+                               range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                     TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)] *= \
+            TemperatureScoreConfig.CONTROLS_CONFIG.energy_unit_conversion_factor
         return projected_emission
 
     def _get_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
@@ -102,8 +103,8 @@ class ExcelProvider(DataProvider):
         if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
             projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
 
-        projected_emissions = projected_emissions.loc[:, range(ControlsConfig.BASE_YEAR,
-                                                               ControlsConfig.TARGET_END_YEAR + 1)]
+        projected_emissions = projected_emissions.loc[:, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                                               TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
 
         if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
             projected_emissions = projected_emissions.groupby(level=0, sort=False).sum()
@@ -125,7 +126,8 @@ class ExcelProvider(DataProvider):
         sector_projection = sector_projection.reset_index().set_index([ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
         return sector_projection.loc[list(zip(sectors, regions)),
-                                     range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
+                                     range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                           TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
 
     def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
                                  ) -> pd.Series:

@@ -2,18 +2,15 @@ import logging
 import pandas as pd
 from typing import List, Optional, Tuple, Type, Dict
 
-from ITR.configs import ColumnsConfig
-from ITR.interfaces import IDataProviderTarget, IDataProviderCompany
-
-
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
+from .configs import ColumnsConfig, TemperatureScoreConfig
+from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, IDataProviderTarget, \
+    IDataProviderCompany, TemperatureScoreControls
 from .target_validation import TargetProtocol
 
 from .temperature_score import TemperatureScore
 from .portfolio_aggregation import PortfolioAggregationMethod
 
 from . import data
-
 
 DATA_PROVIDER_MAP: Dict[str, Type[data.DataProvider]] = {
     "excel": data.ExcelProvider,
@@ -32,7 +29,8 @@ def get_data_providers(data_providers_configs: List[dict], data_providers_input:
     logger = logging.getLogger(__name__)
     data_providers = []
     for data_provider_config in data_providers_configs:
-        data_provider_config["class"] = DATA_PROVIDER_MAP[data_provider_config["type"]](**data_provider_config["parameters"])
+        data_provider_config["class"] = DATA_PROVIDER_MAP[data_provider_config["type"]](
+            **data_provider_config["parameters"])
         data_providers.append(data_provider_config)
 
     selected_data_providers = []
@@ -174,8 +172,9 @@ def get_data(data_providers: List[data.DataProvider], portfolio: List[PortfolioC
 
 def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_method: PortfolioAggregationMethod,
               grouping: Optional[List[str]], time_frames: List[ETimeFrames],
-              scopes: List[EScope], anonymize: bool, aggregate: bool = True) -> Tuple[pd.DataFrame,
-                                                                                      Optional[ScoreAggregations]]:
+              scopes: List[EScope], anonymize: bool, aggregate: bool = True,
+              controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,
+                                                                            Optional[ScoreAggregations]]:
     """
     Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).
 
@@ -189,8 +188,12 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_m
     :param aggregate: Whether to aggregate the scores or not
     :return: The scores, the aggregations and the column distribution (if a
     """
+
+    config = TemperatureScoreConfig
+    if controls:
+        TemperatureScoreConfig.CONTROLS_CONFIG = controls
     ts = TemperatureScore(time_frames=time_frames, scopes=scopes, fallback_score=fallback_score,
-                          grouping=grouping, aggregation_method=aggregation_method)
+                          grouping=grouping, aggregation_method=aggregation_method, config=config)
 
     scores = ts.calculate(portfolio_data)
     aggregations = None

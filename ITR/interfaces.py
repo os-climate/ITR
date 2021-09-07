@@ -114,6 +114,24 @@ class SortableEnum(Enum):
             return order.index(self) < order.index(other)
         return NotImplemented
 
+class TemperatureScoreControls(BaseModel):
+    base_year: int
+    target_end_year: int
+    projection_start_year: int
+    projection_end_year: int
+    tcre: float
+    carbon_conversion: float
+    scenario_target_temperature: float
+    global_budget : int  # TODO: is dependent on BASE_YEAR - fix
+    current_temperature: float
+    energy_unit_conversion_factor: float
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    @property
+    def tcre_multiplier(self) -> float:
+        return self.tcre / self.carbon_conversion
 
 class EScope(SortableEnum):
     S1 = "S1"

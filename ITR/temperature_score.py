@@ -4,11 +4,11 @@ from typing import Optional, Tuple, Type, List
 import pandas as pd
 import numpy as np
 
-from .interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
+from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
-from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-from .configs import TemperatureScoreConfig
-from . import data, utils
+from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
+from ITR.configs import TemperatureScoreConfig
+from ITR import data, utils
 
 class TemperatureScore(PortfolioAggregation):
     """
@@ -22,11 +22,9 @@ class TemperatureScore(PortfolioAggregation):
     """
 
     def __init__(self, time_frames: List[ETimeFrames], scopes: List[EScope], fallback_score: float = 3.2,
-                 model: int = 4,
                  aggregation_method: PortfolioAggregationMethod = PortfolioAggregationMethod.WATS,
                  grouping: Optional[List] = None, config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(config)
-        self.model = model
         self.c: Type[TemperatureScoreConfig] = config
         self.fallback_score = fallback_score
 
@@ -69,10 +67,10 @@ class TemperatureScore(PortfolioAggregation):
             target_overshoot_ratio = 0
             trajectory_overshoot_ratio = 0
 
-        target_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
-                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * (target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.TCRE)
-        trajectory_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
-                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * (trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.TCRE)
+        target_temperature_score = self.c.CONTROLS_CONFIG.current_temperature + \
+                       (self.c.CONTROLS_CONFIG.global_budget * (target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
+        trajectory_temperature_score = self.c.CONTROLS_CONFIG.current_temperature + \
+                       (self.c.CONTROLS_CONFIG.global_budget * (trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
         score = target_temperature_score * target[self.c.COLS.TARGET_PROBABILITY] + \
                 trajectory_temperature_score * (1 - target[self.c.COLS.TARGET_PROBABILITY])
 

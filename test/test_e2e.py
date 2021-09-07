@@ -41,7 +41,7 @@ class EndToEndTest(unittest.TestCase):
 
     def setUp(self):
         company_id = "BaseCompany"
-        self.BASE_COMP_SCORE = 3.63
+        self.BASE_COMP_SCORE = 3.85
         self.company_base = IDataProviderCompany(
             company_name=company_id,
             company_id=company_id,
@@ -334,7 +334,7 @@ if __name__ == "__main__":
     test = EndToEndTest()
     test.setUp()
     test.test_basic()
-    # test.test_basic_flow()
-    # test.test_regression_companies()
-    # test.test_score_cap()
+    test.test_basic_flow()
+    test.test_regression_companies()
+    test.test_score_cap()
     test.test_target_grouping()

@@ -2,20 +2,7 @@
 This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
 the module, extend the respective config class and pass it to the class as the "constants" parameter.
 """
-
-class ControlsConfig:
-    BASE_YEAR = 2019
-    TARGET_END_YEAR = 2050
-    PROJECTION_START_YEAR = 2010
-    PROJECTION_END_YEAR = 2019
-
-    TCRE = 0.000545
-    SCENARIO_TARGET_TEMPERATURE = 1.5
-
-    GLOBAL_BUDGET = 396  # TODO: is dependent on BASE_YEAR - fix
-    CURRENT_TEMPERATURE = SCENARIO_TARGET_TEMPERATURE
-
-    ENERGY_UNIT_CONVERSION_FACTOR = 3.6
+from .interfaces import TemperatureScoreControls
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
@@ -110,6 +97,18 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
 
     TEMPERATURE_RESULTS = 'temperature_results'
     INVESTMENT_VALUE = "investment_value"
-    CONTROLS_CONFIG = ControlsConfig
+    CONTROLS_CONFIG = TemperatureScoreControls(
+        base_year = 2019,
+        target_end_year = 2050,
+        projection_start_year = 2010,
+        projection_end_year = 2019,
+        tcre = 2.2,
+        carbon_conversion = 3664.0,
+        scenario_target_temperature = 1.5,
+        global_budget = 396,
+        current_temperature = 1.5,
+        energy_unit_conversion_factor = 3.6
+    )
+
 
 
