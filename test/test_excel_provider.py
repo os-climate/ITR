@@ -87,7 +87,7 @@ class TestExcelProvider(unittest.TestCase):
                                        0.062450199, 0.056927654]],
                                      columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1),
                                      index=self.company_ids)
-        pd.testing.assert_frame_equal(self.excel_provider._get_projected_emission(self.company_ids,
+        pd.testing.assert_frame_equal(self.excel_provider._get_projection(self.company_ids,
                                                                                   TabsConfig.PROJECTED_EI),
                                       expected_data, check_names=False)
 
@@ -118,8 +118,8 @@ class TestExcelProvider(unittest.TestCase):
                                                                      names=['sector', 'region']),
                                      columns=range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1))
 
-        pd.testing.assert_frame_equal(self.excel_provider._get_sector_emission(self.company_ids,
-                                                                               emission_type=TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_provider._get_sector_projection(self.company_ids,
+                                                                               TabsConfig.PROJECTED_EI),
                                       expected_data)
 
     def test_get_cumulative_value(self):
@@ -149,10 +149,12 @@ class TestExcelProvider(unittest.TestCase):
     def test_get_value(self):
         expected_data = pd.Series([20248547997.0,
                                    276185899.0,
-                                   10283015132.0])
+                                   10283015132.0],
+                                  index=pd.Index(self.company_ids, name='company_id'),
+                                  name='company_revenue')
         pd.testing.assert_series_equal(self.excel_provider.get_value(company_ids=self.company_ids,
                                                                      variable_name=ColumnsConfig.COMPANY_REVENUE),
-                                       expected_data, check_index=False, check_names=False)
+                                       expected_data)
 
     def test_get_sbti_targets(self):
         pass
