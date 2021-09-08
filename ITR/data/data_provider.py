@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from ITR.interfaces import IDataProviderCompany, IDataProviderTarget
+from ITR.interfaces import IDataProviderCompany
 
 
 class DataProvider(ABC):
@@ -17,16 +17,7 @@ class DataProvider(ABC):
         """
         pass
 
-    @abstractmethod
-    def get_targets(self, company_ids: List[str]) -> List[IDataProviderTarget]:
-        """
-        Get all relevant targets for a list of company ids (ISIN). This method should return a list of
-        IDataProviderTarget instances.
 
-        :param company_ids: A list of company IDs (ISINs)
-        :return: A list containing the targets
-        """
-        raise NotImplementedError
 
     @abstractmethod
     def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:

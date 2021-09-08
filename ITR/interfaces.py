@@ -65,10 +65,11 @@ class IDataProviderCompany(BaseModel):
     isic: str
     ghg_s1s2: float
     ghg_s3: float
+    region: str #TODO: make SortableEnums
+    sector: str #TODO: make SortableEnums
 
     country: Optional[str]
-    region: Optional[str]
-    sector: Optional[str]
+
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
     industry_level_3: Optional[str]
@@ -157,31 +158,6 @@ class ETimeFrames(SortableEnum):
     SHORT = "short"
     MID = "mid"
     LONG = "long"
-
-
-class IDataProviderTarget(BaseModel):
-    company_id: str
-    target_type: str
-    intensity_metric: Optional[str]
-    scope: EScope
-    coverage_s1: float
-    coverage_s2: float
-    coverage_s3: float
-    reduction_ambition: float
-    base_year: int
-    base_year_ghg_s1: float
-    base_year_ghg_s2: float
-    base_year_ghg_s3: float
-    start_year: Optional[int]
-    end_year: int
-    time_frame: Optional[ETimeFrames]
-    achieved_reduction: Optional[float] = 0
-
-    @validator('start_year', pre=True, always=False)
-    def validate_e(cls, val):
-        if val == "" or val == "nan" or pd.isnull(val):
-            return None
-        return val
 
 
 class ECarbonBudgetScenario(Enum):

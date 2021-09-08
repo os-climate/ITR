@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 from ITR.data.data_provider import DataProvider
 from ITR.configs import ColumnsConfig, TabsConfig, TemperatureScoreConfig, SectorsConfig
-from ITR.interfaces import IDataProviderCompany, IDataProviderTarget
+from ITR.interfaces import IDataProviderCompany
 
 
 class ExcelProvider(DataProvider):
@@ -28,7 +28,7 @@ class ExcelProvider(DataProvider):
 
         :return: None
         """
-        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.TARGET, TabsConfig.PROJECTED_TARGET,
+        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET,
                           TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
             self.company_data.keys()).all(), "some tabs are missing in the company data excel"
 
@@ -41,36 +41,6 @@ class ExcelProvider(DataProvider):
         assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
             self.sector_data.keys()).all(), "some tabs are missing in the sector data excel"
 
-    def get_targets(self, company_ids: List[str]) -> List[IDataProviderTarget]:
-        """
-        Get all relevant targets for a list of company ids (ISIN). This method should return a list of
-        IDataProviderTarget instances.
-
-        :param company_ids: A list of company IDs (ISINs)
-        :return: A list containing the targets
-        """
-        model_targets = self._target_df_to_model(self.company_data['target_data'])
-        model_targets = [target for target in model_targets if target.company_id in company_ids]
-        return model_targets
-
-    def _target_df_to_model(self, df_targets: pd.DataFrame) -> List[IDataProviderTarget]:
-        """
-        transforms target Dataframe into list of IDataProviderTarget instances
-
-        :param df_targets: pandas Dataframe with targets
-        :return: A list containing the targets
-        """
-        logger = logging.getLogger(__name__)
-        targets = df_targets.to_dict(orient="records")
-        model_targets: List[IDataProviderTarget] = []
-        for target in targets:
-            try:
-                model_targets.append(IDataProviderTarget.parse_obj(target))
-            except ValidationError as e:
-                logger.warning(
-                    "(one of) the target(s) of company %s is invalid and will be skipped" % target[self.c.COMPANY_NAME])
-                pass
-        return model_targets
 
     def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
         """
@@ -184,13 +154,3 @@ class ExcelProvider(DataProvider):
         company_data = company_data.reset_index().set_index(ColumnsConfig.COMPANY_ID)
         return company_data.loc[company_ids, variable_name]
 
-    def get_sbti_targets(self, companies: list) -> list:
-        """
-        For each of the companies, get the status of their target (Target set, Committed or No target) as it's known to
-        the SBTi.
-
-        :param companies: A list of companies. Each company should be a dict with a "company_name" and "company_id"
-                            field.
-        :return: The original list, enriched with a field called "sbti_target_status"
-        """
-        raise NotImplementedError

@@ -6,7 +6,6 @@ from .interfaces import TemperatureScoreControls
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
-    TARGET = "target_data"
     PROJECTED_EI = "projected_ei_in_Wh"
     PROJECTED_PRODUCTION = "projected_production"
     PROJECTED_TARGET = "projected_target"
