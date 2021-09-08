@@ -3,9 +3,8 @@ import pandas as pd
 from typing import List, Optional, Tuple, Type, Dict
 
 from .configs import ColumnsConfig, TemperatureScoreConfig
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, IDataProviderTarget, \
+from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, \
     IDataProviderCompany, TemperatureScoreControls
-from .target_validation import TargetProtocol
 
 from .temperature_score import TemperatureScore
 from .portfolio_aggregation import PortfolioAggregationMethod
@@ -76,32 +75,6 @@ def get_company_data(data_providers: list, company_ids: List[str]) -> List[IData
     return company_data
 
 
-def get_targets(data_providers: list, companies: list) -> List[IDataProviderTarget]:
-    """
-    Get the targets in a waterfall method, given a list of companies and a list of data providers. This will go through
-    the list of data providers and retrieve the required info until either there are no companies left or there are no
-    data providers left.
-
-    :param data_providers: A list of data providers instances
-    :param companies: A list of companies. Each company should be a dict and contain a company_name and company_id field
-    :return: A data frame containing the targets
-    """
-    target_data = []
-    logger = logging.getLogger(__name__)
-    for dp in data_providers:
-        try:
-            targets_data_provider = dp.get_targets(companies)
-            target_data += targets_data_provider
-            companies = [company for company in companies
-                         if company not in [t.company_id for t in targets_data_provider]]
-            if len(companies) == 0:
-                break
-        except NotImplementedError:
-            logger.warning("{} is not available yet".format(type(dp).__name__))
-
-    return target_data
-
-
 def _flatten_user_fields(record: PortfolioCompany):
     """
     Flatten the user fields in a portfolio company and return it as a dictionary.
@@ -146,28 +119,26 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
 
 def get_data(data_providers: List[data.DataProvider], portfolio: List[PortfolioCompany]) -> pd.DataFrame:
     """
-    Get the required data from the data provider(s), validate the targets and return a 9-box grid for each company.
+    Get the required data from the data provider(s) and return a 9-box grid for each company.
 
     :param data_providers: A list of DataProvider instances
     :param portfolio: A list of PortfolioCompany models
-    :return: A data frame containing the relevant company-target data
+    :return: A data frame containing the relevant company data
     """
     df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio])
+    # Look for data in all data providers:
     company_data = get_company_data(data_providers, df_portfolio["company_id"].tolist())
-    target_data = get_targets(data_providers, df_portfolio["company_id"].tolist())
-
-    if len(target_data) == 0:
-        raise ValueError("No targets found")
-
-    # Prepare the data
-    portfolio_data = TargetProtocol().process(target_data, company_data)
-    portfolio_data = pd.merge(left=portfolio_data, right=df_portfolio.drop("company_name", axis=1), how="left",
-                              on=["company_id"])
 
     if len(company_data) == 0:
         raise ValueError("None of the companies in your portfolio could be found by the data providers")
 
+    df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
+    portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop("company_name", axis=1), how="left",
+                              on=["company_id"])
+
     return portfolio_data
+
+    return pd.DataFrame.from_records([c.dict() for c in company_data])
 
 
 def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_method: PortfolioAggregationMethod,
