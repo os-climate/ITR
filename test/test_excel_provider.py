@@ -111,16 +111,24 @@ class TestExcelProvider(unittest.TestCase):
                                        0.041516267, 0.03618498, 0.030853693, 0.025522406, 0.022743071, 0.019963735,
                                        0.0171844, 0.014405065, 0.01162573, 0.010380657, 0.009135584, 0.007890511,
                                        0.006645438, 0.005400365]],
-                                     index=pd.MultiIndex.from_tuples([('Electricity Utilities', 'North America'),
-                                                                      ('Electricity Utilities', 'North America'),
-                                                                      ('Electricity Utilities', 'Europe')],
-                                                                     names=['sector', 'region']),
+                                     index=self.company_ids,
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
 
-        pd.testing.assert_frame_equal(self.excel_provider._get_sector_projection(self.company_ids,
-                                                                                 TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_provider._get_benchmark_projections(self.company_ids,
+                                                                                     TabsConfig.PROJECTED_EI),
                                       expected_data)
+
+    def test_get_projected_production(self):
+        ghg = pd.DataFrame([[1.04827859e+08],
+                            [5.98937002e+08],
+                            [1.22472003e+08]],
+                           index=self.company_ids)
+        expected_data_2025 = pd.Series([1.06866370e+08, 6.10584093e+08, 1.28474171e+08],
+                                       index=self.company_ids,
+                                       name=2025)
+        pd.testing.assert_series_equal(self.excel_provider._get_projected_production(ghg)[2025],
+                                       expected_data_2025)
 
     def test_get_cumulative_value(self):
         projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]])
@@ -137,8 +145,8 @@ class TestExcelProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(company_1.ghg_s1s2, 24965246.1281838)
-        self.assertAlmostEqual(company_2.ghg_s1s2, 1288468.92016451)
+        self.assertAlmostEqual(company_1.ghg_s1s2, 104827858.636039)
+        self.assertAlmostEqual(company_2.ghg_s1s2, 598937001.892059)
         self.assertAlmostEqual(company_1.cumulative_budget, 345325664.840567, places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, 1973028172.73122, places=4)
         self.assertAlmostEqual(company_1.cumulative_target, 3769096510.09909, places=4)

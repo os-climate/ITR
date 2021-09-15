@@ -28,8 +28,7 @@ class ExcelProvider(DataProvider):
 
         :return: None
         """
-        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET,
-                          TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
+        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET, TabsConfig.PROJECTED_EI]).isin(
             self.company_data.keys()).all(), "some tabs are missing in the company data excel"
 
     def _check_sector_data(self) -> None:
@@ -40,7 +39,6 @@ class ExcelProvider(DataProvider):
         """
         assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
             self.sector_data.keys()).all(), "some tabs are missing in the sector data excel"
-
 
     def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
         """
@@ -69,19 +67,25 @@ class ExcelProvider(DataProvider):
             f"company ids missing in {feature}"
 
         projected_emissions = projected_emissions.loc[company_ids, :]
-
-        if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
-            projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
+        projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
 
         projected_emissions = projected_emissions.loc[:, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                                TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
+        projected_emissions_s1s2 = projected_emissions.groupby(level=0, sort=False).sum()  # add scope 1 and 2
 
-        if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
-            projected_emissions = projected_emissions.groupby(level=0, sort=False).sum()
+        return projected_emissions_s1s2
 
-        return projected_emissions
+    def _get_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
+        """
+        get the projected productions for list of companies
+        :param ghg_scope12: Pandas Dataframe with ghg values indexed by company_id
+        :return: Dataframe of projected productions for [base_year - base_year + 50]
+        """
+        company_ids = ghg_scope12.index
+        benchmark_production_projections = self._get_benchmark_projections(company_ids, TabsConfig.PROJECTED_PRODUCTION)
+        return benchmark_production_projections.add(1).cumprod(axis=1).mul(ghg_scope12.values, axis=0)
 
-    def _get_sector_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
+    def _get_benchmark_projections(self, company_ids: List[str], feature: str) -> pd.DataFrame:
         """
         get the sector emissions for a list of companies.
         If there is no data for the sector, then it will be replaced by the global value
@@ -89,15 +93,19 @@ class ExcelProvider(DataProvider):
         :param feature: name of the projected feature
         :return: series of projected emissions for the sector
         """
-        sector_projection = self.sector_data[feature]
+        benchmark_projection = self.sector_data[feature]
         sectors = self.get_value(company_ids, ColumnsConfig.SECTOR)
         regions = self.get_value(company_ids, ColumnsConfig.REGION)
-        regions.loc[~regions.isin(sector_projection[ColumnsConfig.REGION])] = "Global"
-        sector_projection = sector_projection.reset_index().set_index([ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+        regions.loc[~regions.isin(benchmark_projection[ColumnsConfig.REGION])] = "Global"
+        benchmark_projection = benchmark_projection.reset_index().set_index(
+            [ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
-        return sector_projection.loc[list(zip(sectors, regions)),
-                                     range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                           TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
+        benchmark_projection = benchmark_projection.loc[list(zip(sectors, regions)),
+                                                        range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                                              TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
+        benchmark_projection.index = company_ids
+
+        return benchmark_projection
 
     def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
                                  ) -> pd.Series:
@@ -124,18 +132,21 @@ class ExcelProvider(DataProvider):
             "some of the company ids are not included in the fundamental data"
 
         data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
+        ghg_scope12 = data_company[[ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_SCOPE12]].set_index(
+            ColumnsConfig.COMPANY_ID)
+        projected_production = self._get_projected_production(ghg_scope12)
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
             projected_emission_intensity=self._get_projection(company_ids, TabsConfig.PROJECTED_EI),
-            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+            projected_production=projected_production).to_numpy()
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self._get_cumulative_emission(
             projected_emission_intensity=self._get_projection(company_ids, TabsConfig.PROJECTED_TARGET),
-            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+            projected_production=projected_production).to_numpy()
 
         data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
-            projected_emission_intensity=self._get_sector_projection(company_ids, TabsConfig.PROJECTED_EI),
-            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
+            projected_emission_intensity=self._get_benchmark_projections(company_ids, TabsConfig.PROJECTED_EI),
+            projected_production=projected_production).to_numpy()
 
         companies = data_company.to_dict(orient="records")
 
@@ -153,4 +164,3 @@ class ExcelProvider(DataProvider):
         company_data = self.company_data[TabsConfig.FUNDAMENTAL]
         company_data = company_data.reset_index().set_index(ColumnsConfig.COMPANY_ID)
         return company_data.loc[company_ids, variable_name]
-
