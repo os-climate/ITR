@@ -148,7 +148,8 @@ class TemperatureScore(PortfolioAggregation):
         ))
         return data
 
-    def calculate(self, data: Optional[pd.DataFrame] = None, data_providers: Optional[List[data.DataProvider]] = None,
+    def calculate(self, data: Optional[pd.DataFrame] = None,
+                  data_providers: Optional[List[data.CompanyDataProvider]] = None,
                   portfolio: Optional[List[PortfolioCompany]] = None):
         """
         Calculate the temperature for a dataframe of company data. The columns in the data frame should be a combination

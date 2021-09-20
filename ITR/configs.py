@@ -4,7 +4,7 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from .interfaces import TemperatureScoreControls
 
-class TabsConfig:
+class TabsConfig:  # TODO MOVE to excel warehouse
     FUNDAMENTAL = "fundamental_data"
     PROJECTED_EI = "projected_ei_in_Wh"
     PROJECTED_PRODUCTION = "projected_production"
@@ -93,7 +93,7 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
 
     """
     """
-
+    #TODO some of these configs are dataprovider configs that need to move
     TEMPERATURE_RESULTS = 'temperature_results'
     INVESTMENT_VALUE = "investment_value"
     CONTROLS_CONFIG = TemperatureScoreControls(

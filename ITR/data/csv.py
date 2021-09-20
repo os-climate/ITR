@@ -3,11 +3,12 @@ from pydantic import ValidationError
 import logging
 
 import pandas as pd
-from ITR.data.data_provider import DataProvider
-from ITR.interfaces import IDataProviderCompany
+from ITR.data.data_providers import CompanyDataProvider
+from ITR.interfaces import ICompanyData
 
-#TODO
-class CSVProvider(DataProvider):
+
+# TODO
+class CSVProviderCompany(CompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
 
@@ -18,9 +19,7 @@ class CSVProvider(DataProvider):
         super().__init__()
         self.data = pd.read_csv(path, encoding=encoding)
 
-
-
-    def get_company_data(self, company_ids: list) -> List[IDataProviderCompany]:
+    def get_company_data(self, company_ids: list) -> List[ICompanyData]:
         """
         Get all relevant data for a list of company ids (ISIN). This method should return a list of IDataProviderCompany
         instances.
@@ -29,7 +28,7 @@ class CSVProvider(DataProvider):
         :return: A list containing the company data
         """
         companies = self.data.to_dict(orient="records")
-        model_companies: List[IDataProviderCompany] = [IDataProviderCompany.parse_obj(company) for company in companies]
+        model_companies: List[ICompanyData] = [ICompanyData.parse_obj(company) for company in companies]
         model_companies = [target for target in model_companies if target.company_id in company_ids]
         return model_companies
 

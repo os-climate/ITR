@@ -59,14 +59,15 @@ class PortfolioCompany(BaseModel):
     user_fields: Optional[dict]
 
 
-class IDataProviderCompany(BaseModel):
+class ICompanyData(BaseModel):
     company_name: str
     company_id: str
     isic: str
     ghg_s1s2: float
     ghg_s3: float
-    region: str #TODO: make SortableEnums
-    sector: str #TODO: make SortableEnums
+    region: str  # TODO: make SortableEnums
+    sector: str  # TODO: make SortableEnums
+    target_probability: float
 
     country: Optional[str]
 
@@ -81,11 +82,11 @@ class IDataProviderCompany(BaseModel):
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
 
+
+class ICompanyAggregates(ICompanyData):
     cumulative_budget: float
     cumulative_trajectory: float
     cumulative_target: float
-    target_probability: float
-
 
 class SortableEnum(Enum):
     def __str__(self):

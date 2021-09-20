@@ -2,7 +2,7 @@ import unittest
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
-    IDataProviderCompany,
+    ICompanyData,
     PortfolioCompany,
 )
 
@@ -10,20 +10,20 @@ from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 import copy
 import ITR
-from ITR.data.data_provider import DataProvider
+from ITR.data.data_providers import CompanyDataProvider
+from ITR.data.data_warehouse import DataWarehouse
 from typing import List
-from ITR.interfaces import IDataProviderCompany
+from ITR.interfaces import ICompanyAggregates
 
 
-class TestDataProvider(DataProvider):
+class TestDataWareHouse(DataWarehouse):
     def __init__(
-            self, companies: List[IDataProviderCompany]
+            self, companies: List[ICompanyAggregates]
     ):
         self.companies = companies
 
-    def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
+    def get_company_aggregates(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         return self.companies
-
 
 class EndToEndTest(unittest.TestCase):
     """
@@ -37,7 +37,7 @@ class EndToEndTest(unittest.TestCase):
     def setUp(self):
         company_id = "BaseCompany"
         self.BASE_COMP_SCORE = 3.85
-        self.company_base = IDataProviderCompany(
+        self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,
             ghg_s1s2=100,
@@ -72,7 +72,7 @@ class EndToEndTest(unittest.TestCase):
 
         # Setup test provider
         company = copy.deepcopy(self.company_base)
-        data_provider = TestDataProvider(companies=[company])
+        data_provider = TestDataWareHouse([company])
 
         # Calculate Temp Scores
         temp_score = TemperatureScore(
@@ -83,7 +83,7 @@ class EndToEndTest(unittest.TestCase):
 
         # portfolio data
         pf_company = copy.deepcopy(self.pf_base)
-        portfolio_data = ITR.utils.get_data([data_provider], [pf_company])
+        portfolio_data = ITR.utils.get_data(data_provider, [pf_company])
 
         # Verify data
         scores = temp_score.calculate(portfolio_data)
@@ -101,7 +101,7 @@ class EndToEndTest(unittest.TestCase):
 
         companies, pf_companies = self.create_base_companies(["A", "B"])
 
-        data_provider = TestDataProvider(companies=companies)
+        data_provider = TestDataWareHouse(companies=companies)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -110,7 +110,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -124,8 +124,7 @@ class EndToEndTest(unittest.TestCase):
         nr_companies = 1000
 
         # test 10000 companies
-        companies: List[IDataProviderCompany] = []
-        targets: List[IDataProviderTarget] = []
+        companies: List[ICompanyAggregates] = []
         pf_companies: List[PortfolioCompany] = []
 
         for i in range(nr_companies):
@@ -144,7 +143,7 @@ class EndToEndTest(unittest.TestCase):
             )
             pf_companies.append(pf_company)
 
-        data_provider = TestDataProvider(companies=companies)
+        data_provider = TestDataWareHouse(companies=companies)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -153,7 +152,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -166,7 +165,7 @@ class EndToEndTest(unittest.TestCase):
         # make 2+ companies and group them together
         industry_levels = ["Manufacturer", "Energy"]
         company_ids = ["A", "B"]
-        companies_all: List[IDataProviderCompany] = []
+        companies_all: List[ICompanyAggregates] = []
         pf_companies_all: List[PortfolioCompany] = []
 
         for ind_level in industry_levels:
@@ -180,7 +179,7 @@ class EndToEndTest(unittest.TestCase):
             companies_all.extend(companies)
             pf_companies_all.extend(pf_companies)
 
-        data_provider = TestDataProvider(companies=companies_all)
+        data_provider = TestDataWareHouse(companies=companies_all)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -189,7 +188,7 @@ class EndToEndTest(unittest.TestCase):
             grouping=["industry_level_1"]
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies_all)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies_all)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -198,8 +197,8 @@ class EndToEndTest(unittest.TestCase):
 
     def test_score_cap(self):
 
-        companies,  pf_companies = self.create_base_companies(["A"])
-        data_provider = TestDataProvider(companies=companies)
+        companies, pf_companies = self.create_base_companies(["A"])
+        data_provider = TestDataWareHouse(companies=companies)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -207,7 +206,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -217,7 +216,7 @@ class EndToEndTest(unittest.TestCase):
         """
         This is a helper method to create base companies that can be used for the test cases
         """
-        companies: List[IDataProviderCompany] = []
+        companies: List[ICompanyAggregates] = []
         pf_companies: List[PortfolioCompany] = []
         for company_id in company_ids:
             # company

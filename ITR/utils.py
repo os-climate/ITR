@@ -4,20 +4,22 @@ from typing import List, Optional, Tuple, Type, Dict
 
 from .configs import ColumnsConfig, TemperatureScoreConfig
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, \
-    IDataProviderCompany, TemperatureScoreControls
+    ICompanyData, TemperatureScoreControls
 
 from .temperature_score import TemperatureScore
 from .portfolio_aggregation import PortfolioAggregationMethod
 
 from . import data
+from .data.data_warehouse import DataWarehouse
 
-DATA_PROVIDER_MAP: Dict[str, Type[data.DataProvider]] = {
-    "excel": data.ExcelProvider,
-    "csv": data.CSVProvider,
+DATA_PROVIDER_MAP: Dict[str, Type[data.CompanyDataProvider]] = {
+    "excel": data.ExcelProviderCompany,
+    "csv": data.CSVProviderCompany,
 }
 
 
-def get_data_providers(data_providers_configs: List[dict], data_providers_input: List[str]) -> List[data.DataProvider]:
+def get_data_providers(data_providers_configs: List[dict], data_providers_input: List[str]) -> List[
+    data.CompanyDataProvider]:
     """
     Determines which data provider and in which order should be used.
 
@@ -47,32 +49,6 @@ def get_data_providers(data_providers_configs: List[dict], data_providers_input:
         raise ValueError("None of the selected data providers are available. The following data providers are valid "
                          "options: " + ", ".join(data_provider["name"] for data_provider in data_providers_configs))
     return selected_data_providers
-
-
-def get_company_data(data_providers: list, company_ids: List[str]) -> List[IDataProviderCompany]:
-    """
-    Get the company data in a waterfall method, given a list of companies and a list of data providers. This will go
-    through the list of data providers and retrieve the required info until either there are no companies left or there
-    are no data providers left.
-
-    :param data_providers: A list of data providers instances
-    :param company_ids: A list of company ids (ISINs)
-    :return: A data frame containing the company data
-    """
-    company_data = []
-    logger = logging.getLogger(__name__)
-    for dp in data_providers:
-        try:
-            company_data_provider = dp.get_company_data(company_ids)
-            company_data += company_data_provider
-            company_ids = [company for company in company_ids
-                           if company not in [c.company_id for c in company_data_provider]]
-            if len(company_ids) == 0:
-                break
-        except NotImplementedError:
-            logger.warning("{} is not available yet".format(type(dp).__name__))
-
-    return company_data
 
 
 def _flatten_user_fields(record: PortfolioCompany):
@@ -117,7 +93,7 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
     return [PortfolioCompany.parse_obj(company) for company in df_portfolio.to_dict(orient="records")]
 
 
-def get_data(data_providers: List[data.DataProvider], portfolio: List[PortfolioCompany]) -> pd.DataFrame:
+def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -> pd.DataFrame:
     """
     Get the required data from the data provider(s) and return a 9-box grid for each company.
 
@@ -127,7 +103,7 @@ def get_data(data_providers: List[data.DataProvider], portfolio: List[PortfolioC
     """
     df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio])
     # Look for data in all data providers:
-    company_data = get_company_data(data_providers, df_portfolio["company_id"].tolist())
+    company_data = data_warehouse.get_company_aggregates(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
 
     if len(company_data) == 0:
         raise ValueError("None of the companies in your portfolio could be found by the data providers")
@@ -137,8 +113,6 @@ def get_data(data_providers: List[data.DataProvider], portfolio: List[PortfolioC
                               on=["company_id"])
 
     return portfolio_data
-
-    return pd.DataFrame.from_records([c.dict() for c in company_data])
 
 
 def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_method: PortfolioAggregationMethod,

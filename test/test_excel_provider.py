@@ -4,7 +4,8 @@ import unittest
 import pandas as pd
 import numpy as np
 import ITR
-from ITR.data.excel import ExcelProvider
+from ITR.data.excel import ExcelProviderCompany, ExcelProviderProductionBenchmark, ExcelProviderIntensistyBenchmark
+from ITR.data.data_warehouse import DataWarehouse
 from ITR.configs import ColumnsConfig, TabsConfig, TemperatureScoreConfig
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
@@ -20,11 +21,18 @@ class TestExcelProvider(unittest.TestCase):
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
         self.sector_data_path = os.path.join(self.root, "inputs", "test_data_sector.xlsx")
-        self.excel_provider = ExcelProvider(company_path=self.company_data_path,
-                                            sector_path=self.sector_data_path)
+        self.excel_company_data = ExcelProviderCompany(company_path=self.company_data_path)
+        self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
+        self.excel_EI_bm = ExcelProviderIntensistyBenchmark(excel_path=self.sector_data_path)
+        self.excel_provider = DataWarehouse(self.excel_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
                             "FR0000125338"]
+        self.ghg = pd.DataFrame([[1.04827859e+08, 'Electricity Utilities', 'North America'],
+                                 [5.98937002e+08, 'Electricity Utilities', 'North America'],
+                                 [1.22472003e+08, 'Electricity Utilities', 'Europe']],
+                                index=self.company_ids,
+                                columns=[ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
     def test_temp_score_from_excel_data(self):
         # Calculate Temp Scores
@@ -43,7 +51,7 @@ class TestExcelProvider(unittest.TestCase):
             )
             )
         # portfolio data
-        portfolio_data = ITR.utils.get_data([self.excel_provider], portfolio)
+        portfolio_data = ITR.utils.get_data(self.excel_provider, portfolio)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -61,8 +69,9 @@ class TestExcelProvider(unittest.TestCase):
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
                                      index=company_ids)
         expected_data.iloc[0:3, :] = 3.6
-        pd.testing.assert_frame_equal(self.excel_provider._unit_of_measure_correction(company_ids, projected_values),
-                                      expected_data)
+        pd.testing.assert_frame_equal(
+            self.excel_company_data._unit_of_measure_correction(company_ids, projected_values),
+            expected_data)
 
     def test_get_projected_value(self):
         expected_data = pd.DataFrame([[1.698247435, 1.698247435, 1.590828573, 1.492707987, 1.403890821, 1.325025884,
@@ -86,8 +95,8 @@ class TestExcelProvider(unittest.TestCase):
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
                                      index=self.company_ids)
-        pd.testing.assert_frame_equal(self.excel_provider._get_projection(self.company_ids,
-                                                                          TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_company_data._get_projection(self.company_ids,
+                                                                              TabsConfig.PROJECTED_EI),
                                       expected_data, check_names=False)
 
     def test_get_benchmark(self):
@@ -115,19 +124,15 @@ class TestExcelProvider(unittest.TestCase):
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
 
-        pd.testing.assert_frame_equal(self.excel_provider._get_benchmark_projections(self.company_ids,
-                                                                                     TabsConfig.PROJECTED_EI),
-                                      expected_data)
+        pd.testing.assert_frame_equal(
+            self.excel_EI_bm.get_intensity_benchmarks(self.ghg),
+            expected_data)
 
     def test_get_projected_production(self):
-        ghg = pd.DataFrame([[1.04827859e+08],
-                            [5.98937002e+08],
-                            [1.22472003e+08]],
-                           index=self.company_ids)
         expected_data_2025 = pd.Series([1.06866370e+08, 6.10584093e+08, 1.28474171e+08],
                                        index=self.company_ids,
                                        name=2025)
-        pd.testing.assert_series_equal(self.excel_provider._get_projected_production(ghg)[2025],
+        pd.testing.assert_series_equal(self.excel_production_bm.get_projected_production_per_company(self.ghg)[2025],
                                        expected_data_2025)
 
     def test_get_cumulative_value(self):
@@ -139,8 +144,8 @@ class TestExcelProvider(unittest.TestCase):
                                                          projected_production=projected_production), expected_data)
 
     def test_get_company_data(self):
-        company_1 = self.excel_provider.get_company_data(self.company_ids)[0]
-        company_2 = self.excel_provider.get_company_data(self.company_ids)[1]
+        company_1 = self.excel_provider.get_company_aggregates(self.company_ids)[0]
+        company_2 = self.excel_provider.get_company_aggregates(self.company_ids)[1]
         self.assertEqual(company_1.company_name, "Company AG")
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
@@ -160,6 +165,6 @@ class TestExcelProvider(unittest.TestCase):
                                    10283015132.0],
                                   index=pd.Index(self.company_ids, name='company_id'),
                                   name='company_revenue')
-        pd.testing.assert_series_equal(self.excel_provider.get_value(company_ids=self.company_ids,
-                                                                     variable_name=ColumnsConfig.COMPANY_REVENUE),
+        pd.testing.assert_series_equal(self.excel_company_data.get_value(company_ids=self.company_ids,
+                                                                         variable_name=ColumnsConfig.COMPANY_REVENUE),
                                        expected_data)
