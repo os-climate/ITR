@@ -16,9 +16,11 @@ class DataWarehouse(ABC):
                  benchmark_projected_production: ProductionBenchmarkDataProvider,
                  benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider):
         """
-        Create a new data provider instance.
+        Create a new data warehouse instance.
 
-        :param config: A dictionary containing the configuration parameters for this data provider.
+        :param company_data: CompanyDataProvider
+        :param benchmark_projected_production: ProductionBenchmarkDataProvider
+        :param benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider
         """
         self.company_data = company_data
         self.benchmark_projected_production = benchmark_projected_production
@@ -40,20 +42,25 @@ class DataWarehouse(ABC):
         df_ghg_scope12 = df_company_data[[
             ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.GHG_SCOPE12]].set_index(
             ColumnsConfig.COMPANY_ID)
-        projected_production = self.benchmark_projected_production.get_projected_production_per_company(df_ghg_scope12)
+        projected_production = self.benchmark_projected_production.get_company_projected_production(df_ghg_scope12)
 
         df_company_data.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
-            projected_emission_intensity=self.company_data.get_projected_intensities(company_ids),
+            projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
             projected_production=projected_production).to_numpy()
 
         df_company_data.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self._get_cumulative_emission(
-            projected_emission_intensity=self.company_data.get_projected_targets(company_ids),
+            projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             projected_production=projected_production).to_numpy()
 
         df_company_data.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_intensity_benchmarks(
                 df_ghg_scope12),
             projected_production=projected_production).to_numpy()
+
+        df_company_data.loc[:,
+        ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = self.benchmarks_projected_emission_intensity.benchmark_global_budget
+        df_company_data.loc[:,
+        ColumnsConfig.BENCHMARK_TEMP] = self.benchmarks_projected_emission_intensity.benchmark_temperature
 
         companies = df_company_data.to_dict(orient="records")
 

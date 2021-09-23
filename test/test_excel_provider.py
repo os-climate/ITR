@@ -23,7 +23,8 @@ class TestExcelProvider(unittest.TestCase):
         self.sector_data_path = os.path.join(self.root, "inputs", "test_data_sector.xlsx")
         self.excel_company_data = ExcelProviderCompany(company_path=self.company_data_path)
         self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        self.excel_EI_bm = ExcelProviderIntensistyBenchmark(excel_path=self.sector_data_path)
+        self.excel_EI_bm = ExcelProviderIntensistyBenchmark(excel_path=self.sector_data_path, benchmark_temperature=1.5,
+                                                            benchmark_global_budget=396, AFOLU_included=False)
         self.excel_provider = DataWarehouse(self.excel_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
@@ -132,7 +133,7 @@ class TestExcelProvider(unittest.TestCase):
         expected_data_2025 = pd.Series([1.06866370e+08, 6.10584093e+08, 1.28474171e+08],
                                        index=self.company_ids,
                                        name=2025)
-        pd.testing.assert_series_equal(self.excel_production_bm.get_projected_production_per_company(self.ghg)[2025],
+        pd.testing.assert_series_equal(self.excel_production_bm.get_company_projected_production(self.ghg)[2025],
                                        expected_data_2025)
 
     def test_get_cumulative_value(self):

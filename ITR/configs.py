@@ -69,6 +69,8 @@ class ColumnsConfig:
     CUMULATIVE_TRAJECTORY = 'cumulative_trajectory'
     CUMULATIVE_TARGET = 'cumulative_target'
     TARGET_PROBABILITY = 'target_probability'
+    BENCHMARK_TEMP = 'benchmark_temperature'
+    BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
 
     # Output columns
     WEIGHTED_TEMPERATURE_SCORE = "weighted_temperature_score"
@@ -108,6 +110,5 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         current_temperature = 1.5,
         energy_unit_conversion_factor = 3.6
     )
-
 
 

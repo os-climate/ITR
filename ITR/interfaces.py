@@ -87,6 +87,8 @@ class ICompanyAggregates(ICompanyData):
     cumulative_budget: float
     cumulative_trajectory: float
     cumulative_target: float
+    benchmark_temperature: float
+    benchmark_global_budget: float
 
 class SortableEnum(Enum):
     def __str__(self):

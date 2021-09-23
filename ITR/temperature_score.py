@@ -10,6 +10,7 @@ from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribu
 from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
 from ITR.configs import TemperatureScoreConfig
 from ITR import data, utils
+from ITR.data.data_warehouse import DataWarehouse
 
 
 class TemperatureScore(PortfolioAggregation):
@@ -46,7 +47,8 @@ class TemperatureScore(PortfolioAggregation):
         :return: The temperature score
         """
         if scorable_row[self.c.COLS.CUMULATIVE_BUDGET] > 0:
-            target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[self.c.COLS.CUMULATIVE_BUDGET]
+            target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
+                self.c.COLS.CUMULATIVE_BUDGET]
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
         else:
@@ -54,11 +56,11 @@ class TemperatureScore(PortfolioAggregation):
             trajectory_overshoot_ratio = 0
 
         target_temperature_score = self.c.CONTROLS_CONFIG.current_temperature + \
-                                   (self.c.CONTROLS_CONFIG.global_budget * (
-                                               target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
-        trajectory_temperature_score = self.c.CONTROLS_CONFIG.current_temperature + \
-                                       (self.c.CONTROLS_CONFIG.global_budget * (
-                                                   trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
+                                   (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
+                                           target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
+        trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                                       (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
+                                               trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
         score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
                 trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
@@ -121,9 +123,6 @@ class TemperatureScore(PortfolioAggregation):
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
         scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
 
-        # data[self.c.COLS.ANNUAL_REDUCTION_RATE] = data.apply(lambda row: self.get_annual_reduction_rate(row), axis=1)
-        # TODO: Move computations in dataprovider to here added columns ITR + ghg
-
         scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
             lambda row: self.get_score(row), axis=1))
 
@@ -149,22 +148,22 @@ class TemperatureScore(PortfolioAggregation):
         return data
 
     def calculate(self, data: Optional[pd.DataFrame] = None,
-                  data_providers: Optional[List[data.CompanyDataProvider]] = None,
+                  data_warehouse: Optional[DataWarehouse] = None,
                   portfolio: Optional[List[PortfolioCompany]] = None):
         """
         Calculate the temperature for a dataframe of company data. The columns in the data frame should be a combination
         of IDataProviderTarget and IDataProviderCompany.
 
         :param data: The data set (or None if the data should be retrieved)
-        :param data_providers: A list of DataProvider instances. Optional, only required if data is empty.
+        :param data_warehouse: A list of DataProvider instances. Optional, only required if data is empty.
         :param portfolio: A list of PortfolioCompany models. Optional, only required if data is empty.
         :return: A data frame containing all relevant information for the targets and companies
         """
         if data is None:
-            if data_providers is not None and portfolio is not None:
-                data = utils.get_data(data_providers, portfolio)
+            if data_warehouse is not None and portfolio is not None:
+                data = utils.get_data(data_warehouse, portfolio)
             else:
-                raise ValueError("You need to pass and either a data set or a list of data providers and companies")
+                raise ValueError("You need to pass and either a data set or a datawarehouse and companies")
 
         data = self._prepare_data(data)
 
