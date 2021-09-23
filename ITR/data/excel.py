@@ -11,7 +11,7 @@ from ITR.interfaces import ICompanyData
 class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
     def __init__(self, excel_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__()
-        self.sector_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
         self.c = config  # TODO polish config
 
@@ -22,7 +22,7 @@ class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: None
         """
         assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
-            self.sector_data.keys()).all(), "some tabs are missing in the sector data excel"
+            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
     def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
         """
@@ -55,7 +55,7 @@ class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param feature: name of the projected feature
         :return: series of projected emissions for the sector
         """
-        benchmark_projection = self.sector_data[feature]
+        benchmark_projection = self.benchmark_excel[feature]
         sectors = company_secor_region_info[ColumnsConfig.SECTOR]
         regions = company_secor_region_info[ColumnsConfig.REGION]
         regions.loc[~regions.isin(benchmark_projection[ColumnsConfig.REGION])] = "Global"
@@ -74,7 +74,7 @@ class ExcelProviderIntensistyBenchmark(IntensityBenchmarkDataProvider):
     def __init__(self, excel_path: str, benchmark_temperature: float,
                  benchmark_global_budget: float, AFOLU_included: bool, config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__(benchmark_temperature, benchmark_global_budget, AFOLU_included)
-        self.sector_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
         self.c = config
 
@@ -94,7 +94,7 @@ class ExcelProviderIntensistyBenchmark(IntensityBenchmarkDataProvider):
         :return: None
         """
         assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
-            self.sector_data.keys()).all(), "some tabs are missing in the sector data excel"
+            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
     def get_benchmark_projections(self, company_secor_region_info: pd.DataFrame, feature: str) -> pd.DataFrame:
         """
@@ -104,7 +104,7 @@ class ExcelProviderIntensistyBenchmark(IntensityBenchmarkDataProvider):
         :param feature: name of the projected feature corresponding to the sheet name in the excel
         :return: series of projected emissions for the sector
         """
-        benchmark_projection = self.sector_data[feature]
+        benchmark_projection = self.benchmark_excel[feature]
         sectors = company_secor_region_info[ColumnsConfig.SECTOR]
         regions = company_secor_region_info[ColumnsConfig.REGION]
         regions.loc[~regions.isin(benchmark_projection[ColumnsConfig.REGION])] = "Global"
@@ -126,9 +126,9 @@ class ExcelProviderCompany(CompanyDataProvider):
     :param config: A dictionary containing a "path" field that leads to the path of the CSV file
     """
 
-    def __init__(self, company_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
+    def __init__(self, excel_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__()
-        self.company_data = pd.read_excel(company_path, sheet_name=None, skiprows=0)
+        self.company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_company_data()
         self.c = config
 

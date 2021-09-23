@@ -55,7 +55,7 @@ class TemperatureScore(PortfolioAggregation):
             target_overshoot_ratio = 0
             trajectory_overshoot_ratio = 0
 
-        target_temperature_score = self.c.CONTROLS_CONFIG.current_temperature + \
+        target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                                    (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
                                            target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
         trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \

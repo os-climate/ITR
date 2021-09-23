@@ -53,7 +53,9 @@ class EndToEndTest(unittest.TestCase):
             target_probability=0.428571428571428,
             isic='A12',
             sector='Steel',
-            region='Europe'
+            region='Europe',
+            benchmark_global_budget=396,
+            benchmark_temperature=1.5
         )
 
         # pf

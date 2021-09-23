@@ -106,8 +106,6 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         tcre = 2.2,
         carbon_conversion = 3664.0,
         scenario_target_temperature = 1.5,
-        global_budget = 396,
-        current_temperature = 1.5,
         energy_unit_conversion_factor = 3.6
     )
 

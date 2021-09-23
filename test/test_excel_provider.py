@@ -20,11 +20,11 @@ class TestExcelProvider(unittest.TestCase):
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
-        self.sector_data_path = os.path.join(self.root, "inputs", "test_data_sector.xlsx")
-        self.excel_company_data = ExcelProviderCompany(company_path=self.company_data_path)
+        self.sector_data_path = os.path.join(self.root, "inputs", "OECM_EI_and_production_benchmarks.xlsx")
+        self.excel_company_data = ExcelProviderCompany(excel_path=self.company_data_path)
         self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
         self.excel_EI_bm = ExcelProviderIntensistyBenchmark(excel_path=self.sector_data_path, benchmark_temperature=1.5,
-                                                            benchmark_global_budget=396, AFOLU_included=False)
+                                                            benchmark_global_budget=396, AFOLU_included=True)
         self.excel_provider = DataWarehouse(self.excel_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",

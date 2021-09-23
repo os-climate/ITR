@@ -126,8 +126,6 @@ class TemperatureScoreControls(BaseModel):
     tcre: float
     carbon_conversion: float
     scenario_target_temperature: float
-    global_budget : int  # TODO: is dependent on BASE_YEAR - fix
-    current_temperature: float
     energy_unit_conversion_factor: float
 
     def __getitem__(self, item):
