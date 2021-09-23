@@ -12,45 +12,6 @@ from .portfolio_aggregation import PortfolioAggregationMethod
 from . import data
 from .data.data_warehouse import DataWarehouse
 
-DATA_PROVIDER_MAP: Dict[str, Type[data.CompanyDataProvider]] = {
-    "excel": data.ExcelProviderCompany,
-    "csv": data.CSVProviderCompany,
-}
-
-
-def get_data_providers(data_providers_configs: List[dict], data_providers_input: List[str]) -> List[
-    data.CompanyDataProvider]:
-    """
-    Determines which data provider and in which order should be used.
-
-    :param data_providers_configs: A list of data provider configurations
-    :param data_providers_input: A list of data provider names
-    :return: a list of data providers in order.
-    """
-    logger = logging.getLogger(__name__)
-    data_providers = []
-    for data_provider_config in data_providers_configs:
-        data_provider_config["class"] = DATA_PROVIDER_MAP[data_provider_config["type"]](
-            **data_provider_config["parameters"])
-        data_providers.append(data_provider_config)
-
-    selected_data_providers = []
-    for data_provider_name in data_providers_input:
-        found = False
-        for data_provider_config in data_providers:
-            if data_provider_config["name"] == data_provider_name:
-                selected_data_providers.append(data_provider_config["class"])
-                found = True
-                break
-        if not found:
-            logger.warning("The following data provider could not be found: {}".format(data_provider_name))
-
-    if len(selected_data_providers) == 0:
-        raise ValueError("None of the selected data providers are available. The following data providers are valid "
-                         "options: " + ", ".join(data_provider["name"] for data_provider in data_providers_configs))
-    return selected_data_providers
-
-
 def _flatten_user_fields(record: PortfolioCompany):
     """
     Flatten the user fields in a portfolio company and return it as a dictionary.
@@ -88,8 +49,6 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
     PortfolioCompany model.
     :return: A list of portfolio companies
     """
-
-    # bla
     return [PortfolioCompany.parse_obj(company) for company in df_portfolio.to_dict(orient="records")]
 
 
@@ -102,7 +61,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     :return: A data frame containing the relevant company data
     """
     df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio])
-    # Look for data in all data providers:
+
     company_data = data_warehouse.get_company_aggregates(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
 
     if len(company_data) == 0:

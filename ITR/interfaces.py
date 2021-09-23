@@ -126,7 +126,6 @@ class TemperatureScoreControls(BaseModel):
     tcre: float
     carbon_conversion: float
     scenario_target_temperature: float
-    energy_unit_conversion_factor: float
 
     def __getitem__(self, item):
         return getattr(self, item)

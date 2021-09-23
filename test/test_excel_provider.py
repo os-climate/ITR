@@ -4,9 +4,10 @@ import unittest
 import pandas as pd
 import numpy as np
 import ITR
-from ITR.data.excel import ExcelProviderCompany, ExcelProviderProductionBenchmark, ExcelProviderIntensistyBenchmark
+from ITR.data.excel import ExcelProviderCompany, ExcelProviderProductionBenchmark, ExcelProviderIntensistyBenchmark, \
+    TabsConfig
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.configs import ColumnsConfig, TabsConfig, TemperatureScoreConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod

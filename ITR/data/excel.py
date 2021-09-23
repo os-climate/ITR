@@ -4,9 +4,15 @@ import logging
 
 import pandas as pd
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig, TabsConfig, TemperatureScoreConfig, SectorsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
 from ITR.interfaces import ICompanyData
 
+
+class TabsConfig:
+    FUNDAMENTAL = "fundamental_data"
+    PROJECTED_EI = "projected_ei_in_Wh"
+    PROJECTED_PRODUCTION = "projected_production"
+    PROJECTED_TARGET = "projected_target"
 
 class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
     def __init__(self, excel_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
@@ -131,6 +137,7 @@ class ExcelProviderCompany(CompanyDataProvider):
         self.company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_company_data()
         self.c = config
+        self.ENERGY_UNIT_CONVERSION_FACTOR = 3.6
 
     def _check_company_data(self) -> None:
         """
@@ -202,7 +209,7 @@ class ExcelProviderCompany(CompanyDataProvider):
         projected_emission.loc[self.get_value(company_ids, ColumnsConfig.SECTOR).isin(SectorsConfig.CORRECTION_SECTORS),
                                range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                      TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)] *= \
-            TemperatureScoreConfig.CONTROLS_CONFIG.energy_unit_conversion_factor
+            self.ENERGY_UNIT_CONVERSION_FACTOR
         return projected_emission
 
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
