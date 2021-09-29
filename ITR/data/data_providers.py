@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import List
-
 import pandas as pd
 from ITR.interfaces import ICompanyData
 
@@ -40,11 +39,14 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str], base_year: int) -> pd.DataFrame:
         """
-        :param company_ids: list of company ids
+        overrides subclass method
+        :param: company_ids: list of company ids
+        :param: base year: int
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
+        ColumnsConfig.REGION
         """
         raise NotImplementedError
 
@@ -72,7 +74,8 @@ class CompanyDataProvider(ABC):
     @abstractmethod
     def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
         """
-        corrects the projection emissions for the configured sectors with a temperature correction from the TempScoreConfig
+        corrects the projection emissions for the configured sectors with a temperature correction from the
+        TempScoreConfig
         :param company_ids: list of company ids
         :param projected_emission: series of projected emissions
         :return: series of projected emissions corrected for unit of measure

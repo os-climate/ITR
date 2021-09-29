@@ -3,7 +3,6 @@ import unittest
 
 import pandas as pd
 
-from ITR.configs import ColumnsConfig
 from ITR.interfaces import ETimeFrames, EScope
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
@@ -49,7 +48,7 @@ class TestTemperatureScore(unittest.TestCase):
 
     def test_temp_score_overwrite_tcre(self) -> None:
         """
-        Test whether the temperature score is calculated as  when overwriting the Transient Climate Responsie cumulative Emissions (TCRE) control.
+        Test whether the temperature score is calculated as  when overwriting the Transient Climate Response cumulative Emissions (TCRE) control.
 
         :return:
         """

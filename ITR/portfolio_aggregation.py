@@ -29,8 +29,8 @@ class PortfolioAggregationMethod(Enum):
         :return:
         """
         return method == PortfolioAggregationMethod.MOTS or method == PortfolioAggregationMethod.EOTS or \
-            method == PortfolioAggregationMethod.ECOTS or method == PortfolioAggregationMethod.AOTS or \
-            method == PortfolioAggregationMethod.ROTS
+               method == PortfolioAggregationMethod.ECOTS or method == PortfolioAggregationMethod.AOTS or \
+               method == PortfolioAggregationMethod.ROTS
 
     @staticmethod
     def get_value_column(method: 'PortfolioAggregationMethod', column_config: Type[ColumnsConfig]) -> str:
@@ -99,9 +99,10 @@ class PortfolioAggregation(ABC):
             if use_S1S2.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE12)
             # Calculate the total emissions of all companies
-            emissions = (use_S1S2*data[self.c.COLS.GHG_SCOPE12]).sum() + (use_S3*data[self.c.COLS.GHG_SCOPE3]).sum()
+            emissions = (use_S1S2 * data[self.c.COLS.GHG_SCOPE12]).sum() + (use_S3 * data[self.c.COLS.GHG_SCOPE3]).sum()
             try:
-                return (use_S1S2*data[self.c.COLS.GHG_SCOPE12] + use_S3*data[self.c.COLS.GHG_SCOPE3]) / emissions * data[input_column]
+                return (use_S1S2 * data[self.c.COLS.GHG_SCOPE12] + use_S3 * data[self.c.COLS.GHG_SCOPE3]) / emissions * \
+                       data[input_column]
             except ZeroDivisionError:
                 raise ValueError("The total emissions should be higher than zero")
 
@@ -126,7 +127,7 @@ class PortfolioAggregation(ABC):
                 if use_S3.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE3)
                 data[self.c.COLS.OWNED_EMISSIONS] = (data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]) * (
-                        use_S1S2*data[self.c.COLS.GHG_SCOPE12] + use_S3*data[self.c.COLS.GHG_SCOPE3])
+                        use_S1S2 * data[self.c.COLS.GHG_SCOPE12] + use_S3 * data[self.c.COLS.GHG_SCOPE3])
             except ZeroDivisionError:
                 raise ValueError("To calculate the aggregation, the {} column may not be zero".format(value_column))
             owned_emissions = data[self.c.COLS.OWNED_EMISSIONS].sum()

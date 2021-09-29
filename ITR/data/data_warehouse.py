@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import List
-
 import pandas as pd
-from ITR.interfaces import ICompanyData, ICompanyAggregates
+from ITR.interfaces import ICompanyAggregates
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
+from typing import Type
 
 
 class DataWarehouse(ABC):
@@ -14,7 +14,8 @@ class DataWarehouse(ABC):
 
     def __init__(self, company_data: CompanyDataProvider,
                  benchmark_projected_production: ProductionBenchmarkDataProvider,
-                 benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider):
+                 benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider,
+                 config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         """
         Create a new data warehouse instance.
 
@@ -25,6 +26,7 @@ class DataWarehouse(ABC):
         self.company_data = company_data
         self.benchmark_projected_production = benchmark_projected_production
         self.benchmarks_projected_emission_intensity = benchmarks_projected_emission_intensity
+        self.c: Type[TemperatureScoreConfig] = config
 
     def get_company_aggregates(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """
@@ -39,7 +41,8 @@ class DataWarehouse(ABC):
         assert pd.Series(company_ids).isin(df_company_data.loc[:, ColumnsConfig.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
-        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
+        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids,
+                                                                                                        self.c.CONTROLS_CONFIG.base_year)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year)
 

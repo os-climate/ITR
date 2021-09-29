@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Optional, Dict, List
-import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 class AggregationContribution(BaseModel):
