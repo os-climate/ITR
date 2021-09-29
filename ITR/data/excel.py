@@ -84,7 +84,44 @@ class ExcelProviderIntensistyBenchmark(IntensityBenchmarkDataProvider):
         self._check_sector_data()
         self.c = config
 
-    def get_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
+        """
+        Overrides subclass method
+        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+        :param company_info_at_base_year: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
+        """
+        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
+        decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
+        last_ei = intensity_benchmarks[TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year]
+        ei_base = company_info_at_base_year[ColumnsConfig.BASE_EI]
+
+        return decarbonization_paths.mul((ei_base - last_ei), axis=0).add(last_ei, axis=0)
+
+    def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
+        """
+        Overrides subclass method
+        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+        :param company_secor_region_info: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: A pd.DataFrame with company and decarbonisation path s per calendar year per row
+        """
+        return intensity_benchmarks.apply(lambda row: self._get_decarbonization(row), axis=1)
+
+    def _get_decarbonization(self, intensity_benchmark_row: pd.Series) -> pd.Series:
+        """
+        Overrides subclass method
+        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+        :param company_secor_region_info: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: A pd.Series with company and decarbonisation path s per calendar year per row
+        """
+        first_ei = intensity_benchmark_row[TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+        last_ei = intensity_benchmark_row[TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year]
+        return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
+
+    def _get_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
@@ -225,3 +262,19 @@ class ExcelProviderCompany(CompanyDataProvider):
         :return: DataFrame with projected intensities per company extracted from the excel
         """
         return self._get_projection(company_ids, TabsConfig.PROJECTED_EI)
+
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        overrides subclass method
+        :param company_ids: list of company ids
+        :return: DataFrame the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        """
+
+        df_company_data = pd.DataFrame.from_records([c.dict() for c in self.get_company_data(company_ids)])
+        company_info = df_company_data[[
+            ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.GHG_SCOPE12]].set_index(
+            ColumnsConfig.COMPANY_ID)
+        ei_at_base = self._get_company_intensity_at_year(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                                         company_ids).rename(ColumnsConfig.BASE_EI)
+        return company_info.merge(ei_at_base, left_index=True, right_index=True)

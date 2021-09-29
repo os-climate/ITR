@@ -42,6 +42,7 @@ class ColumnsConfig:
     TARGET_PROBABILITY = 'target_probability'
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
+    BASE_EI = 'emission_intensity_at_base_year'
 
     # Output columns
     WEIGHTED_TEMPERATURE_SCORE = "weighted_temperature_score"

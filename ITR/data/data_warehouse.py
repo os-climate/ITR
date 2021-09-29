@@ -39,10 +39,9 @@ class DataWarehouse(ABC):
         assert pd.Series(company_ids).isin(df_company_data.loc[:, ColumnsConfig.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
-        df_ghg_scope12 = df_company_data[[
-            ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.GHG_SCOPE12]].set_index(
-            ColumnsConfig.COMPANY_ID)
-        projected_production = self.benchmark_projected_production.get_company_projected_production(df_ghg_scope12)
+        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
+        projected_production = self.benchmark_projected_production.get_company_projected_production(
+            company_info_at_base_year)
 
         df_company_data.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
@@ -53,8 +52,8 @@ class DataWarehouse(ABC):
             projected_production=projected_production).to_numpy()
 
         df_company_data.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
-            projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_intensity_benchmarks(
-                df_ghg_scope12),
+            projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
+                company_info_at_base_year),
             projected_production=projected_production).to_numpy()
 
         df_company_data.loc[:,

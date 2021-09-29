@@ -40,6 +40,15 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: list of company ids
+        :return: DataFrame the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
         """
         get the value of a variable of a list of companies
@@ -47,6 +56,9 @@ class CompanyDataProvider(ABC):
         :return: dataframe of projected intensities for each company in company_ids
         """
         raise NotImplementedError
+
+    def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
+        return self.get_company_projected_intensities(company_ids)[year]
 
     @abstractmethod
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
@@ -158,7 +170,17 @@ class IntensityBenchmarkDataProvider(ABC):
         self._benchmark_global_budget = value
 
     @abstractmethod
-    def get_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
+    def _get_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
+        """
+        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+        :param company_secor_region_info: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: A DataFrame with company and intensity benchmarks per calendar year per row
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_SDA_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_secor_region_info: DataFrame with at least the following columns :

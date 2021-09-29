@@ -30,7 +30,7 @@ def _flatten_user_fields(record: PortfolioCompany):
 
 def _make_isin_map(df_portfolio: pd.DataFrame) -> dict:
     """
-    Create a mapping from company_id to ISIN (required for the SBTi matching).
+    Create a mapping from company_id to ISIN
 
     :param df_portfolio: The complete portfolio
     :return: A mapping from company_id to ISIN
