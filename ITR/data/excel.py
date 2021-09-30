@@ -1,5 +1,6 @@
 from typing import Type, List
 import pandas as pd
+import numpy as np
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
 from ITR.interfaces import ICompanyData
@@ -236,7 +237,11 @@ class ExcelProviderCompany(CompanyDataProvider):
 
         projected_emissions = projected_emissions.loc[:, range(self.temp_config.CONTROLS_CONFIG.base_year,
                                                                self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+
+        # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
+        projected_emissions = projected_emissions.fillna(np.inf)
         projected_emissions_s1s2 = projected_emissions.groupby(level=0, sort=False).sum()  # add scope 1 and 2
+        projected_emissions_s1s2 = projected_emissions_s1s2.replace(np.inf, np.nan)
 
         return projected_emissions_s1s2
 

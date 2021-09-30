@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Optional, Tuple, Type, List
 
 import pandas as pd
@@ -9,7 +8,7 @@ from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribu
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
 from ITR.configs import TemperatureScoreConfig
-from ITR import data, utils
+from ITR import utils
 from ITR.data.data_warehouse import DataWarehouse
 
 
@@ -18,7 +17,6 @@ class TemperatureScore(PortfolioAggregation):
     This class is provides a temperature score based on the climate goals.
 
     :param fallback_score: The temp score if a company is not found
-    :param model: The regression model to use
     :param config: A class defining the constants that are used throughout this class. This parameter is only required
                     if you'd like to overwrite a constant. This can be done by extending the TemperatureScoreConfig
                     class and overwriting one of the parameters.
@@ -46,6 +44,10 @@ class TemperatureScore(PortfolioAggregation):
         :param scorable_row: The target as a row of a data frame
         :return: The temperature score
         """
+        # if either cum target or trajectory is zero return default.
+        if scorable_row[self.c.COLS.CUMULATIVE_TARGET] * scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] == 0.0:
+            return self.get_default_score(scorable_row), 1
+
         if scorable_row[self.c.COLS.CUMULATIVE_BUDGET] > 0:
             target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
@@ -64,7 +66,7 @@ class TemperatureScore(PortfolioAggregation):
         score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
                 trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
-        # If score is NaN due to missing data assign default score.
+        # Safeguard: If score is NaN due to missing data assign default score.
         if np.isnan(score):
             return self.get_default_score(scorable_row), 1
         return score, 0

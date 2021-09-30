@@ -39,14 +39,21 @@ class TestExcelProvider(unittest.TestCase):
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
     def test_temp_score_from_excel_data(self):
+        comids = ['US0079031078', 'US00724F1012', 'FR0000125338', 'US17275R1023', 'CH0198251305', 'US1266501006',
+                  'FR0000120644', 'US24703L1035', 'TW0002308004', 'FR0000120321', 'CH0038863350', 'US8356993076',
+                  'JP3401400001', 'US6541061031', 'GB0031274896', 'US6293775085', 'US7134481081', 'JP0000000001',
+                  'NL0000000002', 'IT0000000003', 'SE0000000004', 'SE0000000005', 'NL0000000006', 'CN0000000007',
+                  'CN0000000008', 'CN0000000009', 'BR0000000010', 'BR0000000011', 'BR0000000012', 'AR0000000013']
+
         # Calculate Temp Scores
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
+
         portfolio = []
-        for company in self.company_ids:
+        for company in comids:
             portfolio.append(PortfolioCompany(
                 company_name=company,
                 company_id=company,
@@ -60,10 +67,13 @@ class TestExcelProvider(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.05, 2.22, 2.06]
+        expected = [2.05, 2.22, 2.06, 2.01, 1.93, 1.78, 1.71, 1.34, 2.21, 2.69, 2.65, temp_score.fallback_score, 2.89,
+                    1.91, 2.16, 1.76, temp_score.fallback_score, temp_score.fallback_score, 1.47, 1.72, 1.76, 1.81,
+                    temp_score.fallback_score, 1.78, 1.84, temp_score.fallback_score, temp_score.fallback_score, 1.74,
+                    1.88, temp_score.fallback_score]
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.11, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.259, places=2)
 
     def test_unit_of_measure_correction(self):
         company_ids = self.company_ids + ["US6293775085"]

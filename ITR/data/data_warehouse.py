@@ -79,5 +79,6 @@ class DataWarehouse(ABC):
         :param projected_production: series of projected production series
         :return: weighted sum of production and emission
         """
+
         return projected_emission_intensity.reset_index(drop=True).multiply(projected_production.reset_index(
             drop=True)).sum(axis=1)
