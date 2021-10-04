@@ -26,7 +26,7 @@ class TestExcelProvider(unittest.TestCase):
         self.excel_company_data = ExcelProviderCompany(excel_path=self.company_data_path)
         self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
         self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=1.5,
-                                                           benchmark_global_budget=396, AFOLU_included=False)
+                                                           benchmark_global_budget=396, is_AFOLU_included=False)
         self.excel_provider = DataWarehouse(self.excel_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
@@ -162,8 +162,8 @@ class TestExcelProvider(unittest.TestCase):
                                                          projected_production=projected_production), expected_data)
 
     def test_get_company_data(self):
-        company_1 = self.excel_provider.get_company_aggregates(self.company_ids)[0]
-        company_2 = self.excel_provider.get_company_aggregates(self.company_ids)[1]
+        company_1 = self.excel_provider.get_preprocessed_company_data(self.company_ids)[0]
+        company_2 = self.excel_provider.get_preprocessed_company_data(self.company_ids)[1]
         self.assertEqual(company_1.company_name, "Company AG")
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")

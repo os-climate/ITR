@@ -28,7 +28,7 @@ class DataWarehouse(ABC):
         self.benchmarks_projected_emission_intensity = benchmarks_projected_emission_intensity
         self.c: Type[TemperatureScoreConfig] = config
 
-    def get_company_aggregates(self, company_ids: List[str]) -> List[ICompanyAggregates]:
+    def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """
         Get all relevant data for a list of company ids. This method should return a list of ICompanyAggregates
         instances.
@@ -41,8 +41,7 @@ class DataWarehouse(ABC):
         assert pd.Series(company_ids).isin(df_company_data.loc[:, ColumnsConfig.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
-        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids,
-                                                                                                        self.c.CONTROLS_CONFIG.base_year)
+        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year)
 

@@ -7,6 +7,10 @@ from ITR.interfaces import ICompanyData
 class CompanyDataProvider(ABC):
     """
     Company data provider super class.
+    Data container for company specific data. It expects both Fundamental (e.g. Company revenue, marktetcap etc) and
+    emission and target data per company.
+
+    Initialized CompanyDataProvider is required when setting up a data warehouse instance.
     """
 
     def __init__(self, **kwargs):
@@ -31,7 +35,7 @@ class CompanyDataProvider(ABC):
     @abstractmethod
     def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
         """
-        get the value of a variable of a list of companies
+        Gets the value of a variable for a list of companies idss
         :param company_ids: list of company ids
         :param variable_name: variable name of the projected feature
         :return: series of values
@@ -39,11 +43,10 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str], base_year: int) -> pd.DataFrame:
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
         """
-        overrides subclass method
+        Get the emission intensity and the production for a list of companies at the base year.
         :param: company_ids: list of company ids
-        :param: base year: int
         :return: DataFrame the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
         ColumnsConfig.REGION
@@ -53,7 +56,7 @@ class CompanyDataProvider(ABC):
     @abstractmethod
     def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
         """
-        get the value of a variable of a list of companies
+        Gets the emission intensities for a list of companies
         :param company_ids: list of company ids
         :return: dataframe of projected intensities for each company in company_ids
         """
@@ -65,7 +68,7 @@ class CompanyDataProvider(ABC):
     @abstractmethod
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
         """
-        get the value of a variable of a list of companies
+        Gets the projected targets for a list of companies
         :param company_ids: list of company ids
         :return: dataframe of projected targets for each company in company_ids
         """
@@ -74,24 +77,20 @@ class CompanyDataProvider(ABC):
     @abstractmethod
     def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
         """
-        corrects the projection emissions for the configured sectors with a temperature correction from the
+        Corrects the projection emissions for the configured sectors with a temperature correction from the
         TempScoreConfig
         :param company_ids: list of company ids
         :param projected_emission: series of projected emissions
         :return: series of projected emissions corrected for unit of measure
         """
-
-
-class CompanyNotFoundException(Exception):
-    """
-    This exception occurs when a company is not found.
-    """
-    pass
-
+        raise NotImplementedError
 
 class ProductionBenchmarkDataProvider(ABC):
     """
     Production projecton data provider super class.
+
+    This Data Container contains Production data on benchmark level. Data has a regions and sector indices.
+    Initialized ProductionBenchmarkDataProvider is required when setting up a data warehouse instance.
     """
 
     def __init__(self, **kwargs):
@@ -127,10 +126,12 @@ class ProductionBenchmarkDataProvider(ABC):
 class IntensityBenchmarkDataProvider(ABC):
     """
     Production intensity data provider super class.
+    This Data Container contains emission intensity data on benchmark level. Data has a regions and sector indices.
+    Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.
     """
-    AFOLU_CORRECTION_FACTOR = 0.76
+    AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
 
-    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, AFOLU_included: bool = False,
+    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, is_AFOLU_included: bool = False,
                  **kwargs):
         """
         Create a new data provider instance.
@@ -139,19 +140,19 @@ class IntensityBenchmarkDataProvider(ABC):
         """
         self.AFOLU_CORRECTION_FACTOR = 0.76
         self._benchmark_temperature = benchmark_temperature
-        self._AFOLU_included = AFOLU_included
+        self._is_AFOLU_included = is_AFOLU_included
         self._benchmark_global_budget = benchmark_global_budget
 
     @property
-    def AFOLU_included(self) -> bool:
+    def is_AFOLU_included(self) -> bool:
         """
         :return: if AFOLU is included in the benchmarks global budget
         """
-        return self._AFOLU_included
+        return self._is_AFOLU_included
 
-    @AFOLU_included.setter
-    def AFOLU_included(self, value):
-        self._AFOLU_included = value
+    @is_AFOLU_included.setter
+    def is_AFOLU_included(self, value):
+        self._is_AFOLU_included = value
 
     @property
     def benchmark_temperature(self) -> float:
@@ -165,7 +166,7 @@ class IntensityBenchmarkDataProvider(ABC):
         """
         :return: Benchmark provider assumed global budget. if AFOLU is not included global budget is divided by 0.76
         """
-        return self._benchmark_global_budget if self.AFOLU_included else (
+        return self._benchmark_global_budget if self.is_AFOLU_included else (
                 self._benchmark_global_budget / self.AFOLU_CORRECTION_FACTOR)
 
     @benchmark_global_budget.setter

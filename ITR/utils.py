@@ -62,7 +62,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     """
     df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio])
 
-    company_data = data_warehouse.get_company_aggregates(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
+    company_data = data_warehouse.get_preprocessed_company_data(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
 
     if len(company_data) == 0:
         raise ValueError("None of the companies in your portfolio could be found by the data providers")

@@ -22,7 +22,7 @@ class TestDataWareHouse(DataWarehouse):
     ):
         self.companies = companies
 
-    def get_company_aggregates(self, company_ids: List[str]) -> List[ICompanyAggregates]:
+    def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         return self.companies
 
 class EndToEndTest(unittest.TestCase):
