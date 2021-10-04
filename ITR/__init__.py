@@ -1,7 +1,6 @@
 """
-This package helps companies and financial institutions to assess the temperature alignment of current
-targets, commitments, and investment and lending portfolios, and to use this information to develop
-targets for official validation by the SBTi.
+This package helps companies and financial institutions to assess the temperature alignment of investment and lending
+portfolios.
 """
 from . import data
 from . import utils

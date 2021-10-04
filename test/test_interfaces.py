@@ -3,7 +3,7 @@ import unittest
 
 import pandas as pd
 
-from ITR.interfaces import EScope, IDataProviderTarget
+from ITR.interfaces import EScope
 
 
 class TestInterfaces(unittest.TestCase):
@@ -19,9 +19,5 @@ class TestInterfaces(unittest.TestCase):
     def test_Escope(self):
         self.assertEqual(EScope.get_result_scopes(), [EScope.S1S2, EScope.S3, EScope.S1S2S3])
 
-    def test_IDataProviderTarget(self):
-        self.assertEqual(IDataProviderTarget.validate_e("test"), "test")
-        self.assertIsNone(IDataProviderTarget.validate_e(""))
-        self.assertIsNone(IDataProviderTarget.validate_e("nan"))
 
 

@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Optional, Dict, List
-import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 class AggregationContribution(BaseModel):
@@ -59,16 +58,18 @@ class PortfolioCompany(BaseModel):
     user_fields: Optional[dict]
 
 
-class IDataProviderCompany(BaseModel):
+class ICompanyData(BaseModel):
     company_name: str
     company_id: str
     isic: str
     ghg_s1s2: float
     ghg_s3: float
+    region: str  # TODO: make SortableEnums
+    sector: str  # TODO: make SortableEnums
+    target_probability: float
 
     country: Optional[str]
-    region: Optional[str]
-    sector: Optional[str]
+
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
     industry_level_3: Optional[str]
@@ -80,11 +81,13 @@ class IDataProviderCompany(BaseModel):
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
 
+
+class ICompanyAggregates(ICompanyData):
     cumulative_budget: float
     cumulative_trajectory: float
     cumulative_target: float
-    target_probability: float
-
+    benchmark_temperature: float
+    benchmark_global_budget: float
 
 class SortableEnum(Enum):
     def __str__(self):
@@ -114,6 +117,21 @@ class SortableEnum(Enum):
             return order.index(self) < order.index(other)
         return NotImplemented
 
+class TemperatureScoreControls(BaseModel):
+    base_year: int
+    target_end_year: int
+    projection_start_year: int
+    projection_end_year: int
+    tcre: float
+    carbon_conversion: float
+    scenario_target_temperature: float
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    @property
+    def tcre_multiplier(self) -> float:
+        return self.tcre / self.carbon_conversion
 
 class EScope(SortableEnum):
     S1 = "S1"
@@ -139,31 +157,6 @@ class ETimeFrames(SortableEnum):
     SHORT = "short"
     MID = "mid"
     LONG = "long"
-
-
-class IDataProviderTarget(BaseModel):
-    company_id: str
-    target_type: str
-    intensity_metric: Optional[str]
-    scope: EScope
-    coverage_s1: float
-    coverage_s2: float
-    coverage_s3: float
-    reduction_ambition: float
-    base_year: int
-    base_year_ghg_s1: float
-    base_year_ghg_s2: float
-    base_year_ghg_s3: float
-    start_year: Optional[int]
-    end_year: int
-    time_frame: Optional[ETimeFrames]
-    achieved_reduction: Optional[float] = 0
-
-    @validator('start_year', pre=True, always=False)
-    def validate_e(cls, val):
-        if val == "" or val == "nan" or pd.isnull(val):
-            return None
-        return val
 
 
 class ECarbonBudgetScenario(Enum):

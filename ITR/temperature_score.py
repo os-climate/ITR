@@ -1,32 +1,31 @@
-from enum import Enum
 from typing import Optional, Tuple, Type, List
 
 import pandas as pd
 import numpy as np
+import itertools
 
-from .interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
+from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
-from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-from .configs import TemperatureScoreConfig
-from . import data, utils
+from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
+from ITR.configs import TemperatureScoreConfig
+from ITR import utils
+from ITR.data.data_warehouse import DataWarehouse
+
 
 class TemperatureScore(PortfolioAggregation):
     """
     This class is provides a temperature score based on the climate goals.
 
     :param fallback_score: The temp score if a company is not found
-    :param model: The regression model to use
     :param config: A class defining the constants that are used throughout this class. This parameter is only required
                     if you'd like to overwrite a constant. This can be done by extending the TemperatureScoreConfig
                     class and overwriting one of the parameters.
     """
 
     def __init__(self, time_frames: List[ETimeFrames], scopes: List[EScope], fallback_score: float = 3.2,
-                 model: int = 4,
                  aggregation_method: PortfolioAggregationMethod = PortfolioAggregationMethod.WATS,
                  grouping: Optional[List] = None, config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(config)
-        self.model = model
         self.c: Type[TemperatureScoreConfig] = config
         self.fallback_score = fallback_score
 
@@ -38,47 +37,38 @@ class TemperatureScore(PortfolioAggregation):
         if grouping is not None:
             self.grouping = grouping
 
-    def get_annual_reduction_rate(self, target: pd.Series) -> Optional[float]:
-        """
-        Get the annual reduction rate (or None if not available).
-
-        :param target: The target as a row of a dataframe
-        :return: The annual reduction
-        """
-        if pd.isnull(target[self.c.COLS.REDUCTION_AMBITION]):
-            return None
-
-        try:
-            return target[self.c.COLS.REDUCTION_AMBITION] / float(target[self.c.COLS.END_YEAR] -
-                                                                  target[self.c.COLS.BASE_YEAR])
-        except ZeroDivisionError:
-            raise ValueError("Couldn't calculate the annual reduction rate because the start and target year are the "
-                             "same")
-
-    def get_score(self, target: pd.Series) -> Tuple[float, float]:
+    def get_score(self, scorable_row: pd.Series) -> Tuple[float, float]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
-        :param target: The target as a row of a data frame
+        :param scorable_row: The target as a row of a data frame
         :return: The temperature score
         """
-        if target[self.c.COLS.CUMULATIVE_BUDGET] > 0:
-            target_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TARGET] / target[self.c.COLS.CUMULATIVE_BUDGET]
-            trajectory_overshoot_ratio = target[self.c.COLS.CUMULATIVE_TRAJECTORY] / target[self.c.COLS.CUMULATIVE_BUDGET]
+        # if either cum target or trajectory is zero return default.
+        if scorable_row[self.c.COLS.CUMULATIVE_TARGET] * scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] == 0.0:
+            return self.get_default_score(scorable_row), 1
+
+        if scorable_row[self.c.COLS.CUMULATIVE_BUDGET] > 0:
+            target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
+                self.c.COLS.CUMULATIVE_BUDGET]
+            trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
+                self.c.COLS.CUMULATIVE_BUDGET]
         else:
             target_overshoot_ratio = 0
             trajectory_overshoot_ratio = 0
 
-        target_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
-                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * (target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.TCRE)
-        trajectory_temperature_score = self.c.CONTROLS_CONFIG.CURRENT_TEMPERATURE + \
-                       (self.c.CONTROLS_CONFIG.GLOBAL_BUDGET * (trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.TCRE)
-        score = target_temperature_score * target[self.c.COLS.TARGET_PROBABILITY] + \
-                trajectory_temperature_score * (1 - target[self.c.COLS.TARGET_PROBABILITY])
+        target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                                   (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
+                                           target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
+        trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                                       (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
+                                               trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
+        score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
+                trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
-        # If score is NaN due to missing data assign default score.
+        # Safeguard: If score is NaN due to missing data assign default score.
         if np.isnan(score):
-            return self.get_default_score(target), 1
+            return self.get_default_score(scorable_row), 1
         return score, 0
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[float, float]:
@@ -122,6 +112,8 @@ class TemperatureScore(PortfolioAggregation):
         :param data: The original data set as a pandas data frame
         :return: The extended data frame
         """
+        companies = data[self.c.COLS.COMPANY_ID].unique()
+
         # If scope S1S2S3 is in the list of scopes to calculate, we need to calculate the other two as well
         scopes = self.scopes.copy()
         if EScope.S1S2S3 in self.scopes and EScope.S1S2 not in self.scopes:
@@ -129,15 +121,15 @@ class TemperatureScore(PortfolioAggregation):
         if EScope.S1S2S3 in scopes and EScope.S3 not in scopes:
             scopes.append(EScope.S3)
 
-        data = data[data[self.c.COLS.SCOPE].isin(scopes) & data[self.c.COLS.TIME_FRAME].isin(self.time_frames)].copy()
+        score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
+                                          columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
+        scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
 
-        data[self.c.COLS.ANNUAL_REDUCTION_RATE] = data.apply(lambda row: self.get_annual_reduction_rate(row), axis=1)
-        # TODO: Move temperature result to cols
-        data[self.c.COLS.TEMPERATURE_SCORE], data[self.c.TEMPERATURE_RESULTS] = zip(*data.apply(
+        scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
             lambda row: self.get_score(row), axis=1))
 
-        data = self.cap_scores(data)
-        return data
+        scoring_data = self.cap_scores(scoring_data)
+        return scoring_data
 
     def _calculate_company_score(self, data):
         """
@@ -157,22 +149,23 @@ class TemperatureScore(PortfolioAggregation):
         ))
         return data
 
-    def calculate(self, data: Optional[pd.DataFrame] = None, data_providers: Optional[List[data.DataProvider]] = None,
+    def calculate(self, data: Optional[pd.DataFrame] = None,
+                  data_warehouse: Optional[DataWarehouse] = None,
                   portfolio: Optional[List[PortfolioCompany]] = None):
         """
         Calculate the temperature for a dataframe of company data. The columns in the data frame should be a combination
         of IDataProviderTarget and IDataProviderCompany.
 
         :param data: The data set (or None if the data should be retrieved)
-        :param data_providers: A list of DataProvider instances. Optional, only required if data is empty.
+        :param data_warehouse: A list of DataProvider instances. Optional, only required if data is empty.
         :param portfolio: A list of PortfolioCompany models. Optional, only required if data is empty.
         :return: A data frame containing all relevant information for the targets and companies
         """
         if data is None:
-            if data_providers is not None and portfolio is not None:
-                data = utils.get_data(data_providers, portfolio)
+            if data_warehouse is not None and portfolio is not None:
+                data = utils.get_data(data_warehouse, portfolio)
             else:
-                raise ValueError("You need to pass and either a data set or a list of data providers and companies")
+                raise ValueError("You need to pass and either a data set or a datawarehouse and companies")
 
         data = self._prepare_data(data)
 
@@ -198,17 +191,17 @@ class TemperatureScore(PortfolioAggregation):
                                                           self.aggregation_method)
         data[self.c.COLS.CONTRIBUTION_RELATIVE] = weighted_scores / (weighted_scores.sum() / 100)
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
-        contributions = data\
-            .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False)\
-            .where(pd.notnull(data), None)\
+        contributions = data \
+            .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
+            .where(pd.notnull(data), None) \
             .to_dict(orient="records")
         return Aggregation(
-                score=weighted_scores.sum(),
-                proportion=len(weighted_scores) / (total_companies / 100.0),
-                contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]
-            ), \
-            data[self.c.COLS.CONTRIBUTION_RELATIVE], \
-            data[self.c.COLS.CONTRIBUTION]
+            score=weighted_scores.sum(),
+            proportion=len(weighted_scores) / (total_companies / 100.0),
+            contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]
+        ), \
+               data[self.c.COLS.CONTRIBUTION_RELATIVE], \
+               data[self.c.COLS.CONTRIBUTION]
 
     def _get_score_aggregation(self, data: pd.DataFrame, time_frame: ETimeFrames, scope: EScope) -> \
             Optional[ScoreAggregation]:
@@ -227,8 +220,8 @@ class TemperatureScore(PortfolioAggregation):
         total_companies = len(filtered_data)
         if not filtered_data.empty:
             score_aggregation_all, \
-                filtered_data[self.c.COLS.CONTRIBUTION_RELATIVE], \
-                filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
+            filtered_data[self.c.COLS.CONTRIBUTION_RELATIVE], \
+            filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
             score_aggregation = ScoreAggregation(
                 grouped={},
                 all=score_aggregation_all,
@@ -239,8 +232,10 @@ class TemperatureScore(PortfolioAggregation):
             if len(self.grouping) > 0:
                 grouped_data = filtered_data.groupby(self.grouping)
                 for group_names, group in grouped_data:
-                    group_name_joined = group_names if type(group_names) == str else "-".join([str(group_name) for group_name in group_names])
-                    score_aggregation.grouped[group_name_joined], _, _ = self._get_aggregations(group.copy(), total_companies)
+                    group_name_joined = group_names if type(group_names) == str else "-".join(
+                        [str(group_name) for group_name in group_names])
+                    score_aggregation.grouped[group_name_joined], _, _ = self._get_aggregations(group.copy(),
+                                                                                                total_companies)
             return score_aggregation
         else:
             return None

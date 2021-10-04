@@ -2,8 +2,7 @@ import unittest
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
-    IDataProviderCompany,
-    IDataProviderTarget,
+    ICompanyData,
     PortfolioCompany,
 )
 
@@ -11,24 +10,20 @@ from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 import copy
 import ITR
-from ITR.data.data_provider import DataProvider
+from ITR.data.data_providers import CompanyDataProvider
+from ITR.data.data_warehouse import DataWarehouse
 from typing import List
-from ITR.interfaces import IDataProviderCompany,IDataProviderTarget
+from ITR.interfaces import ICompanyAggregates
 
 
-class TestDataProvider(DataProvider):
+class TestDataWareHouse(DataWarehouse):
     def __init__(
-            self, targets: List[IDataProviderTarget], companies: List[IDataProviderCompany]
+            self, companies: List[ICompanyAggregates]
     ):
-        self.targets = targets
         self.companies = companies
 
-    def get_targets(self, company_ids: List[str]) -> List[IDataProviderTarget]:
-        return self.targets
-
-    def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
+    def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         return self.companies
-
 
 class EndToEndTest(unittest.TestCase):
     """
@@ -41,8 +36,8 @@ class EndToEndTest(unittest.TestCase):
 
     def setUp(self):
         company_id = "BaseCompany"
-        self.BASE_COMP_SCORE = 3.63
-        self.company_base = IDataProviderCompany(
+        self.BASE_COMP_SCORE = 3.85
+        self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,
             ghg_s1s2=100,
@@ -56,22 +51,11 @@ class EndToEndTest(unittest.TestCase):
             cumulative_trajectory=3745094638.52858,
             cumulative_target=3769096510.09909,
             target_probability=0.428571428571428,
-            isic='A12'
-        )
-        # define targets
-        self.target_base = IDataProviderTarget(
-            company_id=company_id,
-            target_type="abs",
-            scope=EScope.S1S2,
-            coverage_s1=0.95,
-            coverage_s2=0.95,
-            coverage_s3=0,
-            reduction_ambition=0.8,
-            base_year=2019,
-            base_year_ghg_s1=100,
-            base_year_ghg_s2=0,
-            base_year_ghg_s3=0,
-            end_year=2030,
+            isic='A12',
+            sector='Steel',
+            region='Europe',
+            benchmark_global_budget=396,
+            benchmark_temperature=1.5
         )
 
         # pf
@@ -90,8 +74,7 @@ class EndToEndTest(unittest.TestCase):
 
         # Setup test provider
         company = copy.deepcopy(self.company_base)
-        target = copy.deepcopy(self.target_base)
-        data_provider = TestDataProvider(companies=[company], targets=[target])
+        data_provider = TestDataWareHouse([company])
 
         # Calculate Temp Scores
         temp_score = TemperatureScore(
@@ -102,7 +85,7 @@ class EndToEndTest(unittest.TestCase):
 
         # portfolio data
         pf_company = copy.deepcopy(self.pf_base)
-        portfolio_data = ITR.utils.get_data([data_provider], [pf_company])
+        portfolio_data = ITR.utils.get_data(data_provider, [pf_company])
 
         # Verify data
         scores = temp_score.calculate(portfolio_data)
@@ -113,75 +96,14 @@ class EndToEndTest(unittest.TestCase):
         # TODO: go thru lots of different parameters on company & target level and try to break it
         pass
 
-    def test_target_grouping(self):
-        """
-        This test is checking the target grouping in the target validation from begin to end.
-        """
-
-        companies, targets, pf_companies = self.create_base_companies(["A", "B", "C", "D"])
-        target = copy.deepcopy(self.target_base)
-        target.company_id = 'A'
-        target.coverage_s1 = 0.75
-        target.coverage_s2 = 0.75
-        target.coverage_s3 = 0.75
-        targets.append(target)
-
-        target = copy.deepcopy(self.target_base)
-        target.company_id = 'A'
-        target.coverage_s1 = 0.99
-        target.coverage_s2 = 0.99
-        target.coverage_s3 = 0.99
-        targets.append(target)
-
-        target = copy.deepcopy(self.target_base)
-        target.company_id = 'B'
-        target.scope = EScope.S1S2
-        target.coverage_s1 = 0.75
-        target.coverage_s2 = 0.75
-        target.coverage_s3 = 0.49
-        targets.append(target)
-
-        target = copy.deepcopy(self.target_base)
-        target.company_id = 'B'
-        target.scope = EScope.S1S2
-        target.coverage_s1 = 0.99
-        target.coverage_s2 = 0.99
-        target.coverage_s3 = 0.49
-        target.end_year = 2035
-        targets.append(target)
-
-        target = copy.deepcopy(self.target_base)
-        target.company_id = 'ES0125220311'
-        target.coverage_s1 = 0.95
-        target.coverage_s2 = 0.95
-        target.target_type = 'int'
-        target.intensity_metric = 'Revenue'
-        targets.append(target)
-
-        data_provider = TestDataProvider(companies=companies, targets=targets)
-
-        # Calculate scores & Aggregated values
-        temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.LONG],
-            scopes=[EScope.S1S2],
-            aggregation_method=PortfolioAggregationMethod.WATS,
-        )
-
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies)
-        scores = temp_score.calculate(portfolio_data)
-        agg_scores = temp_score.aggregate_scores(scores)
-
-        # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=4)
-
     def test_basic_flow(self):
         """
         This test is going all the way to the aggregated calculations
         """
 
-        companies, targets, pf_companies = self.create_base_companies(["A", "B"])
+        companies, pf_companies = self.create_base_companies(["A", "B"])
 
-        data_provider = TestDataProvider(companies=companies, targets=targets)
+        data_provider = TestDataWareHouse(companies=companies)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -190,7 +112,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -204,8 +126,7 @@ class EndToEndTest(unittest.TestCase):
         nr_companies = 1000
 
         # test 10000 companies
-        companies: List[IDataProviderCompany] = []
-        targets: List[IDataProviderTarget] = []
+        companies: List[ICompanyAggregates] = []
         pf_companies: List[PortfolioCompany] = []
 
         for i in range(nr_companies):
@@ -214,11 +135,6 @@ class EndToEndTest(unittest.TestCase):
             company = copy.deepcopy(self.company_base)
             company.company_id = company_id
             companies.append(company)
-
-            # target
-            target = copy.deepcopy(self.target_base)
-            target.company_id = company_id
-            targets.append(target)
 
             # pf company
             pf_company = PortfolioCompany(
@@ -229,7 +145,7 @@ class EndToEndTest(unittest.TestCase):
             )
             pf_companies.append(pf_company)
 
-        data_provider = TestDataProvider(companies=companies, targets=targets)
+        data_provider = TestDataWareHouse(companies=companies)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -238,7 +154,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -251,23 +167,21 @@ class EndToEndTest(unittest.TestCase):
         # make 2+ companies and group them together
         industry_levels = ["Manufacturer", "Energy"]
         company_ids = ["A", "B"]
-        companies_all: List[IDataProviderCompany] = []
-        targets_all: List[IDataProviderTarget] = []
+        companies_all: List[ICompanyAggregates] = []
         pf_companies_all: List[PortfolioCompany] = []
 
         for ind_level in industry_levels:
 
             company_ids_with_level = [f"{ind_level}_{company_id}" for company_id in company_ids]
 
-            companies, targets, pf_companies = self.create_base_companies(company_ids_with_level)
+            companies,  pf_companies = self.create_base_companies(company_ids_with_level)
             for company in companies:
                 company.industry_level_1 = ind_level
 
             companies_all.extend(companies)
-            targets_all.extend(targets)
             pf_companies_all.extend(pf_companies)
 
-        data_provider = TestDataProvider(companies=companies_all, targets=targets_all)
+        data_provider = TestDataWareHouse(companies=companies_all)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -276,7 +190,7 @@ class EndToEndTest(unittest.TestCase):
             grouping=["industry_level_1"]
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies_all)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies_all)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -285,8 +199,8 @@ class EndToEndTest(unittest.TestCase):
 
     def test_score_cap(self):
 
-        companies, targets, pf_companies = self.create_base_companies(["A"])
-        data_provider = TestDataProvider(companies=companies, targets=targets)
+        companies, pf_companies = self.create_base_companies(["A"])
+        data_provider = TestDataWareHouse(companies=companies)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -294,7 +208,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS
         )
 
-        portfolio_data = ITR.utils.get_data([data_provider], pf_companies)
+        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -304,8 +218,7 @@ class EndToEndTest(unittest.TestCase):
         """
         This is a helper method to create base companies that can be used for the test cases
         """
-        companies: List[IDataProviderCompany] = []
-        targets: List[IDataProviderTarget] = []
+        companies: List[ICompanyAggregates] = []
         pf_companies: List[PortfolioCompany] = []
         for company_id in company_ids:
             # company
@@ -319,22 +232,20 @@ class EndToEndTest(unittest.TestCase):
                 company_id=company_id,
                 investment_value=100,
                 company_isin=company_id,
+                region='Europe',
+                sector='Steel'
             )
-
-            target = copy.deepcopy(self.target_base)
-            target.company_id = company_id
-
             pf_companies.append(pf_company)
-            targets.append(target)
 
-        return companies, targets, pf_companies
+
+        return companies, pf_companies
 
 
 if __name__ == "__main__":
     test = EndToEndTest()
     test.setUp()
     test.test_basic()
-    # test.test_basic_flow()
-    # test.test_regression_companies()
-    # test.test_score_cap()
+    test.test_basic_flow()
+    test.test_regression_companies()
+    test.test_score_cap()
     test.test_target_grouping()

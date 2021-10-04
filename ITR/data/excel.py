@@ -1,36 +1,26 @@
 from typing import Type, List
-from pydantic import ValidationError
-import logging
-
 import pandas as pd
-from ITR.data.data_provider import DataProvider
-from ITR.configs import ColumnsConfig, TabsConfig, ControlsConfig, SectorsConfig
-from ITR.interfaces import IDataProviderCompany, IDataProviderTarget
+import numpy as np
+from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
+from ITR.interfaces import ICompanyData
 
 
-class ExcelProvider(DataProvider):
-    """
-    Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
+class TabsConfig:
+    FUNDAMENTAL = "fundamental_data"
+    PROJECTED_EI = "projected_ei_in_Wh"
+    PROJECTED_PRODUCTION = "projected_production"
+    PROJECTED_TARGET = "projected_target"
 
-    :param config: A dictionary containing a "path" field that leads to the path of the CSV file
-    """
 
-    def __init__(self, company_path: str, sector_path: str, config: Type[ColumnsConfig] = ColumnsConfig):
+class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
+    def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__()
-        self.company_data = pd.read_excel(company_path, sheet_name=None, skiprows=0)
-        self._check_company_data()
-        self.sector_data = pd.read_excel(sector_path, sheet_name=None, skiprows=0)
-        self.c = config
-
-    def _check_company_data(self) -> None:
-        """
-        Checks if the company data excel contains the data in the right format
-
-        :return: None
-        """
-        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.TARGET, TabsConfig.PROJECTED_TARGET,
-                          TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
-            self.company_data.keys()).all(), "some tabs are missing in the company data excel"
+        self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_sector_data()
+        self.temp_config = tempscore_config
+        self.column_config = column_config
 
     def _check_sector_data(self) -> None:
         """
@@ -39,106 +29,150 @@ class ExcelProvider(DataProvider):
         :return: None
         """
         assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
-            self.sector_data.keys()).all(), "some tabs are missing in the sector data excel"
+            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
-    def get_targets(self, company_ids: List[str]) -> List[IDataProviderTarget]:
+    def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
         """
-        Get all relevant targets for a list of company ids (ISIN). This method should return a list of
-        IDataProviderTarget instances.
-
-        :param company_ids: A list of company IDs (ISINs)
-        :return: A list containing the targets
+        get the projected productions for list of companies in ghg_scope12
+        :param ghg_scope12: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID,ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
-        model_targets = self._target_df_to_model(self.company_data['target_data'])
-        model_targets = [target for target in model_targets if target.company_id in company_ids]
-        return model_targets
+        benchmark_production_projections = self.get_benchmark_projections(ghg_scope12)
+        return benchmark_production_projections.add(1).cumprod(axis=1).mul(
+            ghg_scope12[self.column_config.GHG_SCOPE12].values, axis=0)
 
-    def _target_df_to_model(self, df_targets: pd.DataFrame) -> List[IDataProviderTarget]:
+    def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
-        transforms target Dataframe into list of IDataProviderTarget instances
-
-        :param df_targets: pandas Dataframe with targets
-        :return: A list containing the targets
+        Overrides subclass method
+        returns a Dataframe with production benchmarks per company_id given a region and sector.
+        :param company_sector_region_info: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
-        logger = logging.getLogger(__name__)
-        targets = df_targets.to_dict(orient="records")
-        model_targets: List[IDataProviderTarget] = []
-        for target in targets:
-            try:
-                model_targets.append(IDataProviderTarget.parse_obj(target))
-            except ValidationError as e:
-                logger.warning(
-                    "(one of) the target(s) of company %s is invalid and will be skipped" % target[self.c.COMPANY_NAME])
-                pass
-        return model_targets
+        benchmark_projection = self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION]
+        sectors = company_sector_region_info[self.column_config.SECTOR]
+        regions = company_sector_region_info[self.column_config.REGION]
+        benchmark_regions = regions.copy()
+        mask = benchmark_regions.isin(benchmark_projection[self.column_config.REGION])
+        benchmark_regions.loc[~mask] = "Global"
+        benchmark_projection = benchmark_projection.reset_index().set_index(
+            [self.column_config.SECTOR, self.column_config.REGION])
 
-    def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
+        benchmark_projection = benchmark_projection.loc[list(zip(sectors, benchmark_regions)),
+                                                        range(self.temp_config.CONTROLS_CONFIG.base_year,
+                                                              self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+        benchmark_projection.index = sectors.index
+
+        return benchmark_projection
+
+
+
+class ExcelProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
+    def __init__(self, excel_path: str, benchmark_temperature: float,
+                 benchmark_global_budget: float, is_AFOLU_included: bool,
+                 column_config: Type[ColumnsConfig] = ColumnsConfig,
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+        super().__init__(benchmark_temperature, benchmark_global_budget, is_AFOLU_included)
+        self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_sector_data()
+        self.temp_config = tempscore_config
+        self.column_config = column_config
+
+    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
         """
-
-        :param company_ids: list of company ids
-        :param projected_emission: series of projected emissions
-        :return: series of projected emissions corrected for unit of measure
+        Overrides subclass method
+        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+        :param company_info_at_base_year: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
-        projected_emission.loc[self.get_value(company_ids, ColumnsConfig.SECTOR).isin(SectorsConfig.CORRECTION_SECTORS),
-                               range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)] *= \
-            ControlsConfig.ENERGY_UNIT_CONVERSION_FACTOR
-        return projected_emission
+        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
+        decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
+        last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
+        ei_base = company_info_at_base_year[self.column_config.BASE_EI]
 
-    def _get_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
+        return decarbonization_paths.mul((ei_base - last_ei), axis=0).add(last_ei, axis=0)
+
+    def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
         """
-        get the projected emissions for list of companies
-        :param company_ids: list of company ids
-        :param feature: name of the projected feature
-        :return: series of projected emissions
+        Overrides subclass method
+        Returns a DataFrame with the projected decarbonization paths for the supplied companies in intensity_benchmarks.
+        :param: A DataFrame with company and intensity benchmarks per calendar year per row
+        :return: A pd.DataFrame with company and decarbonisation path s per calendar year per row
         """
-        projected_emissions = self.company_data[feature]
-        projected_emissions = projected_emissions.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+        return intensity_benchmarks.apply(lambda row: self._get_decarbonization(row), axis=1)
 
-        assert all(company_id in projected_emissions.index for company_id in company_ids), \
-            f"company ids missing in {feature}"
-
-        projected_emissions = projected_emissions.loc[company_ids, :]
-
-        if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
-            projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
-
-        projected_emissions = projected_emissions.loc[:, range(ControlsConfig.BASE_YEAR,
-                                                               ControlsConfig.TARGET_END_YEAR + 1)]
-
-        if feature == TabsConfig.PROJECTED_TARGET or feature == TabsConfig.PROJECTED_EI:
-            projected_emissions = projected_emissions.groupby(level=0, sort=False).sum()
-
-        return projected_emissions
-
-    def _get_sector_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
+    def _get_decarbonization(self, intensity_benchmark_row: pd.Series) -> pd.Series:
         """
-        get the sector emissions for a list of companies.
-        If there is no data for the sector, then it will be replaced by the global value
-        :param company_ids: list of company ids
-        :param feature: name of the projected feature
-        :return: series of projected emissions for the sector
+        Overrides subclass method
+        returns a Series with the decarbonization path for a benchmark.
+        :param: A Series with company and intensity benchmarks per calendar year per row
+        :return: A pd.Series with company and decarbonisation path s per calendar year per row
         """
-        sector_projection = self.sector_data[feature]
-        sectors = self.get_value(company_ids, ColumnsConfig.SECTOR)
-        regions = self.get_value(company_ids, ColumnsConfig.REGION)
-        regions.loc[~regions.isin(sector_projection[ColumnsConfig.REGION])] = "Global"
-        sector_projection = sector_projection.reset_index().set_index([ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+        first_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.base_year]
+        last_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.target_end_year]
+        return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
 
-        return sector_projection.loc[list(zip(sectors, regions)),
-                                     range(ControlsConfig.BASE_YEAR, ControlsConfig.TARGET_END_YEAR + 1)]
-
-    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
-                                 ) -> pd.Series:
+    def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
-        get the weighted sum of the projected emission times the projected production
-        :param projected_emission_intensity: series of projected emissions
-        :param projected_production: series of projected production series
-        :return: weighted sum of production and emission
+        Overrides subclass method
+        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+        :param company_sector_region_info: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
-        return projected_emission_intensity.reset_index(drop=True).multiply(projected_production.reset_index(
-            drop=True)).sum(axis=1)
+        benchmark_projection = self.benchmark_excel[TabsConfig.PROJECTED_EI]
+        sectors = company_sector_region_info[self.column_config.SECTOR]
+        regions = company_sector_region_info[self.column_config.REGION]
+        benchmark_regions = regions.copy()
+        mask = benchmark_regions.isin(benchmark_projection[self.column_config.REGION])
+        benchmark_regions.loc[~mask] = "Global"
+        benchmark_projection = benchmark_projection.reset_index().set_index(
+            [self.column_config.SECTOR, self.column_config.REGION])
 
-    def get_company_data(self, company_ids: List[str]) -> List[IDataProviderCompany]:
+        benchmark_projection = benchmark_projection.loc[list(zip(sectors, benchmark_regions)),
+                                                        range(self.temp_config.CONTROLS_CONFIG.base_year,
+                                                              self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+        benchmark_projection.index = sectors.index
+
+        return benchmark_projection
+
+    def _check_sector_data(self) -> None:
+        """
+        Checks if the sector data excel contains the data in the right format
+        :return: None
+        """
+        assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
+            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
+
+
+class ExcelProviderCompany(CompanyDataProvider):
+    """
+    Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
+
+    :param column_config: A dictionary containing a "path" field that leads to the path of the CSV file
+    """
+
+    def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+        super().__init__()
+        self.company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_company_data()
+        self.column_config = column_config
+        self.temp_config = tempscore_config
+        self.ENERGY_UNIT_CONVERSION_FACTOR = 3.6
+
+    def _check_company_data(self) -> None:
+        """
+        Checks if the company data excel contains the data in the right format
+
+        :return: None
+        """
+        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET, TabsConfig.PROJECTED_EI]).isin(
+            self.company_data.keys()).all(), "some tabs are missing in the company data excel"
+
+    def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
         """
         Get all relevant data for a list of company ids (ISIN). This method should return a list of IDataProviderCompany
         instances.
@@ -148,26 +182,12 @@ class ExcelProvider(DataProvider):
         """
         data_company = self.company_data[TabsConfig.FUNDAMENTAL]
 
-        assert pd.Series(company_ids).isin(data_company.loc[:, ColumnsConfig.COMPANY_ID]).all(), \
+        assert pd.Series(company_ids).isin(data_company.loc[:, self.column_config.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
-        data_company = data_company.loc[data_company.loc[:, ColumnsConfig.COMPANY_ID].isin(company_ids), :]
-
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
-            projected_emission_intensity=self._get_projection(company_ids, TabsConfig.PROJECTED_EI),
-            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
-
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_TARGET] = self._get_cumulative_emission(
-            projected_emission_intensity=self._get_projection(company_ids, TabsConfig.PROJECTED_TARGET),
-            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
-
-        data_company.loc[:, ColumnsConfig.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
-            projected_emission_intensity=self._get_sector_projection(company_ids, TabsConfig.PROJECTED_EI),
-            projected_production=self._get_projection(company_ids, TabsConfig.PROJECTED_PRODUCTION)).to_numpy()
-
+        data_company = data_company.loc[data_company.loc[:, self.column_config.COMPANY_ID].isin(company_ids), :]
         companies = data_company.to_dict(orient="records")
-
-        model_companies: List[IDataProviderCompany] = [IDataProviderCompany.parse_obj(company) for company in companies]
+        model_companies: List[ICompanyData] = [ICompanyData.parse_obj(company) for company in companies]
 
         return model_companies
 
@@ -179,16 +199,75 @@ class ExcelProvider(DataProvider):
         :return: series of values
         """
         company_data = self.company_data[TabsConfig.FUNDAMENTAL]
-        company_data = company_data.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+        company_data = company_data.reset_index().set_index(self.column_config.COMPANY_ID)
         return company_data.loc[company_ids, variable_name]
 
-    def get_sbti_targets(self, companies: list) -> list:
+    def _get_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
         """
-        For each of the companies, get the status of their target (Target set, Committed or No target) as it's known to
-        the SBTi.
+        get the projected emissions for list of companies
+        :param company_ids: list of company ids
+        :param feature: name of the projected feature
+        :return: series of projected emissions
+        """
+        projected_emissions = self.company_data[feature]
+        projected_emissions = projected_emissions.reset_index().set_index(self.column_config.COMPANY_ID)
 
-        :param companies: A list of companies. Each company should be a dict with a "company_name" and "company_id"
-                            field.
-        :return: The original list, enriched with a field called "sbti_target_status"
+        assert all(company_id in projected_emissions.index for company_id in company_ids), \
+            f"company ids missing in {feature}"
+
+        projected_emissions = projected_emissions.loc[company_ids, :]
+        projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
+
+        projected_emissions = projected_emissions.loc[:, range(self.temp_config.CONTROLS_CONFIG.base_year,
+                                                               self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+
+        # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
+        projected_emissions = projected_emissions.fillna(np.inf)
+        projected_emissions_s1s2 = projected_emissions.groupby(level=0, sort=False).sum()  # add scope 1 and 2
+        projected_emissions_s1s2 = projected_emissions_s1s2.replace(np.inf, np.nan)
+
+        return projected_emissions_s1s2
+
+    def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
         """
-        raise NotImplementedError
+        :param company_ids: list of company ids
+        :param projected_emission: series of projected emissions
+        :return: series of projected emissions corrected for unit of measure
+        """
+        projected_emission.loc[
+            self.get_value(company_ids, self.column_config.SECTOR).isin(SectorsConfig.CORRECTION_SECTORS),
+            range(self.temp_config.CONTROLS_CONFIG.base_year,
+                  self.temp_config.CONTROLS_CONFIG.target_end_year + 1)] *= \
+            self.ENERGY_UNIT_CONVERSION_FACTOR
+        return projected_emission
+
+    def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: list of company ids
+        :return: DataFrame with projected targets per company extracted from the excel
+        """
+        return self._get_projection(company_ids, TabsConfig.PROJECTED_TARGET)
+
+    def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: list of company ids
+        :return: DataFrame with projected intensities per company extracted from the excel
+        """
+        return self._get_projection(company_ids, TabsConfig.PROJECTED_EI)
+
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        overrides subclass method
+        :param: company_ids: list of company ids
+        :return: DataFrame the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        """
+        base_year = self.temp_config.CONTROLS_CONFIG.base_year
+        df_company_data = pd.DataFrame.from_records([c.dict() for c in self.get_company_data(company_ids)])
+        company_info = df_company_data[[
+            self.column_config.COMPANY_ID, self.column_config.SECTOR, self.column_config.REGION,
+            self.column_config.GHG_SCOPE12]].set_index(
+            self.column_config.COMPANY_ID)
+        ei_at_base = self._get_company_intensity_at_year(base_year,
+                                                         company_ids).rename(self.column_config.BASE_EI)
+        return company_info.merge(ei_at_base, left_index=True, right_index=True)
