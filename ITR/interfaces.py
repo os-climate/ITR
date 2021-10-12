@@ -61,14 +61,14 @@ class PortfolioCompany(BaseModel):
 class ICompanyData(BaseModel):
     company_name: str
     company_id: str
-    isic: str
-    ghg_s1s2: float
-    ghg_s3: float
+
     region: str  # TODO: make SortableEnums
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
     country: Optional[str]
+    ghg_s1s2: Optional[float]
+    ghg_s3: Optional[float]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
