@@ -152,7 +152,9 @@ class ExcelProviderCompany(CompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
 
-    :param column_config: A dictionary containing a "path" field that leads to the path of the CSV file
+    :param excel_path: A path to the Excel file with the company data
+    :param column_config: An optional ColumnsConfig object containing relevant variable names
+    :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
     """
 
     def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
@@ -173,7 +175,7 @@ class ExcelProviderCompany(CompanyDataProvider):
         assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET, TabsConfig.PROJECTED_EI]).isin(
             self.company_data.keys()).all(), "some tabs are missing in the company data excel"
 
-    def _company_df_to_model(self, df_company_data):
+    def _company_df_to_model(self, df_company_data) -> List[ICompanyData]:
         """
         transforms target Dataframe into list of IDataProviderTarget instances
 
