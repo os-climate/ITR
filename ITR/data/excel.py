@@ -1,10 +1,11 @@
 from typing import Type, List
 import pandas as pd
 import numpy as np
+from pydantic import ValidationError
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
 from ITR.interfaces import ICompanyData
-
+import logging
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
@@ -172,6 +173,28 @@ class ExcelProviderCompany(CompanyDataProvider):
         assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET, TabsConfig.PROJECTED_EI]).isin(
             self.company_data.keys()).all(), "some tabs are missing in the company data excel"
 
+    def _company_df_to_model(self, df_company_data):
+        """
+        transforms target Dataframe into list of IDataProviderTarget instances
+
+        :param df_company_data: pandas Dataframe with targets
+        :return: A list containing the targets
+        """
+        logger = logging.getLogger(__name__)
+        df_company_data = df_company_data.where(pd.notnull(df_company_data), None).replace(
+            {np.nan: None})  # set NaN to None since NaN is float instance
+        companies_data_dict = df_company_data.to_dict(orient="records")
+        model_companies: List[ICompanyData] = []
+        for company_data in companies_data_dict:
+            try:
+                model_companies.append(ICompanyData.parse_obj(company_data))
+            except ValidationError as e:
+                logger.warning(
+                    "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                        self.column_config.COMPANY_NAME])
+                pass
+        return model_companies
+
     def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
         """
         Get all relevant data for a list of company ids (ISIN). This method should return a list of IDataProviderCompany
@@ -186,10 +209,8 @@ class ExcelProviderCompany(CompanyDataProvider):
             "some of the company ids are not included in the fundamental data"
 
         data_company = data_company.loc[data_company.loc[:, self.column_config.COMPANY_ID].isin(company_ids), :]
-        companies = data_company.to_dict(orient="records")
-        model_companies: List[ICompanyData] = [ICompanyData.parse_obj(company) for company in companies]
+        return self._company_df_to_model(data_company)
 
-        return model_companies
 
     def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
         """

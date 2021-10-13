@@ -1,15 +1,12 @@
-import logging
 import pandas as pd
-from typing import List, Optional, Tuple, Type, Dict
+from typing import List, Optional, Tuple
 
 from .configs import ColumnsConfig, TemperatureScoreConfig
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, \
-    ICompanyData, TemperatureScoreControls
+from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 
 from .temperature_score import TemperatureScore
 from .portfolio_aggregation import PortfolioAggregationMethod
 
-from . import data
 from .data.data_warehouse import DataWarehouse
 
 def _flatten_user_fields(record: PortfolioCompany):
@@ -56,7 +53,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     """
     Get the required data from the data provider(s) and return a 9-box grid for each company.
 
-    :param data_providers: A list of DataProvider instances
+    :param data_warehouse: DataWarehouse instances
     :param portfolio: A list of PortfolioCompany models
     :return: A data frame containing the relevant company data
     """
