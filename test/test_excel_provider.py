@@ -2,11 +2,10 @@ import os
 import unittest
 
 import pandas as pd
-import numpy as np
+
 from numpy.testing import assert_array_equal
 import ITR
-from ITR.data.excel import ExcelProviderCompany, ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark, \
-    TabsConfig
+from ITR.data.excel import ExcelProviderCompany, ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
@@ -75,21 +74,6 @@ class TestExcelProvider(unittest.TestCase):
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.259, places=2)
 
-    def test_unit_of_measure_correction(self):
-        company_ids = self.company_ids + ["US6293775085"]
-        projected_values = pd.DataFrame(np.ones((4, 32)),
-                                        columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                      TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                        index=company_ids)
-        expected_data = pd.DataFrame(np.ones((4, 32)),
-                                     columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                     index=company_ids)
-        expected_data.iloc[0:3, :] = 3.6
-        pd.testing.assert_frame_equal(
-            self.excel_company_data._unit_of_measure_correction(company_ids, projected_values),
-            expected_data)
-
     def test_get_projected_value(self):
         expected_data = pd.DataFrame([[1.698247435, 1.698247435, 1.590828573, 1.492707987, 1.403890821, 1.325025884,
                                        1.256900833, 1.199892962, 1.153286422, 1.115132019, 1.082871619, 1.054062505,
@@ -112,8 +96,7 @@ class TestExcelProvider(unittest.TestCase):
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
                                      index=self.company_ids)
-        pd.testing.assert_frame_equal(self.excel_company_data._get_projection(self.company_ids,
-                                                                              TabsConfig.PROJECTED_EI),
+        pd.testing.assert_frame_equal(self.excel_company_data.get_company_projected_intensities(self.company_ids),
                                       expected_data, check_names=False)
 
     def test_get_benchmark(self):

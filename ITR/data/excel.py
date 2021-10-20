@@ -2,10 +2,12 @@ from typing import Type, List
 import pandas as pd
 import numpy as np
 from pydantic import ValidationError
-from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
+from ITR.data.data_providers import ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
+from ITR.data.base_providers import BaseCompanyDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
-from ITR.interfaces import ICompanyData
+from ITR.interfaces import ICompanyData, ICompanyProjection
 import logging
+
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
@@ -66,7 +68,6 @@ class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_projection.index = sectors.index
 
         return benchmark_projection
-
 
 
 class ExcelProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
@@ -148,7 +149,7 @@ class ExcelProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
             self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
 
-class ExcelProviderCompany(CompanyDataProvider):
+class ExcelProviderCompany(BaseCompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
 
@@ -159,37 +160,77 @@ class ExcelProviderCompany(CompanyDataProvider):
 
     def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__()
-        self.company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._check_company_data()
-        self.column_config = column_config
-        self.temp_config = tempscore_config
+        super().__init__(None, column_config, tempscore_config)
         self.ENERGY_UNIT_CONVERSION_FACTOR = 3.6
+        self.CORRECTION_SECTORS = [SectorsConfig.ELECTRICITY]
+        self._companies = self._convert_excel_data_to_ICompanyData(excel_path)
 
-    def _check_company_data(self) -> None:
+    def _check_company_data(self, df: pd.DataFrame) -> None:
         """
         Checks if the company data excel contains the data in the right format
 
         :return: None
         """
         assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET, TabsConfig.PROJECTED_EI]).isin(
-            self.company_data.keys()).all(), "some tabs are missing in the company data excel"
+            df.keys()).all(), "some tabs are missing in the company data excel"
 
-    def _company_df_to_model(self, df_company_data) -> List[ICompanyData]:
+    def _convert_excel_data_to_ICompanyData(self, excel_path: str) -> List[ICompanyData]:
+        """
+        Converts the Excel template to list of ICompanyDta objects. All dataprovider features will be inhereted from
+        Base
+        :param excel_path: file path to excel file
+        :return: List of ICompanyData objects
+        """
+        df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_company_data(df_company_data)
+
+        df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
+        company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
+        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET])
+        df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI])
+        return self._company_df_to_model(df_fundamentals, df_targets, df_ei)
+
+    def _convert_series_to_projections(self, projections: pd.Series, convert_unit: bool = False) -> List[
+        ICompanyProjection]:
+        """
+        Converts a Pandas Series in a list of ICompanyProjections
+        :param projections: Pandas Series with years as indices
+        :param convert_unit: Boolean if series values needs conversion for unit of measure
+        :return: List of ICompanyProjection objects
+        """
+        projections = projections * self.ENERGY_UNIT_CONVERSION_FACTOR if convert_unit else projections
+        return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
+
+    def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame) -> \
+            List[ICompanyData]:
         """
         transforms target Dataframe into list of IDataProviderTarget instances
 
-        :param df_company_data: pandas Dataframe with targets
-        :return: A list containing the targets
+        :param df_fundamentals: pandas Dataframe with fundamental data
+        :param df_targets: pandas Dataframe with targets
+        :param df_ei: pandas Dataframe with emission intensities
+        :return: A list containing the ICompanyData objects
         """
         logger = logging.getLogger(__name__)
-        df_company_data = df_company_data.where(pd.notnull(df_company_data), None).replace(
-            {np.nan: None})  # set NaN to None since NaN is float instance
-        companies_data_dict = df_company_data.to_dict(orient="records")
+        # set NaN to None since NaN is float instance
+        df_fundamentals = df_fundamentals.where(pd.notnull(df_fundamentals), None).replace({np.nan: None})
+
+        companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
         for company_data in companies_data_dict:
             try:
+                convert_unit_of_measure = company_data[self.column_config.SECTOR] in self.CORRECTION_SECTORS
+                company_targets = self._convert_series_to_projections(
+                    df_targets.loc[company_data[self.column_config.COMPANY_ID], :], convert_unit_of_measure)
+                company_ei = self._convert_series_to_projections(
+                    df_ei.loc[company_data[self.column_config.COMPANY_ID], :],
+                    convert_unit_of_measure)
+
+                company_data.update({self.column_config.PROJECTED_TARGETS: {'S1S2': {'projections': company_targets}}})
+                company_data.update({self.column_config.PROJECTED_EI: {'S1S2': {'projections': company_ei}}})
+
                 model_companies.append(ICompanyData.parse_obj(company_data))
+
             except ValidationError as e:
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
@@ -197,100 +238,26 @@ class ExcelProviderCompany(CompanyDataProvider):
                 pass
         return model_companies
 
-    def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
-        """
-        Get all relevant data for a list of company ids (ISIN). This method should return a list of IDataProviderCompany
-        instances.
-
-        :param company_ids: A list of company IDs (ISINs)
-        :return: A list containing the company data
-        """
-        data_company = self.company_data[TabsConfig.FUNDAMENTAL]
-
-        assert pd.Series(company_ids).isin(data_company.loc[:, self.column_config.COMPANY_ID]).all(), \
-            "some of the company ids are not included in the fundamental data"
-
-        data_company = data_company.loc[data_company.loc[:, self.column_config.COMPANY_ID].isin(company_ids), :]
-        return self._company_df_to_model(data_company)
-
-
-    def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
-        """
-        get the value of a variable of a list of companies
-        :param company_ids: list of company ids
-        :param variable_name: variable name of the projected feature
-        :return: series of values
-        """
-        company_data = self.company_data[TabsConfig.FUNDAMENTAL]
-        company_data = company_data.reset_index().set_index(self.column_config.COMPANY_ID)
-        return company_data.loc[company_ids, variable_name]
-
-    def _get_projection(self, company_ids: List[str], feature: str) -> pd.DataFrame:
+    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame) -> pd.DataFrame:
         """
         get the projected emissions for list of companies
         :param company_ids: list of company ids
-        :param feature: name of the projected feature
+        :param projections: Dataframe with listed projections per company
         :return: series of projected emissions
         """
-        projected_emissions = self.company_data[feature]
-        projected_emissions = projected_emissions.reset_index().set_index(self.column_config.COMPANY_ID)
 
-        assert all(company_id in projected_emissions.index for company_id in company_ids), \
-            f"company ids missing in {feature}"
+        projections = projections.reset_index().set_index(self.column_config.COMPANY_ID)
 
-        projected_emissions = projected_emissions.loc[company_ids, :]
-        projected_emissions = self._unit_of_measure_correction(company_ids, projected_emissions)
+        assert all(company_id in projections.index for company_id in company_ids), \
+            f"company ids missing in provided projections"
 
-        projected_emissions = projected_emissions.loc[:, range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                                               self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+        projections = projections.loc[company_ids, :]
+        projections = projections.loc[:, range(self.temp_config.CONTROLS_CONFIG.base_year,
+                                               self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
 
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
-        projected_emissions = projected_emissions.fillna(np.inf)
-        projected_emissions_s1s2 = projected_emissions.groupby(level=0, sort=False).sum()  # add scope 1 and 2
+        projections = projections.fillna(np.inf)
+        projected_emissions_s1s2 = projections.groupby(level=0, sort=False).sum()  # add scope 1 and 2
         projected_emissions_s1s2 = projected_emissions_s1s2.replace(np.inf, np.nan)
 
         return projected_emissions_s1s2
-
-    def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
-        """
-        :param company_ids: list of company ids
-        :param projected_emission: series of projected emissions
-        :return: series of projected emissions corrected for unit of measure
-        """
-        projected_emission.loc[
-            self.get_value(company_ids, self.column_config.SECTOR).isin(SectorsConfig.CORRECTION_SECTORS),
-            range(self.temp_config.CONTROLS_CONFIG.base_year,
-                  self.temp_config.CONTROLS_CONFIG.target_end_year + 1)] *= \
-            self.ENERGY_UNIT_CONVERSION_FACTOR
-        return projected_emission
-
-    def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        :param company_ids: list of company ids
-        :return: DataFrame with projected targets per company extracted from the excel
-        """
-        return self._get_projection(company_ids, TabsConfig.PROJECTED_TARGET)
-
-    def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        :param company_ids: list of company ids
-        :return: DataFrame with projected intensities per company extracted from the excel
-        """
-        return self._get_projection(company_ids, TabsConfig.PROJECTED_EI)
-
-    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        overrides subclass method
-        :param: company_ids: list of company ids
-        :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        """
-        base_year = self.temp_config.CONTROLS_CONFIG.base_year
-        df_company_data = pd.DataFrame.from_records([c.dict() for c in self.get_company_data(company_ids)])
-        company_info = df_company_data[[
-            self.column_config.COMPANY_ID, self.column_config.SECTOR, self.column_config.REGION,
-            self.column_config.GHG_SCOPE12]].set_index(
-            self.column_config.COMPANY_ID)
-        ei_at_base = self._get_company_intensity_at_year(base_year,
-                                                         company_ids).rename(self.column_config.BASE_EI)
-        return company_info.merge(ei_at_base, left_index=True, right_index=True)

@@ -2,7 +2,6 @@ import json
 import unittest
 import os
 import pandas as pd
-import numpy as np
 from numpy.testing import assert_array_equal
 import ITR
 
@@ -11,13 +10,13 @@ from ITR.temperature_score import TemperatureScore
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.excel import ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
-from ITR.data.json import JsonProviderCompany
+from ITR.data.base_providers import BaseCompanyDataProvider
 from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany
 
 
-class TestJsonProvider(unittest.TestCase):
+class TestBaseProvider(unittest.TestCase):
     """
-    Test the JSON provider
+    Test the Base provider
     """
 
     def setUp(self) -> None:
@@ -26,17 +25,14 @@ class TestJsonProvider(unittest.TestCase):
         self.excel_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
 
         with open(self.json_data_path) as json_file:
-            companies_data_dict = json.load(json_file)
-        portfolio = [ICompanyData.parse_obj(company_data) for company_data in companies_data_dict.values()]
-        projected_ei = pd.read_excel(self.excel_data_path, sheet_name="projected_ei_in_Wh", skiprows=0)
-        projected_target = pd.read_excel(self.excel_data_path, sheet_name="projected_target", skiprows=0)
-
-        self.json_company_data = JsonProviderCompany(portfolio, projected_ei, projected_target)
+            parsed_json = json.load(json_file)
+        self.companies = [ICompanyData.parse_obj(company_data) for company_data in parsed_json]
+        self.base_company_data = BaseCompanyDataProvider(self.companies)
         self.sector_data_path = os.path.join(self.root, "inputs", "OECM_EI_and_production_benchmarks.xlsx")
         self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
         self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=1.5,
                                                            benchmark_global_budget=396, is_AFOLU_included=False)
-        self.excel_provider = DataWarehouse(self.json_company_data, self.excel_production_bm, self.excel_EI_bm)
+        self.excel_provider = DataWarehouse(self.base_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
                             "FR0000125338"]
@@ -48,11 +44,6 @@ class TestJsonProvider(unittest.TestCase):
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
     def test_temp_score_from_excel_data(self):
-        comids = ['US0079031078', 'US00724F1012', 'FR0000125338', 'US17275R1023', 'CH0198251305', 'US1266501006',
-                  'FR0000120644', 'US24703L1035', 'TW0002308004', 'FR0000120321', 'CH0038863350', 'US8356993076',
-                  'JP3401400001', 'US6541061031', 'GB0031274896', 'US6293775085', 'US7134481081', 'JP0000000001',
-                  'NL0000000002', 'IT0000000003', 'SE0000000004', 'SE0000000005', 'NL0000000006', 'CN0000000007',
-                  'CN0000000008', 'CN0000000009', 'BR0000000010', 'BR0000000011', 'BR0000000012', 'AR0000000013']
 
         # Calculate Temp Scores
         temp_score = TemperatureScore(
@@ -62,7 +53,7 @@ class TestJsonProvider(unittest.TestCase):
         )
 
         portfolio = []
-        for company in comids:
+        for company in self.company_ids:
             portfolio.append(PortfolioCompany(
                 company_name=company,
                 company_id=company,
@@ -76,54 +67,13 @@ class TestJsonProvider(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.05, 2.22, 2.06, 2.01, 1.93, 1.78, 1.71, 1.34, 2.21, 2.69, 2.65, temp_score.fallback_score, 2.89,
-                    1.91, 2.16, 1.76, temp_score.fallback_score, temp_score.fallback_score, 1.47, 1.72, 1.76, 1.81,
-                    temp_score.fallback_score, 1.78, 1.84, temp_score.fallback_score, temp_score.fallback_score, 1.74,
-                    1.88, temp_score.fallback_score]
+        expected = [2.05, 2.22, 2.06]
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.259, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.11, places=2)
 
-    def test_unit_of_measure_correction(self):
-        company_ids = self.company_ids + ["US6293775085"]
-        projected_values = pd.DataFrame(np.ones((4, 32)),
-                                        columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                      TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                        index=company_ids)
-        expected_data = pd.DataFrame(np.ones((4, 32)),
-                                     columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                     index=company_ids)
-        expected_data.iloc[0:3, :] = 3.6
-        pd.testing.assert_frame_equal(
-            self.json_company_data._unit_of_measure_correction(company_ids, projected_values),
-            expected_data)
 
-    def test_get_projected_value(self):
-        expected_data = pd.DataFrame([[1.698247435, 1.698247435, 1.590828573, 1.492707987, 1.403890821, 1.325025884,
-                                       1.256900833, 1.199892962, 1.153286422, 1.115132019, 1.082871619, 1.054062505,
-                                       1.026649109, 0.99885963, 0.969029076, 0.935600151, 0.897456359, 0.854466423,
-                                       0.807721858, 0.759088111, 0.710432718, 0.663134402, 0.618007985, 0.575439357,
-                                       0.535546775, 0.498300211, 0.463594864, 0.431292461, 0.401243246, 0.373297218,
-                                       0.347309599, 0.32314329],
-                                      [0.476586932, 0.476586932, 0.464695628, 0.464754889, 0.466332369, 0.469162115,
-                                       0.472725797, 0.47629738, 0.479176649, 0.480954576, 0.481532513, 0.480898667,
-                                       0.478873144, 0.474920056, 0.468037326, 0.456822975, 0.439924142, 0.416868713,
-                                       0.38867473, 0.357527534, 0.325789571, 0.295235835, 0.266872969, 0.241107715,
-                                       0.21798084, 0.197345262, 0.178974681, 0.162622136, 0.148048657, 0.135035628,
-                                       0.123388813, 0.112938349],
-                                      [0.224573932, 0.258012985, 0.261779459, 0.26416071, 0.266503379, 0.268691114,
-                                       0.270569413, 0.271980435, 0.272823337, 0.273080838, 0.272767105, 0.27183449,
-                                       0.270090124, 0.267129877, 0.262302026, 0.254777592, 0.243845281, 0.229393209,
-                                       0.212192429, 0.193616639, 0.175038148, 0.157423255, 0.141276866, 0.12676707,
-                                       0.113867496, 0.102458357, 0.092385201, 0.083489223, 0.0756213, 0.068647473,
-                                       0.062450199, 0.056927654]],
-                                     columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                     index=self.company_ids)
-        pd.testing.assert_frame_equal(self.json_company_data._get_company_projections(self.company_ids,
-                                                                                      self.json_company_data.projected_ei),
-                                      expected_data, check_names=False)
+
 
     def test_get_benchmark(self):
         expected_data = pd.DataFrame([[1.698247435, 1.581691084, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
@@ -192,6 +142,6 @@ class TestJsonProvider(unittest.TestCase):
                                    10283015132.0],
                                   index=pd.Index(self.company_ids, name='company_id'),
                                   name='company_revenue')
-        pd.testing.assert_series_equal(self.json_company_data.get_value(company_ids=self.company_ids,
-                                                                         variable_name=ColumnsConfig.COMPANY_REVENUE),
+        pd.testing.assert_series_equal(self.base_company_data.get_value(company_ids=self.company_ids,
+                                                                        variable_name=ColumnsConfig.COMPANY_REVENUE),
                                        expected_data)

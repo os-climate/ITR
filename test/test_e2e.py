@@ -2,7 +2,6 @@ import unittest
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
-    ICompanyData,
     PortfolioCompany,
 )
 
@@ -10,10 +9,9 @@ from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 import copy
 import ITR
-from ITR.data.data_providers import CompanyDataProvider
 from ITR.data.data_warehouse import DataWarehouse
 from typing import List
-from ITR.interfaces import ICompanyAggregates
+from ITR.interfaces import ICompanyAggregates, ICompanyProjectionsScopes
 
 
 class TestDataWareHouse(DataWarehouse):
@@ -24,6 +22,7 @@ class TestDataWareHouse(DataWarehouse):
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         return self.companies
+
 
 class EndToEndTest(unittest.TestCase):
     """
@@ -55,7 +54,43 @@ class EndToEndTest(unittest.TestCase):
             sector='Steel',
             region='Europe',
             benchmark_global_budget=396,
-            benchmark_temperature=1.5
+            benchmark_temperature=1.5,
+            projected_intensities=ICompanyProjectionsScopes.parse_obj({
+                "S1S2": {
+                    "projections": [
+                        {
+                            "year": "2019",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2020",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2021",
+                            "value": 1.5908285727976157
+                        }
+                    ]
+                }
+            }),
+            projected_targets=ICompanyProjectionsScopes.parse_obj({
+                "S1S2": {
+                    "projections": [
+                        {
+                            "year": "2019",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2020",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2021",
+                            "value": 1.5577542305393455
+                        }
+                    ]
+                }
+            })
         )
 
         # pf
@@ -65,7 +100,6 @@ class EndToEndTest(unittest.TestCase):
             investment_value=100,
             company_isin=company_id,
         )
-
 
     def test_basic(self):
         """
@@ -174,7 +208,7 @@ class EndToEndTest(unittest.TestCase):
 
             company_ids_with_level = [f"{ind_level}_{company_id}" for company_id in company_ids]
 
-            companies,  pf_companies = self.create_base_companies(company_ids_with_level)
+            companies, pf_companies = self.create_base_companies(company_ids_with_level)
             for company in companies:
                 company.industry_level_1 = ind_level
 
@@ -237,7 +271,6 @@ class EndToEndTest(unittest.TestCase):
             )
             pf_companies.append(pf_company)
 
-
         return companies, pf_companies
 
 
@@ -248,4 +281,4 @@ if __name__ == "__main__":
     test.test_basic_flow()
     test.test_regression_companies()
     test.test_score_cap()
-    test.test_target_grouping()
+    test.test_grouping()

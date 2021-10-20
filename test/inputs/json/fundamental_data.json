@@ -1,572 +1,863 @@
-{
-    "0": {
-        "company_name": "Company AG",
-        "company_id": "US0079031078",
-        "country": "United States of America",
-        "region": "North America",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 104827858.636039,
-        "ghg_s3": 104827858.636039,
-        "company_revenue": 20248547996.8143,
-        "company_market_cap": 10464805624.2886,
-        "company_enterprise_value": 20370723452.9736,
-        "company_total_assets": 814618.205724596,
-        "company_cash_equivalents": 4528467714.72676,
-        "target_probability": 0.428571428571428
+[
+  {
+    "company_name": "Company AG",
+    "company_id": "US0079031078",
+    "country": "United States of America",
+    "region": "North America",
+    "industry_level_1": null,
+    "industry_level_2": null,
+    "industry_level_3": null,
+    "industry_level_4": null,
+    "sector": "Electricity Utilities",
+    "ghg_s1s2": 104827858.636039,
+    "ghg_s3": 104827858.636039,
+    "company_revenue": 20248547996.8143,
+    "company_market_cap": 10464805624.2886,
+    "company_enterprise_value": 20370723452.9736,
+    "company_total_assets": 814618.205724596,
+    "company_cash_equivalents": 4528467714.72676,
+    "target_probability": 0.428571428571428,
+    "projected_intensities": {
+      "S1S2": {
+        "projections": [
+          {
+            "year": "2048",
+            "value": 0.3732972177077626
+          },
+          {
+            "year": "2049",
+            "value": 0.3473095993533106
+          },
+          {
+            "year": "2050",
+            "value": 0.32314328995492764
+          },
+          {
+            "year": "2019",
+            "value": 1.6982474347547039
+          },
+          {
+            "year": "2020",
+            "value": 1.6982474347547039
+          },
+          {
+            "year": "2021",
+            "value": 1.5908285727976157
+          },
+          {
+            "year": "2022",
+            "value": 1.4927079868414053
+          },
+          {
+            "year": "2023",
+            "value": 1.40389082098226
+          },
+          {
+            "year": "2024",
+            "value": 1.3250258841945497
+          },
+          {
+            "year": "2025",
+            "value": 1.2569008331330909
+          },
+          {
+            "year": "2026",
+            "value": 1.1998929619569176
+          },
+          {
+            "year": "2027",
+            "value": 1.1532864221845391
+          },
+          {
+            "year": "2028",
+            "value": 1.1151320189357772
+          },
+          {
+            "year": "2029",
+            "value": 1.0828716192035852
+          },
+          {
+            "year": "2030",
+            "value": 1.0540625049962402
+          },
+          {
+            "year": "2031",
+            "value": 1.0266491086836922
+          },
+          {
+            "year": "2032",
+            "value": 0.9988596299898523
+          },
+          {
+            "year": "2033",
+            "value": 0.9690290755397601
+          },
+          {
+            "year": "2034",
+            "value": 0.9356001506697456
+          },
+          {
+            "year": "2035",
+            "value": 0.897456358810864
+          },
+          {
+            "year": "2036",
+            "value": 0.8544664234169375
+          },
+          {
+            "year": "2037",
+            "value": 0.8077218576734647
+          },
+          {
+            "year": "2038",
+            "value": 0.7590881112787137
+          },
+          {
+            "year": "2039",
+            "value": 0.7104327175253641
+          },
+          {
+            "year": "2040",
+            "value": 0.663134401797776
+          },
+          {
+            "year": "2041",
+            "value": 0.6180079848270246
+          },
+          {
+            "year": "2042",
+            "value": 0.5754393574567898
+          },
+          {
+            "year": "2043",
+            "value": 0.535546775490256
+          },
+          {
+            "year": "2044",
+            "value": 0.4983002114580005
+          },
+          {
+            "year": "2045",
+            "value": 0.46359486423678625
+          },
+          {
+            "year": "2046",
+            "value": 0.43129246081540834
+          },
+          {
+            "year": "2047",
+            "value": 0.401243245935312
+          }
+        ]
+      }
     },
-    "1": {
-        "company_name": "Company AH",
-        "company_id": "US00724F1012",
-        "country": "United States of America",
-        "region": "North America",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 598937001.892059,
-        "ghg_s3": 598937001.892059,
-        "company_revenue": 276185899.614351,
-        "company_market_cap": 170431377.0111033,
-        "company_enterprise_value": 348843699.94010025,
-        "company_total_assets": 27314.648029499283,
-        "company_cash_equivalents": 69006940.99809252,
-        "target_probability": 0.4285714285714285
-    },
-    "2": {
-        "company_name": "Company AI",
-        "company_id": "FR0000125338",
-        "country": "Germany",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 122472002.661096,
-        "ghg_s3": 122472002.661096,
-        "company_revenue": 10283015131.798985,
-        "company_market_cap": 3087133686.0634212,
-        "company_enterprise_value": 4800604056.581685,
-        "company_total_assets": 343642.4737086049,
-        "company_cash_equivalents": 1163119848.4230556,
-        "target_probability": 0.4285714285714285
-    },
-    "3": {
-        "company_name": "Company AJ",
-        "company_id": "US17275R1023",
-        "country": "France",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 100080009.401725,
-        "ghg_s3": 100080009.401725,
-        "company_revenue": 1860376238.2982879,
-        "company_market_cap": 1395966780.8786128,
-        "company_enterprise_value": 1849921444.2644947,
-        "company_total_assets": 159262.60935025438,
-        "company_cash_equivalents": 117630751.45422383,
-        "target_probability": 0.4285714285714285
-    },
-    "4": {
-        "company_name": "Company AK",
-        "company_id": "CH0198251305",
-        "country": "Italy",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 824864406.472471,
-        "ghg_s3": 824864406.472471,
-        "company_revenue": 31781332590.123966,
-        "company_market_cap": 20377644507.874138,
-        "company_enterprise_value": 34890123636.20844,
-        "company_total_assets": 43112605.77960962,
-        "company_cash_equivalents": 28933197273.168182,
-        "target_probability": 0.4285714285714285
-    },
-    "5": {
-        "company_name": "Company AL",
-        "company_id": "US1266501006",
-        "country": "France",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 221601600.376334,
-        "ghg_s3": 221601600.376334,
-        "company_revenue": 22080444055.73389,
-        "company_market_cap": 89487875452.40962,
-        "company_enterprise_value": 142815816841.33038,
-        "company_total_assets": 12916972.788158268,
-        "company_cash_equivalents": 51876930016.31418,
-        "target_probability": 0.4285714285714285
-    },
-    "6": {
-        "company_name": "Company AM",
-        "company_id": "FR0000120644",
-        "country": "Spain",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 411300002.585938,
-        "ghg_s3": 411300002.585938,
-        "company_revenue": 940141306.0207825,
-        "company_market_cap": 81646651.50551033,
-        "company_enterprise_value": 1803870072.9332182,
-        "company_total_assets": 24970.460312431045,
-        "company_cash_equivalents": 2214490.9702577037,
-        "target_probability": 0.4285714285714285
-    },
-    "7": {
-        "company_name": "Company AN",
-        "company_id": "US24703L1035",
-        "country": "South Korea",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 1472652000.85954,
-        "ghg_s3": 1472652000.85954,
-        "company_revenue": 7175786054.992616,
-        "company_market_cap": 3440335994.5862403,
-        "company_enterprise_value": 65904184518.99241,
-        "company_total_assets": 981839.2186555777,
-        "company_cash_equivalents": 203940251.1185415,
-        "target_probability": 0.4285714285714285
-    },
-    "8": {
-        "company_name": "Company AO",
-        "company_id": "TW0002308004",
-        "country": "United Kingdom",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 21142801.5077199,
-        "ghg_s3": 21142801.5077199,
-        "company_revenue": 23960680689.116013,
-        "company_market_cap": 70745916655.31746,
-        "company_enterprise_value": 73065684225.78769,
-        "company_total_assets": 62472439.55564904,
-        "company_cash_equivalents": 42950453116.50563,
-        "target_probability": 0.4285714285714285
-    },
-    "9": {
-        "company_name": "Company AP",
-        "company_id": "FR0000120321",
-        "country": "India",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 988020000.90193,
-        "ghg_s3": 988020000.90193,
-        "company_revenue": 3219109002.8957133,
-        "company_market_cap": 2496486713.6419,
-        "company_enterprise_value": 5824358695.194101,
-        "company_total_assets": 1524416.4350418877,
-        "company_cash_equivalents": 5520000408.487849,
-        "target_probability": 0.4285714285714285
-    },
-    "10": {
-        "company_name": "Company AQ",
-        "company_id": "CH0038863350",
-        "country": "Australia",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 73011601.1549344,
-        "ghg_s3": 73011601.1549344,
-        "company_revenue": 2270961652.5606284,
-        "company_market_cap": 2706457656.025761,
-        "company_enterprise_value": 6515964879.946278,
-        "company_total_assets": 1952107.22158874,
-        "company_cash_equivalents": 505519258.45795137,
-        "target_probability": 0.4285714285714285
-    },
-    "11": {
-        "company_name": "Company AR",
-        "company_id": "US8356993076",
-        "country": "Poland",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 288420004.281372,
-        "ghg_s3": 288420004.281372,
-        "company_revenue": 2923800677.472364,
-        "company_market_cap": 664730339.0584776,
-        "company_enterprise_value": 835883594.7677848,
-        "company_total_assets": 2411999.9946857756,
-        "company_cash_equivalents": 462245314.1145333,
-        "target_probability": 0.4285714285714285
-    },
-    "12": {
-        "company_name": "Company AS",
-        "company_id": "JP3401400001",
-        "country": "Hong Kong",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 47691749.8864963,
-        "ghg_s3": 47691749.8864963,
-        "company_revenue": 13732514101.607698,
-        "company_market_cap": 3691311949.146696,
-        "company_enterprise_value": 5115075673.0843115,
-        "company_total_assets": 11668515.241009872,
-        "company_cash_equivalents": 1853875026.0311818,
-        "target_probability": 0.4285714285714285
-    },
-    "13": {
-        "company_name": "Company AT",
-        "company_id": "US6541061031",
-        "country": "Germany",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 551394001.129387,
-        "ghg_s3": 551394001.129387,
-        "company_revenue": 209346393.1699769,
-        "company_market_cap": 4230199159.3241043,
-        "company_enterprise_value": 4360171694.819017,
-        "company_total_assets": 17677610.033387754,
-        "company_cash_equivalents": 3272481697.8285317,
-        "target_probability": 0.4285714285714285
-    },
-    "14": {
-        "company_name": "Company AU",
-        "company_id": "GB0031274896",
-        "country": "United States of America",
-        "region": "North America",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Electricity Utilities",
-        "ghg_s1s2": 242884801.558717,
-        "ghg_s3": 242884801.558717,
-        "company_revenue": 1273070098.4773746,
-        "company_market_cap": 4968986648.627988,
-        "company_enterprise_value": 7465409801.551762,
-        "company_total_assets": 2598718.909952181,
-        "company_cash_equivalents": 518880676.89759755,
-        "target_probability": 0.4285714285714285
-    },
-    "15": {
-        "company_name": "Company AV",
-        "company_id": "US6293775085",
-        "country": "Netherlands",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 89800001.3960884,
-        "ghg_s3": 89800001.3960884,
-        "company_revenue": 7370536918.381833,
-        "company_market_cap": 7318942238.108914,
-        "company_enterprise_value": 24392175674.038094,
-        "company_total_assets": 21337139.680116065,
-        "company_cash_equivalents": 990719858.473371,
-        "target_probability": 0.4285714285714285
-    },
-    "16": {
-        "company_name": "Company AW",
-        "company_id": "US7134481081",
-        "country": "Australia",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": null,
-        "ghg_s3": null,
-        "company_revenue": 7275042285.236163,
-        "company_market_cap": 9570757347.846252,
-        "company_enterprise_value": 12112090004.878937,
-        "company_total_assets": 9846733.135934643,
-        "company_cash_equivalents": 470283632.88013947,
-        "target_probability": 0.4285714285714285
-    },
-    "17": {
-        "company_name": "Company A",
-        "company_id": "JP0000000001",
-        "country": "Taiwan",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": null,
-        "ghg_s3": null,
-        "company_revenue": 1236962789.3246891,
-        "company_market_cap": 938015347.697118,
-        "company_enterprise_value": 1252496335.1625824,
-        "company_total_assets": 4084768.6436157217,
-        "company_cash_equivalents": 963039844.5036674,
-        "target_probability": 0.4285714285714285
-    },
-    "18": {
-        "company_name": "Company B",
-        "company_id": "NL0000000002",
-        "country": "Brazil",
-        "region": "South America",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 12453000.4760821,
-        "ghg_s3": 12453000.4760821,
-        "company_revenue": 261404023.8424081,
-        "company_market_cap": 662870771.9690096,
-        "company_enterprise_value": 1167174030.7255652,
-        "company_total_assets": 472694.85008635663,
-        "company_cash_equivalents": 23467516.32994597,
-        "target_probability": 0.4285714285714285
-    },
-    "19": {
-        "company_name": "Company C",
-        "company_id": "IT0000000003",
-        "country": "South Korea",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 23303009.677026,
-        "ghg_s3": 23303009.677026,
-        "company_revenue": 3077369259.962948,
-        "company_market_cap": 2939810093.711022,
-        "company_enterprise_value": 13093340767.11665,
-        "company_total_assets": 13536767.267073056,
-        "company_cash_equivalents": 457926390.7271148,
-        "target_probability": 0.4285714285714285
-    },
-    "20": {
-        "company_name": "Company D",
-        "company_id": "SE0000000004",
-        "country": "Japan",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 27880000.2335485,
-        "ghg_s3": 27880000.2335485,
-        "company_revenue": 23244037103.494522,
-        "company_market_cap": 2098673804.5958335,
-        "company_enterprise_value": 14963947966.837791,
-        "company_total_assets": 8645431.929301228,
-        "company_cash_equivalents": 469617764.2483638,
-        "target_probability": 0.4285714285714285
-    },
-    "21": {
-        "company_name": "Company E",
-        "company_id": "SE0000000005",
-        "country": "India",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 12630001.0468216,
-        "ghg_s3": 12630001.0468216,
-        "company_revenue": 1728429611.5289557,
-        "company_market_cap": 295280720.0118176,
-        "company_enterprise_value": 1576360518.0586846,
-        "company_total_assets": 2020519.8719741097,
-        "company_cash_equivalents": 209706066.6328014,
-        "target_probability": 0.4285714285714285
-    },
-    "22": {
-        "company_name": "Company F",
-        "company_id": "NL0000000006",
-        "country": "Russia",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 23779000.8292913,
-        "ghg_s3": 23779000.8292913,
-        "company_revenue": 11389577659.555063,
-        "company_market_cap": 9120141519.595299,
-        "company_enterprise_value": 12030116674.248018,
-        "company_total_assets": 11516548.098293064,
-        "company_cash_equivalents": 80140338.55221638,
-        "target_probability": 0.4285714285714285
-    },
-    "23": {
-        "company_name": "Company G",
-        "company_id": "CN0000000007",
-        "country": "Japan",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 47840001.3676141,
-        "ghg_s3": 47840001.3676141,
-        "company_revenue": 1367677977.4270518,
-        "company_market_cap": 19415557155.05172,
-        "company_enterprise_value": 19753012111.679474,
-        "company_total_assets": 44134141.77217996,
-        "company_cash_equivalents": 1863069356.136927,
-        "target_probability": 0.4285714285714285
-    },
-    "24": {
-        "company_name": "Company H",
-        "company_id": "CN0000000008",
-        "country": "Russia",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 15520004.6310296,
-        "ghg_s3": 15520004.6310296,
-        "company_revenue": 26686529634.595795,
-        "company_market_cap": 5602526037.038002,
-        "company_enterprise_value": 13449017632.306343,
-        "company_total_assets": 28682928.807853833,
-        "company_cash_equivalents": 802015633.4125073,
-        "target_probability": 0.4285714285714285
-    },
-    "25": {
-        "company_name": "Company I",
-        "company_id": "CN0000000009",
-        "country": "South Korea",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": null,
-        "ghg_s3": null,
-        "company_revenue": 2631856604.6076617,
-        "company_market_cap": 3041544901.99725,
-        "company_enterprise_value": 3932507690.064404,
-        "company_total_assets": 18254077.867497787,
-        "company_cash_equivalents": 1090445581.1975896,
-        "target_probability": 0.4285714285714285
-    },
-    "26": {
-        "company_name": "Company J",
-        "company_id": "BR0000000010",
-        "country": "Russia",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 11847001.9224849,
-        "ghg_s3": 11847001.9224849,
-        "company_revenue": 1955329090.5211396,
-        "company_market_cap": 1202043687.03022,
-        "company_enterprise_value": 4172635345.018464,
-        "company_total_assets": 22152151.290723033,
-        "company_cash_equivalents": 408632883.32140654,
-        "target_probability": 0.4285714285714285
-    },
-    "27": {
-        "company_name": "Company K",
-        "company_id": "BR0000000011",
-        "country": "Sweden",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 14618000.0778486,
-        "ghg_s3": 14618000.0778486,
-        "company_revenue": 679399572.3480997,
-        "company_market_cap": 989091472.7085501,
-        "company_enterprise_value": 1824699389.5965521,
-        "company_total_assets": 12700301.946414873,
-        "company_cash_equivalents": 223357269.54921383,
-        "target_probability": 0.4285714285714285
-    },
-    "28": {
-        "company_name": "Company L",
-        "company_id": "BR0000000012",
-        "country": "India",
-        "region": "Asia",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": 27110004.3464472,
-        "ghg_s3": 27110004.3464472,
-        "company_revenue": 4733667268.946122,
-        "company_market_cap": 6559712908.822652,
-        "company_enterprise_value": 7869272284.65931,
-        "company_total_assets": 60818049.223066434,
-        "company_cash_equivalents": 1279584288.1275206,
-        "target_probability": 0.4285714285714285
-    },
-    "29": {
-        "company_name": "Company M",
-        "company_id": "AR0000000013",
-        "country": "Germany",
-        "region": "Europe",
-        "industry_level_1": null,
-        "industry_level_2": null,
-        "industry_level_3": null,
-        "industry_level_4": null,
-        "sector": "Steel",
-        "ghg_s1s2": null,
-        "ghg_s3": null,
-        "company_revenue": 9338027130.327995,
-        "company_market_cap": 933460072.7871801,
-        "company_enterprise_value": 2521235187.1692467,
-        "company_total_assets": 18868083.741257884,
-        "company_cash_equivalents": 259739897.26190066,
-        "target_probability": 0.4285714285714285
+    "projected_targets": {
+      "S1S2": {
+        "projections": [
+          {
+            "year": "2048",
+            "value": 0.37214308377617
+          },
+          {
+            "year": "2049",
+            "value": 0.3460761777533931
+          },
+          {
+            "year": "2050",
+            "value": 0.32186333388002936
+          },
+          {
+            "year": "2019",
+            "value": 1.6982474347547039
+          },
+          {
+            "year": "2020",
+            "value": 1.6982474347547039
+          },
+          {
+            "year": "2021",
+            "value": 1.5577542305393455
+          },
+          {
+            "year": "2022",
+            "value": 1.4175814131267943
+          },
+          {
+            "year": "2023",
+            "value": 1.3757498305423042
+          },
+          {
+            "year": "2024",
+            "value": 1.3339068423287557
+          },
+          {
+            "year": "2025",
+            "value": 1.2920428864089595
+          },
+          {
+            "year": "2026",
+            "value": 1.250148465996677
+          },
+          {
+            "year": "2027",
+            "value": 1.2082175997495752
+          },
+          {
+            "year": "2028",
+            "value": 1.1662487949464946
+          },
+          {
+            "year": "2029",
+            "value": 1.1242411674193187
+          },
+          {
+            "year": "2030",
+            "value": 1.0821881325764464
+          },
+          {
+            "year": "2031",
+            "value": 1.0336668334595038
+          },
+          {
+            "year": "2032",
+            "value": 1.0060112712997695
+          },
+          {
+            "year": "2033",
+            "value": 0.9761745320942703
+          },
+          {
+            "year": "2034",
+            "value": 0.9425400205253532
+          },
+          {
+            "year": "2035",
+            "value": 0.9039393234183674
+          },
+          {
+            "year": "2036",
+            "value": 0.8602347104642205
+          },
+          {
+            "year": "2037",
+            "value": 0.8125797891612296
+          },
+          {
+            "year": "2038",
+            "value": 0.7629485261651574
+          },
+          {
+            "year": "2039",
+            "value": 0.7133146578424875
+          },
+          {
+            "year": "2040",
+            "value": 0.6651284434989192
+          },
+          {
+            "year": "2041",
+            "value": 0.6192381388976574
+          },
+          {
+            "year": "2042",
+            "value": 0.576036179937961
+          },
+          {
+            "year": "2043",
+            "value": 0.535632683016501
+          },
+          {
+            "year": "2044",
+            "value": 0.4979831917544518
+          },
+          {
+            "year": "2045",
+            "value": 0.46296688059027286
+          },
+          {
+            "year": "2046",
+            "value": 0.4304301348728542
+          },
+          {
+            "year": "2047",
+            "value": 0.40020948027188047
+          }
+        ]
+      }
     }
-}
+  },
+  {
+    "company_name": "Company AH",
+    "company_id": "US00724F1012",
+    "country": "United States of America",
+    "region": "North America",
+    "industry_level_1": null,
+    "industry_level_2": null,
+    "industry_level_3": null,
+    "industry_level_4": null,
+    "sector": "Electricity Utilities",
+    "ghg_s1s2": 598937001.892059,
+    "ghg_s3": 598937001.892059,
+    "company_revenue": 276185899.614351,
+    "company_market_cap": 170431377.0111033,
+    "company_enterprise_value": 348843699.94010025,
+    "company_total_assets": 27314.648029499283,
+    "company_cash_equivalents": 69006940.99809252,
+    "target_probability": 0.4285714285714285,
+    "projected_intensities": {
+      "S1S2": {
+        "projections": [
+          {
+            "year": "2048",
+            "value": 0.1350356279896691
+          },
+          {
+            "year": "2049",
+            "value": 0.12338881327823213
+          },
+          {
+            "year": "2050",
+            "value": 0.11293834909899002
+          },
+          {
+            "year": "2019",
+            "value": 0.4765869315822794
+          },
+          {
+            "year": "2020",
+            "value": 0.4765869315822794
+          },
+          {
+            "year": "2021",
+            "value": 0.4646956275668277
+          },
+          {
+            "year": "2022",
+            "value": 0.46475488884564986
+          },
+          {
+            "year": "2023",
+            "value": 0.46633236949094614
+          },
+          {
+            "year": "2024",
+            "value": 0.4691621154334045
+          },
+          {
+            "year": "2025",
+            "value": 0.4727257970031997
+          },
+          {
+            "year": "2026",
+            "value": 0.47629738046867404
+          },
+          {
+            "year": "2027",
+            "value": 0.47917664907701873
+          },
+          {
+            "year": "2028",
+            "value": 0.48095457621703386
+          },
+          {
+            "year": "2029",
+            "value": 0.48153251319271473
+          },
+          {
+            "year": "2030",
+            "value": 0.48089866695678
+          },
+          {
+            "year": "2031",
+            "value": 0.4788731437775646
+          },
+          {
+            "year": "2032",
+            "value": 0.47492005648125624
+          },
+          {
+            "year": "2033",
+            "value": 0.4680373257828999
+          },
+          {
+            "year": "2034",
+            "value": 0.456822974997255
+          },
+          {
+            "year": "2035",
+            "value": 0.43992414191953577
+          },
+          {
+            "year": "2036",
+            "value": 0.4168687128633767
+          },
+          {
+            "year": "2037",
+            "value": 0.3886747301872676
+          },
+          {
+            "year": "2038",
+            "value": 0.3575275342519104
+          },
+          {
+            "year": "2039",
+            "value": 0.32578957147485127
+          },
+          {
+            "year": "2040",
+            "value": 0.2952358348870772
+          },
+          {
+            "year": "2041",
+            "value": 0.26687296857116094
+          },
+          {
+            "year": "2042",
+            "value": 0.2411077146972847
+          },
+          {
+            "year": "2043",
+            "value": 0.21798083999859974
+          },
+          {
+            "year": "2044",
+            "value": 0.19734526221504217
+          },
+          {
+            "year": "2045",
+            "value": 0.1789746807517556
+          },
+          {
+            "year": "2046",
+            "value": 0.16262213627268932
+          },
+          {
+            "year": "2047",
+            "value": 0.14804865736582992
+          }
+        ]
+      }
+    },
+    "projected_targets": {
+      "S1S2": {
+        "projections": [
+          {
+            "year": "2048",
+            "value": 0.03494970831603377
+          },
+          {
+            "year": "2049",
+            "value": 0.017474854158016848
+          },
+          {
+            "year": "2050",
+            "value": 0.0
+          },
+          {
+            "year": "2019",
+            "value": 0.4765869315822794
+          },
+          {
+            "year": "2020",
+            "value": 0.4765869315822794
+          },
+          {
+            "year": "2021",
+            "value": 0.4638779467400853
+          },
+          {
+            "year": "2022",
+            "value": 0.45116896189789124
+          },
+          {
+            "year": "2023",
+            "value": 0.43845997705569717
+          },
+          {
+            "year": "2024",
+            "value": 0.42575099221350304
+          },
+          {
+            "year": "2025",
+            "value": 0.4130420073713089
+          },
+          {
+            "year": "2026",
+            "value": 0.40033302252911485
+          },
+          {
+            "year": "2027",
+            "value": 0.3876240376869208
+          },
+          {
+            "year": "2028",
+            "value": 0.3749150528447267
+          },
+          {
+            "year": "2029",
+            "value": 0.36220606800253263
+          },
+          {
+            "year": "2030",
+            "value": 0.34949708316033845
+          },
+          {
+            "year": "2031",
+            "value": 0.33202222900232153
+          },
+          {
+            "year": "2032",
+            "value": 0.31454737484430456
+          },
+          {
+            "year": "2033",
+            "value": 0.29707252068628764
+          },
+          {
+            "year": "2034",
+            "value": 0.27959766652827067
+          },
+          {
+            "year": "2035",
+            "value": 0.26212281237025375
+          },
+          {
+            "year": "2036",
+            "value": 0.2446479582122368
+          },
+          {
+            "year": "2037",
+            "value": 0.22717310405421987
+          },
+          {
+            "year": "2038",
+            "value": 0.20969824989620298
+          },
+          {
+            "year": "2039",
+            "value": 0.19222339573818606
+          },
+          {
+            "year": "2040",
+            "value": 0.17474854158016914
+          },
+          {
+            "year": "2041",
+            "value": 0.15727368742215225
+          },
+          {
+            "year": "2042",
+            "value": 0.1397988332641353
+          },
+          {
+            "year": "2043",
+            "value": 0.12232397910611838
+          },
+          {
+            "year": "2044",
+            "value": 0.10484912494810146
+          },
+          {
+            "year": "2045",
+            "value": 0.08737427079008454
+          },
+          {
+            "year": "2046",
+            "value": 0.06989941663206761
+          },
+          {
+            "year": "2047",
+            "value": 0.0524245624740507
+          }
+        ]
+      }
+    }
+  },
+  {
+    "company_name": "Company AI",
+    "company_id": "FR0000125338",
+    "country": "Germany",
+    "region": "Europe",
+    "industry_level_1": null,
+    "industry_level_2": null,
+    "industry_level_3": null,
+    "industry_level_4": null,
+    "sector": "Electricity Utilities",
+    "ghg_s1s2": 122472002.661096,
+    "ghg_s3": 122472002.661096,
+    "company_revenue": 10283015131.798985,
+    "company_market_cap": 3087133686.0634212,
+    "company_enterprise_value": 4800604056.581685,
+    "company_total_assets": 343642.4737086049,
+    "company_cash_equivalents": 1163119848.4230556,
+    "target_probability": 0.4285714285714285,
+    "projected_intensities": {
+      "S1S2": {
+        "projections": [
+          {
+            "year": "2048",
+            "value": 0.06864747304171098
+          },
+          {
+            "year": "2049",
+            "value": 0.0624501985776124
+          },
+          {
+            "year": "2050",
+            "value": 0.056927654404565015
+          },
+          {
+            "year": "2019",
+            "value": 0.22457393169276957
+          },
+          {
+            "year": "2020",
+            "value": 0.2580129849830155
+          },
+          {
+            "year": "2021",
+            "value": 0.261779458792482
+          },
+          {
+            "year": "2022",
+            "value": 0.2641607100651649
+          },
+          {
+            "year": "2023",
+            "value": 0.26650337879692015
+          },
+          {
+            "year": "2024",
+            "value": 0.26869111393257805
+          },
+          {
+            "year": "2025",
+            "value": 0.2705694125124543
+          },
+          {
+            "year": "2026",
+            "value": 0.2719804346544648
+          },
+          {
+            "year": "2027",
+            "value": 0.2728233367299267
+          },
+          {
+            "year": "2028",
+            "value": 0.27308083760219315
+          },
+          {
+            "year": "2029",
+            "value": 0.2727671049650463
+          },
+          {
+            "year": "2030",
+            "value": 0.2718344903407429
+          },
+          {
+            "year": "2031",
+            "value": 0.2700901241414129
+          },
+          {
+            "year": "2032",
+            "value": 0.26712987691140366
+          },
+          {
+            "year": "2033",
+            "value": 0.2623020263149985
+          },
+          {
+            "year": "2034",
+            "value": 0.25477759230500713
+          },
+          {
+            "year": "2035",
+            "value": 0.24384528110981835
+          },
+          {
+            "year": "2036",
+            "value": 0.22939320881946784
+          },
+          {
+            "year": "2037",
+            "value": 0.21219242867517268
+          },
+          {
+            "year": "2038",
+            "value": 0.19361663923163058
+          },
+          {
+            "year": "2039",
+            "value": 0.17503814781395072
+          },
+          {
+            "year": "2040",
+            "value": 0.15742325486563583
+          },
+          {
+            "year": "2041",
+            "value": 0.14127686604553363
+          },
+          {
+            "year": "2042",
+            "value": 0.12676706957864525
+          },
+          {
+            "year": "2043",
+            "value": 0.11386749628109936
+          },
+          {
+            "year": "2044",
+            "value": 0.10245835732472205
+          },
+          {
+            "year": "2045",
+            "value": 0.09238520094315873
+          },
+          {
+            "year": "2046",
+            "value": 0.08348922300821485
+          },
+          {
+            "year": "2047",
+            "value": 0.07562130040069098
+          }
+        ]
+      }
+    },
+    "projected_targets": {
+      "S1S2": {
+        "projections": [
+          {
+            "year": "2048",
+            "value": 0.0
+          },
+          {
+            "year": "2049",
+            "value": 0.0
+          },
+          {
+            "year": "2050",
+            "value": 0.0
+          },
+          {
+            "year": "2019",
+            "value": 0.22457393169276957
+          },
+          {
+            "year": "2020",
+            "value": 0.2580129849830155
+          },
+          {
+            "year": "2021",
+            "value": 0.2404211905523554
+          },
+          {
+            "year": "2022",
+            "value": 0.22282939612169525
+          },
+          {
+            "year": "2023",
+            "value": 0.2052376016910351
+          },
+          {
+            "year": "2024",
+            "value": 0.187645807260375
+          },
+          {
+            "year": "2025",
+            "value": 0.17005401282971486
+          },
+          {
+            "year": "2026",
+            "value": 0.15246221839905472
+          },
+          {
+            "year": "2027",
+            "value": 0.1348704239683946
+          },
+          {
+            "year": "2028",
+            "value": 0.11727862953773444
+          },
+          {
+            "year": "2029",
+            "value": 0.0996868351070743
+          },
+          {
+            "year": "2030",
+            "value": 0.08209504067641415
+          },
+          {
+            "year": "2031",
+            "value": 0.07388553660877273
+          },
+          {
+            "year": "2032",
+            "value": 0.06567603254113132
+          },
+          {
+            "year": "2033",
+            "value": 0.05746652847348991
+          },
+          {
+            "year": "2034",
+            "value": 0.04925702440584849
+          },
+          {
+            "year": "2035",
+            "value": 0.04104752033820708
+          },
+          {
+            "year": "2036",
+            "value": 0.032838016270565665
+          },
+          {
+            "year": "2037",
+            "value": 0.024628512202924252
+          },
+          {
+            "year": "2038",
+            "value": 0.01641900813528284
+          },
+          {
+            "year": "2039",
+            "value": 0.008209504067641425
+          },
+          {
+            "year": "2040",
+            "value": 0.0
+          },
+          {
+            "year": "2041",
+            "value": 0.0
+          },
+          {
+            "year": "2042",
+            "value": 0.0
+          },
+          {
+            "year": "2043",
+            "value": 0.0
+          },
+          {
+            "year": "2044",
+            "value": 0.0
+          },
+          {
+            "year": "2045",
+            "value": 0.0
+          },
+          {
+            "year": "2046",
+            "value": 0.0
+          },
+          {
+            "year": "2047",
+            "value": 0.0
+          }
+        ]
+      }
+    }
+  }
+]

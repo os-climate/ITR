@@ -62,8 +62,6 @@ class CompanyDataProvider(ABC):
         """
         raise NotImplementedError
 
-    def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
-        return self.get_company_projected_intensities(company_ids)[year]
 
     @abstractmethod
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
@@ -74,16 +72,6 @@ class CompanyDataProvider(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
-        """
-        Corrects the projection emissions for the configured sectors with a temperature correction from the
-        TempScoreConfig
-        :param company_ids: list of company ids
-        :param projected_emission: series of projected emissions
-        :return: series of projected emissions corrected for unit of measure
-        """
-        raise NotImplementedError
 
 class ProductionBenchmarkDataProvider(ABC):
     """

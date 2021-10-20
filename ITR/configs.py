@@ -43,6 +43,8 @@ class ColumnsConfig:
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
     BASE_EI = 'emission_intensity_at_base_year'
+    PROJECTED_EI = 'projected_intensities'
+    PROJECTED_TARGETS = 'projected_targets'
 
     # Output columns
     WEIGHTED_TEMPERATURE_SCORE = "weighted_temperature_score"
@@ -57,7 +59,6 @@ class SectorsConfig:
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
 
-    CORRECTION_SECTORS = [ELECTRICITY]
 
 class PortfolioAggregationConfig:
     COLS = ColumnsConfig
