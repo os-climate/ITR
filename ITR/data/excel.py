@@ -2,12 +2,14 @@ from typing import Type, List
 import pandas as pd
 import numpy as np
 from pydantic import ValidationError
-from ITR.data.data_providers import ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.data.base_providers import BaseCompanyDataProvider
+from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
+    BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
-from ITR.interfaces import ICompanyData, ICompanyProjection
+from ITR.interfaces import ICompanyData, ICompanyProjection, EScope
 import logging
 
+
+# TODO: Force validation for excel benchmarks
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
@@ -16,14 +18,19 @@ class TabsConfig:
     PROJECTED_TARGET = "projected_target"
 
 
-class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
+class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
     def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__()
+        """
+        Overrices BaseProvider and provides an interfaces for excel the excel template
+        :param excel_path: file path to excel
+        :param column_config: An optional ColumnsConfig object containing relevant variable names
+        :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
+        """
+        super().__init__(None, column_config, tempscore_config)
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
-        self.temp_config = tempscore_config
-        self.column_config = column_config
+
 
     def _check_sector_data(self) -> None:
         """
@@ -34,111 +41,34 @@ class ExcelProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
             self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
-    def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
+    def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
-        get the projected productions for list of companies in ghg_scope12
-        :param ghg_scope12: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID,ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :return: DataFrame of projected productions for [base_year - base_year + 50]
+        interface from excel file and internally used DataFrame
+        :param scope:
+        :return:
         """
-        benchmark_production_projections = self.get_benchmark_projections(ghg_scope12)
-        return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-            ghg_scope12[self.column_config.GHG_SCOPE12].values, axis=0)
-
-    def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
-        """
-        Overrides subclass method
-        returns a Dataframe with production benchmarks per company_id given a region and sector.
-        :param company_sector_region_info: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :return: A DataFrame with company and intensity benchmarks per calendar year per row
-        """
-        benchmark_projection = self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION]
-        sectors = company_sector_region_info[self.column_config.SECTOR]
-        regions = company_sector_region_info[self.column_config.REGION]
-        benchmark_regions = regions.copy()
-        mask = benchmark_regions.isin(benchmark_projection[self.column_config.REGION])
-        benchmark_regions.loc[~mask] = "Global"
-        benchmark_projection = benchmark_projection.reset_index().set_index(
-            [self.column_config.SECTOR, self.column_config.REGION])
-
-        benchmark_projection = benchmark_projection.loc[list(zip(sectors, benchmark_regions)),
-                                                        range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                                              self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
-        benchmark_projection.index = sectors.index
-
-        return benchmark_projection
+        return self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].reset_index().set_index(
+            [self.column_config.REGION, self.column_config.SECTOR])
 
 
-class ExcelProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
+class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
     def __init__(self, excel_path: str, benchmark_temperature: float,
                  benchmark_global_budget: float, is_AFOLU_included: bool,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__(benchmark_temperature, benchmark_global_budget, is_AFOLU_included)
+        super().__init__(None, benchmark_temperature, benchmark_global_budget, is_AFOLU_included, column_config,
+                         tempscore_config)
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
-        self.temp_config = tempscore_config
-        self.column_config = column_config
 
-    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
+    def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.Series:
         """
-        Overrides subclass method
-        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param company_info_at_base_year: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
+        Converts IBenchmarkScopes into dataframe for a scope
+        :param scope: a scope
+        :return: pd.Series
         """
-        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
-        decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
-        last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
-        ei_base = company_info_at_base_year[self.column_config.BASE_EI]
-
-        return decarbonization_paths.mul((ei_base - last_ei), axis=0).add(last_ei, axis=0)
-
-    def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
-        """
-        Overrides subclass method
-        Returns a DataFrame with the projected decarbonization paths for the supplied companies in intensity_benchmarks.
-        :param: A DataFrame with company and intensity benchmarks per calendar year per row
-        :return: A pd.DataFrame with company and decarbonisation path s per calendar year per row
-        """
-        return intensity_benchmarks.apply(lambda row: self._get_decarbonization(row), axis=1)
-
-    def _get_decarbonization(self, intensity_benchmark_row: pd.Series) -> pd.Series:
-        """
-        Overrides subclass method
-        returns a Series with the decarbonization path for a benchmark.
-        :param: A Series with company and intensity benchmarks per calendar year per row
-        :return: A pd.Series with company and decarbonisation path s per calendar year per row
-        """
-        first_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.base_year]
-        last_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.target_end_year]
-        return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
-
-    def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
-        """
-        Overrides subclass method
-        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param company_sector_region_info: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :return: A DataFrame with company and intensity benchmarks per calendar year per row
-        """
-        benchmark_projection = self.benchmark_excel[TabsConfig.PROJECTED_EI]
-        sectors = company_sector_region_info[self.column_config.SECTOR]
-        regions = company_sector_region_info[self.column_config.REGION]
-        benchmark_regions = regions.copy()
-        mask = benchmark_regions.isin(benchmark_projection[self.column_config.REGION])
-        benchmark_regions.loc[~mask] = "Global"
-        benchmark_projection = benchmark_projection.reset_index().set_index(
-            [self.column_config.SECTOR, self.column_config.REGION])
-
-        benchmark_projection = benchmark_projection.loc[list(zip(sectors, benchmark_regions)),
-                                                        range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                                              self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
-        benchmark_projection.index = sectors.index
-
-        return benchmark_projection
+        return self.benchmark_excel[TabsConfig.PROJECTED_EI].reset_index().set_index(
+            [self.column_config.REGION, self.column_config.SECTOR])
 
     def _check_sector_data(self) -> None:
         """

@@ -9,9 +9,10 @@ from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.excel import ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
-from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany
+from ITR.data.excel import ExcelProviderIntensityBenchmark
+from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
+    BaseProviderIntensityBenchmark
+from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IBenchmarkScopes
 
 
 class TestBaseProvider(unittest.TestCase):
@@ -21,18 +22,32 @@ class TestBaseProvider(unittest.TestCase):
 
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
-        self.json_data_path = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
+        self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
+        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
+        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM.json")
         self.excel_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
 
-        with open(self.json_data_path) as json_file:
+        # load company data
+        with open(self.company_json) as json_file:
             parsed_json = json.load(json_file)
         self.companies = [ICompanyData.parse_obj(company_data) for company_data in parsed_json]
         self.base_company_data = BaseCompanyDataProvider(self.companies)
         self.sector_data_path = os.path.join(self.root, "inputs", "OECM_EI_and_production_benchmarks.xlsx")
-        self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=1.5,
-                                                           benchmark_global_budget=396, is_AFOLU_included=False)
-        self.excel_provider = DataWarehouse(self.base_company_data, self.excel_production_bm, self.excel_EI_bm)
+
+        # load production benchmarks
+        with open(self.benchmark_prod_json) as json_file:
+            parsed_json = json.load(json_file)
+        prod_bms = IBenchmarkScopes.parse_obj(parsed_json)
+        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
+
+        # load intensity benchmarks
+        with open(self.benchmark_EI_json) as json_file:
+            parsed_json = json.load(json_file)
+        ei_bms = IBenchmarkScopes.parse_obj(parsed_json)
+        self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms, benchmark_temperature=1.5,
+                                                         benchmark_global_budget=396, is_AFOLU_included=False)
+
+        self.base_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.base_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
                             "FR0000125338"]
@@ -44,7 +59,6 @@ class TestBaseProvider(unittest.TestCase):
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
     def test_temp_score_from_excel_data(self):
-
         # Calculate Temp Scores
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -62,7 +76,7 @@ class TestBaseProvider(unittest.TestCase):
             )
             )
         # portfolio data
-        portfolio_data = ITR.utils.get_data(self.excel_provider, portfolio)
+        portfolio_data = ITR.utils.get_data(self.base_warehouse, portfolio)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -71,9 +85,6 @@ class TestBaseProvider(unittest.TestCase):
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.11, places=2)
-
-
-
 
     def test_get_benchmark(self):
         expected_data = pd.DataFrame([[1.698247435, 1.581691084, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
@@ -101,7 +112,7 @@ class TestBaseProvider(unittest.TestCase):
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
 
         pd.testing.assert_frame_equal(
-            self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year),
+            self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year),
             expected_data)
 
     def test_get_projected_production(self):
@@ -109,7 +120,7 @@ class TestBaseProvider(unittest.TestCase):
                                        index=self.company_ids,
                                        name=2025)
         pd.testing.assert_series_equal(
-            self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025],
+            self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025],
             expected_data_2025)
 
     def test_get_cumulative_value(self):
@@ -117,12 +128,12 @@ class TestBaseProvider(unittest.TestCase):
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]])
         expected_data = pd.Series([10.0, 50.0])
         pd.testing.assert_series_equal(
-            self.excel_provider._get_cumulative_emission(projected_emission_intensity=projected_emission,
+            self.base_warehouse._get_cumulative_emission(projected_emission_intensity=projected_emission,
                                                          projected_production=projected_production), expected_data)
 
     def test_get_company_data(self):
-        company_1 = self.excel_provider.get_preprocessed_company_data(self.company_ids)[0]
-        company_2 = self.excel_provider.get_preprocessed_company_data(self.company_ids)[1]
+        company_1 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[0]
+        company_2 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[1]
         self.assertEqual(company_1.company_name, "Company AG")
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")

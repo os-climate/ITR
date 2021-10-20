@@ -58,13 +58,49 @@ class PortfolioCompany(BaseModel):
     user_fields: Optional[dict]
 
 
-class ICompanyProjection(BaseModel):
+class IBenchmarkProjection(BaseModel):
     year: int
     value: float
 
 
+class IBenchmark(BaseModel):
+    sector: str
+    region: str
+    projections: List[IBenchmarkProjection]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class IBenchmarks(BaseModel):
+    benchmarks: List[IBenchmark]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class IBenchmarkScopes(BaseModel):
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class ICompanyProjection(BaseModel):
+    year: int
+    value: float
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
 class ICompanyProjections(BaseModel):
     projections: List[ICompanyProjection]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
 
 
 class ICompanyProjectionsScopes(BaseModel):

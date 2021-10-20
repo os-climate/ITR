@@ -162,20 +162,20 @@ class IntensityBenchmarkDataProvider(ABC):
         self._benchmark_global_budget = value
 
     @abstractmethod
-    def _get_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
+    def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param company_secor_region_info: DataFrame with at least the following columns :
+        :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         raise NotImplementedError
 
     @abstractmethod
-    def get_SDA_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param company_secor_region_info: DataFrame with at least the following columns :
+        :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
