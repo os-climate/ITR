@@ -5,7 +5,8 @@ from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
-from ITR.interfaces import ICompanyData, ICompanyProjection, EScope
+from ITR.interfaces import ICompanyData, ICompanyProjection, EScope, IEmissionIntensityBenchmarkScopes, \
+    IProductionBenchmarkScopes
 import logging
 
 
@@ -31,7 +32,6 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
 
-
     def _check_sector_data(self) -> None:
         """
         Checks if the sector data excel contains the data in the right format
@@ -56,7 +56,9 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                  benchmark_global_budget: float, is_AFOLU_included: bool,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__(None, benchmark_temperature, benchmark_global_budget, is_AFOLU_included, column_config,
+        super().__init__(IEmissionIntensityBenchmarkScopes(benchmark_temperature=benchmark_temperature,
+                                                           benchmark_global_budget=benchmark_global_budget,
+                                                           is_AFOLU_included=is_AFOLU_included), column_config,
                          tempscore_config)
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()

@@ -9,10 +9,10 @@ from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.excel import ExcelProviderIntensityBenchmark
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IBenchmarkScopes
+from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEmissionIntensityBenchmarkScopes, \
+    IProductionBenchmarkScopes
 
 
 class TestBaseProvider(unittest.TestCase):
@@ -37,15 +37,14 @@ class TestBaseProvider(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IBenchmarkScopes.parse_obj(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # load intensity benchmarks
         with open(self.benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IBenchmarkScopes.parse_obj(parsed_json)
-        self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms, benchmark_temperature=1.5,
-                                                         benchmark_global_budget=396, is_AFOLU_included=False)
+        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         self.base_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.base_EI_bm)
         self.company_ids = ["US0079031078",

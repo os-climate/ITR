@@ -2,7 +2,8 @@ import pandas as pd
 from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.interfaces import ICompanyData, EScope, IBenchmarkScopes, IBenchmark
+from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, \
+    IBenchmark
 
 
 # TODO handling of scopes in benchmarks
@@ -118,7 +119,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
 
 class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
-    def __init__(self, production_benchmarks: List[IBenchmarkScopes],
+    def __init__(self, production_benchmarks: IProductionBenchmarkScopes,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         """
@@ -192,11 +193,11 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
 
 class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
-    def __init__(self, EI_benchmarks: List[IBenchmarkScopes], benchmark_temperature: float,
-                 benchmark_global_budget: float, is_AFOLU_included: bool,
+    def __init__(self, EI_benchmarks: IEmissionIntensityBenchmarkScopes,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__(benchmark_temperature, benchmark_global_budget, is_AFOLU_included)
+        super().__init__(EI_benchmarks.benchmark_temperature, EI_benchmarks.benchmark_global_budget,
+                         EI_benchmarks.is_AFOLU_included)
         self._EI_benchmarks = EI_benchmarks
         self.temp_config = tempscore_config
         self.column_config = column_config

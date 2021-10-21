@@ -119,7 +119,7 @@ class IntensityBenchmarkDataProvider(ABC):
     """
     AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
 
-    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, is_AFOLU_included: bool = False,
+    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, is_AFOLU_included: bool,
                  **kwargs):
         """
         Create a new data provider instance.

@@ -1,4 +1,7 @@
 {
+  "benchmark_temperature": 1.5,
+  "benchmark_global_budget": 396,
+  "is_AFOLU_included": false,
   "S1S2": {
     "benchmarks": [
       {

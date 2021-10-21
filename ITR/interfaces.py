@@ -78,11 +78,19 @@ class IBenchmarks(BaseModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
-
-class IBenchmarkScopes(BaseModel):
+class IProductionBenchmarkScopes(BaseModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
+
+
+class IEmissionIntensityBenchmarkScopes(BaseModel):
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
+    benchmark_temperature: float
+    benchmark_global_budget: float
+    is_AFOLU_included: bool
 
     def __getitem__(self, item):
         return getattr(self, item)
