@@ -45,6 +45,10 @@ class ColumnsConfig:
     BASE_EI = 'emission_intensity_at_base_year'
     PROJECTED_EI = 'projected_intensities'
     PROJECTED_TARGETS = 'projected_targets'
+    TRAJECTORY_SCORE = 'trajectory_score'
+    TRAJECTORY_OVERSHOOT = 'trajectory_overshoot_ratio'
+    TARGET_SCORE = 'target_score'
+    TARGET_OVERSHOOT = 'target_overshoot_ratio'
 
     # Output columns
     WEIGHTED_TEMPERATURE_SCORE = "weighted_temperature_score"
