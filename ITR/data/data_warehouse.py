@@ -41,7 +41,8 @@ class DataWarehouse(ABC):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data and additional precalculated fields
         """
-        df_company_data = pd.DataFrame.from_records([c.dict() for c in self.company_data.get_company_data(company_ids)])
+        company_data = self.company_data.get_company_data(company_ids)
+        df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
 
         assert pd.Series(company_ids).isin(df_company_data.loc[:, self.column_config.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"

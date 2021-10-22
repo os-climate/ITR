@@ -37,7 +37,7 @@ class TemperatureScore(PortfolioAggregation):
         if grouping is not None:
             self.grouping = grouping
 
-    def get_score(self, scorable_row: pd.Series) -> Tuple[float, float]:
+    def get_score(self, scorable_row: pd.Series) -> Tuple[float, float, float, float, float, float]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
@@ -46,7 +46,7 @@ class TemperatureScore(PortfolioAggregation):
         """
         # if either cum target or trajectory is zero return default.
         if scorable_row[self.c.COLS.CUMULATIVE_TARGET] * scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] == 0.0:
-            return self.get_default_score(scorable_row), 1
+            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, 1
 
         if scorable_row[self.c.COLS.CUMULATIVE_BUDGET] > 0:
             target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
@@ -69,7 +69,7 @@ class TemperatureScore(PortfolioAggregation):
         # Safeguard: If score is NaN due to missing data assign default score.
         if np.isnan(score):
             return self.get_default_score(scorable_row), 1
-        return score, 0
+        return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, 0
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[float, float]:
         """
@@ -125,7 +125,9 @@ class TemperatureScore(PortfolioAggregation):
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
         scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
 
-        scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
+        scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
+            self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
+            self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
             lambda row: self.get_score(row), axis=1))
 
         scoring_data = self.cap_scores(scoring_data)

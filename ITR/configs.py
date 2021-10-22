@@ -4,6 +4,7 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from .interfaces import TemperatureScoreControls
 
+
 class ColumnsConfig:
     # Define a constant for each column used in the
     COMPANY_ID = "company_id"
@@ -43,11 +44,18 @@ class ColumnsConfig:
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
     BASE_EI = 'emission_intensity_at_base_year'
+    PROJECTED_EI = 'projected_intensities'
+    PROJECTED_TARGETS = 'projected_targets'
+    TRAJECTORY_SCORE = 'trajectory_score'
+    TRAJECTORY_OVERSHOOT = 'trajectory_overshoot_ratio'
+    TARGET_SCORE = 'target_score'
+    TARGET_OVERSHOOT = 'target_overshoot_ratio'
 
     # Output columns
     WEIGHTED_TEMPERATURE_SCORE = "weighted_temperature_score"
     CONTRIBUTION_RELATIVE = "contribution_relative"
     CONTRIBUTION = "contribution"
+
 
 class SectorsConfig:
     STEEL = "Steel"
@@ -57,23 +65,19 @@ class SectorsConfig:
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
 
-    CORRECTION_SECTORS = [ELECTRICITY]
 
 class PortfolioAggregationConfig:
     COLS = ColumnsConfig
 
 
 class TemperatureScoreConfig(PortfolioAggregationConfig):
-
     TEMPERATURE_RESULTS = 'temperature_results'
     CONTROLS_CONFIG = TemperatureScoreControls(
-        base_year = 2019,
-        target_end_year = 2050,
-        projection_start_year = 2010,
-        projection_end_year = 2019,
-        tcre = 2.2,
-        carbon_conversion = 3664.0,
+        base_year=2019,
+        target_end_year=2050,
+        projection_start_year=2010,
+        projection_end_year=2019,
+        tcre=2.2,
+        carbon_conversion=3664.0,
         scenario_target_temperature=1.5
     )
-
-

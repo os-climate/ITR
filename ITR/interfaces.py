@@ -58,6 +58,68 @@ class PortfolioCompany(BaseModel):
     user_fields: Optional[dict]
 
 
+class IBenchmarkProjection(BaseModel):
+    year: int
+    value: float
+
+
+class IBenchmark(BaseModel):
+    sector: str
+    region: str
+    projections: List[IBenchmarkProjection]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class IBenchmarks(BaseModel):
+    benchmarks: List[IBenchmark]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+class IProductionBenchmarkScopes(BaseModel):
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
+
+
+class IEmissionIntensityBenchmarkScopes(BaseModel):
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
+    benchmark_temperature: float
+    benchmark_global_budget: float
+    is_AFOLU_included: bool
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class ICompanyProjection(BaseModel):
+    year: int
+    value: Optional[float]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class ICompanyProjections(BaseModel):
+    projections: List[ICompanyProjection]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class ICompanyProjectionsScopes(BaseModel):
+    S1S2: Optional[ICompanyProjections]
+    S3: Optional[ICompanyProjections]
+    S1S2S3: Optional[ICompanyProjections]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
 class ICompanyData(BaseModel):
     company_name: str
     company_id: str
@@ -65,6 +127,9 @@ class ICompanyData(BaseModel):
     region: str  # TODO: make SortableEnums
     sector: str  # TODO: make SortableEnums
     target_probability: float
+
+    projected_targets: ICompanyProjectionsScopes
+    projected_intensities: ICompanyProjectionsScopes
 
     country: Optional[str]
     ghg_s1s2: Optional[float]
@@ -88,6 +153,7 @@ class ICompanyAggregates(ICompanyData):
     cumulative_target: float
     benchmark_temperature: float
     benchmark_global_budget: float
+
 
 class SortableEnum(Enum):
     def __str__(self):
@@ -117,6 +183,7 @@ class SortableEnum(Enum):
             return order.index(self) < order.index(other)
         return NotImplemented
 
+
 class TemperatureScoreControls(BaseModel):
     base_year: int
     target_end_year: int
@@ -132,6 +199,7 @@ class TemperatureScoreControls(BaseModel):
     @property
     def tcre_multiplier(self) -> float:
         return self.tcre / self.carbon_conversion
+
 
 class EScope(SortableEnum):
     S1 = "S1"

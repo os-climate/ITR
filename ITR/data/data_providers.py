@@ -62,8 +62,6 @@ class CompanyDataProvider(ABC):
         """
         raise NotImplementedError
 
-    def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
-        return self.get_company_projected_intensities(company_ids)[year]
 
     @abstractmethod
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
@@ -74,16 +72,6 @@ class CompanyDataProvider(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def _unit_of_measure_correction(self, company_ids: List[str], projected_emission: pd.DataFrame) -> pd.DataFrame:
-        """
-        Corrects the projection emissions for the configured sectors with a temperature correction from the
-        TempScoreConfig
-        :param company_ids: list of company ids
-        :param projected_emission: series of projected emissions
-        :return: series of projected emissions corrected for unit of measure
-        """
-        raise NotImplementedError
 
 class ProductionBenchmarkDataProvider(ABC):
     """
@@ -131,7 +119,7 @@ class IntensityBenchmarkDataProvider(ABC):
     """
     AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
 
-    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, is_AFOLU_included: bool = False,
+    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, is_AFOLU_included: bool,
                  **kwargs):
         """
         Create a new data provider instance.
@@ -174,20 +162,20 @@ class IntensityBenchmarkDataProvider(ABC):
         self._benchmark_global_budget = value
 
     @abstractmethod
-    def _get_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
+    def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param company_secor_region_info: DataFrame with at least the following columns :
+        :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         raise NotImplementedError
 
     @abstractmethod
-    def get_SDA_intensity_benchmarks(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param company_secor_region_info: DataFrame with at least the following columns :
+        :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
