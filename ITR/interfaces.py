@@ -98,7 +98,7 @@ class IEmissionIntensityBenchmarkScopes(BaseModel):
 
 class ICompanyProjection(BaseModel):
     year: int
-    value: float
+    value: Optional[float]
 
     def __getitem__(self, item):
         return getattr(self, item)

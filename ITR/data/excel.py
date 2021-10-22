@@ -6,11 +6,30 @@ from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProduct
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
 from ITR.interfaces import ICompanyData, ICompanyProjection, EScope, IEmissionIntensityBenchmarkScopes, \
-    IProductionBenchmarkScopes
+    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection
 import logging
 
 
 # TODO: Force validation for excel benchmarks
+
+# Utils functions:
+
+def convert_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
+                                     column_name_sector: str) -> IBenchmarks:
+    """
+    Converts excel into IBenchmarks
+    :param excal_path: file path to excel
+    :return: IBenchmarks instance (list of IBenchmark)
+    """
+    df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
+        [column_name_region, column_name_sector])
+    result = []
+    for index, row in df_ei_bms.iterrows():
+        bm = IBenchmark(region=index[0], sector=index[1],
+                        projections=[IBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
+        result.append(bm)
+    return IBenchmarks(benchmarks=result)
+
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
@@ -28,9 +47,14 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         :param column_config: An optional ColumnsConfig object containing relevant variable names
         :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
-        super().__init__(None, column_config, tempscore_config)
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
+        self._convert_excel_to_model = convert_benchmark_excel_to_model
+        production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
+                                                      column_config.REGION, column_config.SECTOR)
+        super().__init__(
+            IProductionBenchmarkScopes(S1S2=production_bms), column_config,
+            tempscore_config)
 
     def _check_sector_data(self) -> None:
         """
@@ -56,21 +80,16 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                  benchmark_global_budget: float, is_AFOLU_included: bool,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__(IEmissionIntensityBenchmarkScopes(benchmark_temperature=benchmark_temperature,
-                                                           benchmark_global_budget=benchmark_global_budget,
-                                                           is_AFOLU_included=is_AFOLU_included), column_config,
-                         tempscore_config)
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
-
-    def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.Series:
-        """
-        Converts IBenchmarkScopes into dataframe for a scope
-        :param scope: a scope
-        :return: pd.Series
-        """
-        return self.benchmark_excel[TabsConfig.PROJECTED_EI].reset_index().set_index(
-            [self.column_config.REGION, self.column_config.SECTOR])
+        self._convert_excel_to_model = convert_benchmark_excel_to_model
+        EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
+                                                     column_config.REGION, column_config.SECTOR)
+        super().__init__(
+            IEmissionIntensityBenchmarkScopes(S1S2=EI_benchmarks, benchmark_temperature=benchmark_temperature,
+                                              benchmark_global_budget=benchmark_global_budget,
+                                              is_AFOLU_included=is_AFOLU_included), column_config,
+            tempscore_config)
 
     def _check_sector_data(self) -> None:
         """

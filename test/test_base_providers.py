@@ -32,7 +32,6 @@ class TestBaseProvider(unittest.TestCase):
             parsed_json = json.load(json_file)
         self.companies = [ICompanyData.parse_obj(company_data) for company_data in parsed_json]
         self.base_company_data = BaseCompanyDataProvider(self.companies)
-        self.sector_data_path = os.path.join(self.root, "inputs", "OECM_EI_and_production_benchmarks.xlsx")
 
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
