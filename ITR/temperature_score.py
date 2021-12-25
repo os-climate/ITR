@@ -76,7 +76,7 @@ class TemperatureScore(PortfolioAggregation):
         Get the aggregated temperature score and a temperature result, which indicates how much of the score is based on the default score for a certain company based on the emissions of company.
 
         :param company_data: The original data, grouped by company, time frame and scope category
-        :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score
+        :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score)
         :return: The aggregated temperature score for a company
         """
         if row[self.c.COLS.SCOPE] != EScope.S1S2S3:
