@@ -2,7 +2,7 @@ import pandas as pd
 from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, PScope, IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, \
     IBenchmark
 
 
@@ -28,7 +28,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         self.temp_config = tempscore_config
 
     def _convert_projections_to_series(self, company: ICompanyData, feature: str,
-                                       scope: EScope = EScope.S1S2) -> pd.Series:
+                                       scope: PScope = PScope.S1S2) -> pd.Series:
         """
         extracts the company projected intensities or targets for a given scope
         :param feature: PROJECTED_EI or PROJECTED_TARGETS
@@ -78,15 +78,17 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         overrides subclass method
         :param: company_ids: list of company ids
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
-        ColumnsConfig.REGION
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI,
+        ColumnsConfig.SECTOR and ColumnsConfig.REGION
         """
         df_fundamentals = self.get_company_fundamentals(company_ids)
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
+                          self.column_config.PRODUCTION,
                           self.column_config.GHG_SCOPE12]]
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
+        # print(f"BA: company_info.loc[] = {company_info.loc['US0185223007']}")
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
     def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
@@ -96,7 +98,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         return pd.DataFrame.from_records(
             [ICompanyData.parse_obj(c).dict() for c in self.get_company_data(company_ids)],
-            exclude=['projected_targets', 'projected_intensities']).set_index(self.column_config.COMPANY_ID)
+            exclude=['projected_production_units', 'projected_targets', 'projected_intensities']).set_index(self.column_config.COMPANY_ID)
 
     def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
         """
@@ -114,6 +116,15 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         return pd.DataFrame(
             [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
+             self.get_company_data(company_ids)])
+
+    def get_company_projected_production(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: A list of company IDs
+        :return: A pandas DataFrame with projected production per company
+        """
+        return pd.DataFrame(
+            [self._convert_projections_to_series(c, self.column_config.PROJECTED_PRODUCTION) for c in
              self.get_company_data(company_ids)])
 
 
@@ -142,7 +153,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector))
 
-    def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
+    def _get_projected_production(self, scope: PScope = PScope.PRODUCTION) -> pd.DataFrame:
         """
         Converts IBenchmarkScopes into dataframe for a scope
         :param scope: a scope
@@ -156,19 +167,19 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
         return df_bm
 
-    def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
+    def get_company_projected_production(self, production: pd.DataFrame) -> pd.DataFrame:
         """
-        get the projected productions for list of companies in ghg_scope12
-        :param ghg_scope12: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID,ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        get the projected productions for list of companies (PRODUCTIONS not S1S2)
+        :param production: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID,ColumnsConfig.PRODUCTION, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
-        benchmark_production_projections = self.get_benchmark_projections(ghg_scope12)
+        benchmark_production_projections = self.get_benchmark_projections(production)
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-            ghg_scope12[self.column_config.GHG_SCOPE12].values, axis=0)
+            production[self.column_config.PRODUCTION].values, axis=0)
 
     def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame,
-                                  scope: EScope = EScope.S1S2) -> pd.DataFrame:
+                                  scope: PScope = PScope.S1S2) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with production benchmarks per company_id given a region and sector.
@@ -246,7 +257,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector))
 
-    def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.Series:
+    def _get_projected_intensities(self, scope: PScope = PScope.S1S2) -> pd.Series:
         """
         Converts IBenchmarkScopes into dataframe for a scope
         :param scope: a scope
@@ -261,7 +272,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         return df_bm
 
     def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame,
-                                  scope: EScope = EScope.S1S2) -> pd.DataFrame:
+                                  scope: PScope = PScope.S1S2) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with production benchmarks per company_id given a region and sector.

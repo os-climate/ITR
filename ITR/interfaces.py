@@ -79,6 +79,7 @@ class IBenchmarks(BaseModel):
         return getattr(self, item)
 
 class IProductionBenchmarkScopes(BaseModel):
+    PRODUCTION: Optional[IBenchmarks]
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
@@ -112,6 +113,7 @@ class ICompanyProjections(BaseModel):
 
 
 class ICompanyProjectionsScopes(BaseModel):
+    PRODUCTION: Optional[ICompanyProjections]
     S1S2: Optional[ICompanyProjections]
     S3: Optional[ICompanyProjections]
     S1S2S3: Optional[ICompanyProjections]
@@ -128,10 +130,12 @@ class ICompanyData(BaseModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
+    projected_production_units: ICompanyProjectionsScopes
     projected_targets: ICompanyProjectionsScopes
     projected_intensities: ICompanyProjectionsScopes
 
     country: Optional[str]
+    production: Optional[float]
     ghg_s1s2: Optional[float]
     ghg_s3: Optional[float]
 
@@ -201,19 +205,21 @@ class TemperatureScoreControls(BaseModel):
         return self.tcre / self.carbon_conversion
 
 
-class EScope(SortableEnum):
+class PScope(SortableEnum):
     S1 = "S1"
     S2 = "S2"
     S3 = "S3"
     S1S2 = "S1+S2"
     S1S2S3 = "S1+S2+S3"
+    PRODUCTION = "Production"
 
     @classmethod
-    def get_result_scopes(cls) -> List['EScope']:
+    def get_result_scopes(cls) -> List['PScope']:
         """
-        Get a list of scopes that should be calculated if the user leaves it open.
+        Get a list of emission scopes that should be calculated if the user leaves it open.
+        If user doesn't ask for production scopes, don't tell them!
 
-        :return: A list of EScope objects
+        :return: A list of PScope objects
         """
         return [cls.S1S2, cls.S3, cls.S1S2S3]
 

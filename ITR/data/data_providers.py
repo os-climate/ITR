@@ -48,8 +48,8 @@ class CompanyDataProvider(ABC):
         Get the emission intensity and the production for a list of companies at the base year.
         :param: company_ids: list of company ids
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
-        ColumnsConfig.REGION
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI,
+        ColumnsConfig.SECTOR and ColumnsConfig.REGION
         """
         raise NotImplementedError
 
