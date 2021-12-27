@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC # _project
 from typing import List
 import pandas as pd
 from pydantic import ValidationError
@@ -43,27 +43,40 @@ class DataWarehouse(ABC):
         """
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
-
+        
         assert pd.Series(company_ids).isin(df_company_data.loc[:, self.column_config.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
+        # print(f"DW: company_info_at_base_year.loc[] = {company_info_at_base_year.loc['US0185223007']}")
         projected_production = self.benchmark_projected_production.get_company_projected_production(
-            company_info_at_base_year)
+            company_info_at_base_year).sort_index()
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
+        df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
-            projected_production=projected_production).to_numpy()
+            projected_production=projected_production)
+        df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_TRAJECTORY}, inplace=True)
+        df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_TARGET] = self._get_cumulative_emission(
+        df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
-            projected_production=projected_production).to_numpy()
+            projected_production=projected_production)
+        df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_TARGET}, inplace=True)
+        df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
+        df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
-            projected_production=projected_production).to_numpy()
+            projected_production=projected_production)
+        df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_BUDGET}, inplace=True)
+        df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
+        # 'US00130H1059', 'US0185223007', 'US0188021085'
+        # print(f"df_company_data.columns = {df_company_data.columns}")
+        # print(f"BUDG:\n{df_company_data.loc[df_company_data.index<40,['company_id',self.column_config.CUMULATIVE_BUDGET]]}\n\n")
+        # print(f"CIABY:\n{company_info_at_base_year.loc[df_company_data.index<40,:]}\n\n")
+        # print(f"""SDA:\n{self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
+        #         company_info_at_base_year).loc[df_company_data.index<40,:]}\n\n""")
         df_company_data.loc[:,
         self.column_config.BENCHMARK_GLOBAL_BUDGET] = self.benchmarks_projected_emission_intensity.benchmark_global_budget
         df_company_data.loc[:,
@@ -94,7 +107,7 @@ class DataWarehouse(ABC):
                 model_companies.append(ICompanyAggregates.parse_obj(company_data))
             except ValidationError as e:
                 logger.warning(
-                    "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    "DW: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
                 pass
         return model_companies
@@ -107,6 +120,13 @@ class DataWarehouse(ABC):
         :param projected_production: series of projected production series
         :return: weighted sum of production and emission
         """
-
-        return projected_emission_intensity.reset_index(drop=True).multiply(projected_production.reset_index(
-            drop=True)).sum(axis=1)
+        # print(f"DW: projected_emission_intensity['US0185223007'] = {projected_emission_intensity.loc['US0185223007']}")
+        # print(f"DW: projected_production['US0185223007'] = {projected_production.loc['US0185223007']}")
+        # print(projected_emission_intensity.index[0:3])
+        # print(projected_emission_intensity.iloc[0:3])
+        # print(projected_production.index[0:3])
+        # print(projected_production.iloc[0:3])
+        df = projected_emission_intensity.multiply(projected_production).sum(axis=1)
+        df = pd.DataFrame(data=df, index=df.index).reset_index()
+        df.rename(columns={'index':'company_id', 0:'cumulative_value'},inplace=True)
+        return df

@@ -25,6 +25,7 @@ class ColumnsConfig:
     OWNED_EMISSIONS = "owned_emissions"
     COUNTRY = 'country'
     SECTOR = 'sector'
+    PRODUCTION = 'production'
     GHG_SCOPE12 = 'ghg_s1s2'
     GHG_SCOPE3 = 'ghg_s3'
     COMPANY_REVENUE = 'company_revenue'
@@ -44,6 +45,7 @@ class ColumnsConfig:
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
     BASE_EI = 'emission_intensity_at_base_year'
+    PROJECTED_PRODUCTION = 'projected_production_units'
     PROJECTED_EI = 'projected_intensities'
     PROJECTED_TARGETS = 'projected_targets'
     TRAJECTORY_SCORE = 'trajectory_score'

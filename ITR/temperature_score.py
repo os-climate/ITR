@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import itertools
 
-from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
+from ITR.interfaces import PScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
 from ITR.configs import TemperatureScoreConfig
@@ -22,7 +22,7 @@ class TemperatureScore(PortfolioAggregation):
                     class and overwriting one of the parameters.
     """
 
-    def __init__(self, time_frames: List[ETimeFrames], scopes: List[EScope], fallback_score: float = 3.2,
+    def __init__(self, time_frames: List[ETimeFrames], scopes: List[PScope], fallback_score: float = 3.2,
                  aggregation_method: PortfolioAggregationMethod = PortfolioAggregationMethod.WATS,
                  grouping: Optional[List] = None, config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(config)
@@ -76,13 +76,13 @@ class TemperatureScore(PortfolioAggregation):
         Get the aggregated temperature score and a temperature result, which indicates how much of the score is based on the default score for a certain company based on the emissions of company.
 
         :param company_data: The original data, grouped by company, time frame and scope category
-        :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score
+        :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score)
         :return: The aggregated temperature score for a company
         """
-        if row[self.c.COLS.SCOPE] != EScope.S1S2S3:
+        if row[self.c.COLS.SCOPE] != PScope.S1S2S3:
             return row[self.c.COLS.TEMPERATURE_SCORE], row[self.c.TEMPERATURE_RESULTS]
-        s1s2 = company_data.loc[(row[self.c.COLS.COMPANY_ID], row[self.c.COLS.TIME_FRAME], EScope.S1S2)]
-        s3 = company_data.loc[(row[self.c.COLS.COMPANY_ID], row[self.c.COLS.TIME_FRAME], EScope.S3)]
+        s1s2 = company_data.loc[(row[self.c.COLS.COMPANY_ID], row[self.c.COLS.TIME_FRAME], PScope.S1S2)]
+        s3 = company_data.loc[(row[self.c.COLS.COMPANY_ID], row[self.c.COLS.TIME_FRAME], PScope.S3)]
 
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
@@ -116,10 +116,10 @@ class TemperatureScore(PortfolioAggregation):
 
         # If scope S1S2S3 is in the list of scopes to calculate, we need to calculate the other two as well
         scopes = self.scopes.copy()
-        if EScope.S1S2S3 in self.scopes and EScope.S1S2 not in self.scopes:
-            scopes.append(EScope.S1S2)
-        if EScope.S1S2S3 in scopes and EScope.S3 not in scopes:
-            scopes.append(EScope.S3)
+        if PScope.S1S2S3 in self.scopes and PScope.S1S2 not in self.scopes:
+            scopes.append(PScope.S1S2)
+        if PScope.S1S2S3 in scopes and PScope.S3 not in scopes:
+            scopes.append(PScope.S3)
 
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
@@ -142,8 +142,9 @@ class TemperatureScore(PortfolioAggregation):
         """
         # Calculate the GHC
         company_data = data[
-            [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
-             self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.TEMPERATURE_RESULTS]
+            [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE,
+             self.c.COLS.PRODUCTION, self.c.COLS.GHG_SCOPE12, self.c.COLS.GHG_SCOPE3,
+             self.c.COLS.TEMPERATURE_SCORE, self.c.TEMPERATURE_RESULTS]
         ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]).mean()
 
         data[self.c.COLS.TEMPERATURE_SCORE], data[self.c.TEMPERATURE_RESULTS] = zip(*data.apply(
@@ -171,9 +172,15 @@ class TemperatureScore(PortfolioAggregation):
 
         data = self._prepare_data(data)
 
-        if EScope.S1S2S3 in self.scopes:
+        checks_passed = False
+        if PScope.S1S2S3 in self.scopes:
             self._check_column(data, self.c.COLS.GHG_SCOPE12)
             self._check_column(data, self.c.COLS.GHG_SCOPE3)
+            checks_passed = True
+        if PScope.PRODUCTION in self.scopes:
+            self._check_column(data, self.c.COLS.PRODUCTION)
+            checks_passed = True
+        if checks_passed:
             data = self._calculate_company_score(data)
 
         # We need to filter the scopes again, because we might have had to add a scope in te preparation step
@@ -205,7 +212,7 @@ class TemperatureScore(PortfolioAggregation):
                data[self.c.COLS.CONTRIBUTION_RELATIVE], \
                data[self.c.COLS.CONTRIBUTION]
 
-    def _get_score_aggregation(self, data: pd.DataFrame, time_frame: ETimeFrames, scope: EScope) -> \
+    def _get_score_aggregation(self, data: pd.DataFrame, time_frame: ETimeFrames, scope: PScope) -> \
             Optional[ScoreAggregation]:
         """
         Get a score aggregation for a certain time frame and scope, for the data set as a whole and for the different

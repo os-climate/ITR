@@ -2,7 +2,7 @@ import pandas as pd
 from typing import List, Optional, Tuple
 
 from .configs import ColumnsConfig, TemperatureScoreConfig
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
+from .interfaces import PortfolioCompany, PScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 
 from .temperature_score import TemperatureScore
 from .portfolio_aggregation import PortfolioAggregationMethod
@@ -73,7 +73,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
 def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_method: PortfolioAggregationMethod,
               grouping: Optional[List[str]], time_frames: List[ETimeFrames],
-              scopes: List[EScope], anonymize: bool, aggregate: bool = True,
+              scopes: List[PScope], anonymize: bool, aggregate: bool = True,
               controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,
                                                                             Optional[ScoreAggregations]]:
     """

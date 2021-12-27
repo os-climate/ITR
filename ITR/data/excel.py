@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
-from ITR.interfaces import ICompanyData, ICompanyProjection, EScope, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, ICompanyProjection, PScope, IEmissionIntensityBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection
 import logging
 
@@ -30,7 +30,7 @@ def convert_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, col
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
-
+# ??? This duplicates info from 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
     PROJECTED_EI = "projected_ei_in_Wh"
@@ -53,7 +53,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
                                                       column_config.REGION, column_config.SECTOR)
         super().__init__(
-            IProductionBenchmarkScopes(S1S2=production_bms), column_config,
+            IProductionBenchmarkScopes(PRODUCTION=production_bms), column_config,
             tempscore_config)
 
     def _check_sector_data(self) -> None:
@@ -65,7 +65,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
             self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
-    def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
+    def _get_projected_production(self, scope: PScope = PScope.PRODUCTION) -> pd.DataFrame:
         """
         interface from excel file and internally used DataFrame
         :param scope:
@@ -137,9 +137,10 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
         company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
+        df_production = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_PRODUCTION])
         df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET])
         df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI])
-        return self._company_df_to_model(df_fundamentals, df_targets, df_ei)
+        return self._company_df_to_model(df_fundamentals, df_production, df_targets, df_ei)
 
     def _convert_series_to_projections(self, projections: pd.Series, convert_unit: bool = False) -> List[
         ICompanyProjection]:
@@ -152,12 +153,14 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         projections = projections * self.ENERGY_UNIT_CONVERSION_FACTOR if convert_unit else projections
         return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
 
-    def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame) -> \
+    def _company_df_to_model(self, df_fundamentals: pd.DataFrame,
+                             df_production: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame) -> \
             List[ICompanyData]:
         """
         transforms target Dataframe into list of IDataProviderTarget instances
 
         :param df_fundamentals: pandas Dataframe with fundamental data
+        :param df_production: pandas Dataframe with production
         :param df_targets: pandas Dataframe with targets
         :param df_ei: pandas Dataframe with emission intensities
         :return: A list containing the ICompanyData objects
@@ -171,12 +174,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         for company_data in companies_data_dict:
             try:
                 convert_unit_of_measure = company_data[self.column_config.SECTOR] in self.CORRECTION_SECTORS
-                company_targets = self._convert_series_to_projections(
-                    df_targets.loc[company_data[self.column_config.COMPANY_ID], :], convert_unit_of_measure)
+                company_production = self._convert_series_to_projections(
+                    df_production.loc[company_data[self.column_config.COMPANY_ID], :], convert_unit_of_measure)
                 company_ei = self._convert_series_to_projections(
-                    df_ei.loc[company_data[self.column_config.COMPANY_ID], :],
-                    convert_unit_of_measure)
-
+                    df_ei.loc[company_data[self.column_config.COMPANY_ID], :], convert_unit_of_measure)
+                company_targets = self._convert_series_to_projections(
+                    df_targets.loc[company_data[self.column_config.COMPANY_ID], :], False)
+                company_data.update({self.column_config.PROJECTED_PRODUCTION: {'PRODUCTION': {'projections': company_production}}})
                 company_data.update({self.column_config.PROJECTED_TARGETS: {'S1S2': {'projections': company_targets}}})
                 company_data.update({self.column_config.PROJECTED_EI: {'S1S2': {'projections': company_ei}}})
 
@@ -184,7 +188,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
             except ValidationError as e:
                 logger.warning(
-                    "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    "EX: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
                 pass
         return model_companies
