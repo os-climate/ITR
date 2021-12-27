@@ -3,6 +3,13 @@ from typing import List
 import pandas as pd
 from pydantic import ValidationError
 import numpy as np
+
+import pint
+import pint_pandas
+
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+
 from ITR.interfaces import ICompanyAggregates
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
@@ -41,9 +48,12 @@ class DataWarehouse(ABC):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data and additional precalculated fields
         """
+        print(f"company_ids = {company_ids}\n\n")
         company_data = self.company_data.get_company_data(company_ids)
+        print(f"company_data = {company_data}\n\n")
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
 
+        print(f"df_company_data = {df_company_data}\n\n")
         assert pd.Series(company_ids).isin(df_company_data.loc[:, self.column_config.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
@@ -64,6 +74,7 @@ class DataWarehouse(ABC):
                 company_info_at_base_year),
             projected_production=projected_production).to_numpy()
 
+        print(f"self.benchmarks_projected_emission_intensity.benchmark_global_budget = {self.benchmarks_projected_emission_intensity.benchmark_global_budget}\n\n")
         df_company_data.loc[:,
         self.column_config.BENCHMARK_GLOBAL_BUDGET] = self.benchmarks_projected_emission_intensity.benchmark_global_budget
         df_company_data.loc[:,
@@ -93,8 +104,9 @@ class DataWarehouse(ABC):
             try:
                 model_companies.append(ICompanyAggregates.parse_obj(company_data))
             except ValidationError as e:
+                print(__name__, e)
                 logger.warning(
-                    "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    "DW: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
                 pass
         return model_companies

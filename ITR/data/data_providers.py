@@ -1,6 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List
 import pandas as pd
+
+from pint import Quantity
+import pint
+import pint_pandas
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+
 from ITR.interfaces import ICompanyData
 
 
@@ -119,7 +126,7 @@ class IntensityBenchmarkDataProvider(ABC):
     """
     AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
 
-    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, is_AFOLU_included: bool,
+    def __init__(self, benchmark_temperature: Quantity['degC'], benchmark_global_budget: Quantity['CO2'], is_AFOLU_included: bool,
                  **kwargs):
         """
         Create a new data provider instance.
@@ -143,14 +150,14 @@ class IntensityBenchmarkDataProvider(ABC):
         self._is_AFOLU_included = value
 
     @property
-    def benchmark_temperature(self) -> float:
+    def benchmark_temperature(self) -> Quantity['degC']:
         """
         :return: assumed temperature for the benchmark. for OECM 1.5C for example
         """
         return self._benchmark_temperature
 
     @property
-    def benchmark_global_budget(self) -> float:
+    def benchmark_global_budget(self) -> Quantity['CO2']:
         """
         :return: Benchmark provider assumed global budget. if AFOLU is not included global budget is divided by 0.76
         """
