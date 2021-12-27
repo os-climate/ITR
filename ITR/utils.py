@@ -9,6 +9,12 @@ from .portfolio_aggregation import PortfolioAggregationMethod
 
 from .data.data_warehouse import DataWarehouse
 
+from pint import Quantity
+import pint
+import pint_pandas
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+
 def _flatten_user_fields(record: PortfolioCompany):
     """
     Flatten the user fields in a portfolio company and return it as a dictionary.
@@ -71,7 +77,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     return portfolio_data
 
 
-def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_method: PortfolioAggregationMethod,
+def calculate(portfolio_data: pd.DataFrame, fallback_score: Quantity['degC'], aggregation_method: PortfolioAggregationMethod,
               grouping: Optional[List[str]], time_frames: List[ETimeFrames],
               scopes: List[EScope], anonymize: bool, aggregate: bool = True,
               controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,

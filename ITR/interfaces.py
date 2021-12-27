@@ -1,12 +1,16 @@
 from enum import Enum
 from typing import Optional, Dict, List
 from pydantic import BaseModel
+from pint import Quantity
 
+class PintModel(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
 
-class AggregationContribution(BaseModel):
+class AggregationContribution(PintModel):
     company_name: str
     company_id: str
-    temperature_score: float
+    temperature_score: Quantity['degC']
     contribution_relative: Optional[float]
     contribution: Optional[float]
 
@@ -14,8 +18,8 @@ class AggregationContribution(BaseModel):
         return getattr(self, item)
 
 
-class Aggregation(BaseModel):
-    score: float
+class Aggregation(PintModel):
+    score: Quantity['degC']
     proportion: float
     contributions: List[AggregationContribution]
 
@@ -23,7 +27,7 @@ class Aggregation(BaseModel):
         return getattr(self, item)
 
 
-class ScoreAggregation(BaseModel):
+class ScoreAggregation(PintModel):
     all: Aggregation
     influence_percentage: float
     grouped: Dict[str, Aggregation]
@@ -32,7 +36,7 @@ class ScoreAggregation(BaseModel):
         return getattr(self, item)
 
 
-class ScoreAggregationScopes(BaseModel):
+class ScoreAggregationScopes(PintModel):
     S1S2: Optional[ScoreAggregation]
     S3: Optional[ScoreAggregation]
     S1S2S3: Optional[ScoreAggregation]
@@ -41,7 +45,7 @@ class ScoreAggregationScopes(BaseModel):
         return getattr(self, item)
 
 
-class ScoreAggregations(BaseModel):
+class ScoreAggregations(PintModel):
     short: Optional[ScoreAggregationScopes]
     mid: Optional[ScoreAggregationScopes]
     long: Optional[ScoreAggregationScopes]
@@ -50,7 +54,7 @@ class ScoreAggregations(BaseModel):
         return getattr(self, item)
 
 
-class PortfolioCompany(BaseModel):
+class PortfolioCompany(PintModel):
     company_name: str
     company_id: str
     company_isin: Optional[str]
@@ -58,12 +62,12 @@ class PortfolioCompany(BaseModel):
     user_fields: Optional[dict]
 
 
-class IBenchmarkProjection(BaseModel):
+class IBenchmarkProjection(PintModel):
     year: int
-    value: float
+    value: Quantity['CO2/Wh']
 
 
-class IBenchmark(BaseModel):
+class IBenchmark(PintModel):
     sector: str
     region: str
     projections: List[IBenchmarkProjection]
@@ -72,46 +76,46 @@ class IBenchmark(BaseModel):
         return getattr(self, item)
 
 
-class IBenchmarks(BaseModel):
+class IBenchmarks(PintModel):
     benchmarks: List[IBenchmark]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
-class IProductionBenchmarkScopes(BaseModel):
+class IProductionBenchmarkScopes(PintModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
 
 
-class IEmissionIntensityBenchmarkScopes(BaseModel):
+class IEmissionIntensityBenchmarkScopes(PintModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
-    benchmark_temperature: float
-    benchmark_global_budget: float
+    benchmark_temperature: Quantity['degC']
+    benchmark_global_budget: Quantity['CO2']
     is_AFOLU_included: bool
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class ICompanyProjection(BaseModel):
+class ICompanyProjection(PintModel):
     year: int
-    value: Optional[float]
+    value: Optional[Quantity['CO2']]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class ICompanyProjections(BaseModel):
+class ICompanyProjections(PintModel):
     projections: List[ICompanyProjection]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class ICompanyProjectionsScopes(BaseModel):
+class ICompanyProjectionsScopes(PintModel):
     S1S2: Optional[ICompanyProjections]
     S3: Optional[ICompanyProjections]
     S1S2S3: Optional[ICompanyProjections]
@@ -120,17 +124,17 @@ class ICompanyProjectionsScopes(BaseModel):
         return getattr(self, item)
 
 
-class IProductionRealization(BaseModel):
+class IProductionRealization(PintModel):
     year: int
-    value: Optional[float]
+    value: Optional[Quantity['CO2/Wh']]
 
 
-class IEmissionRealization(BaseModel):
+class IEmissionRealization(PintModel):
     year: int
-    value: Optional[float]
+    value: Optional[Quantity['CO2/Wh']]
 
 
-class IHistoricEmissionsScopes(BaseModel):
+class IHistoricEmissionsScopes(PintModel):
     S1: List[IEmissionRealization]
     S2: List[IEmissionRealization]
     S1S2: List[IEmissionRealization]
@@ -138,12 +142,12 @@ class IHistoricEmissionsScopes(BaseModel):
     S1S2S3: List[IEmissionRealization]
 
 
-class IEIRealization(BaseModel):
+class IEIRealization(PintModel):
     year: int
-    value: Optional[float]
+    value: Optional[Quantity['CO2/Wh']]
 
 
-class IHistoricEIScopes(BaseModel):
+class IHistoricEIScopes(PintModel):
     S1: List[IEIRealization]
     S2: List[IEIRealization]
     S1S2: List[IEIRealization]
@@ -151,13 +155,13 @@ class IHistoricEIScopes(BaseModel):
     S1S2S3: List[IEIRealization]
 
 
-class IHistoricData(BaseModel):
+class IHistoricData(PintModel):
     productions: Optional[List[IProductionRealization]]
     emissions: Optional[IHistoricEmissionsScopes]
     emission_intensities: Optional[IHistoricEIScopes]
 
 
-class ICompanyData(BaseModel):
+class ICompanyData(PintModel):
     company_name: str
     company_id: str
 
@@ -170,8 +174,8 @@ class ICompanyData(BaseModel):
     projected_intensities: Optional[ICompanyProjectionsScopes]
 
     country: Optional[str]
-    ghg_s1s2: Optional[float]
-    ghg_s3: Optional[float]
+    ghg_s1s2: Optional[Quantity['CO2']]
+    ghg_s3: Optional[Quantity['CO2']]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -186,11 +190,11 @@ class ICompanyData(BaseModel):
 
 
 class ICompanyAggregates(ICompanyData):
-    cumulative_budget: float
-    cumulative_trajectory: float
-    cumulative_target: float
-    benchmark_temperature: float
-    benchmark_global_budget: float
+    cumulative_budget: Quantity['CO2']
+    cumulative_trajectory: Quantity['CO2']
+    cumulative_target: Quantity['CO2']
+    benchmark_temperature: Quantity['degC']
+    benchmark_global_budget: Quantity['CO2']
 
 
 class SortableEnum(Enum):
@@ -222,14 +226,14 @@ class SortableEnum(Enum):
         return NotImplemented
 
 
-class TemperatureScoreControls(BaseModel):
+class TemperatureScoreControls(PintModel):
     base_year: int
     target_end_year: int
     projection_start_year: int
     projection_end_year: int
     tcre: float
     carbon_conversion: float
-    scenario_target_temperature: float
+    scenario_target_temperature: Quantity['degC']
 
     def __getitem__(self, item):
         return getattr(self, item)

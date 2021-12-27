@@ -1,8 +1,14 @@
 from typing import Optional, Tuple, Type, List
+from pint import Quantity
 
 import pandas as pd
 import numpy as np
 import itertools
+import pint
+import pint_pandas
+
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
 
 from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
@@ -22,7 +28,7 @@ class TemperatureScore(PortfolioAggregation):
                     class and overwriting one of the parameters.
     """
 
-    def __init__(self, time_frames: List[ETimeFrames], scopes: List[EScope], fallback_score: float = 3.2,
+    def __init__(self, time_frames: List[ETimeFrames], scopes: List[EScope], fallback_score: float = Q_(3.2, ureg.degC),
                  aggregation_method: PortfolioAggregationMethod = PortfolioAggregationMethod.WATS,
                  grouping: Optional[List] = None, config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(config)
