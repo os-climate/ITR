@@ -49,6 +49,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
+        print("returning Series...")
         return pd.Series(
             {r['year']: r['value'] for r in company.dict()[feature][str(scope)]['projections']},
             name=company.company_id)

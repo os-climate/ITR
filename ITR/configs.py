@@ -4,6 +4,11 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from .interfaces import TemperatureScoreControls
 
+from pint import Quantity
+import pint
+import pint_pandas
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -96,7 +101,7 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         projection_end_year=2019,
         tcre=2.2,
         carbon_conversion=3664.0,
-        scenario_target_temperature=1.5
+        scenario_target_temperature=Q_(1.5, ureg.degC)
     )
 
 
