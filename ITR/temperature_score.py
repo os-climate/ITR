@@ -63,9 +63,6 @@ class TemperatureScore(PortfolioAggregation):
             target_overshoot_ratio = 0
             trajectory_overshoot_ratio = 0
 
-        print(f"scorable_row = {scorable_row}")
-        print(f"self.c.CONTROLS_CONFIG.tcre_multiplier = {self.c.CONTROLS_CONFIG.tcre_multiplier}")
-        print(f"target_overshoot_ratio = {target_overshoot_ratio}")
         target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                                    (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
                                            target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
@@ -135,9 +132,6 @@ class TemperatureScore(PortfolioAggregation):
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
         scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
-        print(scoring_data.columns)
-        print(scoring_data.dtypes)
-        print(scoring_data.iloc[0:5])
         scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
             self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
             self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
@@ -189,9 +183,9 @@ class TemperatureScore(PortfolioAggregation):
             self._check_column(data, self.c.COLS.GHG_SCOPE3)
             data = self._calculate_company_score(data)
 
-        # We need to filter the scopes again, because we might have had to add a scope in te preparation step
+        # We need to filter the scopes again, because we might have had to add a scope in the preparation step
         data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
-        data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].round(2)
+        data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(lambda x: Q_(x.m.round(2), x.u))
         return data
 
     def _get_aggregations(self, data: pd.DataFrame, total_companies: int) -> Tuple[Aggregation, pd.Series, pd.Series]:
@@ -210,13 +204,15 @@ class TemperatureScore(PortfolioAggregation):
             .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
             .where(pd.notnull(data), None) \
             .to_dict(orient="records")
-        return Aggregation(
+        aggregations = Aggregation(
             score=weighted_scores.sum(),
             proportion=len(weighted_scores) / (total_companies / 100.0),
             contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]
         ), \
                data[self.c.COLS.CONTRIBUTION_RELATIVE], \
                data[self.c.COLS.CONTRIBUTION]
+        
+        return aggregations
 
     def _get_score_aggregation(self, data: pd.DataFrame, time_frame: ETimeFrames, scope: EScope) -> \
             Optional[ScoreAggregation]:
