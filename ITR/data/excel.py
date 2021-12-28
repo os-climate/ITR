@@ -17,6 +17,8 @@ from ITR.interfaces import ICompanyData, ICompanyProjection, ICompanyEIProjectio
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection
 import logging
 
+from ITR.interfaces import ICompanyProjections
+import inspect
 
 # TODO: Force validation for excel benchmarks
 
@@ -29,7 +31,6 @@ def convert_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, col
     :param excal_path: file path to excel
     :return: IBenchmarks instance (list of IBenchmark)
     """
-    print("here")
     df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
     result = []
@@ -144,11 +145,18 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
         company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
-        print("before df_targets set")
         df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[Mt CO2]')
         df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], 'pint[t CO2/MWh]')
-        print("after df_ei set")
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei)
+
+    def _convert_series_to_projections(self, projections: pd.Series) -> List[
+        ICompanyProjection]:
+        """
+        Converts a Pandas Series in a list of ICompanyProjections
+        :param projections: Pandas Series with years as indices
+        :return: List of ICompanyProjection objects
+        """
+        return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame) -> \
             List[ICompanyData]:
@@ -167,17 +175,23 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
         for company_data in companies_data_dict:
+            # company_data is a dict, not a dataframe
             try:
-                print(f"company_data = {company_data}")
-                break
+                company_id = company_data[self.column_config.COMPANY_ID]
                 # pint automatically handles any unit conversions required
-                company_data.update({self.column_config.PROJECTED_TARGETS: {'S1S2': {'projections': df_targets}}})
-                company_data.update({self.column_config.PROJECTED_EI: {'S1S2': {'projections': df_ei}}})
-                print("after company_data.update")
-
+                ghg_s1s2 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE12].squeeze()
+                if ghg_s1s2 is None:
+                    ghg_s1s2 = 1
+                company_data[self.column_config.GHG_SCOPE12] = Q_(ghg_s1s2, ureg('t CO2'))
+                ghg_s3 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE3].squeeze()
+                if ghg_s3 is None:
+                    ghg_s3 = 1
+                company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, ureg('t CO2'))
+                company_data[self.column_config.PROJECTED_TARGETS] = {'S1S2': {'projections': self._convert_series_to_projections (df_targets.loc[company_id, :])}}
+                company_data[self.column_config.PROJECTED_EI] = {'S1S2': {'projections': self._convert_series_to_projections (df_ei.loc[company_id, :])}}
+                # The call to parse_obj essentially says "I put it all together manually, please validate that it's correct",
+                # as opposed to using constructors to build the object validly in the first place.
                 model_companies.append(ICompanyData.parse_obj(company_data))
-                print("after model_companies.append")
-
             except ValidationError as e:
                 print(__name__, e)
                 logger.warning(

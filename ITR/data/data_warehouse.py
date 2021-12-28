@@ -48,37 +48,54 @@ class DataWarehouse(ABC):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data and additional precalculated fields
         """
-        print(f"company_ids = {company_ids}\n\n")
+        # print(f"company_ids = {company_ids}\n\n")
         company_data = self.company_data.get_company_data(company_ids)
-        print(f"company_data = {company_data}\n\n")
+        # print(f"company_data = {company_data}\n\n")
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
 
-        print(f"df_company_data = {df_company_data}\n\n")
+        # print(f"df_company_data = {df_company_data}\n\n")
         assert pd.Series(company_ids).isin(df_company_data.loc[:, self.column_config.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
+        print(f"before company_info_at_base_year")
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
+        # print(f"after company_info_at_base_year\n\n{company_info_at_base_year}")
+        # print(f"DW: company_info_at_base_year.loc[] = {company_info_at_base_year.loc['US0185223007']}")
         projected_production = self.benchmark_projected_production.get_company_projected_production(
-            company_info_at_base_year)
-
-        df_company_data.loc[:, self.column_config.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
+            company_info_at_base_year).sort_index()
+        print(f"projected_production = {projected_production.iloc[0:5,0:5]}")
+        production_sum = projected_production.sum(axis=0)
+        print(f"production_sum = {production_sum.iloc[0:5]}")
+        production_weights = projected_production.divide(production_sum, axis=1)
+        print(f"production_weights = {production_weights.iloc[0:5,0:5]}")
+        # print(f"projected_production.iloc = {projected_production.iloc[0:3, 0:3]}")
+        # projection_weights = projected_production.groupby(self.column_config.COMPANY_ID)[]
+        df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
-            projected_production=projected_production).to_numpy()
+            production_weights=production_weights)
+        df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_TRAJECTORY}, inplace=True)
+        df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_TARGET] = self._get_cumulative_emission(
+        df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
-            projected_production=projected_production).to_numpy()
+            production_weights=production_weights)
+        df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_TARGET}, inplace=True)
+        print(f"df_target = {df_new}\n\n")
+        df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
+        print(f"before CUMULATIVE_BUDGET")
+        df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
-            projected_production=projected_production).to_numpy()
+            production_weights=production_weights)
+        df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_BUDGET}, inplace=True)
+        df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
-        print(f"self.benchmarks_projected_emission_intensity.benchmark_global_budget = {self.benchmarks_projected_emission_intensity.benchmark_global_budget}\n\n")
-        df_company_data.loc[:,
-        self.column_config.BENCHMARK_GLOBAL_BUDGET] = self.benchmarks_projected_emission_intensity.benchmark_global_budget
-        df_company_data.loc[:,
-        self.column_config.BENCHMARK_TEMP] = self.benchmarks_projected_emission_intensity.benchmark_temperature
+        # print(f"self.benchmarks_projected_emission_intensity.benchmark_global_budget = {self.benchmarks_projected_emission_intensity.benchmark_global_budget}\n\n")
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
+                                                                                            len(df_company_data), dtype='pint[t CO2]')
+        df_company_data[self.column_config.BENCHMARK_TEMP] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
+                                                                                   len(df_company_data), dtype='pint[degC]')
 
         companies = df_company_data.to_dict(orient="records")
 
@@ -111,14 +128,23 @@ class DataWarehouse(ABC):
                 pass
         return model_companies
 
-    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
-                                 ) -> pd.Series:
+    def _weighted_mean(df, values, weights, groupby):
+        df = df.copy()
+        grouped = df.groupby(groupby)
+        df['weighted_average'] = df[values] / grouped[weights].transform('sum') * df[weights]
+        return grouped['weighted_average'].sum(min_count=1) #min_count is required for Grouper objects
+
+    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, production_weights: pd.DataFrame
+                                 ) -> pd.DataFrame:
         """
         get the weighted sum of the projected emission times the projected production
         :param projected_emission_intensity: series of projected emissions
-        :param projected_production: series of projected production series
+        :param production_weights: series of weights to use for emission_intensity sums
         :return: weighted sum of production and emission
         """
-
-        return projected_emission_intensity.reset_index(drop=True).multiply(projected_production.reset_index(
-            drop=True)).sum(axis=1)
+        # print(f"DW: projected_emission_intensity['US0185223007'] = {projected_emission_intensity.loc['US0185223007']}")
+        # print(f"DW: projected_production['US0185223007'] = {projected_production.loc['US0185223007']}")
+        df = projected_emission_intensity.multiply(production_weights).sum(axis=1)
+        df = pd.DataFrame(data=df, index=df.index).reset_index()
+        df.rename(columns={'index':'company_id', 0:'cumulative_value'},inplace=True)
+        return df

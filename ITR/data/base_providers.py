@@ -1,4 +1,11 @@
 import pandas as pd
+
+import pint
+import pint_pandas
+
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+
 from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
@@ -35,7 +42,6 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        print("returning Series...")
         return pd.Series(
             {r['year']: r['value'] for r in company.dict()[feature][str(scope)]['projections']},
             name=company.company_id)
@@ -212,7 +218,9 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
         intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
+        print("before decarb paths")
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
+        print("after decarb paths")
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
 
@@ -231,12 +239,13 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         Overrides subclass method
         returns a Series with the decarbonization path for a benchmark.
-        :param: A Series with company and intensity benchmarks per calendar year per row
-        :return: A pd.Series with company and decarbonisation path s per calendar year per row
+        :param: A Series with a company's intensity benchmarks per calendar year per row
+        :return: A pd.Series with a company's decarbonisation paths per calendar year per row
         """
         first_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.base_year]
         last_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.target_end_year]
-        return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
+        # This throws a warning when processing a NaN
+        return intensity_benchmark_row.apply(lambda x: Q_((x - last_ei) / (first_ei - last_ei)), ureg('t CO2/MWh'))
 
     def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
         """

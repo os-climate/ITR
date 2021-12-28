@@ -109,7 +109,7 @@ class ICompanyProjection(PintModel):
 
 
 class ICompanyProjections(PintModel):
-    projections: List[ICompanyProjection]
+    projections: Optional[List[ICompanyProjection]]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -133,7 +133,7 @@ class ICompanyEIProjection(PintModel):
 
 
 class ICompanyEIProjections(PintModel):
-    projections: List[ICompanyEIProjection]
+    projections: Optional[List[ICompanyEIProjection]]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -156,8 +156,8 @@ class ICompanyData(PintModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
-    projected_targets: ICompanyProjectionsScopes
-    projected_intensities: ICompanyEIProjectionsScopes
+    projected_targets: Optional[ICompanyProjectionsScopes]
+    projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
     country: Optional[str]
     ghg_s1s2: Optional[Quantity['CO2']]
@@ -217,15 +217,15 @@ class TemperatureScoreControls(PintModel):
     target_end_year: int
     projection_start_year: int
     projection_end_year: int
-    tcre: float
-    carbon_conversion: float
+    tcre: Quantity['delta_degC']
+    carbon_conversion: Quantity['CO2']
     scenario_target_temperature: Quantity['degC']
 
     def __getitem__(self, item):
         return getattr(self, item)
 
     @property
-    def tcre_multiplier(self) -> float:
+    def tcre_multiplier(self) -> Quantity['delta_degC/CO2']:
         return self.tcre / self.carbon_conversion
 
 
