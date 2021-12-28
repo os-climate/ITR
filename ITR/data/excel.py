@@ -153,7 +153,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             df_historic = None
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
-    def _convert_series_to_projections(self, projections: pd.Series, convert_unit: bool = False) -> List[
+    def _convert_series_to_projections(self, projections: pd.Series) -> List[
         ICompanyProjection]:
         """
         Converts a Pandas Series in a list of ICompanyProjections
@@ -214,10 +214,9 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 # as opposed to using constructors to build the object validly in the first place.
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError as e:
-                print(__name__, e)
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
-                        ColumnsConfig.COMPANY_NAME])
+                        self.column_config.COMPANY_NAME])
                 pass
         return model_companies
     
@@ -243,10 +242,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                                                self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
         projected_emissions_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
-        # print("about to convert in _get_projection")
         for col in projected_emissions_s1s2.columns:
             projected_emissions_s1s2[col] = projected_emissions_s1s2[col].astype(astype)
-        # print(f"projected_emissions_s1s2.loc[{astype}] = {projected_emissions_s1s2.iloc[0:7, 0:7]}")
 
         return projected_emissions_s1s2
 
