@@ -145,7 +145,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
         company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
-        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[Mt CO2]')
+        # ??? In this interpretation, we accept the `punning` of the term TARGETS as an emission intensity because that's the shape of our data.  Which is ugly and inconsistent!
+        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[t CO2/MWh]')
         df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], 'pint[t CO2/MWh]')
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei)
 
@@ -193,9 +194,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 # as opposed to using constructors to build the object validly in the first place.
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError as e:
-                print(__name__, e)
                 logger.warning(
-                    "EX: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
                 pass
         return model_companies
@@ -222,9 +222,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                                                self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
         projected_emissions_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
-        # print("about to convert in _get_projection")
         for col in projected_emissions_s1s2.columns:
             projected_emissions_s1s2[col] = projected_emissions_s1s2[col].astype(astype)
-        # print(f"projected_emissions_s1s2.loc[{astype}] = {projected_emissions_s1s2.iloc[0:7, 0:7]}")
 
         return projected_emissions_s1s2

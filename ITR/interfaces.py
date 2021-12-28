@@ -156,7 +156,7 @@ class ICompanyData(PintModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
-    projected_targets: Optional[ICompanyProjectionsScopes]
+    projected_targets: Optional[ICompanyEIProjectionsScopes]
     projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
     country: Optional[str]

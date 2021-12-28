@@ -48,28 +48,17 @@ class DataWarehouse(ABC):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data and additional precalculated fields
         """
-        # print(f"company_ids = {company_ids}\n\n")
         company_data = self.company_data.get_company_data(company_ids)
-        # print(f"company_data = {company_data}\n\n")
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
 
-        # print(f"df_company_data = {df_company_data}\n\n")
         assert pd.Series(company_ids).isin(df_company_data.loc[:, self.column_config.COMPANY_ID]).all(), \
             "some of the company ids are not included in the fundamental data"
 
-        print(f"before company_info_at_base_year")
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
-        # print(f"after company_info_at_base_year\n\n{company_info_at_base_year}")
-        # print(f"DW: company_info_at_base_year.loc[] = {company_info_at_base_year.loc['US0185223007']}")
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year).sort_index()
-        print(f"projected_production = {projected_production.iloc[0:5,0:5]}")
         production_sum = projected_production.sum(axis=0)
-        print(f"production_sum = {production_sum.iloc[0:5]}")
         production_weights = projected_production.divide(production_sum, axis=1)
-        print(f"production_weights = {production_weights.iloc[0:5,0:5]}")
-        # print(f"projected_production.iloc = {projected_production.iloc[0:3, 0:3]}")
-        # projection_weights = projected_production.groupby(self.column_config.COMPANY_ID)[]
         df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
             production_weights=production_weights)
@@ -80,10 +69,8 @@ class DataWarehouse(ABC):
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             production_weights=production_weights)
         df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_TARGET}, inplace=True)
-        print(f"df_target = {df_new}\n\n")
         df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
-        print(f"before CUMULATIVE_BUDGET")
         df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
@@ -91,7 +78,6 @@ class DataWarehouse(ABC):
         df_new.rename(columns={"cumulative_value":self.column_config.CUMULATIVE_BUDGET}, inplace=True)
         df_company_data = df_company_data.merge(df_new, on='company_id', how='right')
 
-        # print(f"self.benchmarks_projected_emission_intensity.benchmark_global_budget = {self.benchmarks_projected_emission_intensity.benchmark_global_budget}\n\n")
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
                                                                                             len(df_company_data), dtype='pint[t CO2]')
         df_company_data[self.column_config.BENCHMARK_TEMP] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
@@ -121,9 +107,8 @@ class DataWarehouse(ABC):
             try:
                 model_companies.append(ICompanyAggregates.parse_obj(company_data))
             except ValidationError as e:
-                print(__name__, e)
                 logger.warning(
-                    "DW: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
                 pass
         return model_companies
