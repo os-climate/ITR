@@ -48,7 +48,7 @@ class DataWarehouse(ABC):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data and additional precalculated fields
         """
-        print(f"company_ids = {company_ids}\n\n")
+        # print(f"company_ids = {company_ids}\n\n")
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])\
             .set_index(self.column_config.COMPANY_ID)
@@ -56,7 +56,10 @@ class DataWarehouse(ABC):
         missing_ids = [c_id for c_id in company_ids if c_id not in df_company_data.index]
         assert not missing_ids, f"Company IDs are not included in the fundamental data: {missing_ids}"
 
+        print(f"before company_info_at_base_year")
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
+        # print(f"after company_info_at_base_year\n\n{company_info_at_base_year}")
+        # print(f"DW: company_info_at_base_year.loc[] = {company_info_at_base_year.loc['US0185223007']}")
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year).sort_index()
 
@@ -64,7 +67,7 @@ class DataWarehouse(ABC):
             projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
             projected_production=projected_production)
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_TARGET] = self._get_cumulative_emission(
+        df_new = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             projected_production=projected_production)
 

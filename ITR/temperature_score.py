@@ -43,7 +43,7 @@ class TemperatureScore(PortfolioAggregation):
         if grouping is not None:
             self.grouping = grouping
 
-    def get_score(self, scorable_row: pd.Series) -> Tuple[float, float, float, float, float, float]:
+    def get_score(self, scorable_row: pd.Series) -> Tuple[Quantity['degC'], Quantity['degC'], float, Quantity['degC'], float, float]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
@@ -63,21 +63,24 @@ class TemperatureScore(PortfolioAggregation):
             target_overshoot_ratio = 0
             trajectory_overshoot_ratio = 0
 
+        print(f"scorable_row = {scorable_row}")
+        print(f"self.c.CONTROLS_CONFIG.tcre_multiplier = {self.c.CONTROLS_CONFIG.tcre_multiplier}")
+        print(f"target_overshoot_ratio = {target_overshoot_ratio}")
         target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                                    (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
                                            target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
         trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                                        (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
                                                trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
-        score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
-                trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
+        score = Q_(target_temperature_score.m * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
+                trajectory_temperature_score.m * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY]), target_temperature_score.u)
 
         # Safeguard: If score is NaN due to missing data assign default score.
         if np.isnan(score):
             return self.get_default_score(scorable_row), 1
         return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, 0
 
-    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[float, float]:
+    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[Quantity['degC'], Quantity['degC']]:
         """
         Get the aggregated temperature score and a temperature result, which indicates how much of the score is based on the default score for a certain company based on the emissions of company.
 
@@ -96,15 +99,17 @@ class TemperatureScore(PortfolioAggregation):
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE], s1s2[self.c.TEMPERATURE_RESULTS]
             else:
                 company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
-                return ((s1s2[self.c.COLS.TEMPERATURE_SCORE] * s1s2[self.c.COLS.GHG_SCOPE12] +
-                         s3[self.c.COLS.TEMPERATURE_SCORE] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
-                        (s1s2[self.c.TEMPERATURE_RESULTS] * s1s2[self.c.COLS.GHG_SCOPE12] +
-                         s3[self.c.TEMPERATURE_RESULTS] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions)
+                return (Q_((s1s2[self.c.COLS.TEMPERATURE_SCORE].m * s1s2[self.c.COLS.GHG_SCOPE12] +
+                            s3[self.c.COLS.TEMPERATURE_SCORE].m * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
+                            s1s2[self.c.COLS.TEMPERATURE_SCORE].u),
+                        Q_((s1s2[self.c.TEMPERATURE_RESULTS].m * s1s2[self.c.COLS.GHG_SCOPE12] +
+                            s3[self.c.TEMPERATURE_RESULTS].m * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
+                            s1s2[self.c.TEMPERATURE_RESULTS].u))
 
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
 
-    def get_default_score(self, target: pd.Series) -> float:
+    def get_default_score(self, target: pd.Series) -> Quantity['degC']:
         """
         :param target: The target as a row of a dataframe
         :return: The temperature score
@@ -130,7 +135,9 @@ class TemperatureScore(PortfolioAggregation):
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
         scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
-
+        print(scoring_data.columns)
+        print(scoring_data.dtypes)
+        print(scoring_data.iloc[0:5])
         scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
             self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
             self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(

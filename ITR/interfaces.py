@@ -105,7 +105,7 @@ class ICompanyProjection(PintModel):
 
 
 class ICompanyProjections(PintModel):
-    projections: List[ICompanyProjection]
+    projections: Optional[List[ICompanyProjection]]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -227,15 +227,15 @@ class TemperatureScoreControls(PintModel):
     target_end_year: int
     projection_start_year: int
     projection_end_year: int
-    tcre: float
-    carbon_conversion: float
+    tcre: Quantity['delta_degC']
+    carbon_conversion: Quantity['CO2']
     scenario_target_temperature: Quantity['degC']
 
     def __getitem__(self, item):
         return getattr(self, item)
 
     @property
-    def tcre_multiplier(self) -> float:
+    def tcre_multiplier(self) -> Quantity['delta_degC/CO2']:
         return self.tcre / self.carbon_conversion
 
 
