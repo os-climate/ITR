@@ -2,7 +2,17 @@ from abc import ABC
 from enum import Enum
 from typing import Type
 
+from pint import Quantity
+from pint_pandas import PintArray
+
 import pandas as pd
+import pint
+import pint_pandas
+
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+PA_ = pint_pandas.PintArray
+
 from .configs import PortfolioAggregationConfig, ColumnsConfig
 from .interfaces import EScope
 
@@ -28,9 +38,9 @@ class PortfolioAggregationMethod(Enum):
         :param method: The method to check
         :return:
         """
-        return method == PortfolioAggregationMethod.MOTS or method == PortfolioAggregationMethod.EOTS or \
-               method == PortfolioAggregationMethod.ECOTS or method == PortfolioAggregationMethod.AOTS or \
-               method == PortfolioAggregationMethod.ROTS
+        return method in [PortfolioAggregationMethod.MOTS, PortfolioAggregationMethod.EOTS,
+                          PortfolioAggregationMethod.ECOTS, PortfolioAggregationMethod.AOTS,
+                          PortfolioAggregationMethod.ROTS]
 
     @staticmethod
     def get_value_column(method: 'PortfolioAggregationMethod', column_config: Type[ColumnsConfig]) -> str:
@@ -72,7 +82,7 @@ class PortfolioAggregation(ABC):
             ))
 
     def _calculate_aggregate_score(self, data: pd.DataFrame, input_column: str,
-                                   portfolio_aggregation_method: PortfolioAggregationMethod) -> pd.Series:
+                                   portfolio_aggregation_method: PortfolioAggregationMethod) -> PintArray:
         """
         Aggregate the scores in a given column based on a certain portfolio aggregation method.
 
@@ -84,9 +94,9 @@ class PortfolioAggregation(ABC):
         if portfolio_aggregation_method == PortfolioAggregationMethod.WATS:
             total_investment_weight = data[self.c.COLS.INVESTMENT_VALUE].sum()
             try:
-                return data.apply(
-                    lambda row: (row[self.c.COLS.INVESTMENT_VALUE] * row[input_column]) / total_investment_weight,
-                    axis=1)
+                return PA_(data.apply(
+                    lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column].m / total_investment_weight,
+                    axis=1), dtype=ureg.delta_degC)
             except ZeroDivisionError:
                 raise ValueError("The portfolio weight is not allowed to be zero")
 
@@ -101,8 +111,8 @@ class PortfolioAggregation(ABC):
             # Calculate the total emissions of all companies
             emissions = (use_S1S2 * data[self.c.COLS.GHG_SCOPE12]).sum() + (use_S3 * data[self.c.COLS.GHG_SCOPE3]).sum()
             try:
-                return (use_S1S2 * data[self.c.COLS.GHG_SCOPE12] + use_S3 * data[self.c.COLS.GHG_SCOPE3]) / emissions * \
-                       data[input_column]
+                return PA_((use_S1S2 * data[self.c.COLS.GHG_SCOPE12] + use_S3 * data[self.c.COLS.GHG_SCOPE3]) / emissions * \
+                       data[input_column], dtype=ureg.delta_degC)
             except ZeroDivisionError:
                 raise ValueError("The total emissions should be higher than zero")
 
@@ -126,6 +136,7 @@ class PortfolioAggregation(ABC):
                     self._check_column(data, self.c.COLS.GHG_SCOPE12)
                 if use_S3.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE3)
+                error () # not yet handled...
                 data[self.c.COLS.OWNED_EMISSIONS] = (data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]) * (
                         use_S1S2 * data[self.c.COLS.GHG_SCOPE12] + use_S3 * data[self.c.COLS.GHG_SCOPE3])
             except ZeroDivisionError:
@@ -134,9 +145,9 @@ class PortfolioAggregation(ABC):
 
             try:
                 # Calculate the MOTS value per company
-                return data.apply(
+                return PA_(data.apply(
                     lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
-                    axis=1
+                    axis=1), dtype=ureg.delta_degC
                 )
             except ZeroDivisionError:
                 raise ValueError("The total owned emissions can not be zero")
