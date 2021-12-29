@@ -72,11 +72,10 @@ class DataWarehouse(ABC):
                 company_info_at_base_year),
             projected_production=projected_production)
 
-        print(f"self.benchmarks_projected_emission_intensity.benchmark_global_budget = {self.benchmarks_projected_emission_intensity.benchmark_global_budget}\n\n")
-        df_company_data.loc[:,
-        self.column_config.BENCHMARK_GLOBAL_BUDGET] = self.benchmarks_projected_emissionsintensity.benchmark_global_budget
-        df_company_data.loc[:,
-        self.column_config.BENCHMARK_TEMP] = self.benchmarks_projected_emissions_intensity.benchmark_temperature
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
+                                                                                            len(df_company_data), dtype='pint[t CO2]')
+        df_company_data[self.column_config.BENCHMARK_TEMP] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
+                                                                                   len(df_company_data), dtype='pint[delta_degC]')
 
         companies = df_company_data.reset_index().to_dict(orient="records")
 

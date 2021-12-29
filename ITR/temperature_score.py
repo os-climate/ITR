@@ -53,8 +53,8 @@ class TemperatureScore(PortfolioAggregation):
         :return: The temperature score
         """
         # if either cum target or trajectory is zero return default.
-        if scorable_row[self.c.COLS.CUMULATIVE_TARGET] * scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] == 0.0:
-            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, 1
+        if scorable_row[self.c.COLS.CUMULATIVE_TARGET].m==0 or scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY].m == 0.0:
+            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, Q_(1, ureg.delta_degC)
 
         if scorable_row[self.c.COLS.CUMULATIVE_BUDGET] > 0:
             target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
@@ -71,12 +71,12 @@ class TemperatureScore(PortfolioAggregation):
         trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                                        (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
                                                trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
-        score = Q_(target_temperature_score.m * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
-                trajectory_temperature_score.m * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY]), target_temperature_score.u)
+        score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
+                trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
         # Safeguard: If score is NaN due to missing data assign default score.
         if np.isnan(score):
-            return self.get_default_score(scorable_row), 1
+            return self.get_default_score(scorable_row), target_overshoot_ratio, Q_(1.0, ureg.delta_degC)
         return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(0.0, ureg.delta_degC)
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[Quantity['delta_degC'], Quantity['delta_degC']]:
@@ -203,8 +203,8 @@ class TemperatureScore(PortfolioAggregation):
         data[self.c.COLS.CONTRIBUTION_RELATIVE] = PA_(weighted_scores.quantity.m / (weighted_scores.quantity.m.sum() / 100), ureg.delta_degC)
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         contributions = data \
-            .where(pd.notnull(data), 0) \
             .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
+            .where(pd.notnull(data), 0) \
             .to_dict(orient="records")
         aggregations = Aggregation(
             score=Q_(weighted_scores.quantity.m.sum(), ureg.delta_degC),

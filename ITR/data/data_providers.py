@@ -138,7 +138,7 @@ class IntensityBenchmarkDataProvider(ABC):
     """
     AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
 
-    def __init__(self, benchmark_temperature: Quantity['degC'], benchmark_global_budget: Quantity['CO2'], is_AFOLU_included: bool,
+    def __init__(self, benchmark_temperature: Quantity['delta_degC'], benchmark_global_budget: Quantity['CO2'], is_AFOLU_included: bool,
                  **kwargs):
         """
         Create a new data provider instance.
@@ -162,7 +162,7 @@ class IntensityBenchmarkDataProvider(ABC):
         self._is_AFOLU_included = value
 
     @property
-    def benchmark_temperature(self) -> Quantity['degC']:
+    def benchmark_temperature(self) -> Quantity['delta_degC']:
         """
         :return: assumed temperature for the benchmark. for OECM 1.5C for example
         """
