@@ -7,15 +7,15 @@ class AggregationContribution(BaseModel):
     company_name: str
     company_id: str
     temperature_score: Quantity['degC']
-    contribution_relative: Optional[float]
-    contribution: Optional[float]
+    contribution_relative: Optional[Quantity['delta_degC']]
+    contribution: Optional[Quantity['delta_degC']]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class Aggregation(PintModel):
-    score: Quantity['degC']
+    score: Quantity['delta_degC']
     proportion: float
     contributions: List[AggregationContribution]
 
@@ -88,7 +88,7 @@ class IEmissionIntensityBenchmarkScopes(PintModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
-    benchmark_temperature: Quantity['degC']
+    benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
     is_AFOLU_included: bool
 
@@ -189,7 +189,7 @@ class ICompanyAggregates(ICompanyData):
     cumulative_budget: Quantity['CO2']
     cumulative_trajectory: Quantity['CO2']
     cumulative_target: Quantity['CO2']
-    benchmark_temperature: Quantity['degC']
+    benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
 
 
@@ -229,7 +229,7 @@ class TemperatureScoreControls(PintModel):
     projection_end_year: int
     tcre: Quantity['delta_degC']
     carbon_conversion: Quantity['CO2']
-    scenario_target_temperature: Quantity['degC']
+    scenario_target_temperature: Quantity['delta_degC']
 
     def __getitem__(self, item):
         return getattr(self, item)

@@ -101,7 +101,7 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         projection_end_year=2019,
         tcre=Q_(2.2, ureg.delta_degC),
         carbon_conversion=Q_(3664.0, ureg('Gt CO2')),
-        scenario_target_temperature=Q_(1.5, ureg.degC)
+        scenario_target_temperature=Q_(1.5, ureg.delta_degC)
     )
 
 
