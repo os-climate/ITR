@@ -14,4 +14,4 @@ chardet==4.0.0
 numpy==1.21.5
 Pint==0.18
 Pint-Pandas==0.2
-openscm-units=0.5.0
+openscm-units==0.5.0
