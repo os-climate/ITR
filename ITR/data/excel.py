@@ -3,10 +3,13 @@ import pandas as pd
 import numpy as np
 
 from pint import Quantity
+# from pint_pandas import PintArray
+
 import pint
 import pint_pandas
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
+# PA_ = pint_pandas.PintArray
 
 from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
@@ -86,7 +89,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
 
 
 class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
-    def __init__(self, excel_path: str, benchmark_temperature: Quantity['degC'],
+    def __init__(self, excel_path: str, benchmark_temperature: Quantity['delta_degC'],
                  benchmark_global_budget: Quantity['CO2'], is_AFOLU_included: bool,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):

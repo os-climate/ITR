@@ -77,7 +77,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     return portfolio_data
 
 
-def calculate(portfolio_data: pd.DataFrame, fallback_score: Quantity['degC'], aggregation_method: PortfolioAggregationMethod,
+def calculate(portfolio_data: pd.DataFrame, fallback_score: Quantity['delta_degC'], aggregation_method: PortfolioAggregationMethod,
               grouping: Optional[List[str]], time_frames: List[ETimeFrames],
               scopes: List[EScope], anonymize: bool, aggregate: bool = True,
               controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,

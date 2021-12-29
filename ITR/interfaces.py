@@ -10,7 +10,7 @@ class PintModel(BaseModel):
 class AggregationContribution(PintModel):
     company_name: str
     company_id: str
-    temperature_score: Quantity['degC']
+    temperature_score: Quantity['delta_degC']
     contribution_relative: Optional[Quantity['delta_degC']]
     contribution: Optional[Quantity['delta_degC']]
 
