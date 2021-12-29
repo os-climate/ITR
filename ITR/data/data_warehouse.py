@@ -75,7 +75,7 @@ class DataWarehouse(ABC):
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
                                                                                             len(df_company_data), dtype='pint[t CO2]')
         df_company_data[self.column_config.BENCHMARK_TEMP] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
-                                                                                   len(df_company_data), dtype='pint[degC]')
+                                                                                   len(df_company_data), dtype='pint[delta_degC]')
 
         companies = df_company_data.reset_index().to_dict(orient="records")
 
