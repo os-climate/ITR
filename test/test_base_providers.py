@@ -76,9 +76,9 @@ class TestBaseProvider(unittest.TestCase):
             )
         # portfolio data
         portfolio_data = ITR.utils.get_data(self.base_warehouse, portfolio)
-        print(f"portfolio_data = {portfolio_data}")
+        # print(f"portfolio_data = {portfolio_data}")
         scores = temp_score.calculate(portfolio_data)
-        print(f"scores = {scores}")
+        # print(f"scores = {scores}")
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
@@ -125,8 +125,8 @@ class TestBaseProvider(unittest.TestCase):
                                        index=self.company_ids,
                                        name=2025,
                                        dtype='pint[MWh]')
-        print(self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]['US0079031078'])
-        print(expected_data_2025['US0079031078'])
+        # print(self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]['US0079031078'])
+        # print(expected_data_2025['US0079031078'])
         pd.testing.assert_series_equal(
             self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025],
             expected_data_2025, check_dtype=False)
@@ -137,9 +137,9 @@ class TestBaseProvider(unittest.TestCase):
         expected_data = pd.Series([10.0, 50.0],
                                     index=[0, 1],
                                     dtype='pint[Mt CO2]')
-        print(self.base_warehouse._get_cumulative_emission(projected_emission_intensity=projected_ei,
-                                                           projected_production=projected_production))
-        print(f"expected_data = {expected_data}")
+        # print(self.base_warehouse._get_cumulative_emission(projected_emission_intensity=projected_ei,
+        #                                                    projected_production=projected_production))
+        # print(f"expected_data = {expected_data}")
         pd.testing.assert_series_equal(
             self.base_warehouse._get_cumulative_emission(projected_emission_intensity=projected_ei,
                                                          projected_production=projected_production), expected_data)
