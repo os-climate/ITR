@@ -6,9 +6,7 @@ import numpy as np
 
 import pint
 import pint_pandas
-
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
+from ITR.data.osc_units import ureg, Q_, PA_
 
 from ITR.interfaces import ICompanyAggregates
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
@@ -67,18 +65,23 @@ class DataWarehouse(ABC):
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             projected_production=projected_production)
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
-            projected_emissions_intensity=self.benchmarks_projected_emissions_intensity.get_SDA_intensity_benchmarks(
+        df_trajectory = self._get_cumulative_emission(
+            projected_emission_intensity=self.company_data.get_company_projected_trajectories(company_ids),
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
+        df_target = self._get_cumulative_emission(
+            projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
+        df_budget = self._get_cumulative_emission(
+            projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
-            projected_production=projected_production)
-
-        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
+        df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
                                                                                             len(df_company_data), dtype='pint[t CO2]')
-        df_company_data[self.column_config.BENCHMARK_TEMP] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
+        df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
                                                                                    len(df_company_data), dtype='pint[delta_degC]')
 
-        companies = df_company_data.reset_index().to_dict(orient="records")
-
+        companies = df_company_data.to_dict(orient="records")
         aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
                                                             companies]
 
@@ -87,7 +90,7 @@ class DataWarehouse(ABC):
     def _convert_df_to_model(self, df_company_data: pd.DataFrame) -> List[ICompanyAggregates]:
 
         """
-        transforms Dataframe Company data and preprocessed values into list of IDataProviderTarget instances
+        transforms Dataframe Company data and preprocessed values into list of ICompanyAggregates instances
 
         :param df_company_data: pandas Dataframe with targets
         :return: A list containing the targets
