@@ -8,8 +8,8 @@ from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.interfaces import ICompanyData, EScope, \
-    IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, IYOYBenchmarkScopes, \
-    IBenchmark, IEIBenchmark, IYOYBenchmark
+    IEmissionIntensityBenchmarkScopes, IYOYBenchmarkScopes, \
+    IEIBenchmark, IYOYBenchmark
 
 
 # TODO handling of scopes in benchmarks
