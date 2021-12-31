@@ -44,7 +44,7 @@ class TemperatureScore(PortfolioAggregation):
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
         :param scorable_row: The target as a row of a data frame
-        :return: The temperature score
+        :return: The temperature score, which is a tuple of (TEMPERATURE_SCORE,TRAJECTORY_SCORE,TRAJECTORY_OVERSHOOT,TARGET_SCORE,TARGET_OVERSHOOT,TEMPERATURE_RESULTS])
         """
         # if either cum target or trajectory is zero return default.
         if scorable_row[self.c.COLS.CUMULATIVE_TARGET].m==0 or scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY].m == 0.0:
@@ -90,11 +90,11 @@ class TemperatureScore(PortfolioAggregation):
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
             if s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4:
-                print(f"ignoring s3: {row}")
+                # print(f"ignoring s3: {row}")
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE], s1s2[self.c.TEMPERATURE_RESULTS]
             else:
                 company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
-                print(company_emissions)
+                # print(company_emissions)
                 return (Q_((s1s2[self.c.COLS.TEMPERATURE_SCORE].m * s1s2[self.c.COLS.GHG_SCOPE12] +
                             s3[self.c.COLS.TEMPERATURE_SCORE].m * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
                             s1s2[self.c.COLS.TEMPERATURE_SCORE].u),
@@ -130,7 +130,10 @@ class TemperatureScore(PortfolioAggregation):
 
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
+        # print(f"data = {data}")
+        # print(f"score_combinations = {score_combinations}")
         scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
+        # print(f"scoring_data = {scoring_data}")
         scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
             self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
             self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
@@ -181,8 +184,6 @@ class TemperatureScore(PortfolioAggregation):
             self._check_column(data, self.c.COLS.GHG_SCOPE12)
             self._check_column(data, self.c.COLS.GHG_SCOPE3)
             data = self._calculate_company_score(data)
-        else:
-            print(f"calculate scopes = {self.scopes}")
 
         # We need to filter the scopes again, because we might have had to add a scope in the preparation step
         data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]

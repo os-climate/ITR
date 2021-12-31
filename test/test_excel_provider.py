@@ -12,6 +12,7 @@ from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 
+from ITR.data.osc_units import ureg, Q_, PA_
 
 class TestExcelProvider(unittest.TestCase):
     """
@@ -24,16 +25,16 @@ class TestExcelProvider(unittest.TestCase):
         self.sector_data_path = os.path.join(self.root, "inputs", "OECM_EI_and_production_benchmarks.xlsx")
         self.excel_company_data = ExcelProviderCompany(excel_path=self.company_data_path)
         self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=1.5,
-                                                           benchmark_global_budget=396, is_AFOLU_included=False)
+        self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=Q_(1.5, ureg.delta_degC),
+                                                           benchmark_global_budget=Q_(396, ureg('Gt CO2')), is_AFOLU_included=False)
         self.excel_provider = DataWarehouse(self.excel_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
                             "FR0000125338"]
         self.company_info_at_base_year = pd.DataFrame(
-            [[1.6982474347547, 1.04827859e+08, 'Electricity Utilities', 'North America'],
-             [0.476586931582279, 5.98937002e+08, 'Electricity Utilities', 'North America'],
-             [0.22457393169277, 1.22472003e+08, 'Electricity Utilities', 'Europe']],
+            [[Q_(1.6982474347547, ureg('t CO2/MWh')), Q_(1.04827859e+08, ureg('MWh')), 'Electricity Utilities', 'North America'],
+             [Q_(0.476586931582279, ureg('t CO2/MWh')), Q_(5.98937002e+08, ureg('MWh')), 'Electricity Utilities', 'North America'],
+             [Q_(0.22457393169277, ureg('t CO2/MWh')), Q_(1.22472003e+08, ureg('MWh')), 'Electricity Utilities', 'Europe']],
             index=self.company_ids,
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
@@ -66,13 +67,13 @@ class TestExcelProvider(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.05, 2.22, 2.06, 2.01, 1.93, 1.78, 1.71, 1.34, 2.21, 2.69, 2.65, temp_score.fallback_score, 2.89,
+        expected = pd.Series([2.05, 2.22, 2.06, 2.01, 1.93, 1.78, 1.71, 1.34, 2.21, 2.69, 2.65, temp_score.fallback_score, 2.89,
                     1.91, 2.16, 1.76, temp_score.fallback_score, temp_score.fallback_score, 1.47, 1.72, 1.76, 1.81,
                     temp_score.fallback_score, 1.78, 1.84, temp_score.fallback_score, temp_score.fallback_score, 1.74,
-                    1.88, temp_score.fallback_score]
+                    1.88, temp_score.fallback_score], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.259, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.259, ureg.delta_degC), places=2)
 
     def test_get_projected_value(self):
         expected_data = pd.DataFrame([[1.698247435, 1.698247435, 1.590828573, 1.492707987, 1.403890821, 1.325025884,
@@ -95,8 +96,9 @@ class TestExcelProvider(unittest.TestCase):
                                        0.062450199, 0.056927654]],
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                     index=self.company_ids)
-        pd.testing.assert_frame_equal(self.excel_company_data.get_company_projected_intensities(self.company_ids),
+                                     index=self.company_ids,
+                                     dtype='pint[t CO2/MWh]')
+        pd.testing.assert_frame_equal(self.excel_company_data.get_company_projected_trajectories(self.company_ids),
                                       expected_data, check_names=False)
 
     def test_get_benchmark(self):
@@ -122,8 +124,8 @@ class TestExcelProvider(unittest.TestCase):
                                        0.00617251, 0.005400365]],
                                      index=self.company_ids,
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
-
+                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
+                                     dtype='pint[t CO2/MWh]')
         pd.testing.assert_frame_equal(
             self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year),
             expected_data)
@@ -131,15 +133,18 @@ class TestExcelProvider(unittest.TestCase):
     def test_get_projected_production(self):
         expected_data_2025 = pd.Series([1.06866370e+08, 6.10584093e+08, 1.28474171e+08],
                                        index=self.company_ids,
-                                       name=2025)
+                                       name=2025,
+                                       dtype='pint[MWh]')
         pd.testing.assert_series_equal(
             self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025],
             expected_data_2025)
 
     def test_get_cumulative_value(self):
-        projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]])
-        projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]])
-        expected_data = pd.Series([10.0, 50.0])
+        projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]],
+                                          dtype='pint[t CO2/MWh]')
+        projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]],
+                                            dtype='pint[MWh]')
+        expected_data = pd.Series([10.0, 50.0], dtype='pint[Mt CO2]')
         pd.testing.assert_series_equal(
             self.excel_provider._get_cumulative_emission(projected_emission_intensity=projected_emission,
                                                          projected_production=projected_production), expected_data)
@@ -151,14 +156,14 @@ class TestExcelProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(company_1.ghg_s1s2, 104827858.636039)
-        self.assertAlmostEqual(company_2.ghg_s1s2, 598937001.892059)
-        self.assertAlmostEqual(company_1.cumulative_budget, 1362284467.0830, places=4)
-        self.assertAlmostEqual(company_2.cumulative_budget, 2262242040.68059, places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, 3769096510.09909, places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, 5912426347.23670, places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, 3745094638.52858, places=4)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, 8631481789.38558, places=4)
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, ureg('MWh')))
+        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, ureg('MWh')))
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(5912426347.23670, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(3745094638.52858, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(8631481789.38558, ureg('t CO2')), places=4)
 
     def test_get_value(self):
         expected_data = pd.Series([20248547997.0,
