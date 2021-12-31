@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Optional, Dict, List
 from pydantic import BaseModel
 from pint import Quantity
+from ITR.data.osc_units import ureg, Q_
 
 class PintModel(BaseModel):
     class Config:
@@ -62,9 +63,28 @@ class PortfolioCompany(PintModel):
     user_fields: Optional[dict]
 
 
+def pint_ify(x, units):
+    if x is None:
+        return x
+    if type(x)==str:
+        return ureg(x)
+    return Q_(x, ureg(units))
+
+
 class IBenchmarkProjection(PintModel):
     year: int
+    value: Quantity['Wh']
+
+    def __init__(self, year, value):
+        super().__init__(year=year, value=pint_ify(value, 'MWh'))
+
+
+class IEIBenchmarkProjection(PintModel):
+    year: int
     value: Quantity['CO2/Wh']
+
+    def __init__(self, year, value):
+        super().__init__(year=year, value=pint_ify(value, 't CO2/MWh'))
 
 
 class IBenchmark(PintModel):
@@ -82,16 +102,60 @@ class IBenchmarks(PintModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+
 class IProductionBenchmarkScopes(PintModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
 
 
+class IYOYBenchmarkProjection(PintModel):
+    year: int
+    value: float
+
+
+class IYOYBenchmark(PintModel):
+    sector: str
+    region: str
+    projections: List[IYOYBenchmarkProjection]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class IYOYBenchmarks(PintModel):
+    benchmarks: List[IYOYBenchmark]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class IYOYBenchmarkScopes(PintModel):
+    S1S2: Optional[IYOYBenchmarks]
+    S3: Optional[IYOYBenchmarks]
+    S1S2S3: Optional[IYOYBenchmarks]
+
+
+class IEIBenchmark(PintModel):
+    sector: str
+    region: str
+    projections: List[IEIBenchmarkProjection]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class IEIBenchmarks(PintModel):
+    benchmarks: List[IEIBenchmark]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
 class IEmissionIntensityBenchmarkScopes(PintModel):
-    S1S2: Optional[IBenchmarks]
-    S3: Optional[IBenchmarks]
-    S1S2S3: Optional[IBenchmarks]
+    S1S2: Optional[IEIBenchmarks]
+    S3: Optional[IEIBenchmarks]
+    S1S2S3: Optional[IEIBenchmarks]
     benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
     is_AFOLU_included: bool
@@ -99,17 +163,25 @@ class IEmissionIntensityBenchmarkScopes(PintModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+    def __init__(self, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
+        super().__init__(benchmark_temperature=Q_(benchmark_temperature, ureg.delta_degC),
+                         benchmark_global_budget=Q_(benchmark_temperature, ureg('t CO2')),
+                         *args, **kwargs)
+
 
 class ICompanyProjection(PintModel):
     year: int
-    value: Optional[Quantity['CO2']]
+    value: Optional[Quantity['Wh']]
+
+    def __init__(self, year, value):
+        super().__init__(year=year, value=pint_ify(value, 'MWh'))
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class ICompanyProjections(PintModel):
-    projections: Optional[List[ICompanyProjection]]
+    projections: List[ICompanyProjection]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -123,17 +195,19 @@ class ICompanyProjectionsScopes(PintModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
-
 class ICompanyEIProjection(PintModel):
     year: int
     value: Optional[Quantity['CO2/Wh']]
+
+    def __init__(self, year, value):
+        super().__init__(year=year, value=pint_ify(value, 't CO2/MWh'))
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class ICompanyEIProjections(PintModel):
-    projections: Optional[List[ICompanyEIProjection]]
+    projections: List[ICompanyEIProjection]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -156,12 +230,12 @@ class ICompanyData(PintModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
-    projected_targets: Optional[ICompanyEIProjectionsScopes]
-    projected_intensities: Optional[ICompanyEIProjectionsScopes]
+    projected_ei_targets: Optional[ICompanyEIProjectionsScopes] = None
+    projected_ei_trajectories: Optional[ICompanyEIProjectionsScopes] = None
 
     country: Optional[str]
-    ghg_s1s2: Optional[Quantity['CO2']]
-    ghg_s3: Optional[Quantity['CO2']]
+    ghg_s1s2: Optional[Quantity['Wh']]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
+    ghg_s3: Optional[Quantity['Wh']]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -174,13 +248,23 @@ class ICompanyData(PintModel):
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
 
+    def __init__(self, ghg_s1s2, ghg_s3, *args, **kwargs):
+        super().__init__(ghg_s1s2=pint_ify(ghg_s1s2, 'MWh'), ghg_s3=pint_ify(ghg_s3, 'MWh'), *args, **kwargs)
 
 class ICompanyAggregates(ICompanyData):
-    cumulative_budget: Quantity['CO2']
-    cumulative_trajectory: Quantity['CO2']
-    cumulative_target: Quantity['CO2']
+    cumulative_budget: Quantity['CO2/Wh']
+    cumulative_trajectory: Quantity['CO2/Wh']
+    cumulative_target: Quantity['CO2/Wh']
     benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
+
+    def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
+        super().__init__(cumulative_budget=pint_ify(cumulative_budget, 't CO2'),
+                         cumulative_trajectory=pint_ify(cumulative_trajectory, 't CO2'),
+                         cumulative_target=pint_ify(cumulative_target, 't CO2'),
+                         benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
+                         benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
+                         *args, **kwargs)
 
 
 class SortableEnum(Enum):

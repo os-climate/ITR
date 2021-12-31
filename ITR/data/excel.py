@@ -162,7 +162,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         """
         return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
 
-    def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame) -> \
+    def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_trajectories: pd.DataFrame) -> \
             List[ICompanyData]:
         """
         transforms target Dataframe into list of IDataProviderTarget instances
@@ -192,7 +192,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                     ghg_s3 = 1
                 company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, ureg('t CO2'))
                 company_data[self.column_config.PROJECTED_TARGETS] = {'S1S2': {'projections': self._convert_series_to_projections (df_targets.loc[company_id, :])}}
-                company_data[self.column_config.PROJECTED_EI] = {'S1S2': {'projections': self._convert_series_to_projections (df_ei.loc[company_id, :])}}
+                company_data[self.column_config.PROJECTED_TRAJECTORIES] = {'S1S2': {'projections': self._convert_series_to_projections (df_trajectories.loc[company_id, :])}}
                 # The call to parse_obj essentially says "I put it all together manually, please validate that it's correct",
                 # as opposed to using constructors to build the object validly in the first place.
                 model_companies.append(ICompanyData.parse_obj(company_data))

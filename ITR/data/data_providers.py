@@ -2,12 +2,9 @@ from abc import ABC, abstractmethod
 from typing import List
 import pandas as pd
 
-from pint import Quantity
 import pint
-import pint_pandas
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
-
+from pint import Quantity
+from ITR.data.osc_units import ureg
 from ITR.interfaces import ICompanyData
 
 
@@ -61,11 +58,11 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         Gets the emission intensities for a list of companies
         :param company_ids: list of company ids
-        :return: dataframe of projected intensities for each company in company_ids
+        :return: dataframe of projected intensity trajectories for each company in company_ids
         """
         raise NotImplementedError
 
@@ -75,7 +72,7 @@ class CompanyDataProvider(ABC):
         """
         Gets the projected targets for a list of companies
         :param company_ids: list of company ids
-        :return: dataframe of projected targets for each company in company_ids
+        :return: dataframe of projected intensity targets for each company in company_ids
         """
         raise NotImplementedError
 

@@ -4,11 +4,9 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from .interfaces import TemperatureScoreControls
 
-from pint import Quantity
 import pint
 import pint_pandas
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
+from ITR.data.osc_units import ureg, Q_
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -30,7 +28,7 @@ class ColumnsConfig:
     OWNED_EMISSIONS = "owned_emissions"
     COUNTRY = 'country'
     SECTOR = 'sector'
-    GHG_SCOPE12 = 'ghg_s1s2'
+    GHG_SCOPE12 = 'ghg_s1s2'    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
     GHG_SCOPE3 = 'ghg_s3'
     COMPANY_REVENUE = 'company_revenue'
     CASH_EQUIVALENTS = 'company_cash_equivalents'
@@ -49,8 +47,9 @@ class ColumnsConfig:
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
     BASE_EI = 'emission_intensity_at_base_year'
-    PROJECTED_EI = 'projected_intensities'
-    PROJECTED_TARGETS = 'projected_targets'
+    BASE_PRODUCTION = 'production_at_base_year'    # This would be a better name than GHG_SCOPE12
+    PROJECTED_TRAJECTORIES = 'projected_ei_trajectories'
+    PROJECTED_TARGETS = 'projected_ei_targets'
     TRAJECTORY_SCORE = 'trajectory_score'
     TRAJECTORY_OVERSHOOT = 'trajectory_overshoot_ratio'
     TARGET_SCORE = 'target_score'
