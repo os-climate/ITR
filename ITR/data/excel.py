@@ -166,8 +166,9 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
         company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
         # ??? In this interpretation, we accept the `punning` of the term TARGETS as an emission intensity because that's the shape of our data.  Which is ugly and inconsistent!
-        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[t CO2/MWh]')
-        df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], 'pint[t CO2/MWh]')
+        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[t CO2/GJ]')
+        df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], 'pint[t CO2/GJ]')
+        # print(f"\ndf_ei = {df_ei}\n\n")
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei)
 
     def _convert_series_to_projections(self, projections: pd.Series) -> List[
@@ -227,7 +228,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         get the projected emissions for list of companies
         :param company_ids: list of company ids
         :param projections: Dataframe with listed projections per company
-        :return: series of projected emissions
+        :return: series of projected emission intensities
         """
 
         projections = projections.reset_index().set_index(self.column_config.COMPANY_ID)
@@ -239,8 +240,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         projections = projections.loc[:, range(self.temp_config.CONTROLS_CONFIG.base_year,
                                                self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
-        projected_emissions_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
-        for col in projected_emissions_s1s2.columns:
-            projected_emissions_s1s2[col] = projected_emissions_s1s2[col].astype(astype)
-
-        return projected_emissions_s1s2
+        projected_ei_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
+        for col in projected_ei_s1s2.columns:
+            projected_ei_s1s2[col] = projected_ei_s1s2[col].astype(astype)
+        # print(f"\nprojected_ei_s1s2 = {projected_ei_s1s2}\n\n")
+        return projected_ei_s1s2
