@@ -95,21 +95,21 @@ class TestBaseProvider(unittest.TestCase):
                            0.112645956, 0.100481026, 0.088316097, 0.076151167, 0.062125588, 0.048100009,
                            0.034074431, 0.020048852, 0.006023273, 0.005843878, 0.005664482, 0.005485087,
                            0.005305691, 0.005126296
-                           ], index=seq_index, dtype="pint[delta_degC]"),
+                           ], index=seq_index, dtype="pint[t CO2/MWh]"),
                 pd.Series([0.476586932, 0.444131055, 0.389650913, 0.335170772, 0.28069063, 0.226210489,
                            0.22171226, 0.192474531, 0.163236802, 0.133999073, 0.104761344, 0.075523615,
                            0.068787023, 0.062050431, 0.055313839, 0.048577247, 0.041840655, 0.038453251,
                            0.035065847, 0.031678443, 0.028291039, 0.024903635, 0.020998121, 0.017092607,
                            0.013187093, 0.009281579, 0.005376065, 0.005326111, 0.005276157, 0.005226203,
                            0.005176249, 0.005126296
-                           ], index=seq_index, dtype="pint[delta_degC]"),
+                           ], index=seq_index, dtype="pint[t CO2/MWh]"),
                 pd.Series([0.224573932, 0.17975612, 0.163761501, 0.147766883, 0.131772265, 0.115777646,
                            0.099783028, 0.090628361, 0.081473693, 0.072319026, 0.063164359, 0.054009692,
                            0.050089853, 0.046170015, 0.042250176, 0.038330338, 0.034410499, 0.031104249,
                            0.027797999, 0.024491748, 0.021185498, 0.017879248, 0.016155615, 0.014431983,
                            0.012708351, 0.010984719, 0.009261087, 0.008488943, 0.007716798, 0.006944654,
                            0.00617251, 0.005400365
-                           ], index=seq_index, dtype="pint[delta_degC]")]
+                           ], index=seq_index, dtype="pint[t CO2/MWh]")]
         expected_data = pd.concat(data, axis=1, ignore_index=True).T
         expected_data.index=self.company_ids
 
@@ -138,7 +138,7 @@ class TestBaseProvider(unittest.TestCase):
         print(self.base_warehouse._get_cumulative_emission(projected_emission_intensity=projected_ei,
                                                            projected_production=projected_production))
         print(f"expected_data = {expected_data}")
-        pd.testing.assert_frame_equal(
+        pd.testing.assert_series_equal(
             self.base_warehouse._get_cumulative_emission(projected_emission_intensity=projected_ei,
                                                          projected_production=projected_production), expected_data)
 
