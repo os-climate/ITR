@@ -244,7 +244,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
 
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
-        df = df.add(last_ei, axis=0)
+        df = df.add(last_ei, axis=0).astype('pint[t CO2/MWh]')
         return df
 
     def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
