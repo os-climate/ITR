@@ -162,13 +162,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
         company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
-        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[Mt CO2]')
+        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[t CO2/GJ]')
         if TabsConfig.PROJECTED_EI in df_company_data.keys():
-            df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], 'pint[t CO2/MWh]')
+            df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], 'pint[t CO2/GJ]')
         else:
             df_ei = None
         if TabsConfig.HISTORIC_DATA in df_company_data.keys():
-            df_historic = self._get_historic_data(company_ids, df_company_data[TabsConfig.HISTORIC_DATA], 'pint[t CO2/MWh]'
+            df_historic = self._get_historic_data(company_ids, df_company_data[TabsConfig.HISTORIC_DATA], 'pint[t CO2/GJ]'
         else:
             df_historic = None
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
@@ -245,7 +245,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         get the projected emissions for list of companies
         :param company_ids: list of company ids
         :param projections: Dataframe with listed projections per company
-        :return: series of projected emissions
+        :return: series of projected emission intensities
         """
 
         projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)

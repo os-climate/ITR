@@ -65,6 +65,7 @@ class DataWarehouse(ABC):
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             projected_production=projected_production)
 
+        # print(f"company_info_at_base_year = {company_info_at_base_year}")
         df_trajectory = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_trajectories(company_ids),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
@@ -75,10 +76,11 @@ class DataWarehouse(ABC):
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
+        # print(f"""\ndf_budget = {df_budget}\n\nf_budget.sum() = {df_budget.sum()}\n\n""")
         df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
-        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
-                                                                                            len(df_company_data), dtype='pint[t CO2]')
-        df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget]*
+                                                                                            len(df_company_data), dtype='pint[Gt CO2]')
+        df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature]*
                                                                                    len(df_company_data), dtype='pint[delta_degC]')
 
         companies = df_company_data.to_dict(orient="records")
@@ -125,4 +127,5 @@ class DataWarehouse(ABC):
         :return: cumulative emissions based on weighted sum of production
         """
         df = projected_emission_intensity.multiply(projected_production)
+        # print(f"post-mult = {df.iloc[1,0:5]}")
         return df.sum(axis=1).astype('pint[Mt CO2]')

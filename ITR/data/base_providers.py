@@ -110,6 +110,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
                           self.column_config.GHG_SCOPE12]]
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
+        # print(f"\ncompany_info = {company_info}\n\n")
+        # print(f"\nei_at_base = {ei_at_base}\n\n")
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
     def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
