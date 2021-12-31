@@ -21,28 +21,45 @@ from ITR.interfaces import ICompanyData, ICompanyProjection, EScope, IEmissionIn
 
 import logging
 
-from ITR.interfaces import ICompanyProjections
+from ITR.interfaces import ICompanyProjections, ICompanyEIProjections
 import inspect
 
 # TODO: Force validation for excel benchmarks
 
 # Utils functions:
 
-def convert_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
-                                     column_name_sector: str, cell_unit: str) -> IBenchmarks:
+def convert_yoy_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
+                                     column_name_sector: str) -> IYOYBenchmarks:
     """
-    Converts excel into IBenchmarks
+    Converts excel into IYOYBenchmarks
     :param excal_path: file path to excel
-    :return: IBenchmarks instance (list of IBenchmark)
+    :return: IYOYBenchmarks instance (list of IYOYBenchmark)
     """
     df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
     result = []
     for index, row in df_ei_bms.iterrows():
-        bm = IBenchmark(region=index[0], sector=index[1],
-                        projections=[IBenchmarkProjection(year=int(k), value=Q_(v, cell_unit)) for k, v in row.items()])
+        bm = IYOYBenchmark(region=index[0], sector=index[1],
+                           projections=[IYOYBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
         result.append(bm)
-    return IBenchmarks(benchmarks=result)
+    return IYOYBenchmarks(benchmarks=result)
+
+
+def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
+                                               column_name_sector: str) -> IEIBenchmarks:
+    """
+    Converts excel into IEIBenchmarks
+    :param excal_path: file path to excel
+    :return: IEIBenchmarks instance (list of IEIBenchmark)
+    """
+    df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
+        [column_name_region, column_name_sector])
+    result = []
+    for index, row in df_ei_bms.iterrows():
+        bm = IEIBenchmark(region=index[0], sector=index[1],
+                        projections=[IEIBenchmarkProjection(year=int(k), value=Q_(v, ureg('t CO2/MWh'))) for k, v in row.items()])
+        result.append(bm)
+    return IEIBenchmarks(benchmarks=result)
 
 
 class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
@@ -56,9 +73,9 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         """
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
-        self._convert_excel_to_model = convert_benchmark_excel_to_model
+        self._convert_excel_to_model = convert_yoy_benchmark_excel_to_model
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
-                                                      column_config.REGION, column_config.SECTOR, 'Mt CO2')
+                                                      column_config.REGION, column_config.SECTOR)
         super().__init__(
             IProductionBenchmarkScopes(S1S2=production_bms), column_config,
             tempscore_config)
@@ -89,9 +106,9 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
-        self._convert_excel_to_model = convert_benchmark_excel_to_model
+        self._convert_excel_to_model = convert_intensity_benchmark_excel_to_model
         EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
-                                                     column_config.REGION, column_config.SECTOR, 't CO2/MWh')
+                                                     column_config.REGION, column_config.SECTOR)
         super().__init__(
             IEmissionIntensityBenchmarkScopes(S1S2=EI_benchmarks, benchmark_temperature=benchmark_temperature,
                                               benchmark_global_budget=benchmark_global_budget,
@@ -157,15 +174,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
     def _convert_series_to_projections(self, projections: pd.Series) -> List[
-        ICompanyProjection]:
+        ICompanyEIProjection]:
         """
-        Converts a Pandas Series in a list of ICompanyProjections
+        Converts a Pandas Series in a list of ICompanyEIProjections
         :param projections: Pandas Series with years as indices
-        :param convert_unit: Boolean if series values needs conversion for unit of measure
-        :return: List of ICompanyProjection objects
+        :return: List of ICompanyEIProjection objects
         """
-        projections = projections * self.ENERGY_UNIT_CONVERSION_FACTOR if convert_unit else projections
-        return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
+        return [ICompanyEIProjection(year=y, value=v) for y, v in projections.items()]
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame,
                              df_historic: pd.DataFrame) -> List[ICompanyData]:
@@ -202,11 +217,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 ghg_s1s2 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE12].squeeze()
                 if ghg_s1s2 is None:
                     ghg_s1s2 = 1
-                company_data[self.column_config.GHG_SCOPE12] = Q_(ghg_s1s2, ureg('t CO2'))
+                company_data[self.column_config.GHG_SCOPE12] = Q_(ghg_s1s2, ureg('MWh'))
                 ghg_s3 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE3].squeeze()
                 if ghg_s3 is None:
                     ghg_s3 = 1
-                company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, ureg('t CO2'))
+                company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, ureg('MWh'))
                 company_data[self.column_config.PROJECTED_TARGETS] = {'S1S2': {'projections': self._convert_series_to_projections (df_targets.loc[company_id, :])}}
                 company_data[self.column_config.PROJECTED_EI] = {'S1S2': {'projections': self._convert_series_to_projections (df_ei.loc[company_id, :])}}
 
