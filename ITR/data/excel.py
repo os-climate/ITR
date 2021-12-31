@@ -201,13 +201,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 company_id = company_data[self.column_config.COMPANY_ID]
                 # pint automatically handles any unit conversions required
                 ghg_s1s2 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE12].squeeze()
-                if ghg_s1s2 is None:
-                    ghg_s1s2 = 1
-                company_data[self.column_config.GHG_SCOPE12] = Q_(ghg_s1s2, ureg('MWh'))
+                if ghg_s1s2:
+                    company_data[self.column_config.GHG_SCOPE12] = Q_(ghg_s1s2, ureg('MWh'))
                 ghg_s3 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE3].squeeze()
-                if ghg_s3 is None:
-                    ghg_s3 = 1
-                company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, ureg('MWh'))
+                if ghg_s3:
+                    company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, ureg('MWh'))
                 company_data[self.column_config.PROJECTED_TARGETS] = {'S1S2': {'projections': self._convert_series_to_projections (df_targets.loc[company_id, :])}}
                 company_data[self.column_config.PROJECTED_TRAJECTORIES] = {'S1S2': {'projections': self._convert_series_to_projections (df_trajectories.loc[company_id, :])}}
                 # The call to parse_obj essentially says "I put it all together manually, please validate that it's correct",

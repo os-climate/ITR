@@ -76,7 +76,9 @@ class TestBaseProvider(unittest.TestCase):
             )
         # portfolio data
         portfolio_data = ITR.utils.get_data(self.base_warehouse, portfolio)
+        print(f"portfolio_data = {portfolio_data}")
         scores = temp_score.calculate(portfolio_data)
+        print(f"scores = {scores}")
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:

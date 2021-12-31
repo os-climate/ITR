@@ -114,7 +114,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         return pd.DataFrame(
             [self._convert_projections_to_series(c, self.column_config.PROJECTED_TRAJECTORIES) for c in
-             self.get_company_data(company_ids)])
+             self.get_company_data(company_ids)], dtype='pint[t CO2/MWh]')
 
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
         """
@@ -123,7 +123,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         return pd.DataFrame(
             [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
-             self.get_company_data(company_ids)])
+             self.get_company_data(company_ids)], dtype='pint[t CO2/MWh]')
 
 # This is actual output production (whatever the output production units may be).
 # Not to be confused with the term "projected production" as it relates to energy intensity.
@@ -180,8 +180,9 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
         benchmark_production_projections = self.get_benchmark_projections(ghg_scope12)
+        company_production = ghg_scope12[self.column_config.GHG_SCOPE12]
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-                    ghg_scope12[self.column_config.GHG_SCOPE12], axis=0)
+                    company_production, axis=0).astype('pint[MWh]')
 
     def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame,
                                   scope: EScope = EScope.S1S2) -> pd.DataFrame:
