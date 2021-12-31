@@ -3,9 +3,7 @@ import pandas as pd
 
 import pint
 import pint_pandas
-
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
+from ITR.data.osc_units import ureg, PA_
 
 from typing import List, Type, Dict
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, ProjectionConfig, VariablesConfig
@@ -53,14 +51,16 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                                        scope: EScope = EScope.S1S2) -> pd.Series:
         """
         extracts the company projected intensities or targets for a given scope
-        :param feature: PROJECTED_EI or PROJECTED_TARGETS
+        :param feature: PROJECTED_TRAJECTORIES or PROJECTED_TARGETS (both are intensities)
         :param scope: a scope
         :return: pd.Series
         """
+        feature_to_units = { self.column_config.PROJECTED_TRAJECTORIES:'pint[t CO2/MWh]', self.column_config.PROJECTED_TARGETS:'pint[t CO2/MWh]' }
         return pd.Series(
             {r['year']: r['value'] for r in company.dict()[feature][str(scope)]['projections']},
-            name=company.company_id)
+            name=company.company_id, dtype=feature_to_units[feature])
 
+    # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
         """
         Returns projected intensities for a given set of companies and year
@@ -68,7 +68,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param company_ids: List of company ids
         :return: pd.Series with intensities for given company ids
         """
-        return self.get_company_projected_intensities(company_ids)[year]
+        return self.get_company_projected_trajectories(company_ids)[year]
 
     def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
         """
@@ -100,10 +100,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         overrides subclass method
         :param: company_ids: list of company ids
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
-        ColumnsConfig.REGION
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI,
+        ColumnsConfig.SECTOR and ColumnsConfig.REGION
         """
         df_fundamentals = self.get_company_fundamentals(company_ids)
+        # print(f"df_fundamentals = {df_fundamentals}")
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
@@ -114,39 +115,41 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
-        :return: A pandas DataFrame with company fundamental info per company
+        :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
         """
         return pd.DataFrame.from_records(
             [ICompanyData.parse_obj(c).dict() for c in self.get_company_data(company_ids)],
-            exclude=['projected_targets', 'projected_intensities']).set_index(self.column_config.COMPANY_ID)
+            exclude=['projected_ei_targets', 'projected_ei_trajectories']).set_index(self.column_config.COMPANY_ID)
 
-    def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
-        :return: A pandas DataFrame with projected intensities per company
+        :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id
         """
         return pd.DataFrame(
-            [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI) for c in
+            [self._convert_projections_to_series(c, self.column_config.PROJECTED_TRAJECTORIES) for c in
              self.get_company_data(company_ids)])
 
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
-        :return: A pandas DataFrame with projected targets per company
+        :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
         """
         return pd.DataFrame(
             [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
              self.get_company_data(company_ids)])
 
+# This is actual output production (whatever the output production units may be).
+# Not to be confused with the term "projected production" as it relates to energy intensity.
 
 class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
-    def __init__(self, production_benchmarks: IProductionBenchmarkScopes,
+    def __init__(self, production_benchmarks: IYOYBenchmarkScopes,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         """
         Base provider that relies on pydantic interfaces. Default for FastAPI usage
-        :param production_benchmarks: List of IBenchmarkScopes
+        :param production_benchmarks: List of IYOYBenchmarkScopes
         :param column_config: An optional ColumnsConfig object containing relevant variable names
         :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
@@ -155,24 +158,26 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         self.column_config = column_config
         self._productions_benchmarks = production_benchmarks
 
-    def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
+    # Note that bencharmk production series are dimensionless.
+    def _convert_benchmark_to_series(self, benchmark: IYOYBenchmark) -> pd.Series:
         """
-        extracts the company projected intensities or targets for a given scope
-        :param feature: PROJECTED_EI or PROJECTED_TARGETS
+        extracts the company projected intensity or production targets for a given scope
         :param scope: a scope
         :return: pd.Series
         """
         return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector))
 
+    # YOY production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
+    # It's a label in the top-level of benchmark data.  Currently S1S2 is the only label with any data.
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
-        Converts IBenchmarkScopes into dataframe for a scope
+        Converts IYOYBenchmarkScopes into dataframe for a scope
         :param scope: a scope
-        :return: pd.Series
+        :return: pd.DataFrame
         """
         result = []
         for bm in self._productions_benchmarks.dict()[str(scope)]['benchmarks']:
-            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm)))
+            result.append(self._convert_benchmark_to_series(IYOYBenchmark.parse_obj(bm)))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
 
@@ -238,7 +243,9 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
 
-        return decarbonization_paths.mul((ei_base - last_ei), axis=0).add(last_ei, axis=0)
+        df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
+        df = df.add(last_ei, axis=0)
+        return df
 
     def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
         """
@@ -259,29 +266,27 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         first_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.base_year]
         last_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.target_end_year]
         # This throws a warning when processing a NaN
-        return intensity_benchmark_row.apply(lambda x: Q_((x - last_ei) / (first_ei - last_ei)), ureg('t CO2/MWh'))
+        return intensity_benchmark_row.apply(lambda x: (x.m - last_ei.m) / (first_ei.m - last_ei.m))
 
-    def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
+    def _convert_benchmark_to_series(self, benchmark: IEIBenchmark) -> pd.Series:
         """
         extracts the company projected intensities or targets for a given scope
-        :param feature: PROJECTED_EI or PROJECTED_TARGETS
         :param scope: a scope
         :return: pd.Series
         """
-        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector))
+        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector), dtype='pint[t CO2/MWh]')
 
-    def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.Series:
+    def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
-        Converts IBenchmarkScopes into dataframe for a scope
+        Converts IEIBenchmarkScopes into dataframe for a scope
         :param scope: a scope
-        :return: pd.Series
+        :return: pd.DataFrame
         """
         result = []
         for bm in self._EI_benchmarks.dict()[str(scope)]['benchmarks']:
-            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm)))
+            result.append(self._convert_benchmark_to_series(IEIBenchmark.parse_obj(bm)))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
-
         return df_bm
 
     def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame,
@@ -305,7 +310,6 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                                                         range(self.temp_config.CONTROLS_CONFIG.base_year,
                                                               self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
         benchmark_projection.index = sectors.index
-
         return benchmark_projection
 
 

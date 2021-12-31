@@ -1,17 +1,11 @@
 from typing import Optional, Tuple, Type, List
-from pint import Quantity
-from pint_pandas import PintArray
 
 import pandas as pd
 import numpy as np
 import itertools
-import pint
-import pint_pandas
 
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
-PA_ = pint_pandas.PintArray
-
+from pint import Quantity
+from .data.osc_units import ureg, Q_, PA_
 from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
@@ -76,7 +70,8 @@ class TemperatureScore(PortfolioAggregation):
 
         # Safeguard: If score is NaN due to missing data assign default score.
         if np.isnan(score):
-            return self.get_default_score(scorable_row), target_overshoot_ratio, Q_(1.0, ureg.delta_degC)
+            default_score = self.get_default_score(scorable_row)
+            return default_score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(1.0, ureg.delta_degC)
         return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(0.0, ureg.delta_degC)
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[Quantity['delta_degC'], Quantity['delta_degC']]:
@@ -95,9 +90,11 @@ class TemperatureScore(PortfolioAggregation):
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
             if s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4:
+                print(f"ignoring s3: {row}")
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE], s1s2[self.c.TEMPERATURE_RESULTS]
             else:
                 company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
+                print(company_emissions)
                 return (Q_((s1s2[self.c.COLS.TEMPERATURE_SCORE].m * s1s2[self.c.COLS.GHG_SCOPE12] +
                             s3[self.c.COLS.TEMPERATURE_SCORE].m * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
                             s1s2[self.c.COLS.TEMPERATURE_SCORE].u),
@@ -184,10 +181,12 @@ class TemperatureScore(PortfolioAggregation):
             self._check_column(data, self.c.COLS.GHG_SCOPE12)
             self._check_column(data, self.c.COLS.GHG_SCOPE3)
             data = self._calculate_company_score(data)
+        else:
+            print(f"calculate scopes = {self.scopes}")
 
         # We need to filter the scopes again, because we might have had to add a scope in the preparation step
         data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
-        data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(lambda x: Q_(x.m.round(2), x.u))
+        data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(lambda x: Q_(round (x.m, 2), x.u))
         return data
 
     def _get_aggregations(self, data: pd.DataFrame, total_companies: int) -> Tuple[Aggregation, pd.Series, pd.Series]:

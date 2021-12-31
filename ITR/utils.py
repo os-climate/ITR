@@ -1,6 +1,10 @@
 import pandas as pd
 from typing import List, Optional, Tuple
 
+from pint import Quantity
+from .data.osc_units import ureg, Q_, PA_
+# ureg = pint.get_application_registry()
+
 from .configs import ColumnsConfig, TemperatureScoreConfig
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 
@@ -8,12 +12,6 @@ from .temperature_score import TemperatureScore
 from .portfolio_aggregation import PortfolioAggregationMethod
 
 from .data.data_warehouse import DataWarehouse
-
-from pint import Quantity
-import pint
-import pint_pandas
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
 
 def _flatten_user_fields(record: PortfolioCompany):
     """

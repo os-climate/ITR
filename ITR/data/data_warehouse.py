@@ -6,9 +6,7 @@ import numpy as np
 
 import pint
 import pint_pandas
-
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
+from ITR.data.osc_units import ureg, Q_, PA_
 
 from ITR.interfaces import ICompanyAggregates
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
@@ -67,18 +65,23 @@ class DataWarehouse(ABC):
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             projected_production=projected_production)
 
-        df_new = self._get_cumulative_emission(
+        df_trajectory = self._get_cumulative_emission(
+            projected_emission_intensity=self.company_data.get_company_projected_trajectories(company_ids),
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
+        df_target = self._get_cumulative_emission(
+            projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
+        df_budget = self._get_cumulative_emission(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
-            projected_production=projected_production)
-
-        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
+        df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget.m]*
                                                                                             len(df_company_data), dtype='pint[t CO2]')
-        df_company_data[self.column_config.BENCHMARK_TEMP] = pint_pandas.PintArray([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
+        df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature.m]*
                                                                                    len(df_company_data), dtype='pint[delta_degC]')
 
-        companies = df_company_data.reset_index().to_dict(orient="records")
-
+        companies = df_company_data.to_dict(orient="records")
         aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
                                                             companies]
 
@@ -87,7 +90,7 @@ class DataWarehouse(ABC):
     def _convert_df_to_model(self, df_company_data: pd.DataFrame) -> List[ICompanyAggregates]:
 
         """
-        transforms Dataframe Company data and preprocessed values into list of IDataProviderTarget instances
+        transforms Dataframe Company data and preprocessed values into list of ICompanyAggregates instances
 
         :param df_company_data: pandas Dataframe with targets
         :return: A list containing the targets
@@ -113,12 +116,13 @@ class DataWarehouse(ABC):
         df['weighted_average'] = df[values] / grouped[weights].transform('sum') * df[weights]
         return grouped['weighted_average'].sum(min_count=1) #min_count is required for Grouper objects
 
-    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, production_weights: pd.DataFrame
-                                 ) -> pd.DataFrame:
+    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
+                                 ) -> pd.Series:
         """
         get the weighted sum of the projected emission times the projected production
         :param projected_emission_intensity: series of projected emissions
-        :param production_weights: series of weights to use for emission_intensity sums
-        :return: weighted sum of production and emission
+        :param projected_production: PintArray of projected production amounts
+        :return: cumulative emissions based on weighted sum of production
         """
-        return projected_emission_intensity.multiply(projected_production).sum(axis=1)
+        df = projected_emission_intensity.multiply(projected_production)
+        return df.sum(axis=1).astype('pint[Mt CO2]')
