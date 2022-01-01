@@ -160,8 +160,8 @@ class IEmissionIntensityBenchmarkScopes(PintModel):
         return getattr(self, item)
 
     def __init__(self, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
-        super().__init__(benchmark_temperature=Q_(benchmark_temperature, ureg.delta_degC),
-                         benchmark_global_budget=Q_(benchmark_global_budget, ureg('t CO2')),
+        super().__init__(benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
+                         benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
                          *args, **kwargs)
 
 
