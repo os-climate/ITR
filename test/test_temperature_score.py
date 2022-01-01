@@ -29,7 +29,6 @@ class TestTemperatureScore(unittest.TestCase):
             df[cumulative] = df[cumulative].astype('pint[Mt CO2]')
         df['benchmark_global_budget'] = df['benchmark_global_budget'].astype('pint[Gt CO2]')
         df['benchmark_temperature'] = df['benchmark_temperature'].astype('pint[delta_degC]')
-        print(f"df = {df}")
         self.data = df
 
     def test_temp_score(self) -> None:

@@ -79,7 +79,7 @@ class TemperatureScore(PortfolioAggregation):
         Get the aggregated temperature score and a temperature result, which indicates how much of the score is based on the default score for a certain company based on the emissions of company.
 
         :param company_data: The original data, grouped by company, time frame and scope category
-        :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score
+        :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score)
         :return: The aggregated temperature score for a company
         """
         if row[self.c.COLS.SCOPE] != EScope.S1S2S3:
@@ -90,17 +90,13 @@ class TemperatureScore(PortfolioAggregation):
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
             if s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4:
-                # print(f"ignoring s3: {row}")
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE], s1s2[self.c.TEMPERATURE_RESULTS]
             else:
                 company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
-                # print(company_emissions)
-                return (Q_((s1s2[self.c.COLS.TEMPERATURE_SCORE].m * s1s2[self.c.COLS.GHG_SCOPE12] +
-                            s3[self.c.COLS.TEMPERATURE_SCORE].m * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
-                            s1s2[self.c.COLS.TEMPERATURE_SCORE].u),
-                        Q_((s1s2[self.c.TEMPERATURE_RESULTS].m * s1s2[self.c.COLS.GHG_SCOPE12] +
-                            s3[self.c.TEMPERATURE_RESULTS].m * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
-                            s1s2[self.c.TEMPERATURE_RESULTS].u))
+                return ((s1s2[self.c.COLS.TEMPERATURE_SCORE] * s1s2[self.c.COLS.GHG_SCOPE12] +
+                            s3[self.c.COLS.TEMPERATURE_SCORE] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
+                        (s1s2[self.c.TEMPERATURE_RESULTS] * s1s2[self.c.COLS.GHG_SCOPE12] +
+                            s3[self.c.TEMPERATURE_RESULTS] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions)
 
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
@@ -130,14 +126,15 @@ class TemperatureScore(PortfolioAggregation):
 
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
-        # print(f"data = {data}")
-        # print(f"score_combinations = {score_combinations}")
         scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
-        # print(f"scoring_data = {scoring_data}")
         scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
             self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
             self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
             lambda row: self.get_score(row), axis=1))
+
+        # Fix up dtypes for the new columns we just added
+        for c in [self.c.COLS.TEMPERATURE_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TARGET_SCORE, self.c.TEMPERATURE_RESULTS]:
+            scoring_data[c] = scoring_data[c].astype('pint[delta_degC]')
 
         scoring_data = self.cap_scores(scoring_data)
         return scoring_data
@@ -187,7 +184,7 @@ class TemperatureScore(PortfolioAggregation):
 
         # We need to filter the scopes again, because we might have had to add a scope in the preparation step
         data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
-        data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(lambda x: Q_(round (x.m, 2), x.u))
+        data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(lambda x: Q_(round (x.m, 2), x.u)).astype('pint[delta_degC]')
         return data
 
     def _get_aggregations(self, data: pd.DataFrame, total_companies: int) -> Tuple[Aggregation, pd.Series, pd.Series]:
@@ -200,14 +197,14 @@ class TemperatureScore(PortfolioAggregation):
         data = data.copy()
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
                                                           self.aggregation_method)
-        data[self.c.COLS.CONTRIBUTION_RELATIVE] = PA_(weighted_scores.quantity.m / (weighted_scores.quantity.m.sum() / 100), ureg.delta_degC)
+        data[self.c.COLS.CONTRIBUTION_RELATIVE] = pd.Series(weighted_scores / weighted_scores.sum(), dtype='pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         contributions = data \
             .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
             .where(pd.notnull(data), 0) \
             .to_dict(orient="records")
         aggregations = Aggregation(
-            score=Q_(weighted_scores.quantity.m.sum(), ureg.delta_degC),
+            score=weighted_scores.sum(),
             proportion=len(weighted_scores) / (total_companies / 100.0),
             contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]
         ), \
@@ -239,7 +236,7 @@ class TemperatureScore(PortfolioAggregation):
                 grouped={},
                 all=score_aggregation_all,
                 influence_percentage=self._calculate_aggregate_score(
-                    filtered_data, self.c.TEMPERATURE_RESULTS, self.aggregation_method).quantity.m.sum() * 100)
+                    filtered_data, self.c.TEMPERATURE_RESULTS, self.aggregation_method).sum().m * 100)
 
             # If there are grouping column(s) we'll group in pandas and pass the results to the aggregation
             if len(self.grouping) > 0:

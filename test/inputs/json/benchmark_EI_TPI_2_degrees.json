@@ -1,6 +1,6 @@
 {
-  "benchmark_temperature": 2.0,
-  "benchmark_global_budget": 500,
+  "benchmark_temperature": "2.0 delta_degC",
+  "benchmark_global_budget": "500 Gt CO2",
   "is_AFOLU_included": false,
   "S1S2": {
     "benchmarks": [
@@ -10,131 +10,131 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.6075603731304943
+            "value": "0.6075603731304943 t CO2/MWh"
           },
           {
             "year": 2020,
-            "value": 0.457
+            "value": "0.457 t CO2/MWh"
           },
           {
             "year": 2021,
-            "value": 0.4376
+            "value": "0.4376 t CO2/MWh"
           },
           {
             "year": 2022,
-            "value": 0.41819999999999996
+            "value": "0.41819999999999996 t CO2/MWh"
           },
           {
             "year": 2023,
-            "value": 0.39879999999999993
+            "value": "0.39879999999999993 t CO2/MWh"
           },
           {
             "year": 2024,
-            "value": 0.3793999999999999
+            "value": "0.3793999999999999 t CO2/MWh"
           },
           {
             "year": 2025,
-            "value": 0.36
+            "value": "0.36 t CO2/MWh"
           },
           {
             "year": 2026,
-            "value": 0.33699999999999997
+            "value": "0.33699999999999997 t CO2/MWh"
           },
           {
             "year": 2027,
-            "value": 0.31399999999999995
+            "value": "0.31399999999999995 t CO2/MWh"
           },
           {
             "year": 2028,
-            "value": 0.2909999999999999
+            "value": "0.2909999999999999 t CO2/MWh"
           },
           {
             "year": 2029,
-            "value": 0.2679999999999999
+            "value": "0.2679999999999999 t CO2/MWh"
           },
           {
             "year": 2030,
-            "value": 0.245
+            "value": "0.245 t CO2/MWh"
           },
           {
             "year": 2031,
-            "value": 0.22619999999999998
+            "value": "0.22619999999999998 t CO2/MWh"
           },
           {
             "year": 2032,
-            "value": 0.20739999999999997
+            "value": "0.20739999999999997 t CO2/MWh"
           },
           {
             "year": 2033,
-            "value": 0.18859999999999996
+            "value": "0.18859999999999996 t CO2/MWh"
           },
           {
             "year": 2034,
-            "value": 0.16979999999999995
+            "value": "0.16979999999999995 t CO2/MWh"
           },
           {
             "year": 2035,
-            "value": 0.151
+            "value": "0.151 t CO2/MWh"
           },
           {
             "year": 2036,
-            "value": 0.1402
+            "value": "0.1402 t CO2/MWh"
           },
           {
             "year": 2037,
-            "value": 0.1294
+            "value": "0.1294 t CO2/MWh"
           },
           {
             "year": 2038,
-            "value": 0.11859999999999998
+            "value": "0.11859999999999998 t CO2/MWh"
           },
           {
             "year": 2039,
-            "value": 0.10779999999999998
+            "value": "0.10779999999999998 t CO2/MWh"
           },
           {
             "year": 2040,
-            "value": 0.097
+            "value": "0.097 t CO2/MWh"
           },
           {
             "year": 2041,
-            "value": 0.0888
+            "value": "0.0888 t CO2/MWh"
           },
           {
             "year": 2042,
-            "value": 0.0806
+            "value": "0.0806 t CO2/MWh"
           },
           {
             "year": 2043,
-            "value": 0.0724
+            "value": "0.0724 t CO2/MWh"
           },
           {
             "year": 2044,
-            "value": 0.06420000000000001
+            "value": "0.06420000000000001 t CO2/MWh"
           },
           {
             "year": 2045,
-            "value": 0.056
+            "value": "0.056 t CO2/MWh"
           },
           {
             "year": 2046,
-            "value": 0.0528
+            "value": "0.0528 t CO2/MWh"
           },
           {
             "year": 2047,
-            "value": 0.0496
+            "value": "0.0496 t CO2/MWh"
           },
           {
             "year": 2048,
-            "value": 0.0464
+            "value": "0.0464 t CO2/MWh"
           },
           {
             "year": 2049,
-            "value": 0.043199999999999995
+            "value": "0.043199999999999995 t CO2/MWh"
           },
           {
             "year": 2050,
-            "value": 0.04
+            "value": "0.04 t CO2/MWh"
           }
         ]
       },
@@ -144,131 +144,131 @@
         "projections": [
           {
             "year": 2019,
-            "value": 1.669
+            "value": "1.669 t CO2/MWh"
           },
           {
             "year": 2020,
-            "value": 1.498
+            "value": "1.498 t CO2/MWh"
           },
           {
             "year": 2021,
-            "value": 1.4718
+            "value": "1.4718 t CO2/MWh"
           },
           {
             "year": 2022,
-            "value": 1.4456
+            "value": "1.4456 t CO2/MWh"
           },
           {
             "year": 2023,
-            "value": 1.4194
+            "value": "1.4194 t CO2/MWh"
           },
           {
             "year": 2024,
-            "value": 1.3932
+            "value": "1.3932 t CO2/MWh"
           },
           {
             "year": 2025,
-            "value": 1.367
+            "value": "1.367 t CO2/MWh"
           },
           {
             "year": 2026,
-            "value": 1.3195999999999999
+            "value": "1.3195999999999999 t CO2/MWh"
           },
           {
             "year": 2027,
-            "value": 1.2721999999999998
+            "value": "1.2721999999999998 t CO2/MWh"
           },
           {
             "year": 2028,
-            "value": 1.2247999999999997
+            "value": "1.2247999999999997 t CO2/MWh"
           },
           {
             "year": 2029,
-            "value": 1.1773999999999996
+            "value": "1.1773999999999996 t CO2/MWh"
           },
           {
             "year": 2030,
-            "value": 1.13
+            "value": "1.13 t CO2/MWh"
           },
           {
             "year": 2031,
-            "value": 1.0948
+            "value": "1.0948 t CO2/MWh"
           },
           {
             "year": 2032,
-            "value": 1.0596
+            "value": "1.0596 t CO2/MWh"
           },
           {
             "year": 2033,
-            "value": 1.0244000000000002
+            "value": "1.0244000000000002 t CO2/MWh"
           },
           {
             "year": 2034,
-            "value": 0.9892000000000002
+            "value": "0.9892000000000002 t CO2/MWh"
           },
           {
             "year": 2035,
-            "value": 0.954
+            "value": "0.954 t CO2/MWh"
           },
           {
             "year": 2036,
-            "value": 0.9258
+            "value": "0.9258 t CO2/MWh"
           },
           {
             "year": 2037,
-            "value": 0.8976
+            "value": "0.8976 t CO2/MWh"
           },
           {
             "year": 2038,
-            "value": 0.8694
+            "value": "0.8694 t CO2/MWh"
           },
           {
             "year": 2039,
-            "value": 0.8412
+            "value": "0.8412 t CO2/MWh"
           },
           {
             "year": 2040,
-            "value": 0.813
+            "value": "0.813 t CO2/MWh"
           },
           {
             "year": 2041,
-            "value": 0.7857999999999999
+            "value": "0.7857999999999999 t CO2/MWh"
           },
           {
             "year": 2042,
-            "value": 0.7585999999999999
+            "value": "0.7585999999999999 t CO2/MWh"
           },
           {
             "year": 2043,
-            "value": 0.7313999999999999
+            "value": "0.7313999999999999 t CO2/MWh"
           },
           {
             "year": 2044,
-            "value": 0.7041999999999999
+            "value": "0.7041999999999999 t CO2/MWh"
           },
           {
             "year": 2045,
-            "value": 0.677
+            "value": "0.677 t CO2/MWh"
           },
           {
             "year": 2046,
-            "value": 0.6658000000000001
+            "value": "0.6658000000000001 t CO2/MWh"
           },
           {
             "year": 2047,
-            "value": 0.6546000000000001
+            "value": "0.6546000000000001 t CO2/MWh"
           },
           {
             "year": 2048,
-            "value": 0.6434000000000001
+            "value": "0.6434000000000001 t CO2/MWh"
           },
           {
             "year": 2049,
-            "value": 0.6322000000000001
+            "value": "0.6322000000000001 t CO2/MWh"
           },
           {
             "year": 2050,
-            "value": 0.621
+            "value": "0.621 t CO2/MWh"
           }
         ]
       }

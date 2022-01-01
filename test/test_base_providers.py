@@ -26,7 +26,7 @@ class TestBaseProvider(unittest.TestCase):
         self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
         self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM.json")
-        self.excel_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
+        # self.excel_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
 
         # load company data
         with open(self.company_json) as json_file:
@@ -57,7 +57,7 @@ class TestBaseProvider(unittest.TestCase):
             index=self.company_ids,
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
-    def test_temp_score_from_excel_data(self):
+    def test_temp_score_from_json_data(self):
         # Calculate Temp Scores
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -76,16 +76,14 @@ class TestBaseProvider(unittest.TestCase):
             )
         # portfolio data
         portfolio_data = ITR.utils.get_data(self.base_warehouse, portfolio)
-        # print(f"portfolio_data = {portfolio_data}")
         scores = temp_score.calculate(portfolio_data)
-        # print(f"scores = {scores}")
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.05, 2.22, 2.06]
-        assert_array_equal(scores.temperature_score.values, expected)
+        expected = pd.Series([2.05, 2.22, 2.06], dtype='pint[delta_degC]', name='temperature_score')
+        pd.testing.assert_series_equal(scores.temperature_score, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.11, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.11, ureg.delta_degC), places=2)
 
 
     def test_get_benchmark(self):

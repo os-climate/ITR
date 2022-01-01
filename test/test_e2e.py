@@ -4,6 +4,7 @@ from ITR.interfaces import (
     ETimeFrames,
     PortfolioCompany,
 )
+from ITR.data.osc_units import ureg, Q_, PA_
 
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
@@ -35,7 +36,7 @@ class EndToEndTest(unittest.TestCase):
 
     def setUp(self):
         company_id = "BaseCompany"
-        self.BASE_COMP_SCORE = 3.85
+        self.BASE_COMP_SCORE = Q_(3.85, ureg.delta_degC)
         self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,
@@ -46,29 +47,29 @@ class EndToEndTest(unittest.TestCase):
             company_enterprise_value=100,
             company_total_assets=100,
             company_cash_equivalents=100,
-            cumulative_budget=345325664.840567,
-            cumulative_trajectory=3745094638.52858,
-            cumulative_target=3769096510.09909,
+            cumulative_budget="345325664.840567 t CO2",
+            cumulative_trajectory="3745094638.52858 t CO2",
+            cumulative_target="3769096510.09909 t CO2",
             target_probability=0.428571428571428,
             isic='A12',
             sector='Steel',
             region='Europe',
-            benchmark_global_budget=396,
-            benchmark_temperature=1.5,
+            benchmark_global_budget="396 Gt CO2",
+            benchmark_temperature="1.5 delta_degC",
             projected_intensities=ICompanyProjectionsScopes.parse_obj({
                 "S1S2": {
                     "projections": [
                         {
                             "year": "2019",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/MWh"
                         },
                         {
                             "year": "2020",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/MWh"
                         },
                         {
                             "year": "2021",
-                            "value": 1.5908285727976157
+                            "value": "1.5908285727976157 t CO2/MWh"
                         }
                     ]
                 }
@@ -78,15 +79,15 @@ class EndToEndTest(unittest.TestCase):
                     "projections": [
                         {
                             "year": "2019",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/MWh"
                         },
                         {
                             "year": "2020",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/MWh"
                         },
                         {
                             "year": "2021",
-                            "value": 1.5577542305393455
+                            "value": "1.5577542305393455 t CO2/MWh"
                         }
                     ]
                 }

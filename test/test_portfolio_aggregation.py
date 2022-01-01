@@ -21,12 +21,13 @@ class TestPortfolioAggregation(unittest.TestCase):
         self.data.loc[:, ColumnsConfig.MARKET_CAP] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.SCOPE] = [EScope.S1S2, EScope.S1S2, EScope.S1S2S3]
-        self.data.loc[:, ColumnsConfig.GHG_SCOPE12] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.GHG_SCOPE3] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.GHG_SCOPE12] = pd.Series([1.0, 2.0, 3.0], dtype='pint[MWh]')
+        self.data.loc[:, ColumnsConfig.GHG_SCOPE3] = pd.Series([1.0, 2.0, 3.0], dtype='pint[MWh]')
         self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.CASH_EQUIVALENTS] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.TEMPERATURE_SCORE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[delta_degC]')
 
     def test_is_emissions_based(self):
         self.assertTrue(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.MOTS))
@@ -59,56 +60,56 @@ class TestPortfolioAggregation(unittest.TestCase):
 
         self.data.loc[0, ColumnsConfig.MARKET_CAP] = pd.NA
         with self.assertRaises(ValueError):
-            PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.MARKET_CAP)
+            PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.TEMPERATURE_SCORE)
 
     def test_calculate_aggregate_score_WATS(self):
         pd.testing.assert_series_equal(
             PortfolioAggregation()._calculate_aggregate_score(data=self.data,
-                                                              input_column=ColumnsConfig.MARKET_CAP,
+                                                              input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                               portfolio_aggregation_method=PortfolioAggregationMethod.WATS),
-            pd.Series([0.166667, 0.666667, 1.5]))
+            pd.Series([0.166667, 0.666667, 1.5], dtype='pint[delta_degC]'))
 
     def test_calculate_aggregate_score_TETS(self):
         pd.testing.assert_series_equal(
             PortfolioAggregation()._calculate_aggregate_score(data=self.data,
-                                                              input_column=ColumnsConfig.MARKET_CAP,
+                                                              input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                               portfolio_aggregation_method=PortfolioAggregationMethod.TETS),
-            pd.Series([0.111111, 0.444444, 2.0]))
+            pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
 
     def test_calculate_aggregate_score_ECOTS(self):
         pd.testing.assert_series_equal(
             PortfolioAggregation()._calculate_aggregate_score(data=self.data,
-                                                              input_column=ColumnsConfig.MARKET_CAP,
+                                                              input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                               portfolio_aggregation_method=PortfolioAggregationMethod.ECOTS),
-            pd.Series([0.111111, 0.444444, 2.0]))
+            pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
 
     def test_calculate_aggregate_score_MOTS(self):
         pd.testing.assert_series_equal(
             PortfolioAggregation()._calculate_aggregate_score(data=self.data,
-                                                              input_column=ColumnsConfig.MARKET_CAP,
+                                                              input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                               portfolio_aggregation_method=PortfolioAggregationMethod.MOTS),
-            pd.Series([0.111111, 0.444444, 2.0]))
+            pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
 
     def test_calculate_aggregate_score_EOTS(self):
         pd.testing.assert_series_equal(
             PortfolioAggregation()._calculate_aggregate_score(data=self.data,
-                                                              input_column=ColumnsConfig.MARKET_CAP,
+                                                              input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                               portfolio_aggregation_method=PortfolioAggregationMethod.EOTS),
-            pd.Series([0.111111, 0.444444, 2.0]))
+            pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
 
     def test_calculate_aggregate_score_AOTS(self):
         pd.testing.assert_series_equal(
             PortfolioAggregation()._calculate_aggregate_score(data=self.data,
-                                                              input_column=ColumnsConfig.MARKET_CAP,
+                                                              input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                               portfolio_aggregation_method=PortfolioAggregationMethod.AOTS),
-            pd.Series([0.111111, 0.444444, 2.0]))
+            pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
 
     def test_calculate_aggregate_score_ROTS(self):
         pd.testing.assert_series_equal(
             PortfolioAggregation()._calculate_aggregate_score(data=self.data,
-                                                              input_column=ColumnsConfig.MARKET_CAP,
+                                                              input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                               portfolio_aggregation_method=PortfolioAggregationMethod.ROTS),
-            pd.Series([0.111111, 0.444444, 2.0]))
+            pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
 
 
 
