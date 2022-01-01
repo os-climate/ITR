@@ -82,21 +82,21 @@ class PortfolioAggregation(ABC):
             ))
 
     def _calculate_aggregate_score(self, data: pd.DataFrame, input_column: str,
-                                   portfolio_aggregation_method: PortfolioAggregationMethod) -> PintArray:
+                                   portfolio_aggregation_method: PortfolioAggregationMethod) -> pd.Series:
         """
         Aggregate the scores in a given column based on a certain portfolio aggregation method.
 
         :param data: The data to run the calculations on
         :param input_column: The input column (containing the scores)
         :param portfolio_aggregation_method: The method to use
-        :return: The aggregates score
+        :return: The aggregates score as a pd.Series
         """
         if portfolio_aggregation_method == PortfolioAggregationMethod.WATS:
             total_investment_weight = data[self.c.COLS.INVESTMENT_VALUE].sum()
             try:
-                return PA_(data.apply(
-                    lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column].m / total_investment_weight,
-                    axis=1), dtype=ureg.delta_degC)
+                return pd.Series(data.apply(
+                    lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column] / total_investment_weight,
+                    axis=1), dtype='pint[delta_degC]')
             except ZeroDivisionError:
                 raise ValueError("The portfolio weight is not allowed to be zero")
 
@@ -109,10 +109,10 @@ class PortfolioAggregation(ABC):
             if use_S1S2.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE12)
             # Calculate the total emissions of all companies
-            emissions = (use_S1S2 * data[self.c.COLS.GHG_SCOPE12]).sum() + (use_S3 * data[self.c.COLS.GHG_SCOPE3]).sum()
+            emissions = data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12].sum() + data.loc[use_S3, self.c.COLS.GHG_SCOPE3].sum()
             try:
-                return PA_((use_S1S2 * data[self.c.COLS.GHG_SCOPE12] + use_S3 * data[self.c.COLS.GHG_SCOPE3]) / emissions * \
-                       data[input_column], dtype=ureg.delta_degC)
+                return pd.Series((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0)) \
+                            / emissions * data[input_column], dtype='pint[delta_degC]')
             except ZeroDivisionError:
                 raise ValueError("The total emissions should be higher than zero")
 
@@ -136,19 +136,18 @@ class PortfolioAggregation(ABC):
                     self._check_column(data, self.c.COLS.GHG_SCOPE12)
                 if use_S3.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE3)
-                error () # not yet handled...
                 data[self.c.COLS.OWNED_EMISSIONS] = (data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]) * (
-                        use_S1S2 * data[self.c.COLS.GHG_SCOPE12] + use_S3 * data[self.c.COLS.GHG_SCOPE3])
+                        data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, 0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0))
             except ZeroDivisionError:
                 raise ValueError("To calculate the aggregation, the {} column may not be zero".format(value_column))
             owned_emissions = data[self.c.COLS.OWNED_EMISSIONS].sum()
 
             try:
                 # Calculate the MOTS value per company
-                return PA_(data.apply(
+                result = data.apply(
                     lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
-                    axis=1), dtype=ureg.delta_degC
-                )
+                    axis=1)
+                return result.astype('pint[delta_degC]')
             except ZeroDivisionError:
                 raise ValueError("The total owned emissions can not be zero")
         else:

@@ -70,10 +70,11 @@ class DataWarehouse(ABC):
         # print(f"""\ndf_budget = {df_budget}\n\nf_budget.sum() = {df_budget.sum()}\n\n""")
         df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget]*
-                                                                                            len(df_company_data), dtype='pint[Gt CO2]')
+                                                                                            len(df_company_data), dtype='pint[Gt CO2]',
+                                                                               index=df_company_data.index)
         df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature]*
-                                                                                   len(df_company_data), dtype='pint[delta_degC]')
-
+                                                                                   len(df_company_data), dtype='pint[delta_degC]',
+                                                                               index=df_company_data.index)
         companies = df_company_data.to_dict(orient="records")
         aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
                                                             companies]

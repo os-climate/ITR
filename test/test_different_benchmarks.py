@@ -12,8 +12,9 @@ from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEmissionIntensityBenchmarkScopes, \
-    IProductionBenchmarkScopes
+    IProductionBenchmarkScopes, IYOYBenchmarkScopes
 
+from ITR.data.osc_units import ureg, Q_, PA_
 
 class TestEIBenchmarks(unittest.TestCase):
     """
@@ -38,7 +39,7 @@ class TestEIBenchmarks(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
+        prod_bms = IYOYBenchmarkScopes.parse_obj(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # load intensity benchmarks
@@ -94,10 +95,10 @@ class TestEIBenchmarks(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.05, 2.22, 2.06]
+        expected = pd.Series([2.05, 2.22, 2.06], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.11, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.11, ureg.delta_degC), places=2)
 
         # TPI
         # portfolio data
@@ -106,10 +107,10 @@ class TestEIBenchmarks(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.35, 2.39, 2.22]
+        expected = pd.Series([2.35, 2.39, 2.22], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.32, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.32, ureg.delta_degC), places=2)
 
         # TPI below 2
         # portfolio data
@@ -118,7 +119,7 @@ class TestEIBenchmarks(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.11, 2.32, 2.35]
+        expected = pd.Series([2.11, 2.32, 2.35], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.26, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.26, ureg.delta_degC), places=2)
