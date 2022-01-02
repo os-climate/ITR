@@ -51,11 +51,13 @@ class TestBaseProvider(unittest.TestCase):
                             "US00724F1012",
                             "FR0000125338"]
         self.company_info_at_base_year = pd.DataFrame(
-            [[Q_(1.6982474347547, 't CO2/MWh'), Q_(1.04827859e+08, 'MWh'), 'Electricity Utilities', 'North America'],
-             [Q_(0.476586931582279, 't CO2/MWh'), Q_(5.98937002e+08, 'MWh'), 'Electricity Utilities', 'North America'],
-             [Q_(0.22457393169277, 't CO2/MWh'), Q_(1.22472003e+08, 'MWh'), 'Electricity Utilities', 'Europe']],
+            [[Q_(1.6982474347547, 't CO2/MWh'), Q_(1.04827859e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
+             [Q_(0.476586931582279, 't CO2/MWh'), Q_(5.98937002e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
+             [Q_(0.22457393169277, 't CO2/MWh'), Q_(1.22472003e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'Europe']],
             index=self.company_ids,
-            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+        self.company_info_at_base_year[ColumnsConfig.BASE_EI] = self.company_info_at_base_year[ColumnsConfig.BASE_EI].astype('pint[t CO2/MWh]')
+        self.company_info_at_base_year[ColumnsConfig.GHG_SCOPE12] = self.company_info_at_base_year[ColumnsConfig.GHG_SCOPE12].astype('pint[MWh]')
 
     def test_temp_score_from_json_data(self):
         # Calculate Temp Scores
@@ -149,8 +151,9 @@ class TestBaseProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, 'MWh'))    # These are apparently production numbers, not emissions numbers
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, 'MWh'))    # These are apparently production numbers, not emissions numbers
+        # print(f"\nghg_s1s2 = {company_1.ghg_s1s2}\n\n")
+        self.assertAlmostEqual(Q_(company_1.ghg_s1s2.value,company_1.ghg_s1s2.units), Q_(104827858.636039, 'MWh'))    # These are apparently production numbers, not emissions numbers
+        self.assertAlmostEqual(Q_(company_2.ghg_s1s2.value,company_2.ghg_s1s2.units), Q_(598937001.892059, 'MWh'))    # These are apparently production numbers, not emissions numbers
         self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, 't CO2'), places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, 't CO2'), places=4)
         self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, 't CO2'), places=4)

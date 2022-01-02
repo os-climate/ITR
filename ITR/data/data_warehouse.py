@@ -48,13 +48,16 @@ class DataWarehouse(ABC):
         """
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
+        df_company_data['ghg_s1s2'] = df_company_data['ghg_s1s2'].apply(lambda x: Q_(x['value'], x['units']))
+        df_company_data['production_metric'] = df_company_data['production_metric'].apply(lambda x: x['units'])
+        # print(f"\ndf_company_data = {df_company_data}\n\n")
         assert pd.Series(company_ids).isin(df_company_data.index).all(), \
             "some of the company ids are not included in the fundamental data"
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year)
-        # print(f"projected_production = {projected_production}")
+        # print(f"\nprojected_production = {projected_production}\n\n")
 
         # print(f"company_info_at_base_year = {company_info_at_base_year}")
         df_trajectory = self._get_cumulative_emission(
@@ -67,7 +70,7 @@ class DataWarehouse(ABC):
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
-        # print(f"""\ndf_budget = {df_budget}\n\nf_budget.sum() = {df_budget.sum()}\n\n""")
+        # print(f"\ndf_trajectory.values.quantity[0] = {df_trajectory.values.quantity[0]}\n\n")
         df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget]*
                                                                                             len(df_company_data), dtype='pint[Gt CO2]',
@@ -75,10 +78,14 @@ class DataWarehouse(ABC):
         df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature]*
                                                                                    len(df_company_data), dtype='pint[delta_degC]',
                                                                                index=df_company_data.index)
+        df_company_data['ghg_s1s2'] = df_company_data['ghg_s1s2'].apply(lambda x: {'year':2019, 'value':x.m, 'units':str(x.u)})
+        df_company_data['production_metric'] = df_company_data['production_metric'].apply(lambda x: {'units':x})
+        for col in [ self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
+            df_company_data[col] = df_company_data[col].apply(lambda x: str(x))
         companies = df_company_data.to_dict(orient="records")
         aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
                                                             companies]
-
+        
         return aggregate_company_data
 
     def _convert_df_to_model(self, df_company_data: pd.DataFrame) -> List[ICompanyAggregates]:
