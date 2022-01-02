@@ -21,7 +21,7 @@ from ITR.interfaces import ICompanyData, ICompanyProjection, EScope, IEmissionIn
 
 import logging
 
-from ITR.interfaces import ICompanyProjections, ICompanyEIProjections
+from ITR.interfaces import ICompanyProjections, ICompanyProjections
 import inspect
 
 # TODO: Force validation for excel benchmarks
@@ -46,20 +46,20 @@ def convert_yoy_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str,
 
 
 def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
-                                               column_name_sector: str) -> IEIBenchmarks:
+                                               column_name_sector: str) -> IBenchmarks:
     """
-    Converts excel into IEIBenchmarks
+    Converts excel into IBenchmarks
     :param excal_path: file path to excel
-    :return: IEIBenchmarks instance (list of IEIBenchmark)
+    :return: IBenchmarks instance (list of IBenchmark)
     """
     df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
     result = []
     for index, row in df_ei_bms.iterrows():
-        bm = IEIBenchmark(region=index[0], sector=index[1],
-                        projections=[IEIBenchmarkProjection(year=int(k), value=Q_(v, ureg('t CO2/MWh'))) for k, v in row.items()])
+        bm = IBenchmark(region=index[0], sector=index[1],
+                        projections=[IBenchmarkProjection(year=int(k), value=Q_(v, ureg('t CO2/MWh'))) for k, v in row.items()])
         result.append(bm)
-    return IEIBenchmarks(benchmarks=result)
+    return IBenchmarks(benchmarks=result)
 
 
 class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
@@ -174,13 +174,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
     def _convert_series_to_projections(self, projections: pd.Series) -> List[
-        ICompanyEIProjection]:
+        ICompanyProjection]:
         """
-        Converts a Pandas Series in a list of ICompanyEIProjections
+        Converts a Pandas Series in a list of ICompanyProjections
         :param projections: Pandas Series with years as indices
         :return: List of ICompanyEIProjection objects
         """
-        return [ICompanyEIProjection(year=y, value=v) for y, v in projections.items()]
+        return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame,
                              df_historic: pd.DataFrame) -> List[ICompanyData]:

@@ -3,7 +3,7 @@ import pandas as pd
 
 import pint
 import pint_pandas
-from ITR.data.osc_units import ureg, PA_
+from ITR.data.osc_units import ureg, Q_, PA_
 
 from typing import List, Type, Dict
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, ProjectionConfig, VariablesConfig
@@ -55,10 +55,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        feature_to_units = { self.column_config.PROJECTED_TRAJECTORIES:'pint[t CO2/MWh]', self.column_config.PROJECTED_TARGETS:'pint[t CO2/MWh]' }
+        units = company.dict()[self.column_config.PRODUCTION_METRIC]['units']
         return pd.Series(
             {r['year']: r['value'] for r in company.dict()[feature][str(scope)]['projections']},
-            name=company.company_id, dtype=feature_to_units[feature])
+            name=company.company_id, dtype=f'pint[t CO2/{units}]')
 
     # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
@@ -100,7 +100,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         overrides subclass method
         :param: company_ids: list of company ids
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI,
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI,
         ColumnsConfig.SECTOR and ColumnsConfig.REGION
         """
         df_fundamentals = self.get_company_fundamentals(company_ids)
@@ -108,9 +108,14 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
+                          self.column_config.PRODUCTION_METRIC,
                           self.column_config.GHG_SCOPE12]]
+        company_info[self.column_config.PRODUCTION_METRIC] = company_info[self.column_config.PRODUCTION_METRIC].apply(lambda x: x['units'])
+        # units = company_info[self.column_config.PRODUCTION_METRIC].values[0]
+        # print(f"\nunits = {units}\n\n")
+        company_info[self.column_config.GHG_SCOPE12] = company_info[self.column_config.GHG_SCOPE12].apply(lambda x: Q_(x['value'], x['units'])) # .astype(f'pint[{units}]')
+        # print(f"\ncompany_info.ghg_s12 = {company_info[self.column_config.GHG_SCOPE12]}\n\n")
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
-        # print(f"\ncompany_info = {company_info}\n\n")
         # print(f"\nei_at_base = {ei_at_base}\n\n")
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
@@ -128,18 +133,22 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id
         """
-        return pd.DataFrame(
-            [self._convert_projections_to_series(c, self.column_config.PROJECTED_TRAJECTORIES) for c in
-             self.get_company_data(company_ids)], dtype='pint[t CO2/MWh]')
+        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TRAJECTORIES) for c in
+             self.get_company_data(company_ids)]
+        if trajectory_list:
+            return pd.DataFrame(trajectory_list, dtype=trajectory_list[0].dtype)
+        return pd.DataFrame()
 
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
         """
-        return pd.DataFrame(
-            [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
-             self.get_company_data(company_ids)], dtype='pint[t CO2/MWh]')
+        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
+             self.get_company_data(company_ids)]
+        if target_list:
+            return pd.DataFrame(target_list, dtype=target_list[0].dtype)
+        return pd.DataFrame()
 
 # This is actual output production (whatever the output production units may be).
 # Not to be confused with the term "projected production" as it relates to energy intensity.
@@ -195,7 +204,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info)
         company_production = company_sector_region_info[self.column_config.GHG_SCOPE12]
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-                    company_production, axis=0).astype('pint[MWh]')
+                    company_production, axis=0) # .astype(f"pint[{units}]")
 
     def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame,
                                   scope: EScope = EScope.S1S2) -> pd.DataFrame:
@@ -237,16 +246,16 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_info_at_base_year: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
         intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
-
+        print(f"\nei_base.dtype = {ei_base.dtype}\n\n")
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
-        df = df.add(last_ei, axis=0).astype('pint[t CO2/MWh]')
+        df = df.add(last_ei, axis=0).astype(ei_base.dtype)
         return df
 
     def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
@@ -270,23 +279,23 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         # This throws a warning when processing a NaN
         return intensity_benchmark_row.apply(lambda x: (x.m - last_ei.m) / (first_ei.m - last_ei.m))
 
-    def _convert_benchmark_to_series(self, benchmark: IEIBenchmark) -> pd.Series:
+    def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
         """
         extracts the company projected intensities or targets for a given scope
         :param scope: a scope
         :return: pd.Series
         """
-        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector), dtype='pint[t CO2/MWh]')
+        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector), dtype=f'pint[{benchmark.benchmark_metric.units}]')
 
     def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
-        Converts IEIBenchmarkScopes into dataframe for a scope
+        Converts IBenchmarkScopes into dataframe for a scope
         :param scope: a scope
         :return: pd.DataFrame
         """
         result = []
         for bm in self._EI_benchmarks.dict()[str(scope)]['benchmarks']:
-            result.append(self._convert_benchmark_to_series(IEIBenchmark.parse_obj(bm)))
+            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm)))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
         return df_bm

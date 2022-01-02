@@ -28,6 +28,7 @@ class ColumnsConfig:
     OWNED_EMISSIONS = "owned_emissions"
     COUNTRY = 'country'
     SECTOR = 'sector'
+    PRODUCTION_METRIC = 'production_metric'    # The unit of production (i.e., power generated, tons of steel produced, vehicles manufactured, etc.)
     GHG_SCOPE12 = 'ghg_s1s2'    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
     GHG_SCOPE3 = 'ghg_s3'
     COMPANY_REVENUE = 'company_revenue'
