@@ -242,7 +242,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
-        print(f"\nei_base.dtype = {ei_base.dtype}\n\n")
+        # print(f"\nei_base.dtype = {ei_base.dtype}\n\n")
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
         df = df.add(last_ei, axis=0).astype(ei_base.dtype)
         return df
