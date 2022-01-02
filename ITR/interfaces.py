@@ -1,6 +1,8 @@
 from enum import Enum
-from typing import Optional, Dict, List
-from pydantic import BaseModel
+from typing import Optional, Dict, List, Literal, Union
+from typing_extensions import Annotated
+from pydantic import BaseModel, Field, ValidationError
+
 from pint import Quantity
 from ITR.data.osc_units import ureg, Q_
 
@@ -24,7 +26,7 @@ class Aggregation(PintModel):
         return getattr(self, item)
 
 
-class ScoreAggregation(PintModel):
+class ScoreAggregation(BaseModel):
     all: Aggregation
     influence_percentage: float
     grouped: Dict[str, Aggregation]
@@ -33,7 +35,7 @@ class ScoreAggregation(PintModel):
         return getattr(self, item)
 
 
-class ScoreAggregationScopes(PintModel):
+class ScoreAggregationScopes(BaseModel):
     S1S2: Optional[ScoreAggregation]
     S3: Optional[ScoreAggregation]
     S1S2S3: Optional[ScoreAggregation]
@@ -42,7 +44,7 @@ class ScoreAggregationScopes(PintModel):
         return getattr(self, item)
 
 
-class ScoreAggregations(PintModel):
+class ScoreAggregations(BaseModel):
     short: Optional[ScoreAggregationScopes]
     mid: Optional[ScoreAggregationScopes]
     long: Optional[ScoreAggregationScopes]
@@ -51,7 +53,7 @@ class ScoreAggregations(PintModel):
         return getattr(self, item)
 
 
-class PortfolioCompany(PintModel):
+class PortfolioCompany(BaseModel):
     company_name: str
     company_id: str
     company_isin: Optional[str]
@@ -59,58 +61,72 @@ class PortfolioCompany(PintModel):
     user_fields: Optional[dict]
 
 
-def pint_ify(x, units):
+def pint_ify(x, units='error'):
     if x is None:
         return x
     if type(x)==str:
         return ureg(x)
+    if isinstance(x, Quantity):
+        return x
     return Q_(x, ureg(units))
 
 
-class IBenchmarkProjection(PintModel):
+class PowerGenerationWh(BaseModel):
+    units: Literal['MWh']
+class PowerGenerationJ(BaseModel):
+    units: Literal['GJ']
+PowerGeneration = Annotated[Union[PowerGenerationWh, PowerGenerationJ], Field(discriminator='units')]
+
+
+class ManufactureSteel(BaseModel):
+    units: Literal['Fe_ton']
+Manufacturing = Annotated[Union[ManufactureSteel], Field(discriminator='units')]
+
+
+ProductionMetric = Annotated[Union[PowerGeneration, ManufactureSteel], Field(discriminator='units')]
+
+
+class EmissionIntensity(BaseModel):
+    units: str
+
+
+BenchmarkMetric = Annotated[Union[ProductionMetric,EmissionIntensity], Field(discriminator='units')]
+
+class IBenchmarkProjection(BaseModel):
     year: int
-    value: Quantity['Wh']
-
-    def __init__(self, year, value):
-        super().__init__(year=year, value=pint_ify(value, 'MWh'))
+    value: float
+    units: str
 
 
-class IEIBenchmarkProjection(PintModel):
-    year: int
-    value: Quantity['CO2/Wh']
-
-    def __init__(self, year, value):
-        super().__init__(year=year, value=pint_ify(value, 't CO2/MWh'))
-
-
-class IBenchmark(PintModel):
+class IBenchmark(BaseModel):
     sector: str
     region: str
+    benchmark_metric: BenchmarkMetric
     projections: List[IBenchmarkProjection]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class IBenchmarks(PintModel):
+class IBenchmarks(BaseModel):
     benchmarks: List[IBenchmark]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class IProductionBenchmarkScopes(PintModel):
+class IProductionBenchmarkScopes(BaseModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
 
 
-class IYOYBenchmarkProjection(PintModel):
+class IYOYBenchmarkProjection(BaseModel):
     year: int
     value: float
 
 
-class IYOYBenchmark(PintModel):
+class IYOYBenchmark(BaseModel):
     sector: str
     region: str
     projections: List[IYOYBenchmarkProjection]
@@ -119,39 +135,23 @@ class IYOYBenchmark(PintModel):
         return getattr(self, item)
 
 
-class IYOYBenchmarks(PintModel):
+class IYOYBenchmarks(BaseModel):
     benchmarks: List[IYOYBenchmark]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class IYOYBenchmarkScopes(PintModel):
+class IYOYBenchmarkScopes(BaseModel):
     S1S2: Optional[IYOYBenchmarks]
     S3: Optional[IYOYBenchmarks]
     S1S2S3: Optional[IYOYBenchmarks]
 
 
-class IEIBenchmark(PintModel):
-    sector: str
-    region: str
-    projections: List[IEIBenchmarkProjection]
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-
-class IEIBenchmarks(PintModel):
-    benchmarks: List[IEIBenchmark]
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-
 class IEmissionIntensityBenchmarkScopes(PintModel):
-    S1S2: Optional[IEIBenchmarks]
-    S3: Optional[IEIBenchmarks]
-    S1S2S3: Optional[IEIBenchmarks]
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
     benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
     is_AFOLU_included: bool
@@ -165,32 +165,29 @@ class IEmissionIntensityBenchmarkScopes(PintModel):
                          *args, **kwargs)
 
 
-class ICompanyProjection(PintModel):
+class ICompanyProjection(BaseModel):
     year: int
-    value: Optional[Quantity['Wh']]
-
-    def __init__(self, year, value):
-        super().__init__(year=year, value=pint_ify(value, 'MWh'))
+    value: Optional[float]
+    units: Optional[str]    # Annotated[Union[ProductionMetric, EmissionIntensity], Field(discriminator='units')]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class ICompanyProjections(PintModel):
+class ICompanyProjections(BaseModel):
     projections: List[ICompanyProjection]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class ICompanyProjectionsScopes(PintModel):
+class ICompanyProjectionsScopes(BaseModel):
     S1S2: Optional[ICompanyProjections]
     S3: Optional[ICompanyProjections]
     S1S2S3: Optional[ICompanyProjections]
 
     def __getitem__(self, item):
         return getattr(self, item)
-
 
 class ICompanyEIProjection(PintModel):
     year: int
@@ -242,13 +239,14 @@ class ICompanyData(PintModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
-    historic_data: Optional[IHistoricData]
+    historic_data: Optional[IHistoricData] = None
     projected_targets: Optional[ICompanyProjectionsScopes] = None
     projected_intensities: Optional[ICompanyProjectionsScopes] = None
 
     country: Optional[str]
-    ghg_s1s2: Optional[Quantity['Wh']]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
-    ghg_s3: Optional[Quantity['Wh']]
+    production_metric: ProductionMetric
+    ghg_s1s2: Optional[ICompanyProjection]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
+    ghg_s3: Optional[ICompanyProjection]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -261,13 +259,11 @@ class ICompanyData(PintModel):
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
 
-    def __init__(self, ghg_s1s2, ghg_s3, *args, **kwargs):
-        super().__init__(ghg_s1s2=pint_ify(ghg_s1s2, 'MWh'), ghg_s3=pint_ify(ghg_s3, 'MWh'), *args, **kwargs)
 
 class ICompanyAggregates(ICompanyData):
-    cumulative_budget: Quantity['CO2/Wh']
-    cumulative_trajectory: Quantity['CO2/Wh']
-    cumulative_target: Quantity['CO2/Wh']
+    cumulative_budget: Quantity['CO2']
+    cumulative_trajectory: Quantity['CO2']
+    cumulative_target: Quantity['CO2']
     benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
 
