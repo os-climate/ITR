@@ -199,6 +199,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
+        sector_to_production_metric = { 'Electricity Utilities':'MWh', 'Steel':'Fe_ton' }
         for company_data in companies_data_dict:
             # company_data is a dict, not a dataframe
             try:
@@ -213,13 +214,14 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 # company_data.update({ColumnsConfig.PROJECTED_EI: {'S1S2': {'projections': df_ei}}})
 
                 company_id = company_data[self.column_config.COMPANY_ID]
+                company_data[self.column_config.PRODUCTION_METRIC] = sector_to_production_metric[company_data[self.column_config.SECTOR]]
                 # pint automatically handles any unit conversions required
                 ghg_s1s2 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE12].squeeze()
                 if ghg_s1s2:
-                    company_data[self.column_config.GHG_SCOPE12] = Q_(ghg_s1s2, ureg('MWh'))
+                    company_data[self.column_config.GHG_SCOPE12] = Q_(ghg_s1s2, company_data[self.column_config.PRODUCTION_METRIC])
                 ghg_s3 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE3].squeeze()
                 if ghg_s3:
-                    company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, ureg('MWh'))
+                    company_data[self.column_config.GHG_SCOPE3] = Q_(ghg_s3, company_data[self.column_config.PRODUCTION_METRIC])
                 company_data[self.column_config.PROJECTED_TARGETS] = {'S1S2': {'projections': self._convert_series_to_projections (df_targets.loc[company_id, :])}}
                 company_data[self.column_config.PROJECTED_EI] = {'S1S2': {'projections': self._convert_series_to_projections (df_ei.loc[company_id, :])}}
 
