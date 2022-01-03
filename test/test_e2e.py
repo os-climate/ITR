@@ -12,7 +12,7 @@ import copy
 import ITR
 from ITR.data.data_warehouse import DataWarehouse
 from typing import List
-from ITR.interfaces import ICompanyAggregates, ICompanyProjectionsScopes
+from ITR.interfaces import ICompanyAggregates, ICompanyProjectionsScopes, ICompanyProjection
 
 
 class TestDataWareHouse(DataWarehouse):
@@ -40,8 +40,8 @@ class EndToEndTest(unittest.TestCase):
         self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,
-            ghg_s1s2=100,
-            ghg_s3=0,
+            ghg_s1s2=ICompanyProjection.parse_obj({"year": 2019, "value":100.0}),
+            ghg_s3=ICompanyProjection.parse_obj({"year": 2019, "value":0.0}),
             company_revenue=100,
             company_market_cap=100,
             company_enterprise_value=100,
@@ -56,38 +56,41 @@ class EndToEndTest(unittest.TestCase):
             region='Europe',
             benchmark_global_budget="396 Gt CO2",
             benchmark_temperature="1.5 delta_degC",
-            projected_intensities=ICompanyProjectionsScopes.parse_obj({
+            production_metric = { "units": "Fe_ton" },
+            projected_ei_trajectories=ICompanyProjectionsScopes.parse_obj({
                 "S1S2": {
+                    "units": "t CO2/Fe_ton",
                     "projections": [
                         {
                             "year": "2019",
-                            "value": "1.6982474347547039 t CO2/MWh"
+                            "value": 1.6982474347547039
                         },
                         {
                             "year": "2020",
-                            "value": "1.6982474347547039 t CO2/MWh"
+                            "value": 1.6982474347547039
                         },
                         {
                             "year": "2021",
-                            "value": "1.5908285727976157 t CO2/MWh"
+                            "value": 1.5908285727976157
                         }
                     ]
                 }
             }),
-            projected_targets=ICompanyProjectionsScopes.parse_obj({
+            projected_ei_targets=ICompanyProjectionsScopes.parse_obj({
                 "S1S2": {
+                    "units": "t CO2/Fe_ton",
                     "projections": [
                         {
                             "year": "2019",
-                            "value": "1.6982474347547039 t CO2/MWh"
+                            "value": 1.6982474347547039
                         },
                         {
                             "year": "2020",
-                            "value": "1.6982474347547039 t CO2/MWh"
+                            "value": 1.6982474347547039
                         },
                         {
                             "year": "2021",
-                            "value": "1.5577542305393455 t CO2/MWh"
+                            "value": 1.5577542305393455
                         }
                     ]
                 }

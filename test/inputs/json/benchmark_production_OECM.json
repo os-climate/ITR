@@ -4,6 +4,7 @@
       {
         "sector": "Steel",
         "region": "Global",
+        "benchmark_metric": { "units": "dimensionless" },
         "projections": [
           {
             "year": 2019,
@@ -138,6 +139,7 @@
       {
         "sector": "Steel",
         "region": "Europe",
+        "benchmark_metric": { "units": "dimensionless" },
         "projections": [
           {
             "year": 2019,
@@ -272,6 +274,7 @@
       {
         "sector": "Steel",
         "region": "North America",
+        "benchmark_metric": { "units": "dimensionless" },
         "projections": [
           {
             "year": 2019,
@@ -406,6 +409,7 @@
       {
         "sector": "Electricity Utilities",
         "region": "Global",
+        "benchmark_metric": { "units": "dimensionless" },
         "projections": [
           {
             "year": 2019,
@@ -540,6 +544,7 @@
       {
         "sector": "Electricity Utilities",
         "region": "Europe",
+        "benchmark_metric": { "units": "dimensionless" },
         "projections": [
           {
             "year": 2019,
@@ -674,6 +679,7 @@
       {
         "sector": "Electricity Utilities",
         "region": "North America",
+        "benchmark_metric": { "units": "dimensionless" },
         "projections": [
           {
             "year": 2019,

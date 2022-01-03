@@ -11,163 +11,131 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.6075603731304943,
-            "units": "t CO2/MWh"
+            "value": 0.6075603731304943
           },
           {
             "year": 2020,
-            "value": 0.44,
-            "units": "t CO2/MWh"
+            "value": 0.44
           },
           {
             "year": 2021,
-            "value": 0.418,
-            "units": "t CO2/MWh"
+            "value": 0.418
           },
           {
             "year": 2022,
-            "value": 0.39599999999999996,
-            "units": "t CO2/MWh"
+            "value": 0.39599999999999996
           },
           {
             "year": 2023,
-            "value": 0.37399999999999994,
-            "units": "t CO2/MWh"
+            "value": 0.37399999999999994
           },
           {
             "year": 2024,
-            "value": 0.3519999999999999,
-            "units": "t CO2/MWh"
+            "value": 0.3519999999999999
           },
           {
             "year": 2025,
-            "value": 0.33,
-            "units": "t CO2/MWh"
+            "value": 0.33
           },
           {
             "year": 2026,
-            "value": 0.3098,
-            "units": "t CO2/MWh"
+            "value": 0.3098
           },
           {
             "year": 2027,
-            "value": 0.2896,
-            "units": "t CO2/MWh"
+            "value": 0.2896
           },
           {
             "year": 2028,
-            "value": 0.26940000000000003,
-            "units": "t CO2/MWh"
+            "value": 0.26940000000000003
           },
           {
             "year": 2029,
-            "value": 0.24920000000000003,
-            "units": "t CO2/MWh"
+            "value": 0.24920000000000003
           },
           {
             "year": 2030,
-            "value": 0.229,
-            "units": "t CO2/MWh"
+            "value": 0.229
           },
           {
             "year": 2031,
-            "value": 0.2114,
-            "units": "t CO2/MWh"
+            "value": 0.2114
           },
           {
             "year": 2032,
-            "value": 0.1938,
-            "units": "t CO2/MWh"
+            "value": 0.1938
           },
           {
             "year": 2033,
-            "value": 0.1762,
-            "units": "t CO2/MWh"
+            "value": 0.1762
           },
           {
             "year": 2034,
-            "value": 0.1586,
-            "units": "t CO2/MWh"
+            "value": 0.1586
           },
           {
             "year": 2035,
-            "value": 0.141,
-            "units": "t CO2/MWh"
+            "value": 0.141
           },
           {
             "year": 2036,
-            "value": 0.12719999999999998,
-            "units": "t CO2/MWh"
+            "value": 0.12719999999999998
           },
           {
             "year": 2037,
-            "value": 0.11339999999999999,
-            "units": "t CO2/MWh"
+            "value": 0.11339999999999999
           },
           {
             "year": 2038,
-            "value": 0.0996,
-            "units": "t CO2/MWh"
+            "value": 0.0996
           },
           {
             "year": 2039,
-            "value": 0.0858,
-            "units": "t CO2/MWh"
+            "value": 0.0858
           },
           {
             "year": 2040,
-            "value": 0.072,
-            "units": "t CO2/MWh"
+            "value": 0.072
           },
           {
             "year": 2041,
-            "value": 0.061599999999999995,
-            "units": "t CO2/MWh"
+            "value": 0.061599999999999995
           },
           {
             "year": 2042,
-            "value": 0.051199999999999996,
-            "units": "t CO2/MWh"
+            "value": 0.051199999999999996
           },
           {
             "year": 2043,
-            "value": 0.040799999999999996,
-            "units": "t CO2/MWh"
+            "value": 0.040799999999999996
           },
           {
             "year": 2044,
-            "value": 0.030399999999999996,
-            "units": "t CO2/MWh"
+            "value": 0.030399999999999996
           },
           {
             "year": 2045,
-            "value": 0.02,
-            "units": "t CO2/MWh"
+            "value": 0.02
           },
           {
             "year": 2046,
-            "value": 0.0144,
-            "units": "t CO2/MWh"
+            "value": 0.0144
           },
           {
             "year": 2047,
-            "value": 0.008799999999999999,
-            "units": "t CO2/MWh"
+            "value": 0.008799999999999999
           },
           {
             "year": 2048,
-            "value": 0.003199999999999999,
-            "units": "t CO2/MWh"
+            "value": 0.003199999999999999
           },
           {
             "year": 2049,
-            "value": -0.002400000000000001,
-            "units": "t CO2/MWh"
+            "value": -0.002400000000000001
           },
           {
             "year": 2050,
-            "value": -0.008,
-            "units": "t CO2/MWh"
+            "value": -0.008
           }
         ]
       },
@@ -178,163 +146,131 @@
         "projections": [
           {
             "year": 2019,
-            "value": 1.669,
-            "units": "t CO2/Fe_ton"
+            "value": 1.669
           },
           {
             "year": 2020,
-            "value": 1.325,
-            "units": "t CO2/Fe_ton"
+            "value": 1.325
           },
           {
             "year": 2021,
-            "value": 1.2691999999999999,
-            "units": "t CO2/Fe_ton"
+            "value": 1.2691999999999999
           },
           {
             "year": 2022,
-            "value": 1.2133999999999998,
-            "units": "t CO2/Fe_ton"
+            "value": 1.2133999999999998
           },
           {
             "year": 2023,
-            "value": 1.1575999999999997,
-            "units": "t CO2/Fe_ton"
+            "value": 1.1575999999999997
           },
           {
             "year": 2024,
-            "value": 1.1017999999999997,
-            "units": "t CO2/Fe_ton"
+            "value": 1.1017999999999997
           },
           {
             "year": 2025,
-            "value": 1.046,
-            "units": "t CO2/Fe_ton"
+            "value": 1.046
           },
           {
             "year": 2026,
-            "value": 0.9998,
-            "units": "t CO2/Fe_ton"
+            "value": 0.9998
           },
           {
             "year": 2027,
-            "value": 0.9536,
-            "units": "t CO2/Fe_ton"
+            "value": 0.9536
           },
           {
             "year": 2028,
-            "value": 0.9074,
-            "units": "t CO2/Fe_ton"
+            "value": 0.9074
           },
           {
             "year": 2029,
-            "value": 0.8612,
-            "units": "t CO2/Fe_ton"
+            "value": 0.8612
           },
           {
             "year": 2030,
-            "value": 0.815,
-            "units": "t CO2/Fe_ton"
+            "value": 0.815
           },
           {
             "year": 2031,
-            "value": 0.7714,
-            "units": "t CO2/Fe_ton"
+            "value": 0.7714
           },
           {
             "year": 2032,
-            "value": 0.7278,
-            "units": "t CO2/Fe_ton"
+            "value": 0.7278
           },
           {
             "year": 2033,
-            "value": 0.6842,
-            "units": "t CO2/Fe_ton"
+            "value": 0.6842
           },
           {
             "year": 2034,
-            "value": 0.6406000000000001,
-            "units": "t CO2/Fe_ton"
+            "value": 0.6406000000000001
           },
           {
             "year": 2035,
-            "value": 0.597,
-            "units": "t CO2/Fe_ton"
+            "value": 0.597
           },
           {
             "year": 2036,
-            "value": 0.573,
-            "units": "t CO2/Fe_ton"
+            "value": 0.573
           },
           {
             "year": 2037,
-            "value": 0.5489999999999999,
-            "units": "t CO2/Fe_ton"
+            "value": 0.5489999999999999
           },
           {
             "year": 2038,
-            "value": 0.5249999999999999,
-            "units": "t CO2/Fe_ton"
+            "value": 0.5249999999999999
           },
           {
             "year": 2039,
-            "value": 0.5009999999999999,
-            "units": "t CO2/Fe_ton"
+            "value": 0.5009999999999999
           },
           {
             "year": 2040,
-            "value": 0.477,
-            "units": "t CO2/Fe_ton"
+            "value": 0.477
           },
           {
             "year": 2041,
-            "value": 0.4566,
-            "units": "t CO2/Fe_ton"
+            "value": 0.4566
           },
           {
             "year": 2042,
-            "value": 0.43620000000000003,
-            "units": "t CO2/Fe_ton"
+            "value": 0.43620000000000003
           },
           {
             "year": 2043,
-            "value": 0.41580000000000006,
-            "units": "t CO2/Fe_ton"
+            "value": 0.41580000000000006
           },
           {
             "year": 2044,
-            "value": 0.3954000000000001,
-            "units": "t CO2/Fe_ton"
+            "value": 0.3954000000000001
           },
           {
             "year": 2045,
-            "value": 0.375,
-            "units": "t CO2/Fe_ton"
+            "value": 0.375
           },
           {
             "year": 2046,
-            "value": 0.3526,
-            "units": "t CO2/Fe_ton"
+            "value": 0.3526
           },
           {
             "year": 2047,
-            "value": 0.33020000000000005,
-            "units": "t CO2/Fe_ton"
+            "value": 0.33020000000000005
           },
           {
             "year": 2048,
-            "value": 0.3078000000000001,
-            "units": "t CO2/Fe_ton"
+            "value": 0.3078000000000001
           },
           {
             "year": 2049,
-            "value": 0.2854000000000001,
-            "units": "t CO2/Fe_ton"
+            "value": 0.2854000000000001
           },
           {
             "year": 2050,
-            "value": 0.263,
-            "units": "t CO2/Fe_ton"
+            "value": 0.263
           }
         ]
       }

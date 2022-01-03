@@ -94,12 +94,15 @@ class EmissionIntensity(BaseModel):
     units: str
 
 
-BenchmarkMetric = Annotated[Union[ProductionMetric,EmissionIntensity], Field(discriminator='units')]
+class DimensionlessNumber(BaseModel):
+    units: str
+
+
+BenchmarkMetric = Annotated[Union[ProductionMetric,EmissionIntensity,DimensionlessNumber], Field(discriminator='units')]
 
 class IBenchmarkProjection(BaseModel):
     year: int
     value: float
-    units: str
 
 
 class IBenchmark(BaseModel):
@@ -125,33 +128,6 @@ class IProductionBenchmarkScopes(BaseModel):
     S1S2S3: Optional[IBenchmarks]
 
 
-class IYOYBenchmarkProjection(BaseModel):
-    year: int
-    value: float
-
-
-class IYOYBenchmark(BaseModel):
-    sector: str
-    region: str
-    projections: List[IYOYBenchmarkProjection]
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-
-class IYOYBenchmarks(BaseModel):
-    benchmarks: List[IYOYBenchmark]
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-
-class IYOYBenchmarkScopes(BaseModel):
-    S1S2: Optional[IYOYBenchmarks]
-    S3: Optional[IYOYBenchmarks]
-    S1S2S3: Optional[IYOYBenchmarks]
-
-
 class IEmissionIntensityBenchmarkScopes(PintModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
@@ -172,13 +148,13 @@ class IEmissionIntensityBenchmarkScopes(PintModel):
 class ICompanyProjection(BaseModel):
     year: int
     value: Optional[float]
-    units: Optional[str]    # Annotated[Union[ProductionMetric, EmissionIntensity], Field(discriminator='units')]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class ICompanyProjections(BaseModel):
+    units: str
     projections: List[ICompanyProjection]
 
     def __getitem__(self, item):
@@ -272,12 +248,13 @@ class ICompanyAggregates(ICompanyData):
     benchmark_global_budget: Quantity['CO2']
 
     def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
-        super().__init__(cumulative_budget=pint_ify(cumulative_budget, 't CO2'),
-                         cumulative_trajectory=pint_ify(cumulative_trajectory, 't CO2'),
-                         cumulative_target=pint_ify(cumulative_target, 't CO2'),
-                         benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
-                         benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
-                         *args, **kwargs)
+        super().__init__(
+            cumulative_budget=pint_ify(cumulative_budget, 't CO2'),
+            cumulative_trajectory=pint_ify(cumulative_trajectory, 't CO2'),
+            cumulative_target=pint_ify(cumulative_target, 't CO2'),
+            benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
+            benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
+            *args, **kwargs)
 
 
 class SortableEnum(Enum):
