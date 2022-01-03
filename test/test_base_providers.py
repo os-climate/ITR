@@ -12,7 +12,7 @@ from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEmissionIntensityBenchmarkScopes, \
-    IProductionBenchmarkScopes, IYOYBenchmarkScopes
+    IProductionBenchmarkScopes
 
 from ITR.data.osc_units import ureg, Q_, PA_
 
@@ -37,7 +37,7 @@ class TestBaseProvider(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IYOYBenchmarkScopes.parse_obj(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # load intensity benchmarks
@@ -152,8 +152,8 @@ class TestBaseProvider(unittest.TestCase):
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
         # print(f"\nghg_s1s2 = {company_1.ghg_s1s2}\n\n")
-        self.assertAlmostEqual(Q_(company_1.ghg_s1s2.value,company_1.ghg_s1s2.units), Q_(104827858.636039, 'MWh'))    # These are apparently production numbers, not emissions numbers
-        self.assertAlmostEqual(Q_(company_2.ghg_s1s2.value,company_2.ghg_s1s2.units), Q_(598937001.892059, 'MWh'))    # These are apparently production numbers, not emissions numbers
+        self.assertAlmostEqual(Q_(company_1.ghg_s1s2.value,company_1.production_metric.units), Q_(104827858.636039, 'MWh'))    # These are apparently production numbers, not emissions numbers
+        self.assertAlmostEqual(Q_(company_2.ghg_s1s2.value,company_2.production_metric.units), Q_(598937001.892059, 'MWh'))    # These are apparently production numbers, not emissions numbers
         self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, 't CO2'), places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, 't CO2'), places=4)
         self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, 't CO2'), places=4)

@@ -17,7 +17,7 @@ from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProduct
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
 from ITR.interfaces import ICompanyData, ICompanyProjection, \
     EScope, IEmissionIntensityBenchmarkScopes, \
-    IProductionBenchmarkScopes, IYOYBenchmark, IYOYBenchmarks, IYOYBenchmarkProjection, IBenchmark, IBenchmarks, IBenchmarkProjection
+    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection
 import logging
 
 from ITR.interfaces import ICompanyProjections, ICompanyProjections
@@ -27,21 +27,21 @@ import inspect
 
 # Utils functions:
 
-def convert_yoy_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
-                                     column_name_sector: str) -> IYOYBenchmarks:
+def convert_dimensionless_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
+                                                   column_name_sector: str) -> IBenchmarks:
     """
-    Converts excel into IYOYBenchmarks
+    Converts excel into IBenchmarks
     :param excal_path: file path to excel
-    :return: IYOYBenchmarks instance (list of IYOYBenchmark)
+    :return: IBenchmarks instance (list of IBenchmark)
     """
     df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
     result = []
     for index, row in df_ei_bms.iterrows():
-        bm = IYOYBenchmark(region=index[0], sector=index[1],
-                           projections=[IYOYBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
+        bm = IBenchmark(region=index[0], sector=index[1],
+                           projections=[IBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
         result.append(bm)
-    return IYOYBenchmarks(benchmarks=result)
+    return IBenchmarks(benchmarks=result)
 
 
 def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
@@ -51,6 +51,7 @@ def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname
     :param excal_path: file path to excel
     :return: IBenchmarks instance (list of IBenchmark)
     """
+    error("need to make generic for production units")
     df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
     result = []
@@ -79,7 +80,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         """
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_sector_data()
-        self._convert_excel_to_model = convert_yoy_benchmark_excel_to_model
+        self._convert_excel_to_model = convert_dimensionless_benchmark_excel_to_model
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
                                                       column_config.REGION, column_config.SECTOR)
         super().__init__(
