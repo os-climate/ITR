@@ -32,11 +32,11 @@ class TestExcelProvider(unittest.TestCase):
                             "US00724F1012",
                             "FR0000125338"]
         self.company_info_at_base_year = pd.DataFrame(
-            [[Q_(1.6982474347547, ureg('t CO2/MWh')), Q_(1.04827859e+08, ureg('MWh')), 'Electricity Utilities', 'North America'],
-             [Q_(0.476586931582279, ureg('t CO2/MWh')), Q_(5.98937002e+08, ureg('MWh')), 'Electricity Utilities', 'North America'],
-             [Q_(0.22457393169277, ureg('t CO2/MWh')), Q_(1.22472003e+08, ureg('MWh')), 'Electricity Utilities', 'Europe']],
+            [[Q_(1.6982474347547, ureg('t CO2/MWh')), Q_(1.04827859e+08, ureg('MWh')), 'MWh', 'Electricity Utilities', 'North America'],
+             [Q_(0.476586931582279, ureg('t CO2/MWh')), Q_(5.98937002e+08, ureg('MWh')), 'MWh', 'Electricity Utilities', 'North America'],
+             [Q_(0.22457393169277, ureg('t CO2/MWh')), Q_(1.22472003e+08, ureg('MWh')), 'MWh', 'Electricity Utilities', 'Europe']],
             index=self.company_ids,
-            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
     def test_temp_score_from_excel_data(self):
         comids = ['US0079031078', 'US00724F1012', 'FR0000125338', 'US17275R1023', 'CH0198251305', 'US1266501006',
