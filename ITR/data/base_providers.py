@@ -95,7 +95,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                           self.column_config.PRODUCTION_METRIC,
                           self.column_config.GHG_SCOPE12]]
         company_info[self.column_config.PRODUCTION_METRIC] = company_info[self.column_config.PRODUCTION_METRIC].apply(lambda x: x['units'])
-        company_info[self.column_config.GHG_SCOPE12] = company_info[[self.column_config.PRODUCTION_METRIC, self.column_config.GHG_SCOPE12]].apply(lambda x: Q_(x[self.column_config.GHG_SCOPE12]['value'], x[self.column_config.PRODUCTION_METRIC]), axis=1) # .astype(f'pint[{units}]')
+        company_info[self.column_config.GHG_SCOPE12] = company_info[[self.column_config.PRODUCTION_METRIC, self.column_config.GHG_SCOPE12]
+                                                                   ].apply(lambda x: None if x[self.column_config.GHG_SCOPE12] is None or x[self.column_config.GHG_SCOPE12]['value'] is None else Q_(x[self.column_config.GHG_SCOPE12]['value'], x[self.column_config.PRODUCTION_METRIC]), axis=1) # .astype(f'pint[{units}]')
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
