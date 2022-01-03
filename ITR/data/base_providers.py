@@ -110,7 +110,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                           self.column_config.PRODUCTION_METRIC,
                           self.column_config.GHG_SCOPE12]]
         company_info[self.column_config.PRODUCTION_METRIC] = company_info[self.column_config.PRODUCTION_METRIC].apply(lambda x: x['units'])
-        company_info[self.column_config.GHG_SCOPE12] = company_info[self.column_config.GHG_SCOPE12].apply(lambda x: Q_(x['value'], x['units'])) # .astype(f'pint[{units}]')
+        company_info[self.column_config.GHG_SCOPE12] = company_info[[self.column_config.PRODUCTION_METRIC, self.column_config.GHG_SCOPE12]].apply(lambda x: Q_(x[self.column_config.GHG_SCOPE12]['value'], x[self.column_config.PRODUCTION_METRIC]), axis=1) # .astype(f'pint[{units}]')
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
@@ -150,12 +150,12 @@ class BaseCompanyDataProvider(CompanyDataProvider):
 
 class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
-    def __init__(self, production_benchmarks: IYOYBenchmarkScopes,
+    def __init__(self, production_benchmarks: IProductionBenchmarkScopes,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         """
         Base provider that relies on pydantic interfaces. Default for FastAPI usage
-        :param production_benchmarks: List of IYOYBenchmarkScopes
+        :param production_benchmarks: List of IProductionBenchmarkScopes
         :param column_config: An optional ColumnsConfig object containing relevant variable names
         :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
@@ -165,7 +165,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         self._productions_benchmarks = production_benchmarks
 
     # Note that bencharmk production series are dimensionless.
-    def _convert_benchmark_to_series(self, benchmark: IYOYBenchmark) -> pd.Series:
+    def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
         """
         extracts the company projected intensity or production targets for a given scope
         :param scope: a scope
@@ -173,17 +173,17 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector))
 
-    # YOY production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
+    # Production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
     # It's a label in the top-level of benchmark data.  Currently S1S2 is the only label with any data.
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
-        Converts IYOYBenchmarkScopes into dataframe for a scope
+        Converts IProductionBenchmarkScopes into dataframe for a scope
         :param scope: a scope
         :return: pd.DataFrame
         """
         result = []
         for bm in self._productions_benchmarks.dict()[str(scope)]['benchmarks']:
-            result.append(self._convert_benchmark_to_series(IYOYBenchmark.parse_obj(bm)))
+            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm)))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
 
@@ -283,7 +283,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
 
     def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
-        Converts IBenchmarkScopes into dataframe for a scope
+        Converts IEmissionIntensityBenchmarkScopes into dataframe for a scope
         :param scope: a scope
         :return: pd.DataFrame
         """
