@@ -24,6 +24,9 @@ import logging
 from ITR.interfaces import ICompanyProjections, ICompanyProjections
 import inspect
 
+# Excel spreadsheets don't have units elaborated, so we translate sectors to units
+sector_to_production_metric = { 'Electricity Utilities':'MWh', 'Steel':'Fe_ton' }
+
 # TODO: Force validation for excel benchmarks
 
 # Utils functions:
@@ -39,8 +42,8 @@ def convert_dimensionless_benchmark_excel_to_model(df_excel: pd.DataFrame, sheet
         [column_name_region, column_name_sector])
     result = []
     for index, row in df_ei_bms.iterrows():
-        bm = IBenchmark(region=index[0], sector=index[1],
-                           projections=[IBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
+        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units':'dimensionless'},
+                        projections=[IBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
@@ -52,13 +55,13 @@ def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname
     :param excal_path: file path to excel
     :return: IBenchmarks instance (list of IBenchmark)
     """
-    error("need to make generic for production units")
     df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
     result = []
     for index, row in df_ei_bms.iterrows():
-        bm = IBenchmark(region=index[0], sector=index[1],
-                        projections=[IBenchmarkProjection(year=int(k), value=Q_(v, ureg('t CO2/MWh'))) for k, v in row.items()])
+        intensity_units = f't CO2/({sector_to_production_metric[index[1]]})'
+        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units':intensity_units},
+                        projections=[IBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
@@ -78,7 +81,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
                                                       column_config.REGION, column_config.SECTOR)
         super().__init__(
-            IProductionBenchmarkScopes(S1S2=production_bms), column_config,
+            IProductionBenchmarkScopes(benchmark_metric={'units':'dimensionless'}, S1S2=production_bms), column_config,
             tempscore_config)
 
     def _check_sector_data(self) -> None:
@@ -111,7 +114,8 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
         EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
                                                      column_config.REGION, column_config.SECTOR)
         super().__init__(
-            IEmissionIntensityBenchmarkScopes(S1S2=EI_benchmarks, benchmark_temperature=benchmark_temperature,
+            IEmissionIntensityBenchmarkScopes(benchmark_metric={'units':'t CO2/MWh'}, S1S2=EI_benchmarks,
+                                              benchmark_temperature=benchmark_temperature,
                                               benchmark_global_budget=benchmark_global_budget,
                                               is_AFOLU_included=is_AFOLU_included), column_config,
             tempscore_config)
@@ -161,20 +165,21 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_company_data(df_company_data)
 
-        df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
+        df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL].set_index(self.column_config.COMPANY_ID, drop=False)
+        df_fundamentals[self.column_config.PRODUCTION_METRIC] = df_fundamentals[self.column_config.SECTOR].map(sector_to_production_metric)
         company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
-        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], 'pint[t CO2/GJ]')
+        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], df_fundamentals[self.column_config.PRODUCTION_METRIC])
         if TabsConfig.PROJECTED_EI in df_company_data.keys():
-            df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], 'pint[t CO2/GJ]')
+            df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], df_fundamentals[self.column_config.PRODUCTION_METRIC]))
         else:
             df_ei = None
         if TabsConfig.HISTORIC_DATA in df_company_data.keys():
-            df_historic = self._get_historic_data(company_ids, df_company_data[TabsConfig.HISTORIC_DATA], 'pint[t CO2/GJ]'
+            df_historic = self._get_historic_data(company_ids, df_company_data[TabsConfig.HISTORIC_DATA], df_fundamentals[self.column_config.PRODUCTION_METRIC])
         else:
             df_historic = None
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
-    def _convert_series_to_projections(self, projections: pd.Series) -> List[
+    def _convert_series_to_ICompanyProjections(self, projections: pd.Series) -> List[
         ICompanyProjection]:
         """
         Converts a Pandas Series in a list of ICompanyProjections
@@ -200,7 +205,6 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
-        sector_to_production_metric = { 'Electricity Utilities':'MWh', 'Steel':'Fe_ton' }
         for company_data in companies_data_dict:
             # company_data is a dict, not a dataframe
             try:
@@ -215,7 +219,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 # company_data.update({ColumnsConfig.PROJECTED_EI: {'S1S2': {'projections': df_ei}}})
 
                 company_id = company_data[self.column_config.COMPANY_ID]
-                company_data[self.column_config.PRODUCTION_METRIC] = sector_to_production_metric[company_data[self.column_config.SECTOR]]
+                units = sector_to_production_metric[company_data[self.column_config.SECTOR]]
+                company_data[self.column_config.PRODUCTION_METRIC] = {'units': units}
                 # pint automatically handles any unit conversions required
                 ghg_s1s2 = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE12].squeeze()
                 if ghg_s1s2:
@@ -234,7 +239,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError as e:
                 logger.warning(
-                    "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
                 pass
         return model_companies
@@ -243,11 +248,12 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
     def _np_sum(g):
         return np.sum(g.values)
 
-    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame, astype: str) -> pd.DataFrame:
+    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame, production_metric: pd.DataFrame) -> pd.DataFrame:
         """
-        get the projected emissions for list of companies
+        get the projected emission intensities for list of companies
         :param company_ids: list of company ids
         :param projections: Dataframe with listed projections per company
+        :param production_metric: Dataframe with production_metric per company
         :return: series of projected emission intensities
         """
 
@@ -256,13 +262,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         assert all(company_id in projections.index for company_id in company_ids), \
             f"company ids missing in provided projections"
 
-        projections = projections.loc[company_ids, :]
-        projections = projections.loc[:, range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                               self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+        projections = projections.loc[company_ids, range(self.temp_config.CONTROLS_CONFIG.base_year,
+                                                         self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
         projected_emissions_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
-        for col in projected_emissions_s1s2.columns:
-            projected_emissions_s1s2[col] = projected_emissions_s1s2[col].astype(astype)
+        projected_emissions_s1s2 = projected_ei_s1s2.apply(lambda x: x.astype(f'pint[t CO2/({production_metric[x.name]})]'), axis=1)
 
         return projected_emissions_s1s2
 

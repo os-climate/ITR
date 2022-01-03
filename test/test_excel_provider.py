@@ -28,6 +28,7 @@ class TestExcelProvider(unittest.TestCase):
         self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=Q_(1.5, ureg.delta_degC),
                                                            benchmark_global_budget=Q_(396, ureg('Gt CO2')), is_AFOLU_included=False)
         self.excel_provider = DataWarehouse(self.excel_company_data, self.excel_production_bm, self.excel_EI_bm)
+        # "US0079031078","US00724F1012","FR0000125338" are all Electricity Utilities
         self.company_ids = ["US0079031078",
                             "US00724F1012",
                             "FR0000125338"]
@@ -150,14 +151,15 @@ class TestExcelProvider(unittest.TestCase):
                                                          projected_production=projected_production), expected_data)
 
     def test_get_company_data(self):
+        # "US0079031078" and "US00724F1012" are both Electricity Utilities
         company_1 = self.excel_provider.get_preprocessed_company_data(self.company_ids)[0]
         company_2 = self.excel_provider.get_preprocessed_company_data(self.company_ids)[1]
         self.assertEqual(company_1.company_name, "Company AG")
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, ureg('MWh')))
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, ureg('MWh')))
+        self.assertAlmostEqual(Q_(company_1.ghg_s1s2.value,company_1.production_metric.units), Q_(104827858.636039, ureg('MWh')))
+        self.assertAlmostEqual(Q_(company_2.ghg_s1s2.value,company_2.production_metric.units), Q_(598937001.892059, ureg('MWh')))
         self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, ureg('t CO2')), places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, ureg('t CO2')), places=4)
         self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, ureg('t CO2')), places=4)
