@@ -245,5 +245,4 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         projected_ei_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
         for col in projected_ei_s1s2.columns:
             projected_ei_s1s2[col] = projected_ei_s1s2[col].astype(astype)
-        # print(f"\nprojected_ei_s1s2 = {projected_ei_s1s2}\n\n")
         return projected_ei_s1s2
