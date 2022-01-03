@@ -104,19 +104,14 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         ColumnsConfig.SECTOR and ColumnsConfig.REGION
         """
         df_fundamentals = self.get_company_fundamentals(company_ids)
-        # print(f"df_fundamentals = {df_fundamentals}")
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
                           self.column_config.PRODUCTION_METRIC,
                           self.column_config.GHG_SCOPE12]]
         company_info[self.column_config.PRODUCTION_METRIC] = company_info[self.column_config.PRODUCTION_METRIC].apply(lambda x: x['units'])
-        # units = company_info[self.column_config.PRODUCTION_METRIC].values[0]
-        # print(f"\nunits = {units}\n\n")
         company_info[self.column_config.GHG_SCOPE12] = company_info[self.column_config.GHG_SCOPE12].apply(lambda x: Q_(x['value'], x['units'])) # .astype(f'pint[{units}]')
-        # print(f"\ncompany_info.ghg_s12 = {company_info[self.column_config.GHG_SCOPE12]}\n\n")
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
-        # print(f"\nei_at_base = {ei_at_base}\n\n")
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
     def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
@@ -253,7 +248,6 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
-        # print(f"\nei_base.dtype = {ei_base.dtype}\n\n")
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
         df = df.add(last_ei, axis=0).astype(ei_base.dtype)
         return df
