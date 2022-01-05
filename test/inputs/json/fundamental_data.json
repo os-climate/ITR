@@ -7,8 +7,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.428571428571428,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -139,13 +139,13 @@
             "value": 0.32186333388002936
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -276,20 +276,14 @@
             "value": 0.32314328995492764
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "United States of America",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 104827858.636039
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 104827858.636039
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 104827858.636039,
+    "ghg_s3": 104827858.636039,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -307,8 +301,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -439,13 +433,13 @@
             "value": 0.0
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -576,20 +570,14 @@
             "value": 0.11293834909899002
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "United States of America",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 598937001.892059
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 598937001.892059
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 598937001.892059,
+    "ghg_s3": 598937001.892059,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -607,8 +595,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -739,13 +727,13 @@
             "value": 0.0
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -876,20 +864,14 @@
             "value": 0.056927654404565015
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Germany",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 122472002.661096
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 122472002.661096
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 122472002.661096,
+    "ghg_s3": 122472002.661096,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -907,8 +889,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -1039,13 +1021,13 @@
             "value": 0.019446057728423578
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -1176,20 +1158,14 @@
             "value": 0.01944605772842358
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "France",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 100080009.401725
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 100080009.401725
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 100080009.401725,
+    "ghg_s3": 100080009.401725,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -1207,8 +1183,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -1339,13 +1315,13 @@
             "value": 0.065478378493248
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -1476,20 +1452,14 @@
             "value": 0.0682256166185565
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Italy",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 824864406.472471
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 824864406.472471
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 824864406.472471,
+    "ghg_s3": 824864406.472471,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -1507,8 +1477,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -1639,13 +1609,13 @@
             "value": 0.01908972259658938
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -1776,20 +1746,14 @@
             "value": 0.01908972259658938
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "France",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 221601600.376334
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 221601600.376334
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 221601600.376334,
+    "ghg_s3": 221601600.376334,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -1807,8 +1771,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -1939,13 +1903,13 @@
             "value": 0.0
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -2076,20 +2040,14 @@
             "value": 0.02410695065139955
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Spain",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 411300002.585938
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 411300002.585938
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 411300002.585938,
+    "ghg_s3": 411300002.585938,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -2107,8 +2065,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -2239,13 +2197,13 @@
             "value": 0.0007171644063577842
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -2376,20 +2334,14 @@
             "value": 0.0007171644063577842
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "South Korea",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 1472652000.85954
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 1472652000.85954
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 1472652000.85954,
+    "ghg_s3": 1472652000.85954,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -2407,8 +2359,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -2539,13 +2491,13 @@
             "value": 0.030719485801461905
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -2676,20 +2628,14 @@
             "value": 0.274513227726025
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "United Kingdom",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 21142801.5077199
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 21142801.5077199
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 21142801.5077199,
+    "ghg_s3": 21142801.5077199,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -2707,8 +2653,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -2839,13 +2785,13 @@
             "value": 0.28173508695317845
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -2976,20 +2922,14 @@
             "value": 0.28173508695317845
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "India",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 988020000.90193
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 988020000.90193
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 988020000.90193,
+    "ghg_s3": 988020000.90193,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -3007,8 +2947,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -3139,13 +3079,13 @@
             "value": 0.026974867145530285
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -3276,20 +3216,14 @@
             "value": 0.30143654033545186
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Australia",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 73011601.1549344
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 73011601.1549344
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 73011601.1549344,
+    "ghg_s3": 73011601.1549344,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -3307,8 +3241,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -3439,13 +3373,13 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -3576,20 +3510,14 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Poland",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 288420004.281372
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 288420004.281372
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 288420004.281372,
+    "ghg_s3": 288420004.281372,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -3607,8 +3535,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -3739,13 +3667,13 @@
             "value": 0.290466560681228
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -3876,20 +3804,14 @@
             "value": 0.290466560681228
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Hong Kong",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 47691749.8864963
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 47691749.8864963
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 47691749.8864963,
+    "ghg_s3": 47691749.8864963,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -3907,8 +3829,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -4039,13 +3961,13 @@
             "value": 0.12136988857034575
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -4176,20 +4098,14 @@
             "value": 0.12136988857034575
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Germany",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 551394001.129387
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 551394001.129387
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 551394001.129387,
+    "ghg_s3": 551394001.129387,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -4207,8 +4123,8 @@
     "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -4339,13 +4255,13 @@
             "value": 0.0
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/MWh",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
             "year": 2019,
@@ -4476,20 +4392,14 @@
             "value": 0.19997605950297165
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "United States of America",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 242884801.558717
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 242884801.558717
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 242884801.558717,
+    "ghg_s3": 242884801.558717,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -4507,8 +4417,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -4639,13 +4549,13 @@
             "value": 0.023531717117231055
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -4776,20 +4686,14 @@
             "value": 1.4236498966235975
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Netherlands",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 89800001.3960884
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 89800001.3960884
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 89800001.3960884,
+    "ghg_s3": 89800001.3960884,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -4807,8 +4711,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -4939,13 +4843,13 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -5076,7 +4980,7 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
@@ -5101,8 +5005,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -5233,13 +5137,13 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -5370,7 +5274,7 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
@@ -5395,8 +5299,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -5527,13 +5431,13 @@
             "value": 0.06921896577724047
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -5664,20 +5568,14 @@
             "value": 0.06921896577724047
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Brazil",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 12453000.4760821
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 12453000.4760821
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 12453000.4760821,
+    "ghg_s3": 12453000.4760821,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -5695,8 +5593,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -5827,13 +5725,13 @@
             "value": 0.06589864832712344
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -5964,20 +5862,14 @@
             "value": 0.6374459070572828
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "South Korea",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 23303009.677026
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 23303009.677026
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 23303009.677026,
+    "ghg_s3": 23303009.677026,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -5995,8 +5887,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -6127,13 +6019,13 @@
             "value": 0.0673367403352704
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -6264,20 +6156,14 @@
             "value": 1.3525034681569517
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Japan",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 27880000.2335485
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 27880000.2335485
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 27880000.2335485,
+    "ghg_s3": 27880000.2335485,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -6295,8 +6181,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -6427,13 +6313,13 @@
             "value": 2.13378665842693
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -6564,20 +6450,14 @@
             "value": 2.13378665842693
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "India",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 12630001.0468216
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 12630001.0468216
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 12630001.0468216,
+    "ghg_s3": 12630001.0468216,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -6595,8 +6475,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -6727,13 +6607,13 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -6864,20 +6744,14 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Russia",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 23779000.8292913
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 23779000.8292913
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 23779000.8292913,
+    "ghg_s3": 23779000.8292913,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -6895,8 +6769,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -7027,13 +6901,13 @@
             "value": 1.158316671492553
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -7164,20 +7038,14 @@
             "value": 1.158316671492553
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Japan",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 47840001.3676141
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 47840001.3676141
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 47840001.3676141,
+    "ghg_s3": 47840001.3676141,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -7195,8 +7063,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -7327,13 +7195,13 @@
             "value": 1.2225581277619404
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -7464,20 +7332,14 @@
             "value": 1.2961814763575168
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Russia",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 15520004.6310296
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 15520004.6310296
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 15520004.6310296,
+    "ghg_s3": 15520004.6310296,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -7495,8 +7357,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -7627,13 +7489,13 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -7764,7 +7626,7 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
@@ -7789,8 +7651,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -7921,13 +7783,13 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -8058,20 +7920,14 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Russia",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 11847001.9224849
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 11847001.9224849
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 11847001.9224849,
+    "ghg_s3": 11847001.9224849,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -8089,8 +7945,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -8221,13 +8077,13 @@
             "value": 0.5201755039378894
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -8358,20 +8214,14 @@
             "value": 0.5410407687401423
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "Sweden",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 14618000.0778486
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 14618000.0778486
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 14618000.0778486,
+    "ghg_s3": 14618000.0778486,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -8389,8 +8239,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -8521,13 +8371,13 @@
             "value": 1.534974823445468
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -8658,20 +8508,14 @@
             "value": 1.534974823445468
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "country": "India",
-    "ghg_s1s2": {
-      "year": 2019,
-      "value": 27110004.3464472
-    },
-    "ghg_s3": {
-      "year": 2019,
-      "value": 27110004.3464472
-    },
-  "industry_level_1": null,
+    "ghg_s1s2": 27110004.3464472,
+    "ghg_s3": 27110004.3464472,
+    "industry_level_1": null,
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
@@ -8689,8 +8533,8 @@
     "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
     "projected_ei_targets": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -8821,13 +8665,13 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },
     "projected_ei_trajectories": {
-      "S1S2": {
-        "units": "t CO2/Fe_ton",
+	"S1S2": { "reports": [ {
+        "company_metric": { "units": "t CO2/Fe_ton" },
         "projections": [
           {
             "year": 2019,
@@ -8958,7 +8802,7 @@
             "value": null
           }
         ]
-      },
+	} ] },
       "S3": null,
       "S1S2S3": null
     },

@@ -23,7 +23,7 @@ class TestEIBenchmarks(unittest.TestCase):
 
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
-        self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data2.json")
+        self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
         self.benchmark_EI_OECM = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM.json")
         self.benchmark_EI_TPI = os.path.join(self.root, "inputs", "json", "benchmark_EI_TPI_2_degrees.json")
