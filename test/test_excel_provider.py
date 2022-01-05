@@ -33,9 +33,9 @@ class TestExcelProvider(unittest.TestCase):
                             "US00724F1012",
                             "FR0000125338"]
         self.company_info_at_base_year = pd.DataFrame(
-            [[Q_(1.6982474347547, ureg('t CO2/MWh')), Q_(1.04827859e+08, ureg('MWh')), 'MWh', 'Electricity Utilities', 'North America'],
-             [Q_(0.476586931582279, ureg('t CO2/MWh')), Q_(5.98937002e+08, ureg('MWh')), 'MWh', 'Electricity Utilities', 'North America'],
-             [Q_(0.22457393169277, ureg('t CO2/MWh')), Q_(1.22472003e+08, ureg('MWh')), 'MWh', 'Electricity Utilities', 'Europe']],
+            [[Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
+             [Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
+             [Q_(0.22457393169277, ureg('t CO2/GJ')), Q_(1.22472003e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'Europe']],
             index=self.company_ids,
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
@@ -98,35 +98,36 @@ class TestExcelProvider(unittest.TestCase):
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
                                      index=self.company_ids,
-                                     dtype='pint[t CO2/MWh]')
+                                     dtype='pint[t CO2/GJ]').astype('object')
         pd.testing.assert_frame_equal(self.excel_company_data.get_company_projected_trajectories(self.company_ids),
                                       expected_data, check_names=False)
 
     def test_get_benchmark(self):
-        expected_data = pd.DataFrame([[1.698247435, 1.581691084, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
+        expected_data = pd.DataFrame([pd.Series([1.698247435, 1.581691084, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
                                        0.782935186, 0.677935928, 0.572936671, 0.467937413, 0.362938156, 0.257938898,
                                        0.233746281, 0.209553665, 0.185361048, 0.161168432, 0.136975815, 0.124810886,
                                        0.112645956, 0.100481026, 0.088316097, 0.076151167, 0.062125588, 0.048100009,
                                        0.034074431, 0.020048852, 0.006023273, 0.005843878, 0.005664482, 0.005485087,
                                        0.005305691, 0.005126296
-                                       ],
-                                      [0.476586932, 0.444131055, 0.389650913, 0.335170772, 0.28069063, 0.226210489,
+                                       ],name='US0079031078', dtype='pint[t CO2/GJ]'),
+                                      pd.Series([0.476586932, 0.444131055, 0.389650913, 0.335170772, 0.28069063, 0.226210489,
                                        0.22171226, 0.192474531, 0.163236802, 0.133999073, 0.104761344, 0.075523615,
                                        0.068787023, 0.062050431, 0.055313839, 0.048577247, 0.041840655, 0.038453251,
                                        0.035065847, 0.031678443, 0.028291039, 0.024903635, 0.020998121, 0.017092607,
                                        0.013187093, 0.009281579, 0.005376065, 0.005326111, 0.005276157, 0.005226203,
                                        0.005176249, 0.005126296
-                                       ],
-                                      [0.224573932, 0.17975612, 0.163761501, 0.147766883, 0.131772265, 0.115777646,
+                                       ],name='US00724F1012', dtype='pint[t CO2/GJ]'),
+                                      pd.Series([0.224573932, 0.17975612, 0.163761501, 0.147766883, 0.131772265, 0.115777646,
                                        0.099783028, 0.090628361, 0.081473693, 0.072319026, 0.063164359, 0.054009692,
                                        0.050089853, 0.046170015, 0.042250176, 0.038330338, 0.034410499, 0.031104249,
                                        0.027797999, 0.024491748, 0.021185498, 0.017879248, 0.016155615, 0.014431983,
                                        0.012708351, 0.010984719, 0.009261087, 0.008488943, 0.007716798, 0.006944654,
-                                       0.00617251, 0.005400365]],
+                                       0.00617251, 0.005400365
+                                       ],name='FR0000125338', dtype='pint[t CO2/GJ]')
+                                     ],
                                      index=self.company_ids,
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                     dtype='pint[t CO2/MWh]')
+                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
         pd.testing.assert_frame_equal(
             self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year),
             expected_data)
@@ -135,16 +136,16 @@ class TestExcelProvider(unittest.TestCase):
         expected_data_2025 = pd.Series([1.06866370e+08, 6.10584093e+08, 1.28474171e+08],
                                        index=self.company_ids,
                                        name=2025,
-                                       dtype='pint[MWh]')
+                                       dtype='pint[MWh]').astype('object')
         pd.testing.assert_series_equal(
             self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025],
             expected_data_2025)
 
     def test_get_cumulative_value(self):
         projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]],
-                                          dtype='pint[t CO2/MWh]')
+                                          dtype='pint[t CO2/GJ]')
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]],
-                                            dtype='pint[MWh]')
+                                            dtype='pint[GJ]')
         expected_data = pd.Series([10.0, 50.0], dtype='pint[Mt CO2]')
         pd.testing.assert_series_equal(
             self.excel_provider._get_cumulative_emission(projected_emission_intensity=projected_emission,
@@ -158,8 +159,8 @@ class TestExcelProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(Q_(company_1.ghg_s1s2.value,company_1.production_metric.units), Q_(104827858.636039, ureg('MWh')))
-        self.assertAlmostEqual(Q_(company_2.ghg_s1s2.value,company_2.production_metric.units), Q_(598937001.892059, ureg('MWh')))
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, ureg('MWh')))    # Don't ask!  The Excel spreadsheet is out of step with other data in this test case.
+        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, ureg('MWh')))    # The assertion fail caught it, but pint showed it was a units problem, not something else!
         self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, ureg('t CO2')), places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, ureg('t CO2')), places=4)
         self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, ureg('t CO2')), places=4)
@@ -176,3 +177,8 @@ class TestExcelProvider(unittest.TestCase):
         pd.testing.assert_series_equal(self.excel_company_data.get_value(company_ids=self.company_ids,
                                                                          variable_name=ColumnsConfig.COMPANY_REVENUE),
                                        expected_data)
+
+if __name__ == "__main__":
+    test = TestExcelProvider()
+    test.setUp()
+    test.test_get_company_data()

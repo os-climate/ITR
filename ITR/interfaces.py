@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from pint import Quantity
 from ITR.data.osc_units import ureg, Q_
+import numpy as np
 
 class PintModel(BaseModel):
     class Config:
@@ -66,14 +67,61 @@ class PortfolioCompany(BaseModel):
 
 
 def pint_ify(x, units='error'):
+    if 'units' in units:
+        units = units['units']
     if x is None:
-        return x
+        return Q_(np.nan, units)
     if type(x)==str:
+        if x.startswith('nan '):
+            return Q_(np.nan, units)
         return ureg(x)
     if isinstance(x, Quantity):
         return x
-    return Q_(x, ureg(units))
+    return Q_(x, units)
 
+
+def UProjections_to_IProjections(ul, metric):
+    if ul is None or ul is np.nan:
+        return ul
+    for x in ul:
+        if isinstance(x, IProjection):
+            return ul
+    units = metric['units']
+    if 'units' in units:
+        units = units['units']
+    pl = [dict(x) for x in ul]
+    for x in pl:
+        if x['value'] is None or x['value'] is np.nan:
+            x['value'] = Q_(np.nan, units)
+        else:
+            x['value'] = pint_ify(x['value'], units)
+    return pl
+
+
+def UProjection_to_IProjection(u, metric):
+    if u is None or u['value'] is np.nan:
+        return pint_ify(np.nan, metric['units'])
+    if not isinstance(u,dict):
+        return u
+    p = dict(u)
+    p['value'] = pint_ify(p['value'], metric['units'])
+    return p
+
+
+def UScopes_to_IScopes(uscopes):
+    if not isinstance(uscopes,dict):
+        return uscopes
+    iscopes = dict(uscopes)
+    for skey, sval in iscopes.items():
+        if iscopes[skey] is None:
+            continue
+        iscopes[skey] = ireports = dict(iscopes[skey])
+        ireports['reports'] = u_2_i_list = ireports['reports'].copy()
+        for i in range(len(u_2_i_list)):
+            iscope = dict(u_2_i_list[i])
+            iscope['projections'] = UProjections_to_IProjections(iscope['projections'], iscope['company_metric'])
+            u_2_i_list[i] = iscope
+    return iscopes
 
 class PowerGenerationWh(BaseModel):
     units: Literal['MWh']
@@ -91,25 +139,46 @@ ProductionMetric = Annotated[Union[PowerGeneration, ManufactureSteel], Field(dis
 
 
 class EmissionIntensity(BaseModel):
-    units: str
+    units: Union[Literal['t CO2/MWh'],Literal['t CO2/GJ'],Literal['t CO2/Fe_ton']]
 
 
 class DimensionlessNumber(BaseModel):
-    units: str
+    units: Literal['dimensionless']
 
 
-BenchmarkMetric = Annotated[Union[ProductionMetric,EmissionIntensity,DimensionlessNumber], Field(discriminator='units')]
+OSC_Metric = Annotated[Union[ProductionMetric,EmissionIntensity,DimensionlessNumber], Field(discriminator='units')]
 
-class IBenchmarkProjection(BaseModel):
+# U is Unquantified
+class UProjection(BaseModel):
     year: int
-    value: float
+    value: Optional[float]
+
+
+class UBenchmark(BaseModel):
+    sector: str
+    region: str
+    benchmark_metric: OSC_Metric
+    projections: List[UProjection]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+# I means we have quantified values
+class IProjection(PintModel):
+    year: int
+    value: Optional[Quantity]
 
 
 class IBenchmark(BaseModel):
     sector: str
     region: str
-    benchmark_metric: BenchmarkMetric
-    projections: List[IBenchmarkProjection]
+    benchmark_metric: OSC_Metric
+    projections: List[IProjection]
+
+    def __init__(self, benchmark_metric, projections, *args, **kwargs):
+        super().__init__(benchmark_metric=benchmark_metric,
+                         projections=UProjections_to_IProjections(projections, benchmark_metric),
+                         *args, **kwargs)
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -136,26 +205,30 @@ class IEmissionIntensityBenchmarkScopes(PintModel):
     benchmark_global_budget: Quantity['CO2']
     is_AFOLU_included: bool
 
-    def __getitem__(self, item):
-        return getattr(self, item)
-
     def __init__(self, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
         super().__init__(benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
                          benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
                          *args, **kwargs)
 
+    def __getitem__(self, item):
+        return getattr(self, item)
+
 
 class ICompanyProjection(BaseModel):
-    year: int
-    value: Optional[float]
+    company_metric: OSC_Metric
+    projections: List[IProjection]
+
+    def __init__(self, company_metric, projections, *args, **kwargs):
+        super().__init__(company_metric=company_metric,
+                         projections=UProjections_to_IProjections(projections, company_metric),
+                         *args, **kwargs)
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class ICompanyProjections(BaseModel):
-    units: str
-    projections: List[ICompanyProjection]
+    reports: List[ICompanyProjection]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -183,8 +256,8 @@ class ICompanyData(PintModel):
 
     country: Optional[str]
     production_metric: ProductionMetric
-    ghg_s1s2: Optional[ICompanyProjection]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
-    ghg_s3: Optional[ICompanyProjection]
+    ghg_s1s2: Optional[Quantity]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
+    ghg_s3: Optional[Quantity]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -196,6 +269,15 @@ class ICompanyData(PintModel):
     company_enterprise_value: Optional[float]
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
+
+    def __init__(self, projected_ei_targets, projected_ei_trajectories,
+                       production_metric, ghg_s1s2, ghg_s3, *args, **kwargs):
+        super().__init__(projected_ei_targets=UScopes_to_IScopes(projected_ei_targets),
+                         projected_ei_trajectories=UScopes_to_IScopes(projected_ei_trajectories),
+                         production_metric=production_metric,
+                         ghg_s1s2=pint_ify(ghg_s1s2, production_metric),
+                         ghg_s3=pint_ify(ghg_s3, production_metric),
+                         *args, **kwargs)
 
 
 class ICompanyAggregates(ICompanyData):

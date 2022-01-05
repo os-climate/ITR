@@ -47,10 +47,10 @@ class TemperatureScore(PortfolioAggregation):
         :return: The temperature score, which is a tuple of (TEMPERATURE_SCORE,TRAJECTORY_SCORE,TRAJECTORY_OVERSHOOT,TARGET_SCORE,TARGET_OVERSHOOT,TEMPERATURE_RESULTS])
         """
         # if either cum target or trajectory is zero return default.
-        if scorable_row[self.c.COLS.CUMULATIVE_TARGET].m==0 or scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY].m == 0.0:
+        if scorable_row[self.c.COLS.CUMULATIVE_TARGET].m==0 or scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY].m==0:
             return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, Q_(1, ureg.delta_degC)
 
-        if scorable_row[self.c.COLS.CUMULATIVE_BUDGET] > 0:
+        if scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m > 0:
             target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[

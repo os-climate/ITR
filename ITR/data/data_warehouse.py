@@ -48,15 +48,12 @@ class DataWarehouse(ABC):
         """
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
-        df_company_data['production_metric'] = df_company_data['production_metric'].apply(lambda x: x['units'])
-        df_company_data['ghg_s1s2'] = df_company_data[['production_metric', 'ghg_s1s2']].apply(lambda x: None if x.ghg_s1s2 is None or x.ghg_s1s2['value'] is None else Q_(x.ghg_s1s2['value'], x.production_metric), axis=1)
         assert pd.Series(company_ids).isin(df_company_data.index).all(), \
             "some of the company ids are not included in the fundamental data"
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year)
-
         df_trajectory = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_trajectories(company_ids),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
@@ -74,14 +71,11 @@ class DataWarehouse(ABC):
         df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature]*
                                                                                    len(df_company_data), dtype='pint[delta_degC]',
                                                                                index=df_company_data.index)
-        df_company_data['ghg_s1s2'] = df_company_data['ghg_s1s2'].apply(lambda x: {'year':2019, 'value':x.m})
-        df_company_data['production_metric'] = df_company_data['production_metric'].apply(lambda x: {'units':x})
         for col in [ self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
             df_company_data[col] = df_company_data[col].apply(lambda x: str(x))
         companies = df_company_data.to_dict(orient="records")
         aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
                                                             companies]
-        
         return aggregate_company_data
 
     def _convert_df_to_model(self, df_company_data: pd.DataFrame) -> List[ICompanyAggregates]:

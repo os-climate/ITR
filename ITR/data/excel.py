@@ -15,16 +15,17 @@ from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
-from ITR.interfaces import ICompanyData, ICompanyProjection, \
+from ITR.interfaces import IProjection, ICompanyData, ICompanyProjection, \
     EScope, IEmissionIntensityBenchmarkScopes, \
-    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection
+    IProductionBenchmarkScopes, IBenchmark, IBenchmarks
 import logging
 
 from ITR.interfaces import ICompanyProjections, ICompanyProjections
 import inspect
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
-sector_to_production_metric = { 'Electricity Utilities':'MWh', 'Steel':'Fe_ton' }
+sector_to_production_metric = { 'Electricity Utilities':'GJ', 'Steel':'Fe_ton' }
+sector_to_intensity_metric = { 'Electricity Utilities':'t CO2/MWh', 'Steel':'t CO2/Fe_ton' }
 
 # TODO: Force validation for excel benchmarks
 
@@ -42,7 +43,7 @@ def convert_dimensionless_benchmark_excel_to_model(df_excel: pd.DataFrame, sheet
     result = []
     for index, row in df_ei_bms.iterrows():
         bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units':'dimensionless'},
-                        projections=[IBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
+                        projections=[IProjection(year=int(k), value=Q_(v, ureg('dimensionless'))) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
@@ -58,9 +59,9 @@ def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname
         [column_name_region, column_name_sector])
     result = []
     for index, row in df_ei_bms.iterrows():
-        intensity_units = f't CO2/({sector_to_production_metric[index[1]]})'
+        intensity_units = sector_to_intensity_metric[index[1]]
         bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units':intensity_units},
-                        projections=[IBenchmarkProjection(year=int(k), value=v) for k, v in row.items()])
+                        projections=[IProjection(year=int(k), value=Q_(v, ureg(intensity_units))) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
@@ -175,14 +176,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], df_fundamentals[self.column_config.PRODUCTION_METRIC])
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei)
 
-    def _convert_series_to_ICompanyProjections(self, projections: pd.Series) -> List[
-        ICompanyProjection]:
+    def _convert_series_to_IProjections(self, projections: pd.Series) -> [IProjection]:
         """
         Converts a Pandas Series in a list of ICompanyProjections
         :param projections: Pandas Series with years as indices
-        :return: List of ICompanyEIProjection objects
+        :return: List of IProjection objects
         """
-        return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
+        return [IProjection(year=y, value=v) for y, v in projections.items()]
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_trajectories: pd.DataFrame) -> \
             List[ICompanyData]:
@@ -208,15 +208,15 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 company_data[self.column_config.PRODUCTION_METRIC] = {'units': units}
                 # pint automatically handles any unit conversions required
                 v = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE12].squeeze()
-                if v:
-                    company_data[self.column_config.GHG_SCOPE12] = {'year': 2019, 'value': v}
+                company_data[self.column_config.GHG_SCOPE12] = None if v is None else Q_(v, ureg(units))
                 v = df_fundamentals[df_fundamentals[self.column_config.COMPANY_ID]==company_id][self.column_config.GHG_SCOPE3].squeeze()
-                if v:
-                    company_data[self.column_config.GHG_SCOPE3] = {'year': 2019, 'value': v}
-                company_data[self.column_config.PROJECTED_TARGETS] = {'S1S2': {'units': units,
-                                                                               'projections': self._convert_series_to_ICompanyProjections (df_targets.loc[company_id, :].apply(lambda x: x.m))}}
-                company_data[self.column_config.PROJECTED_TRAJECTORIES] = {'S1S2': {'units': units,
-                                                                                    'projections': self._convert_series_to_ICompanyProjections (df_trajectories.loc[company_id, :].apply(lambda x: x.m))}}
+                company_data[self.column_config.GHG_SCOPE3] = None if v is None else Q_(v, ureg(units))
+                company_data[self.column_config.PROJECTED_TARGETS] = {'S1S2': { 'reports': [ {
+                    'company_metric': {'units': units},
+                    'projections': self._convert_series_to_IProjections (df_targets.loc[company_id, :])}]}}
+                company_data[self.column_config.PROJECTED_TRAJECTORIES] = {'S1S2': { 'reports': [ {
+                    'company_metric': {'units': units},
+                    'projections': self._convert_series_to_IProjections (df_trajectories.loc[company_id, :])}]}}
                 # The call to parse_obj essentially says "I put it all together manually, please validate that it's correct",
                 # as opposed to using constructors to build the object validly in the first place.
                 model_companies.append(ICompanyData.parse_obj(company_data))
@@ -224,6 +224,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 logger.warning(
                     f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
+                break
                 pass
         return model_companies
     
