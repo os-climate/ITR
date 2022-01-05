@@ -23,7 +23,7 @@ class TestBaseProvider(unittest.TestCase):
 
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
-        self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data2.json")
+        self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
         self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM.json")
         # self.excel_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
