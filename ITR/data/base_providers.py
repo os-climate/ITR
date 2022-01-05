@@ -57,7 +57,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         units = company.dict()[self.column_config.PRODUCTION_METRIC]['units']
         return pd.Series(
-            {r['year']: r['value'] for r in company.dict()[feature][str(scope)]['projections']},
+            {r['year']: r['value'] for reports in company.dict()[feature][str(scope)]['reports'] for r in reports['projections'] },
             name=company.company_id, dtype=f'pint[t CO2/{units}]')
 
     # ??? Why prefer TRAJECTORY over TARGET?
@@ -100,7 +100,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         overrides subclass method
         :param: company_ids: list of company ids
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI,
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.BASE_EI,
         ColumnsConfig.SECTOR and ColumnsConfig.REGION
         """
         df_fundamentals = self.get_company_fundamentals(company_ids)
@@ -109,9 +109,6 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
                           self.column_config.PRODUCTION_METRIC,
                           self.column_config.GHG_SCOPE12]]
-        company_info[self.column_config.PRODUCTION_METRIC] = company_info[self.column_config.PRODUCTION_METRIC].apply(lambda x: x['units'])
-        company_info[self.column_config.GHG_SCOPE12] = company_info[[self.column_config.PRODUCTION_METRIC, self.column_config.GHG_SCOPE12]
-                                                                   ].apply(lambda x: None if x[self.column_config.GHG_SCOPE12] is None or x[self.column_config.GHG_SCOPE12]['value'] is None else Q_(x[self.column_config.GHG_SCOPE12]['value'], x[self.column_config.PRODUCTION_METRIC]), axis=1) # .astype(f'pint[{units}]')
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
@@ -132,7 +129,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TRAJECTORIES) for c in
              self.get_company_data(company_ids)]
         if trajectory_list:
-            return pd.DataFrame(trajectory_list, dtype=trajectory_list[0].dtype)
+            return pd.DataFrame(trajectory_list)
         return pd.DataFrame()
 
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
@@ -143,7 +140,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
              self.get_company_data(company_ids)]
         if target_list:
-            return pd.DataFrame(target_list, dtype=target_list[0].dtype)
+            return pd.DataFrame(target_list)
         return pd.DataFrame()
 
 # This is actual output production (whatever the output production units may be).
