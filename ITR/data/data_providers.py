@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 import pandas as pd
+import numpy as np
 from ITR.interfaces import ICompanyData
 
 
@@ -180,3 +181,83 @@ class IntensityBenchmarkDataProvider(ABC):
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         raise NotImplementedError
+
+
+class EmissionIntensityProjector(ABC):
+    """
+    This class projects emission intensities on company level based on historic data on:
+    - A company's emission history (in t CO2)
+    - A company's production history (units depend on industry, e.g. TWh for electricity)
+    """
+
+    def __init__(self, historic_data: pd.DataFrame):
+        self.historic_data = historic_data
+        self.projection_data = None
+        self.historic_years = [column for column in self.historic_data.columns if type(column) == int]
+        self.projection_years = range(max(self.historic_years), ProjectionConfig.TARGET_YEAR)
+
+    def project(self) -> pd.DataFrame:
+        # TODO: Input should be a List[ICompanyData], Output should be a List[ICompanyData]
+        self._validate_historic_data()
+        # TODO: Check if emission intensities are supplied
+        # TODO: If they are not: compute intensities by emissions / production
+        # TODO: Keep only S1S2 and add comment to separate further in the future
+        # TODO: Work back from end result: projected_ei_trajectories: Optional[ICompanyEIProjectionsScopes] = None
+
+        historic_intensities: pd.DataFrame = self.historic_data[self.historic_years]
+        standardized_intensities = self._standardize(historic_intensities)
+        intensity_trends = self._get_trends(standardized_intensities)
+        return self._extrapolate(intensity_trends)
+
+    def _validate_historic_data(self):
+        # TODO: Check that data contains at least 2 values that are not NaNs
+        # TODO: Check that data is indeed historic
+        # TODO: Throw error or continue with valid companies + log invalid company IDs
+        pass
+
+    def get_emission_intensities(self):
+        # TODO: Separate S1 and S2
+        # TODO: Separate Steel Electricity in results - units are different
+        # TODO: Get historic emissions
+        # TODO: Get historic production
+        # TODO: Compute EIs for each scope S1, S2, S1+S2
+        pass
+
+    def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
+        winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
+        standardized_intensities: pd.DataFrame = self._interpolate(winsorized_intensities)
+        return standardized_intensities
+
+    def _winsorize(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
+        winsorized: pd.DataFrame = historic_intensities.clip(
+            lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='columns', numeric_only=True),
+            upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='columns', numeric_only=True),
+            axis='index'
+        )
+        return winsorized
+
+    def _interpolate(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
+        # Interpolate NaNs surrounded by values, and extrapolate NaNs with last known value
+        interpolated = historic_intensities.interpolate(method='linear', axis='columns', inplace=False,
+                                                        limit_direction='forward')
+        return interpolated
+
+    def _get_trends(self, intensities: pd.DataFrame):
+        # Compute year-on-year growth ratios of emission intensities
+        ratios: pd.DataFrame = intensities.rolling(window=2, axis='columns', closed='right') \
+            .apply(func=self._year_on_year_ratio, raw=True)
+
+        trends: pd.DataFrame = ratios.median(axis='columns', skipna=True).clip(
+            lower=ProjectionConfig.LOWER_DELTA,
+            upper=ProjectionConfig.UPPER_DELTA,
+        )
+        return trends
+
+    def _extrapolate(self, trends: pd.DataFrame) -> pd.DataFrame:
+        projected_intensities = self.historic_data.copy()
+        for year in self.projection_years:
+            projected_intensities[year + 1] = projected_intensities[year] * (1 + trends)
+        return projected_intensities
+
+    def _year_on_year_ratio(self, arr: np.ndarray) -> float:
+        return (arr[1] / arr[0]) - 1.0

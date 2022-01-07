@@ -23,9 +23,14 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__()
-        self._companies = companies
+        self._companies = self._validate(companies)
         self.column_config = column_config
         self.temp_config = tempscore_config
+
+    def _validate(self, companies: List[ICompanyData]) -> List[ICompanyData]:
+        # TODO: check if either historic or projected EI data are supplied
+        # TODO: Extrapolate EI data if not yet present
+        return companies
 
     def _convert_projections_to_series(self, company: ICompanyData, feature: str,
                                        scope: EScope = EScope.S1S2) -> pd.Series:
