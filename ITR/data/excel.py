@@ -36,6 +36,7 @@ class TabsConfig:
     PROJECTED_EI = "projected_ei_in_Wh"
     PROJECTED_PRODUCTION = "projected_production"
     PROJECTED_TARGET = "projected_target"
+    HISTORIC_DATA = "historic_data"
 
 
 class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
@@ -111,10 +112,10 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
     def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__(None, column_config, tempscore_config)
+        self._companies = self._convert_excel_data_to_ICompanyData(excel_path)
+        super().__init__(self._companies, column_config, tempscore_config)
         self.ENERGY_UNIT_CONVERSION_FACTOR = 3.6
         self.CORRECTION_SECTORS = [SectorsConfig.ELECTRICITY]
-        self._companies = self._convert_excel_data_to_ICompanyData(excel_path)
 
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
@@ -122,10 +123,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         :return: None
         """
-        assert pd.Series([TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET, TabsConfig.PROJECTED_EI]).isin(
-            df.keys()).all(), "some tabs are missing in the company data excel"
+        required_tabs = [TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET]
+        optional_tabs = [TabsConfig.PROJECTED_EI, TabsConfig.HISTORIC_DATA]
+        missing_tabs = [tab for tab in required_tabs + optional_tabs if tab not in df.keys()]
+        assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
+        assert not all(tab in missing_tabs for tab in optional_tabs), f"Either of the tabs {optional_tabs} is required."
 
-    def _convert_excel_data_to_ICompanyData(self, excel_path: str) -> List[ICompanyData]:
+    def _convert_from_excel_data(self, excel_path: str) -> List[ICompanyData]:
         """
         Converts the Excel template to list of ICompanyDta objects. All dataprovider features will be inhereted from
         Base

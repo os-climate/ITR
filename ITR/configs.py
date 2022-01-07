@@ -46,6 +46,9 @@ class ColumnsConfig:
     BASE_EI = 'emission_intensity_at_base_year'
     PROJECTED_EI = 'projected_intensities'
     PROJECTED_TARGETS = 'projected_targets'
+    HISTORIC_PRODUCTIONS = 'historic_productions'
+    HISTORIC_EMISSIONS = 'historic_emissions'
+    HISTORIC_EI = 'historic_emission_intensities'
     TRAJECTORY_SCORE = 'trajectory_score'
     TRAJECTORY_OVERSHOOT = 'trajectory_overshoot_ratio'
     TARGET_SCORE = 'target_score'
@@ -64,6 +67,12 @@ class SectorsConfig:
     INDUSTRIALS = "Industrials"
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
+
+
+class VariablesConfig:
+    EMISSIONS = "Emissions"
+    PRODUCTIONS = "Productions"
+    EMISSION_INTENSITIES = "Emission Intensities"
 
 
 class PortfolioAggregationConfig:
