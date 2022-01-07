@@ -90,3 +90,13 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion=3664.0,
         scenario_target_temperature=1.5
     )
+
+
+class ProjectionConfig:
+    LOWER_PERCENTILE: float = 0.1
+    UPPER_PERCENTILE: float = 0.9
+
+    LOWER_DELTA: float = -0.10
+    UPPER_DELTA: float = +0.03
+
+    TARGET_YEAR: int = 2050
