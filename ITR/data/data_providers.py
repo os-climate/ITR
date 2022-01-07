@@ -7,7 +7,6 @@ from ITR.configs import ProjectionConfig, TabsConfig, VariablesConfig, ColumnsCo
 from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
     IHistoricEIScopes, ICompanyProjection, ICompanyProjectionsScopes, ICompanyProjections
 
-
 class CompanyDataProvider(ABC):
     """
     Company data provider super class.
