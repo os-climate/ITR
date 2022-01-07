@@ -108,3 +108,4 @@ class ProjectionConfig:
     UPPER_DELTA: float = +0.03
 
     TARGET_YEAR: int = 2050
+
