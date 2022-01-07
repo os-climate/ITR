@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Optional, Dict, List
 from pydantic import BaseModel
 
-
 class AggregationContribution(BaseModel):
     company_name: str
     company_id: str
