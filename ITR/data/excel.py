@@ -8,6 +8,7 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, Va
 from ITR.interfaces import ICompanyData, ICompanyProjection, EScope, IEmissionIntensityBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection, IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, IEmissionRealization, IEIRealization
+
 import logging
 
 
@@ -187,6 +188,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 if df_historic is not None:
                     company_data[TabsConfig.HISTORIC_DATA] = self._convert_historic_data(
                         df_historic.loc[company_data[ColumnsConfig.COMPANY_ID], :], convert_unit_of_measure)
+
+                if df_historic is not None:
+                    company_data[ColumnsConfig.HISTORIC_PRODUCTIONS] = self._convert_to_historic_productions(df_historic)
+                    company_data[ColumnsConfig.HISTORIC_EMISSIONS] = self._convert_to_historic_emissions(df_historic)
+                    company_data[ColumnsConfig.HISTORIC_EI] = self._convert_to_historic_emission_intensities(df_historic)
 
                 model_companies.append(ICompanyData.parse_obj(company_data))
 
