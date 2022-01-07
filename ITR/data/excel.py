@@ -230,7 +230,6 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
     def _get_historic_data(self, company_ids: List[str], historic_data: pd.DataFrame) -> pd.DataFrame:
         historic_data = historic_data.reset_index().drop(columns=['index']).set_index(ColumnsConfig.COMPANY_ID)
         self.historic_years = [column for column in historic_data.columns if type(column) == int]
-
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
         assert not missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
 
