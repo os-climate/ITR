@@ -111,12 +111,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
     :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
     """
 
-    def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        self._companies = self._convert_from_excel_data(excel_path)
-        super().__init__(self._companies, column_config, tempscore_config)
+    def __init__(self, excel_path: str):
         self.ENERGY_UNIT_CONVERSION_FACTOR = 3.6
         self.CORRECTION_SECTORS = [SectorsConfig.ELECTRICITY]
+        self._companies = self._convert_from_excel_data(excel_path)
+        super().__init__(self._companies, ColumnsConfig, TemperatureScoreConfig)
 
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
@@ -141,10 +140,17 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         self._check_company_data(df_company_data)
 
         df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL]
-        company_ids = df_fundamentals[self.column_config.COMPANY_ID].unique()
+        company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
         df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET])
-        df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI])
-        return self._company_df_to_model(df_fundamentals, df_targets, df_ei)
+        if TabsConfig.PROJECTED_EI in df_company_data.keys():
+            df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI])
+        else:
+            df_ei = None
+        if TabsConfig.HISTORIC_DATA in df_company_data.keys():
+            df_historic = self._get_historic_data(company_ids, df_company_data[TabsConfig.HISTORIC_DATA])
+        else:
+            df_historic = None
+        return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
     def _convert_series_to_projections(self, projections: pd.Series, convert_unit: bool = False) -> List[
         ICompanyProjection]:
@@ -175,15 +181,15 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         model_companies: List[ICompanyData] = []
         for company_data in companies_data_dict:
             try:
-                convert_unit_of_measure = company_data[self.column_config.SECTOR] in self.CORRECTION_SECTORS
+                convert_unit_of_measure = company_data[ColumnsConfig.SECTOR] in self.CORRECTION_SECTORS
                 company_targets = self._convert_series_to_projections(
-                    df_targets.loc[company_data[self.column_config.COMPANY_ID], :], convert_unit_of_measure)
+                    df_targets.loc[company_data[ColumnsConfig.COMPANY_ID], :], convert_unit_of_measure)
                 company_ei = self._convert_series_to_projections(
-                    df_ei.loc[company_data[self.column_config.COMPANY_ID], :],
+                    df_ei.loc[company_data[ColumnsConfig.COMPANY_ID], :],
                     convert_unit_of_measure)
 
-                company_data.update({self.column_config.PROJECTED_TARGETS: {'S1S2': {'projections': company_targets}}})
-                company_data.update({self.column_config.PROJECTED_EI: {'S1S2': {'projections': company_ei}}})
+                company_data.update({ColumnsConfig.PROJECTED_TARGETS: {'S1S2': {'projections': company_targets}}})
+                company_data.update({ColumnsConfig.PROJECTED_EI: {'S1S2': {'projections': company_ei}}})
 
                 if df_historic is not None:
                     company_data[ColumnsConfig.HISTORIC_PRODUCTIONS] = self._convert_to_historic_productions(df_historic)
@@ -195,7 +201,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             except ValidationError as e:
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
-                        self.column_config.COMPANY_NAME])
+                        ColumnsConfig.COMPANY_NAME])
                 pass
         return model_companies
 
@@ -207,14 +213,14 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :return: series of projected emissions
         """
 
-        projections = projections.reset_index().set_index(self.column_config.COMPANY_ID)
+        projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
         assert all(company_id in projections.index for company_id in company_ids), \
             f"company ids missing in provided projections"
 
         projections = projections.loc[company_ids, :]
-        projections = projections.loc[:, range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                               self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+        projections = projections.loc[:, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                               TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
 
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
         projections = projections.fillna(np.inf)
@@ -224,10 +230,10 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         return projected_emissions_s1s2
 
     def _get_historic_data(self, company_ids: List[str], historic_data: pd.DataFrame) -> pd.DataFrame:
-        historic_data = historic_data.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+        historic_data = historic_data.reset_index().drop(columns=['index']).set_index(ColumnsConfig.COMPANY_ID)
 
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
-        assert missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
+        assert not missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
 
         return historic_data.loc[company_ids, :]
 
