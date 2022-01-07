@@ -6,7 +6,8 @@ from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProduct
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig
 from ITR.interfaces import ICompanyData, ICompanyProjection, EScope, IEmissionIntensityBenchmarkScopes, \
-    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection
+    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IBenchmarkProjection, IHistoricEmissionsScopes, \
+    IProductionRealization, IHistoricEIScopes
 import logging
 
 
@@ -112,7 +113,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
     def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        self._companies = self._convert_excel_data_to_ICompanyData(excel_path)
+        self._companies = self._convert_from_excel_data(excel_path)
         super().__init__(self._companies, column_config, tempscore_config)
         self.ENERGY_UNIT_CONVERSION_FACTOR = 3.6
         self.CORRECTION_SECTORS = [SectorsConfig.ELECTRICITY]
@@ -156,8 +157,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         projections = projections * self.ENERGY_UNIT_CONVERSION_FACTOR if convert_unit else projections
         return [ICompanyProjection(year=y, value=v) for y, v in projections.items()]
 
-    def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame) -> \
-            List[ICompanyData]:
+    def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame,
+                             df_historic: pd.DataFrame) -> List[ICompanyData]:
         """
         transforms target Dataframe into list of IDataProviderTarget instances
 
@@ -183,6 +184,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
                 company_data.update({self.column_config.PROJECTED_TARGETS: {'S1S2': {'projections': company_targets}}})
                 company_data.update({self.column_config.PROJECTED_EI: {'S1S2': {'projections': company_ei}}})
+
+                if df_historic is not None:
+                    company_data[ColumnsConfig.HISTORIC_PRODUCTIONS] = self._convert_to_historic_productions(df_historic)
+                    company_data[ColumnsConfig.HISTORIC_EMISSIONS] = self._convert_to_historic_emissions(df_historic)
+                    company_data[ColumnsConfig.HISTORIC_EI] = self._convert_to_historic_emission_intensities(df_historic)
 
                 model_companies.append(ICompanyData.parse_obj(company_data))
 
@@ -216,3 +222,20 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         projected_emissions_s1s2 = projected_emissions_s1s2.replace(np.inf, np.nan)
 
         return projected_emissions_s1s2
+
+    def _get_historic_data(self, company_ids: List[str], historic_data: pd.DataFrame) -> pd.DataFrame:
+        historic_data = historic_data.reset_index().set_index(ColumnsConfig.COMPANY_ID)
+
+        missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
+        assert missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
+
+        return historic_data.loc[company_ids, :]
+
+    def _convert_to_historic_emissions(self, dataframe: pd.DataFrame) -> IHistoricEmissionsScopes:
+        return IHistoricEmissionsScopes(S1=[], S2=[], S1S2=[], S3=[], S1S2S3=[])
+
+    def _convert_to_historic_productions(self, dataframe: pd.DataFrame) -> List[IProductionRealization]:
+        return [IProductionRealization(year=1990, value=1)]
+
+    def _convert_to_historic_emission_intensities(self, dataframe: pd.DataFrame) -> IHistoricEIScopes:
+        return IHistoricEIScopes(S1=[], S2=[], S1S2=[], S3=[], S1S2S3=[])
