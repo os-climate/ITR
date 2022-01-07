@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import List
 import pandas as pd
 import numpy as np
+
+from ITR.configs import ProjectionConfig
 from ITR.interfaces import ICompanyData
 
 
