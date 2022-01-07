@@ -120,6 +120,37 @@ class ICompanyProjectionsScopes(BaseModel):
         return getattr(self, item)
 
 
+class IProductionRealization(BaseModel):
+    year: int
+    value: Optional[float]
+
+
+class IEmissionRealization(BaseModel):
+    year: int
+    value: Optional[float]
+
+
+class IHistoricEmissionsScopes(BaseModel):
+    S1: List[IEmissionRealization]
+    S2: List[IEmissionRealization]
+    S1S2: List[IEmissionRealization]
+    S3: List[IEmissionRealization]
+    S1S2S3: List[IEmissionRealization]
+
+
+class IEIRealization(BaseModel):
+    year: int
+    value: Optional[float]
+
+
+class IHistoricEIScopes(BaseModel):
+    S1: List[IEIRealization]
+    S2: List[IEIRealization]
+    S1S2: List[IEIRealization]
+    S3: List[IEIRealization]
+    S1S2S3: List[IEIRealization]
+
+
 class ICompanyData(BaseModel):
     company_name: str
     company_id: str
@@ -128,8 +159,11 @@ class ICompanyData(BaseModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
-    projected_targets: ICompanyProjectionsScopes
-    projected_intensities: ICompanyProjectionsScopes
+    historic_productions: Optional[List[IProductionRealization]]
+    historic_emissions: Optional[IHistoricEmissionsScopes]
+    historic_emission_intensities: Optional[IHistoricEIScopes]
+    projected_targets: Optional[ICompanyProjectionsScopes]
+    projected_intensities: Optional[ICompanyProjectionsScopes]
 
     country: Optional[str]
     ghg_s1s2: Optional[float]
