@@ -7,6 +7,7 @@ from ITR.configs import ProjectionConfig, TabsConfig, VariablesConfig, ColumnsCo
 from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
     IHistoricEIScopes, ICompanyProjection, ICompanyProjectionsScopes, ICompanyProjections
 
+
 class CompanyDataProvider(ABC):
     """
     Company data provider super class.
@@ -203,6 +204,7 @@ class EmissionIntensityProjector(ABC):
     def __init__(self, companies: List[ICompanyData]):
         self.companies = companies
         self.historic_data = self._extract_historic_data(companies)
+        self.projection_data = None
         self.historic_years = [column for column in self.historic_data.columns if type(column) == int]
         self.projection_years = range(max(self.historic_years), ProjectionConfig.TARGET_YEAR)
 
