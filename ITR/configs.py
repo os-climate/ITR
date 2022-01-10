@@ -75,6 +75,14 @@ class VariablesConfig:
     EMISSION_INTENSITIES = "Emission Intensities"
 
 
+class TabsConfig:
+    FUNDAMENTAL = "fundamental_data"
+    PROJECTED_EI = "projected_ei_in_Wh"
+    PROJECTED_PRODUCTION = "projected_production"
+    PROJECTED_TARGET = "projected_target"
+    HISTORIC_DATA = "historic_data"
+
+
 class PortfolioAggregationConfig:
     COLS = ColumnsConfig
 

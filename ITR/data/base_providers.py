@@ -1,7 +1,8 @@
 import pandas as pd
 from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
+from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
+    IntensityBenchmarkDataProvider, EmissionIntensityProjector
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, \
     IBenchmark
 
@@ -23,14 +24,17 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__()
-        self._companies = self._validate(companies)
+        self._companies = self._validate_projected_trajectories(companies)
         self.column_config = column_config
         self.temp_config = tempscore_config
 
-    def _validate(self, companies: List[ICompanyData]) -> List[ICompanyData]:
-        # TODO: check if either historic or projected EI data are supplied
-        # TODO: Extrapolate EI data if not yet present
-        return companies
+    def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
+        companies_without_data = [c.company_id for c in companies if not c.historic_data and not c.projected_intensities]
+        assert not companies_without_data, \
+            f"Provide either historic emission data or projections for companies with IDs {companies_without_data}"
+        companies_without_projections = [c for c in companies if not c.projected_intensities]
+        companies_with_projections = [c for c in companies if c.projected_intensities]
+        return companies_with_projections + EmissionIntensityProjector(companies_without_projections).project()
 
     def _convert_projections_to_series(self, company: ICompanyData, feature: str,
                                        scope: EScope = EScope.S1S2) -> pd.Series:
