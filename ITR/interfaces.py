@@ -151,6 +151,12 @@ class IHistoricEIScopes(BaseModel):
     S1S2S3: List[IEIRealization]
 
 
+class IHistoricData(BaseModel):
+    productions: Optional[List[IProductionRealization]]
+    emissions: Optional[IHistoricEmissionsScopes]
+    emission_intensities: Optional[IHistoricEIScopes]
+
+
 class ICompanyData(BaseModel):
     company_name: str
     company_id: str
@@ -159,9 +165,7 @@ class ICompanyData(BaseModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
-    historic_productions: Optional[List[IProductionRealization]]
-    historic_emissions: Optional[IHistoricEmissionsScopes]
-    historic_emission_intensities: Optional[IHistoricEIScopes]
+    historic_data: Optional[IHistoricData]
     projected_targets: Optional[ICompanyProjectionsScopes]
     projected_intensities: Optional[ICompanyProjectionsScopes]
 
@@ -241,6 +245,14 @@ class EScope(SortableEnum):
     S3 = "S3"
     S1S2 = "S1+S2"
     S1S2S3 = "S1+S2+S3"
+
+    @classmethod
+    def get_scopes(cls) -> List[str]:
+        """
+        Get a list of all scopes.
+        :return: A list of EScope objects
+        """
+        return ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
 
     @classmethod
     def get_result_scopes(cls) -> List['EScope']:
