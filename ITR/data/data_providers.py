@@ -204,7 +204,6 @@ class EmissionIntensityProjector(ABC):
     def __init__(self, companies: List[ICompanyData]):
         self.companies = companies
         self.historic_data = self._extract_historic_data(companies)
-        self.projection_data = None
         self.historic_years = [column for column in self.historic_data.columns if type(column) == int]
         self.projection_years = range(max(self.historic_years), ProjectionConfig.TARGET_YEAR)
 
