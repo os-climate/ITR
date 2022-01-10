@@ -33,8 +33,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         assert not companies_without_data, \
             f"Provide either historic emission data or projections for companies with IDs {companies_without_data}"
         companies_without_projections = [c for c in companies if not c.projected_intensities]
-        companies_with_projections = [c for c in companies if c.projected_intensities]
-        return companies_with_projections + EmissionIntensityProjector(companies_without_projections).project()
+        if companies_without_projections:
+            companies_with_projections = [c for c in companies if c.projected_intensities]
+            return companies_with_projections + EmissionIntensityProjector(companies_without_projections).project()
+        else:
+            return companies
 
     def _convert_projections_to_series(self, company: ICompanyData, feature: str,
                                        scope: EScope = EScope.S1S2) -> pd.Series:
