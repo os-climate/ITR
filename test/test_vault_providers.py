@@ -19,6 +19,7 @@ import trino
 import osc_ingest_trino as osc
 from sqlalchemy.engine import create_engine
 
+ingest_catalog = 'osc_datacommons_dev'
 ingest_schema = 'demo'
 
 dotenv_dir = os.environ.get('CREDENTIAL_DOTENV_DIR', os.environ.get('PWD', '/opt/app-root/src'))
@@ -27,14 +28,14 @@ if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path=dotenv_path,override=True)
 
 sqlstring = 'trino://{user}@{host}:{port}/'.format(
-    user = os.environ['TRINO_USER'],
+    user = os.environ['TRINO_USER_USER1'],
     host = os.environ['TRINO_HOST'],
     port = os.environ['TRINO_PORT']
 )
 sqlargs = {
-    'auth': trino.auth.JWTAuthentication(os.environ['TRINO_PASSWD']),
+    'auth': trino.auth.JWTAuthentication(os.environ['TRINO_PASSWD_USER1']),
     'http_scheme': 'https',
-    'catalog': 'osc_datacommons_dev',
+    'catalog': ingest_catalog,
     'schema': ingest_schema,
 }
 engine_init = create_engine(sqlstring, connect_args = sqlargs)
@@ -57,19 +58,19 @@ class TestVaultProvider(unittest.TestCase):
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
-        self.vault_production_bm = VaultProviderProductionBenchmark(engine_init, ingest_schema, benchmark_name="benchmark_prod", production_benchmarks=prod_bms)
+        self.vault_production_bm = VaultProviderProductionBenchmark(engine_init, benchmark_name="benchmark_prod", production_benchmarks=prod_bms)
 
         # load intensity benchmarks
         with open(self.benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
         ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
-        self.vault_EI_bm = VaultProviderIntensityBenchmark(engine_init, ingest_schema, benchmark_name="benchmark_ei", EI_benchmarks=ei_bms)
+        self.vault_EI_bm = VaultProviderIntensityBenchmark(engine_init, benchmark_name="benchmark_ei", EI_benchmarks=ei_bms)
 
         # load company data
         # TODO: ISIC code should read as int, not float
-        self.vault_company_data = VaultCompanyDataProvider(engine_init, ingest_schema, "rmi_company_data")
+        self.vault_company_data = VaultCompanyDataProvider(engine_init, "rmi_company_data")
 
-        self.vault_warehouse = DataVaultWarehouse(engine_init, ingest_schema, self.vault_company_data, self.vault_production_bm, self.vault_EI_bm)
+        self.vault_warehouse = DataVaultWarehouse(engine_init, self.vault_company_data, self.vault_production_bm, self.vault_EI_bm)
 
     def test_N0_projections(self):
         sqlstring = 'trino://{user}@{host}:{port}/'.format(
