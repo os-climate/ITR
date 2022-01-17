@@ -170,16 +170,17 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
         return df_bm
 
-    def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
+    def get_company_projected_production(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         get the projected productions for list of companies in ghg_scope12
-        :param ghg_scope12: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID,ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :param company_sector_region_info: DataFrame with at least the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
-        benchmark_production_projections = self.get_benchmark_projections(ghg_scope12)
-        return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-            ghg_scope12[self.column_config.GHG_SCOPE12].values, axis=0)
+        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info)
+        return benchmark_production_projections\
+            .add(1).cumprod(axis=1).mul(
+            company_sector_region_info[self.column_config.GHG_SCOPE12].values, axis=0)
 
     def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame,
                                   scope: EScope = EScope.S1S2) -> pd.DataFrame:

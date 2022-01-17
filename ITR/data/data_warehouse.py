@@ -42,34 +42,35 @@ class DataWarehouse(ABC):
         :return: A list containing the company data and additional precalculated fields
         """
         company_data = self.company_data.get_company_data(company_ids)
-        df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
+        df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])\
+            .set_index(self.column_config.COMPANY_ID)
 
-        assert pd.Series(company_ids).isin(df_company_data.loc[:, self.column_config.COMPANY_ID]).all(), \
-            "some of the company ids are not included in the fundamental data"
+        missing_ids = [c_id for c_id in company_ids if c_id not in df_company_data.index]
+        assert not missing_ids, f"Company IDs are not included in the fundamental data: {missing_ids}"
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
-            company_info_at_base_year)
+            company_info_at_base_year).sort_index()
 
         df_company_data.loc[:, self.column_config.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
-            projected_production=projected_production).to_numpy()
+            projected_production=projected_production)
 
         df_company_data.loc[:, self.column_config.CUMULATIVE_TARGET] = self._get_cumulative_emission(
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
-            projected_production=projected_production).to_numpy()
+            projected_production=projected_production)
 
         df_company_data.loc[:, self.column_config.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
-            projected_production=projected_production).to_numpy()
+            projected_production=projected_production)
 
         df_company_data.loc[:,
         self.column_config.BENCHMARK_GLOBAL_BUDGET] = self.benchmarks_projected_emission_intensity.benchmark_global_budget
         df_company_data.loc[:,
         self.column_config.BENCHMARK_TEMP] = self.benchmarks_projected_emission_intensity.benchmark_temperature
 
-        companies = df_company_data.to_dict(orient="records")
+        companies = df_company_data.reset_index().to_dict(orient="records")
 
         aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
                                                             companies]
@@ -107,6 +108,4 @@ class DataWarehouse(ABC):
         :param projected_production: series of projected production series
         :return: weighted sum of production and emission
         """
-
-        return projected_emission_intensity.reset_index(drop=True).multiply(projected_production.reset_index(
-            drop=True)).sum(axis=1)
+        return projected_emission_intensity.multiply(projected_production).sum(axis=1)
