@@ -108,10 +108,6 @@ class DataWarehouse(ABC):
         :param projected_production: series of projected production series
         :return: weighted sum of production and emissions
         """
-<<<<<<< HEAD
 
         return projected_emissions_intensity.reset_index(drop=True).multiply(projected_production.reset_index(
             drop=True)).sum(axis=1)
-=======
-        return projected_emission_intensity.multiply(projected_production).sum(axis=1)
->>>>>>> Fix scrambling of rows in getting processed company data
