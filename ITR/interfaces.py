@@ -247,12 +247,12 @@ class EScope(SortableEnum):
     S1S2S3 = "S1+S2+S3"
 
     @classmethod
-    def get_scopes(cls) -> List[str]:
+    def get_scopes(cls) -> List['EScope']:
         """
         Get a list of all scopes.
         :return: A list of EScope objects
         """
-        return ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+        return [cls.S1.value, cls.S2.value, cls.S1S2.value, cls.S1S2S3.value]
 
     @classmethod
     def get_result_scopes(cls) -> List['EScope']:
