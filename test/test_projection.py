@@ -2,7 +2,7 @@ import json
 import unittest
 import os
 
-from ITR.data.base_providers import BaseEmissionIntensityProjector
+from ITR.data.base_providers import EmissionIntensityProjector
 from ITR.interfaces import ICompanyData
 
 
@@ -19,7 +19,7 @@ class TestProjector(unittest.TestCase):
         with open(self.source_path, 'r') as file:
             company_dicts = json.load(file)
         self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
-        self.projector = BaseEmissionIntensityProjector()
+        self.projector = EmissionIntensityProjector()
 
     def test_project(self):
         projections = self.projector.project_intensities(self.companies)

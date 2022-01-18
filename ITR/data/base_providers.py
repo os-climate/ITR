@@ -300,7 +300,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         return benchmark_projection
 
 
-class BaseEmissionIntensityProjector(object):
+class EmissionIntensityProjector(object):
     """
     This class projects emission intensities on company level based on historic data on:
     - A company's emission history (in t CO2)
@@ -372,7 +372,7 @@ class BaseEmissionIntensityProjector(object):
             ei_keys = {scope: (company.company_id, VariablesConfig.EMISSION_INTENSITIES, scope) for scope in scopes}
             for scope in scopes:
                 if ei_keys[scope] not in historic_data.index:  # Emission intensities not yet computed for this scope
-                    if scope == EScope.S1S2.value:
+                    if scope == 'S1S2':
                         try:  # Try to add S1 and S2 emission intensities
                             historic_data.loc[ei_keys[scope]] = historic_data.loc[ei_keys['S1']] + \
                                                                 historic_data.loc[ei_keys['S2']]
@@ -382,7 +382,9 @@ class BaseEmissionIntensityProjector(object):
                                                                     historic_data.loc[production_key]
                             except KeyError:
                                 missing_data.append(f"{company.company_id} - {scope}")
-                    elif scope == EScope.S1S2S3.value:
+                    elif scope == 'S1S2S3':  # Implement when S3 data is available
+                        pass
+                    elif scope == 'S3':  # Remove when S3 data is available - will be handled by 'else'
                         pass
                     else:  # S1 and S2 cannot be computed from other EIs, so use emissions and productions
                         try:
@@ -395,7 +397,7 @@ class BaseEmissionIntensityProjector(object):
 
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
-            results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, EScope.S1S2.value)]
+            results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, 'S1S2')]
             projections = [ICompanyProjection(year=year, value=value) for year, value in results.items()
                            if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
             company.projected_intensities = ICompanyProjectionsScopes(
