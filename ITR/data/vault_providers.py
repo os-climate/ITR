@@ -77,15 +77,15 @@ class VaultCompanyDataProvider(CompanyDataProvider):
         self.column_config = column_config
         self.temp_config = tempscore_config
         # Validate and complete the projected trajectories
-        self._intensity_table = company_table.replace('_company_', '_intensity_')
-        self._trajectory_table = company_table.replace('_company_', '_trajectory_')
-        self._production_table = company_table.replace('_company_', '_production_')
-        self._emissions_table = company_table.replace('_company_', '_emissions_')
+        self._intensity_table = company_table.replace('company_', 'intensity_')
+        self._trajectory_table = company_table.replace('company_', 'trajectory_')
+        self._production_table = company_table.replace('company_', 'production_')
+        self._emissions_table = company_table.replace('company_', 'emissions_')
         companies_without_projections = self._engine.execute(f"""
 select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._intensity_table} EI on EI.company_name=C.company_name
-where co2_intensity_target_by_year is NULL
+where EI.co2_intensity_target_by_year is NULL
 """).fetchall()
-        assert len(companies_without_projections)==0, f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections.company_id}"
+        assert len(companies_without_projections)==0, f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}"
 
     # The factors one would want to sum over companies for weighting purposes are:
     #   * market_cap_usd
@@ -436,7 +436,8 @@ select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1+S2'
        sum(B.intensity * P.production_by_year) as cumulative_budget
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
-     join {self._schema}.benchmark_ei B on P.year=B.year and C.region=B.region and C.sector=B.sector
+     join demo.isic_to_sector I2S on C.isic=I2S.isic
+     join {self._schema}.benchmark_ei B on P.year=B.year and C.region=B.region and I2S.sector=B.sector
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'benchmark_1', B.global_budget, B.benchmark_temp
 """)
         # Need to fetch so table created above is established before using in query below
