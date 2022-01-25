@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Dict, Union
 import pandas as pd
-from ITR.interfaces import ICompanyData
+import numpy as np
+
+from ITR.configs import ProjectionConfig, TabsConfig, VariablesConfig, ColumnsConfig, TemperatureScoreConfig
+from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
+    IHistoricEIScopes, ICompanyProjection, ICompanyProjectionsScopes, ICompanyProjections
 
 
 class CompanyDataProvider(ABC):

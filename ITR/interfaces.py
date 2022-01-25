@@ -120,6 +120,43 @@ class ICompanyProjectionsScopes(BaseModel):
         return getattr(self, item)
 
 
+class IProductionRealization(BaseModel):
+    year: int
+    value: Optional[float]
+
+
+class IEmissionRealization(BaseModel):
+    year: int
+    value: Optional[float]
+
+
+class IHistoricEmissionsScopes(BaseModel):
+    S1: List[IEmissionRealization]
+    S2: List[IEmissionRealization]
+    S1S2: List[IEmissionRealization]
+    S3: List[IEmissionRealization]
+    S1S2S3: List[IEmissionRealization]
+
+
+class IEIRealization(BaseModel):
+    year: int
+    value: Optional[float]
+
+
+class IHistoricEIScopes(BaseModel):
+    S1: List[IEIRealization]
+    S2: List[IEIRealization]
+    S1S2: List[IEIRealization]
+    S3: List[IEIRealization]
+    S1S2S3: List[IEIRealization]
+
+
+class IHistoricData(BaseModel):
+    productions: Optional[List[IProductionRealization]]
+    emissions: Optional[IHistoricEmissionsScopes]
+    emission_intensities: Optional[IHistoricEIScopes]
+
+
 class ICompanyData(BaseModel):
     company_name: str
     company_id: str
@@ -128,8 +165,9 @@ class ICompanyData(BaseModel):
     sector: str  # TODO: make SortableEnums
     target_probability: float
 
-    projected_targets: ICompanyProjectionsScopes
-    projected_intensities: ICompanyProjectionsScopes
+    historic_data: Optional[IHistoricData]
+    projected_targets: Optional[ICompanyProjectionsScopes]
+    projected_intensities: Optional[ICompanyProjectionsScopes]
 
     country: Optional[str]
     ghg_s1s2: Optional[float]
@@ -207,6 +245,14 @@ class EScope(SortableEnum):
     S3 = "S3"
     S1S2 = "S1+S2"
     S1S2S3 = "S1+S2+S3"
+
+    @classmethod
+    def get_scopes(cls) -> List[str]:
+        """
+        Get a list of all scopes.
+        :return: A list of EScope string values
+        """
+        return ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3']
 
     @classmethod
     def get_result_scopes(cls) -> List['EScope']:

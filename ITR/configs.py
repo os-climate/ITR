@@ -46,6 +46,9 @@ class ColumnsConfig:
     BASE_EI = 'emission_intensity_at_base_year'
     PROJECTED_EI = 'projected_intensities'
     PROJECTED_TARGETS = 'projected_targets'
+    HISTORIC_PRODUCTIONS = 'historic_productions'
+    HISTORIC_EMISSIONS = 'historic_emissions'
+    HISTORIC_EI = 'historic_emission_intensities'
     TRAJECTORY_SCORE = 'trajectory_score'
     TRAJECTORY_OVERSHOOT = 'trajectory_overshoot_ratio'
     TARGET_SCORE = 'target_score'
@@ -66,6 +69,20 @@ class SectorsConfig:
     HEALTH_CARE = "Health Care"
 
 
+class VariablesConfig:
+    EMISSIONS = "Emissions"
+    PRODUCTIONS = "Productions"
+    EMISSION_INTENSITIES = "Emission Intensities"
+
+
+class TabsConfig:
+    FUNDAMENTAL = "fundamental_data"
+    PROJECTED_EI = "projected_ei_in_Wh"
+    PROJECTED_PRODUCTION = "projected_production"
+    PROJECTED_TARGET = "projected_target"
+    HISTORIC_DATA = "historic_data"
+
+
 class PortfolioAggregationConfig:
     COLS = ColumnsConfig
 
@@ -81,3 +98,13 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion=3664.0,
         scenario_target_temperature=1.5
     )
+
+
+class ProjectionConfig:
+    LOWER_PERCENTILE: float = 0.1
+    UPPER_PERCENTILE: float = 0.9
+
+    LOWER_DELTA: float = -0.10
+    UPPER_DELTA: float = +0.03
+
+    TARGET_YEAR: int = 2050
