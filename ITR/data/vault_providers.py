@@ -422,6 +422,7 @@ from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
      join {company_data._schema}.{company_data._intensity_table} EI on EI.company_name=C.company_name and EI.year=P.year
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_name=C.company_name and ET.year=P.year
+where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2'
 """)
         # Need to fetch so table created above is established before using in query below
@@ -438,6 +439,7 @@ from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
      join demo.isic_to_sector I2S on C.isic=I2S.isic
      join {self._schema}.benchmark_ei B on P.year=B.year and C.region=B.region and I2S.sector=B.sector
+where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'benchmark_1', B.global_budget, B.benchmark_temp
 """)
         # Need to fetch so table created above is established before using in query below
