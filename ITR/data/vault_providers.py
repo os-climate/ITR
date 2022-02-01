@@ -279,7 +279,6 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo'
         self.benchmark_name = benchmark_name
         osc.drop_unmanaged_table(ingest_catalog, self._schema, benchmark_name, engine, trino_bucket)
-        osc.drop_unmanaged_data(self._schema, benchmark_name, trino_bucket)
         df = pd.DataFrame()
         for scope in benchmark_scopes:
             if EI_benchmarks.dict()[scope] is None:
@@ -408,7 +407,6 @@ class DataVaultWarehouse(DataWarehouse):
         #    * Cumulative budget of emissions (separately for each benchmark)
         for t in ['cumulative_emissions', 'cumulative_budget_1', 'overshoot_ratios', 'temperature_scores']:
             osc.drop_unmanaged_table(ingest_catalog, self._schema, t, engine, trino_bucket)
-            osc.drop_unmanaged_data(self._schema, t, trino_bucket)
 
         qres = self._engine.execute(f"""
 create table cumulative_emissions with (
