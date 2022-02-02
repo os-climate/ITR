@@ -77,8 +77,8 @@ class VaultCompanyDataProvider(CompanyDataProvider):
         self.column_config = column_config
         self.temp_config = tempscore_config
         # Validate and complete the projected trajectories
-        self._intensity_table = company_table.replace('company_', 'intensity_')
-        self._trajectory_table = company_table.replace('company_', 'trajectory_')
+        self._intensity_table = target_table or company_table.replace('company_', 'intensity_')
+        self._trajectory_table = trajectory_table or company_table.replace('company_', 'trajectory_')
         self._production_table = company_table.replace('company_', 'production_')
         self._emissions_table = company_table.replace('company_', 'emissions_')
         companies_without_projections = self._engine.execute(f"""
@@ -401,11 +401,17 @@ class DataVaultWarehouse(DataWarehouse):
         # intensity_projections['scope'] = 'S1+S2'
         # intensity_projections['source'] = self._schema
         
+        # If there's no company data, we are just using the vault, not initializing it
+        if company_data==None:
+            return
+        if benchmark_projected_production is None and benchmarks_projected_emissions_intensity is None:
+            return
+
         # The DataVaultWarehouse provides three calculations per company:
         #    * Cumulative trajectory of emissions
         #    * Cumulative target of emissions
         #    * Cumulative budget of emissions (separately for each benchmark)
-        for t in ['cumulative_emissions', 'cumulative_budget_1', 'overshoot_ratios', 'temperature_scores']:
+        for t in ['cumulative_emissions', 'cumulative_budget_1']:
             osc.drop_unmanaged_table(ingest_catalog, self._schema, t, engine, trino_bucket)
 
         qres = self._engine.execute(f"""
@@ -440,8 +446,20 @@ from {company_data._schema}.{company_data._company_table} C
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'benchmark_1', B.global_budget, B.benchmark_temp
 """)
-        # Need to fetch so table created above is established before using in query below
+        # Need to fetch so table created above is established so later queries can use it
         qres.fetchall()
+
+    def quant_init(self,
+                   engine: sqlalchemy.engine.base.Engine,
+                   company_data: VaultCompanyDataProvider,
+                   ingest_schema: str = None):
+        # The Quant users of the DataVaultWarehouse produces two calculations per company:
+        #    * Target and Trajectory overshoot ratios
+        #    * Temperature Scores
+
+        for t in ['overshoot_ratios', 'temperature_scores']:
+            osc.drop_unmanaged_table(ingest_catalog, self._schema, t, engine, trino_bucket)
+
         qres = self._engine.execute(f"""
 create table overshoot_ratios with (
     format = 'parquet',
@@ -454,7 +472,7 @@ select E.company_name, E.company_id, '{company_data._schema}' as source, 'S1+S2'
 from {self._schema}.cumulative_emissions E
      join {self._schema}.cumulative_budget_1 B on E.company_id=B.company_id
 """)
-        # Need to fetch so table created above is established before using in query below
+        # Need to fetch so table created above is established so later queries can use it
         qres.fetchall()
         qres = self._engine.execute(f"""
 create table temperature_scores with (
