@@ -4,11 +4,9 @@
     "company_id": "US0079031078",
     "region": "North America",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.428571428571428,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -139,13 +137,12 @@
             "value": 0.32186333388002936
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -276,7 +273,7 @@
             "value": 0.32314328995492764
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -298,11 +295,9 @@
     "company_id": "US00724F1012",
     "region": "North America",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -433,13 +428,12 @@
             "value": 0.0
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -570,7 +564,7 @@
             "value": 0.11293834909899002
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -592,11 +586,9 @@
     "company_id": "FR0000125338",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -727,13 +719,12 @@
             "value": 0.0
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -864,7 +855,7 @@
             "value": 0.056927654404565015
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -886,11 +877,9 @@
     "company_id": "US17275R1023",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -1021,13 +1010,12 @@
             "value": 0.019446057728423578
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -1158,7 +1146,7 @@
             "value": 0.01944605772842358
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -1180,11 +1168,9 @@
     "company_id": "CH0198251305",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -1315,13 +1301,12 @@
             "value": 0.065478378493248
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -1452,7 +1437,7 @@
             "value": 0.0682256166185565
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -1474,11 +1459,9 @@
     "company_id": "US1266501006",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -1609,13 +1592,12 @@
             "value": 0.01908972259658938
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -1746,7 +1728,7 @@
             "value": 0.01908972259658938
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -1768,11 +1750,9 @@
     "company_id": "FR0000120644",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -1903,13 +1883,12 @@
             "value": 0.0
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -2040,7 +2019,7 @@
             "value": 0.02410695065139955
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -2062,11 +2041,9 @@
     "company_id": "US24703L1035",
     "region": "Asia",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -2197,13 +2174,12 @@
             "value": 0.0007171644063577842
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -2334,7 +2310,7 @@
             "value": 0.0007171644063577842
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -2356,11 +2332,9 @@
     "company_id": "TW0002308004",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -2491,13 +2465,12 @@
             "value": 0.030719485801461905
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -2628,7 +2601,7 @@
             "value": 0.274513227726025
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -2650,11 +2623,9 @@
     "company_id": "FR0000120321",
     "region": "Asia",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -2785,13 +2756,12 @@
             "value": 0.28173508695317845
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -2922,7 +2892,7 @@
             "value": 0.28173508695317845
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -2944,11 +2914,9 @@
     "company_id": "CH0038863350",
     "region": "Asia",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -3079,13 +3047,12 @@
             "value": 0.026974867145530285
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -3216,7 +3183,7 @@
             "value": 0.30143654033545186
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -3238,11 +3205,9 @@
     "company_id": "US8356993076",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -3373,13 +3338,12 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -3510,7 +3474,7 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -3532,11 +3496,9 @@
     "company_id": "JP3401400001",
     "region": "Asia",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -3667,13 +3629,12 @@
             "value": 0.290466560681228
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -3804,7 +3765,7 @@
             "value": 0.290466560681228
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -3826,11 +3787,9 @@
     "company_id": "US6541061031",
     "region": "Europe",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -3961,13 +3920,12 @@
             "value": 0.12136988857034575
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -4098,7 +4056,7 @@
             "value": 0.12136988857034575
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -4120,11 +4078,9 @@
     "company_id": "GB0031274896",
     "region": "North America",
     "sector": "Electricity Utilities",
-    "production_metric": { "units": "MWh"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -4255,13 +4211,12 @@
             "value": 0.0
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/MWh" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -4392,7 +4347,7 @@
             "value": 0.19997605950297165
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -4414,11 +4369,9 @@
     "company_id": "US6293775085",
     "region": "Europe",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -4549,13 +4502,12 @@
             "value": 0.023531717117231055
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -4686,7 +4638,7 @@
             "value": 1.4236498966235975
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -4708,11 +4660,9 @@
     "company_id": "US7134481081",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -4843,13 +4793,12 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -4980,7 +4929,7 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -5002,11 +4951,9 @@
     "company_id": "JP0000000001",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -5137,13 +5084,12 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -5274,7 +5220,7 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -5296,11 +5242,9 @@
     "company_id": "NL0000000002",
     "region": "South America",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -5431,13 +5375,12 @@
             "value": 0.06921896577724047
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -5568,7 +5511,7 @@
             "value": 0.06921896577724047
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -5590,11 +5533,9 @@
     "company_id": "IT0000000003",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -5725,13 +5666,12 @@
             "value": 0.06589864832712344
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -5862,7 +5802,7 @@
             "value": 0.6374459070572828
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -5884,11 +5824,9 @@
     "company_id": "SE0000000004",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -6019,13 +5957,12 @@
             "value": 0.0673367403352704
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -6156,7 +6093,7 @@
             "value": 1.3525034681569517
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -6178,11 +6115,9 @@
     "company_id": "SE0000000005",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -6313,13 +6248,12 @@
             "value": 2.13378665842693
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -6450,7 +6384,7 @@
             "value": 2.13378665842693
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -6472,11 +6406,9 @@
     "company_id": "NL0000000006",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -6607,13 +6539,12 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -6744,7 +6675,7 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -6766,11 +6697,9 @@
     "company_id": "CN0000000007",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -6901,13 +6830,12 @@
             "value": 1.158316671492553
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -7038,7 +6966,7 @@
             "value": 1.158316671492553
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -7060,11 +6988,9 @@
     "company_id": "CN0000000008",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -7195,13 +7121,12 @@
             "value": 1.2225581277619404
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -7332,7 +7257,7 @@
             "value": 1.2961814763575168
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -7354,11 +7279,9 @@
     "company_id": "CN0000000009",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -7489,13 +7412,12 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -7626,7 +7548,7 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -7648,11 +7570,9 @@
     "company_id": "BR0000000010",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -7783,13 +7703,12 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -7920,7 +7839,7 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -7942,11 +7861,9 @@
     "company_id": "BR0000000011",
     "region": "Europe",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -8077,13 +7994,12 @@
             "value": 0.5201755039378894
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -8214,7 +8130,7 @@
             "value": 0.5410407687401423
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -8236,11 +8152,9 @@
     "company_id": "BR0000000012",
     "region": "Asia",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -8371,13 +8285,12 @@
             "value": 1.534974823445468
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -8508,7 +8421,7 @@
             "value": 1.534974823445468
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
@@ -8530,11 +8443,9 @@
     "company_id": "AR0000000013",
     "region": "Europe",
     "sector": "Steel",
-    "production_metric": { "units": "Fe_ton"},
     "target_probability": 0.4285714285714285,
-    "projected_ei_targets": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_targets": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -8665,13 +8576,12 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },
-    "projected_ei_trajectories": {
-	"S1S2": { "reports": [ {
-        "company_metric": { "units": "t CO2/Fe_ton" },
+    "projected_intensities": {
+      "S1S2": {
         "projections": [
           {
             "year": 2019,
@@ -8802,7 +8712,7 @@
             "value": null
           }
         ]
-	} ] },
+      },
       "S3": null,
       "S1S2S3": null
     },

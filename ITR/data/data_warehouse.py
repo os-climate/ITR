@@ -111,10 +111,18 @@ class DataWarehouse(ABC):
     def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
                                  ) -> pd.Series:
         """
-        get the weighted sum of the projected emission times the projected production
+        get the weighted sum of the projected emission_intensity times the projected production
         :param projected_emission_intensity: series of projected emissions
         :param projected_production: PintArray of projected production amounts
         :return: cumulative emissions based on weighted sum of production
         """
         df = projected_emission_intensity.multiply(projected_production)
-        return df.sum(axis=1).astype('pint[Mt CO2]')
+        try:
+            s = df.sum(axis=1).astype('pint[Mt CO2]')
+            return s
+        except:
+            display(df.sum(axis=1))
+            display(df)
+            display(projected_emission_intensity)
+            display(projected_production)
+            error()

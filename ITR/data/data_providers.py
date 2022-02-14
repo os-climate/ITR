@@ -6,7 +6,7 @@ import numpy as np
 
 from ITR.configs import ProjectionConfig, TabsConfig, VariablesConfig, ColumnsConfig, TemperatureScoreConfig
 from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
-    IHistoricEIScopes, ICompanyProjection, ICompanyProjectionsScopes, ICompanyProjections
+    IHistoricEIScopes, ICompanyEIProjection, ICompanyEIProjectionsScopes, ICompanyEIProjections
 
 import pint
 from pint import Quantity

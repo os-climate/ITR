@@ -12,7 +12,7 @@ Q_ = ureg.Quantity
 PA_ = PintArray
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
-ureg.define("Fe_ton = [produced_ton] = Fe_")
+ureg.define("Fe_ton = [produced_ton]")
 
 # These are for later
 ureg.define('fraction = [] = frac')

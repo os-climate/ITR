@@ -12,7 +12,7 @@ import copy
 import ITR
 from ITR.data.data_warehouse import DataWarehouse
 from typing import List
-from ITR.interfaces import ICompanyAggregates, ICompanyProjectionsScopes, IProjection
+from ITR.interfaces import ICompanyAggregates, ICompanyEIProjectionsScopes, IProjection
 
 
 class TestDataWareHouse(DataWarehouse):
@@ -57,48 +57,38 @@ class EndToEndTest(unittest.TestCase):
             benchmark_global_budget="396 Gt CO2",
             benchmark_temperature="1.5 delta_degC",
             production_metric = { "units": "Fe_ton" },
-            projected_ei_trajectories=ICompanyProjectionsScopes.parse_obj({
+            projected_intensities=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
-                    "reports": [
+                    "projections": [
                         {
-                            "company_metric": { "units": "t CO2/Fe_ton" },
-                            "projections": [
-                                {
-                                    "year": "2019",
-                                    "value": 1.6982474347547039
-                                },
-                                {
-                                    "year": "2020",
-                                    "value": 1.6982474347547039
-                                },
-                                {
-                                    "year": "2021",
-                                    "value": 1.5908285727976157
-                                }
-                            ]
+                            "year": "2019",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2020",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2021",
+                            "value": 1.5908285727976157
                         }
                     ]
                 }
             }),
-            projected_ei_targets=ICompanyProjectionsScopes.parse_obj({
+            projected_targets=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
-                    "reports": [
+                    "projections": [
                         {
-                            "company_metric": { "units": "t CO2/Fe_ton" },
-                            "projections": [
-                                {
-                                    "year": "2019",
-                                    "value": 1.6982474347547039
-                                },
-                                {
-                                    "year": "2020",
-                                    "value": 1.6982474347547039
-                                },
-                                {
-                                    "year": "2021",
-                                    "value": 1.5577542305393455
-                                }
-                            ]
+                            "year": "2019",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2020",
+                            "value": 1.6982474347547039
+                        },
+                        {
+                            "year": "2021",
+                            "value": 1.5577542305393455
                         }
                     ]
                 }

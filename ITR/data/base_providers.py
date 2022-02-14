@@ -11,7 +11,7 @@ from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkData
     IntensityBenchmarkDataProvider
 
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, \
-    IBenchmark, ICompanyProjections, ICompanyProjectionsScopes, ICompanyProjection, IHistoricEIScopes, \
+    IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, ICompanyProjection, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization
 
 
@@ -57,7 +57,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         units = company.dict()[self.column_config.PRODUCTION_METRIC]['units']
         return pd.Series(
-            {r['year']: r['value'] for reports in company.dict()[feature][str(scope)]['reports'] for r in reports['projections'] },
+            {p['year']: p['value'] for p in company.dict()[feature][str(scope)]['projections'] },
             name=company.company_id, dtype=f'pint[t CO2/{units}]')
 
     # ??? Why prefer TRAJECTORY over TARGET?
@@ -118,15 +118,15 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
         """
         return pd.DataFrame.from_records(
-            [ICompanyData.parse_obj(c).dict() for c in self.get_company_data(company_ids)],
-            exclude=['projected_ei_targets', 'projected_ei_trajectories']).set_index(self.column_config.COMPANY_ID)
+            [ICompanyData.parse_obj(c.dict()).dict() for c in self.get_company_data(company_ids)],
+            exclude=['projected_targets', 'projected_intensities', 'historic_data']).set_index(self.column_config.COMPANY_ID)
 
     def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id
         """
-        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TRAJECTORIES) for c in
+        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI) for c in
              self.get_company_data(company_ids)]
         if trajectory_list:
             return pd.DataFrame(trajectory_list)
@@ -277,7 +277,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector), dtype=f'pint[{benchmark.benchmark_metric.units}]')
+        return pd.Series({p.year: p.value for p in benchmark.projections}, name=(benchmark.region, benchmark.sector), dtype=f'pint[{benchmark.benchmark_metric.units}]')
 
     def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
@@ -332,7 +332,8 @@ class EmissionIntensityProjector(object):
 
         historic_years = [column for column in historic_data.columns if type(column) == int]
         projection_years = range(max(historic_years), ProjectionConfig.TARGET_YEAR)
-
+        # historic_intensities.loc[historic_intensities.index.get_level_values('company_id')=='US6293775085']
+        
         historic_intensities = historic_data[historic_years]
         standardized_intensities = self._standardize(historic_intensities)
         intensity_trends = self._get_trends(standardized_intensities)
@@ -344,6 +345,8 @@ class EmissionIntensityProjector(object):
     def _extract_historic_data(self, companies: List[ICompanyData]) -> pd.DataFrame:
         data = []
         for company in companies:
+            if not company.historic_data:
+                continue
             if company.historic_data.productions:
                 data.append(self._historic_productions_to_dict(company.company_id, company.historic_data.productions))
             if company.historic_data.emissions:
@@ -351,11 +354,14 @@ class EmissionIntensityProjector(object):
             if company.historic_data.emission_intensities:
                 data.extend(self._historic_emission_intensities_to_dicts(company.company_id,
                                                                          company.historic_data.emission_intensities))
+        if not data:
+            print("No historic data anywhere")
+            print(companies)
         return pd.DataFrame.from_records(data).set_index(
             [ColumnsConfig.COMPANY_ID, ColumnsConfig.VARIABLE, ColumnsConfig.SCOPE])
 
     def _historic_productions_to_dict(self, id: str, productions: List[IProductionRealization]) -> Dict[str, str]:
-        prods = {prod.dict()['year']: prod.dict()['value'] for prod in productions}
+        prods = {prod['year']: prod['value'] for prod in productions}
         return {ColumnsConfig.COMPANY_ID: id, ColumnsConfig.VARIABLE: VariablesConfig.PRODUCTIONS,
                 ColumnsConfig.SCOPE: 'Production', **prods}
 
@@ -414,41 +420,74 @@ class EmissionIntensityProjector(object):
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
             results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, 'S1S2')]
-            projections = [ICompanyProjection(year=year, value=value) for year, value in results.items()
-                           if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-            company.projected_intensities = ICompanyProjectionsScopes(
-                S1S2=ICompanyProjections(projections=projections)
+            if company.production_metric:
+                # These are already stored in the correct compact format
+                units = f"t CO2/{company.production_metric.units}"
+            elif company.sector=='Steel':
+                units = "t CO2/Fe_ton"
+            elif company.sector=='Electricity Utilities':
+                units = "Mt CO2/GJ"
+            try:
+                projections = [IProjection(year=int(year), value=Q_(value, units)) for year, value in results.items()
+                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+            except:
+                pass
+            company.projected_intensities = ICompanyEIProjectionsScopes(
+                S1S2=ICompanyEIProjections(projections=projections)
             )
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
+        # When columns are years and rows are all different intensity types, we cannot winsorize
+        # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
+        intensities = intensities.T
+        for col in intensities.columns:
+            s = intensities[col]
+            if s.notnull().any():
+                try:
+                    intensities[col] = s.astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
+                except:
+                    # Don't remember why this was needed, but theory is "no harm, no foul"
+                    pass
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         standardized_intensities: pd.DataFrame = self._interpolate(winsorized_intensities)
-        return standardized_intensities
+        return standardized_intensities.T
 
     def _winsorize(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
         winsorized: pd.DataFrame = historic_intensities.clip(
-            lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='columns', numeric_only=True),
-            upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='columns', numeric_only=True),
-            axis='index'
+            lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='index', numeric_only=True),
+            upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='index', numeric_only=True),
+            axis='columns'
         )
         return winsorized
 
     def _interpolate(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
         # Interpolate NaNs surrounded by values, and extrapolate NaNs with last known value
-        interpolated = historic_intensities.interpolate(method='linear', axis='columns', inplace=False,
-                                                        limit_direction='forward')
+        interpolated = historic_intensities.copy()
+        for col in interpolated.columns:
+            if interpolated[col].isnull().all():
+                continue
+            qty = interpolated[col].values.quantity
+            s = pd.Series(data=qty.m, index=interpolated.index)
+            interpolated[col] = pd.Series(PA_(s.interpolate(method='linear', inplace=False, limit_direction='forward'), f"{qty.u:~P}"), index=interpolated.index)
         return interpolated
 
     def _get_trends(self, intensities: pd.DataFrame):
         # Compute year-on-year growth ratios of emission intensities
-        ratios: pd.DataFrame = intensities.rolling(window=2, axis='columns', closed='right') \
+        
+        # Transpose so we can work with homogeneous units in columns.  This means rows are years.
+        # pd.Series(intensities.iloc[:,0].values.quantity.m).rolling(window=2, axis='index', closed='right').apply(func=self._year_on_year_ratio, raw=True)
+        intensities = intensities.T
+        for col in intensities.columns:
+            # ratios are dimensionless, so get rid of units, which confuse rolling/apply.  Some columns are NaN-only
+            intensities[col] = intensities[col].map(lambda x: x if isinstance(x, float) else x.m)
+        ratios: pd.DataFrame = intensities.rolling(window=2, axis='index', closed='right') \
             .apply(func=self._year_on_year_ratio, raw=True)
 
-        trends: pd.DataFrame = ratios.median(axis='columns', skipna=True).clip(
+        trends: pd.DataFrame = ratios.median(axis='index', skipna=True).clip(
             lower=ProjectionConfig.LOWER_DELTA,
             upper=ProjectionConfig.UPPER_DELTA,
         )
-        return trends
+        return trends.T
 
     def _extrapolate(self, trends: pd.DataFrame, projection_years: range, historic_data: pd.DataFrame) -> pd.DataFrame:
         projected_intensities = historic_data.copy()
