@@ -1,3 +1,5 @@
+import warnings # needed until apply behaves better with Pint quantities in arrays
+
 from typing import Optional, Tuple, Type, List
 
 import pandas as pd
@@ -127,10 +129,14 @@ class TemperatureScore(PortfolioAggregation):
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
         scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
-        scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
-            self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
-            self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
-            lambda row: self.get_score(row), axis=1))
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # See https://github.com/hgrecco/pint-pandas/issues/114
+            scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
+                self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
+                self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
+                lambda row: self.get_score(row), axis=1))
 
         # Fix up dtypes for the new columns we just added
         for c in [self.c.COLS.TEMPERATURE_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TARGET_SCORE, self.c.TEMPERATURE_RESULTS]:
@@ -152,9 +158,11 @@ class TemperatureScore(PortfolioAggregation):
              self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.TEMPERATURE_RESULTS]
         ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]).mean()
 
-        data[self.c.COLS.TEMPERATURE_SCORE], data[self.c.TEMPERATURE_RESULTS] = zip(*data.apply(
-            lambda row: self.get_ghc_temperature_score(row, company_data), axis=1
-        ))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            data[self.c.COLS.TEMPERATURE_SCORE], data[self.c.TEMPERATURE_RESULTS] = zip(*data.apply(
+                lambda row: self.get_ghc_temperature_score(row, company_data), axis=1
+            ))
         return data
 
     def calculate(self, data: Optional[pd.DataFrame] = None,
@@ -184,7 +192,10 @@ class TemperatureScore(PortfolioAggregation):
 
         # We need to filter the scopes again, because we might have had to add a scope in the preparation step
         data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
-        data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(lambda x: Q_(round (x.m, 2), x.u)).astype('pint[delta_degC]')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # See https://github.com/hgrecco/pint-pandas/issues/114
+            data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(lambda x: Q_(round (x.m, 2), x.u)).astype('pint[delta_degC]')
         return data
 
     def _get_aggregations(self, data: pd.DataFrame, total_companies: int) -> Tuple[Aggregation, pd.Series, pd.Series]:
@@ -199,10 +210,12 @@ class TemperatureScore(PortfolioAggregation):
                                                           self.aggregation_method)
         data[self.c.COLS.CONTRIBUTION_RELATIVE] = pd.Series(weighted_scores / weighted_scores.sum(), dtype='pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
-        contributions = data \
-            .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
-            .where(pd.notnull(data), 0) \
-            .to_dict(orient="records")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            contributions = data \
+                .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
+                .where(pd.notnull(data), 0) \
+                .to_dict(orient="records")
         aggregations = Aggregation(
             score=weighted_scores.sum(),
             proportion=len(weighted_scores) / (total_companies / 100.0),

@@ -1,3 +1,5 @@
+import warnings # needed until apply behaves better with Pint quantities in arrays
+
 from abc import ABC
 from typing import List
 import pandas as pd
@@ -72,8 +74,11 @@ class DataWarehouse(ABC):
         df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature]*
                                                                                    len(df_company_data), dtype='pint[delta_degC]',
                                                                                index=df_company_data.index)
-        for col in [ self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
-            df_company_data[col] = df_company_data[col].apply(lambda x: str(x))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # See https://github.com/hgrecco/pint-pandas/issues/114
+            for col in [ self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
+                df_company_data[col] = df_company_data[col].apply(lambda x: str(x))
         companies = df_company_data.to_dict(orient="records")
         aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
                                                             companies]
