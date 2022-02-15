@@ -1,5 +1,7 @@
 from abc import ABC
 from enum import Enum
+import warnings # needed until apply behaves better with Pint quantities in arrays
+
 from typing import Type
 
 from pint import Quantity
@@ -94,9 +96,12 @@ class PortfolioAggregation(ABC):
         if portfolio_aggregation_method == PortfolioAggregationMethod.WATS:
             total_investment_weight = data[self.c.COLS.INVESTMENT_VALUE].sum()
             try:
-                return pd.Series(data.apply(
-                    lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column] / total_investment_weight,
-                    axis=1), dtype='pint[delta_degC]')
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    # See https://github.com/hgrecco/pint-pandas/issues/114
+                    return pd.Series(data.apply(
+                        lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column] / total_investment_weight,
+                        axis=1), dtype='pint[delta_degC]')
             except ZeroDivisionError:
                 raise ValueError("The portfolio weight is not allowed to be zero")
 
@@ -144,9 +149,11 @@ class PortfolioAggregation(ABC):
 
             try:
                 # Calculate the MOTS value per company
-                result = data.apply(
-                    lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
-                    axis=1)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    result = data.apply(
+                        lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
+                        axis=1)
                 return result.astype('pint[delta_degC]')
             except ZeroDivisionError:
                 raise ValueError("The total owned emissions can not be zero")

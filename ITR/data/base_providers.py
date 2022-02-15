@@ -1,3 +1,4 @@
+import warnings # needed until quantile behaves better with Pint quantities in arrays
 import numpy as np
 import pandas as pd
 
@@ -129,7 +130,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI) for c in
              self.get_company_data(company_ids)]
         if trajectory_list:
-            return pd.DataFrame(trajectory_list)
+            with warnings.catch_warnings():
+                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
+                warnings.simplefilter("ignore")
+                return pd.DataFrame(trajectory_list)
         return pd.DataFrame()
 
     def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
@@ -140,7 +144,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
              self.get_company_data(company_ids)]
         if target_list:
-            return pd.DataFrame(target_list)
+            with warnings.catch_warnings():
+                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
+                warnings.simplefilter("ignore")
+                return pd.DataFrame(target_list)
         return pd.DataFrame()
 
 # This is actual output production (whatever the output production units may be).
@@ -169,7 +176,9 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector))
 
     # Production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
     # It's a label in the top-level of benchmark data.  Currently S1S2 is the only label with any data.
@@ -288,7 +297,10 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         result = []
         for bm in self._EI_benchmarks.dict()[str(scope)]['benchmarks']:
             result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm)))
-        df_bm = pd.DataFrame(result)
+            with warnings.catch_warnings():
+                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
+                warnings.simplefilter("ignore")
+                df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
         return df_bm
 
@@ -450,14 +462,20 @@ class EmissionIntensityProjector(object):
                     pass
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         standardized_intensities: pd.DataFrame = self._interpolate(winsorized_intensities)
-        return standardized_intensities.T
+        with warnings.catch_warnings():
+            # Don't worry about warning that we are intentionally dropping units as we transpose
+            warnings.simplefilter("ignore")
+            return standardized_intensities.T
 
     def _winsorize(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
-        winsorized: pd.DataFrame = historic_intensities.clip(
-            lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='index', numeric_only=True),
-            upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='index', numeric_only=True),
-            axis='columns'
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # See https://github.com/hgrecco/pint-pandas/issues/114
+            winsorized: pd.DataFrame = historic_intensities.clip(
+                lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='index', numeric_only=True),
+                upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='index', numeric_only=True),
+                axis='columns'
+            )
         return winsorized
 
     def _interpolate(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:

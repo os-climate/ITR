@@ -1,3 +1,4 @@
+import warnings # needed until apply behaves better with Pint quantities in arrays
 from typing import Type, List, Union, Optional
 import pandas as pd
 import numpy as np
@@ -272,7 +273,10 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                                                          TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
         projected_emissions_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
-        projected_emissions_s1s2 = projected_emissions_s1s2.apply(lambda x: x.astype(f'pint[t CO2/({production_metric[x.name]})]'), axis=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # See https://github.com/hgrecco/pint-pandas/issues/114
+            projected_emissions_s1s2 = projected_emissions_s1s2.apply(lambda x: x.astype(f'pint[t CO2/({production_metric[x.name]})]'), axis=1)
 
         return projected_emissions_s1s2
 

@@ -1,3 +1,5 @@
+import warnings
+
 import os
 import unittest
 
@@ -23,12 +25,14 @@ class TestTemperatureScore(unittest.TestCase):
         self.temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG], scopes=EScope.get_result_scopes())
         df = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "inputs",
                                              "data_test_temperature_score.csv"), sep=";")
-        df['ghg_s1s2'] = df['ghg_s1s2'].astype('pint[MWh]')
-        df['ghg_s3'] = df['ghg_s3'].astype('pint[MWh]')
-        for cumulative in ['cumulative_budget', 'cumulative_target', 'cumulative_trajectory']:
-            df[cumulative] = df[cumulative].astype('pint[Mt CO2]')
-        df['benchmark_global_budget'] = df['benchmark_global_budget'].astype('pint[Gt CO2]')
-        df['benchmark_temperature'] = df['benchmark_temperature'].astype('pint[delta_degC]')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df['ghg_s1s2'] = df['ghg_s1s2'].astype('pint[MWh]')
+            df['ghg_s3'] = df['ghg_s3'].astype('pint[MWh]')
+            for cumulative in ['cumulative_budget', 'cumulative_target', 'cumulative_trajectory']:
+                df[cumulative] = df[cumulative].astype('pint[Mt CO2]')
+            df['benchmark_global_budget'] = df['benchmark_global_budget'].astype('pint[Gt CO2]')
+            df['benchmark_temperature'] = df['benchmark_temperature'].astype('pint[delta_degC]')
         self.data = df
 
     def test_temp_score(self) -> None:
