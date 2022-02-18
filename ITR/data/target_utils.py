@@ -1,3 +1,5 @@
+from typing import List
+
 import pandas as pd
 import numpy as np
 
@@ -9,6 +11,8 @@ import numpy as np
 # In order to have valid data, the base year must be between the start and end years.
 
 #Step 0: Overall function
+from ITR.interfaces import ICompanyEIProjectionsScopes, ICompanyEIProjections, ITargetData
+
 
 def compute_CAGR(first, last, period):
     """Input:
@@ -24,9 +28,6 @@ def compute_CAGR(first, last, period):
 
 #Step 1: function for tagret trajectory
 
-# data_target includes columns for:
-# ISIN, Scope, Base year, Target year, Emissions_unit, Emissions, Percent_reduction, Type (intensity, absolute, other)
-
 # data_emissions includes columns for: 
 # ISIN, Date, Region, Scope 1, Scope 2
 
@@ -39,20 +40,19 @@ def compute_CAGR(first, last, period):
 # Returns a dataframe of a single ISIN, Region, Sector, Data for years 2020-2050:
 # Also Emission, Production, intensity, CAGR, CAGR_emission, CAGR_production
 # Also forecast_target, forecast_emission, forecast_production, forecast_intensity
-def target_projection(isin, data_target, data_emissions, data_prod):
+def project_targets(targets: List[ITargetData], isin=None, data_emissions=None, data_prod=None) -> ICompanyEIProjectionsScopes:
     """Input:
     @isin: isin of the company for which to compute the projection
-    @data_target: tagret database, as given
     @data_emission: database with emission with emissions, intensity, sector and region columns
     @data_prod: database with production evolution from benchmark 
     
     If the company has no target or the target can't be processed, then the output the emission database, unprocessed
     """
-    global data_benchmark
-    
-    #Get the target data
-    df_tar = data_target.loc[lambda row:(row["company_id"]==isin),:]
-    
+    # global data_benchmark
+
+    # TODO: expand function to handle multiple targets
+    target = targets[0]
+
     #Get the intensity data
     df_isin = data_emissions.loc[lambda row:row["company_id"]==isin,:]
 
@@ -73,13 +73,13 @@ def target_projection(isin, data_target, data_emissions, data_prod):
     df_isin = df_isin.sort_values("year")
 
     #Solve for intensity and absolute
-    if df_tar["Type"].values[0]=="Intensity":
+    if target.target_type == "intensity":
         #Simple case: the target is in intensity
-        base_year = df_tar["Base year"].values[0]
+        base_year = target.base_year
         if (base_year<last_year)&(base_year>first_year):
-            target_year = df_tar["Target year"].values[0]
+            target_year = target.end_year
             #Correction here for percentage
-            target_value = df_isin.loc[lambda row:row["year"]==base_year,"intensity"].values[0]*(1-df_tar["Percent_reduction"].values[0]/100)
+            target_value = df_isin.loc[lambda row:row["year"]==base_year,"intensity"].values[0] * (1 - target.target_reduction_pct / 100)
             df_isin.loc[lambda row:row["year"]==target_year,"intensity"] = target_value
             value_last_year_emission = df_isin.loc[lambda row:row["year"]==last_year,"Emission"].values[0]
             CAGR = compute_CAGR(value_last_year,target_value,(target_year - last_year))
@@ -99,16 +99,16 @@ def target_projection(isin, data_target, data_emissions, data_prod):
         else:#test is we have base data in sample
             CAGR = np.nan
         
-    elif df_tar["Type"].values[0]=="Absolute":
+    elif target.target_type == "absolute":
         #Complicated case, the target must be switched from absolute value to intensity. 
         #We use the benchmark production data
         #Compute Emission CAGR
-        base_year = df_tar["Base year"].values[0]
+        base_year = target.base_year
         if (base_year<last_year)&(base_year<first_year):
 
-                target_year = df_tar["Target year"].values[0]
+                target_year = target.end_year
                 #Correction here for percentage
-                target_value = df_isin.loc[lambda row:row["year"]==base_year,"Emission"].values[0]*(1-df_tar["Percent_reduction"].values[0]/100)
+                target_value = df_isin.loc[lambda row:row["year"]==base_year,"Emission"].values[0] * (1 - target.target_reduction_pct / 100)
                 df_isin.loc[lambda row:row["year"]==target_year,"Emission"] = target_value
                 df_isin["Production"] = df_isin["Emission"] /df_isin["intensity"] 
 
@@ -168,5 +168,9 @@ def target_projection(isin, data_target, data_emissions, data_prod):
         #No target
         #Maybe modification needed here, depends on the output needed for the case where there is no target
         CAGR=np.nan
-     
-    return df_isin
+
+    return ICompanyEIProjectionsScopes(
+        S1S2=ICompanyEIProjections,
+        S3=None,
+        S1S2S3=None
+    )
