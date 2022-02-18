@@ -11,13 +11,18 @@ from ITR.data.osc_units import ureg, Q_
 class ColumnsConfig:
     # Define a constant for each column used in the
     COMPANY_ID = "company_id"
+    COMPANY_LEI = "company_lei"
     COMPANY_ISIN = "company_isin"
     COMPANY_ISIC = "isic"
     MARKET_CAP = "company_market_cap"
+    TEMPLATE_MARKET_CAP = "market_cap"
     INVESTMENT_VALUE = "investment_value"
     COMPANY_ENTERPRISE_VALUE = "company_enterprise_value"
     COMPANY_EV_PLUS_CASH = "company_ev_plus_cash"
     COMPANY_TOTAL_ASSETS = "company_total_assets"
+    TEMPLATE_ENTERPRISE_VALUE = "ev"
+    TEMPLATE_EV_PLUS_CASH = "evic"
+    COMPANY_TOTAL_ASSETS = "assets"
     SCOPE = "scope"
     START_YEAR = "start_year"
     VARIABLE = "variable"
@@ -28,10 +33,23 @@ class ColumnsConfig:
     OWNED_EMISSIONS = "owned_emissions"
     COUNTRY = 'country'
     SECTOR = 'sector'
+    TEMPLATE_EXPOSURE = 'exposure'
+    TEMPLATE_CURRENCY = 'currency'
+    TEMPLATE_REPORT_DATE = 'report_date'
+    EMISSIONS_METRIC = 'emissions_metric'
     PRODUCTION_METRIC = 'production_metric'    # The unit of production (i.e., power generated, tons of steel produced, vehicles manufactured, etc.)
     GHG_SCOPE12 = 'ghg_s1s2'    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
     GHG_SCOPE3 = 'ghg_s3'
+    TEMPLATE_SCOPE1 = 'em_s1'
+    TEMPLATE_SCOPE2 = 'em_s2'
+    TEMPLATE_SCOPE12 = 'em_s1s2'
+    TEMPLATE_SCOPE3 = 'em_s3'
+    TEMPLATE_SCOPE123 = 'em_s1s2s3'
+    HISTORIC_DATA = "historic_data"
+    TARGET_DATA = "target_data"
+    TEMPLATE_PRODUCTION = 'production'
     COMPANY_REVENUE = 'company_revenue'
+    TEMPLAET_REVENUE = 'revenue'
     CASH_EQUIVALENTS = 'company_cash_equivalents'
     BASE_YEAR = 'base_year'
     END_YEAR = 'end_year'
@@ -80,12 +98,29 @@ class VariablesConfig:
     EMISSION_INTENSITIES = "Emission Intensities"
 
 
+class TargetConfig:
+    COMPANY_ID = "company_id"
+    COMPANY_LEI = "company_lei"
+    COMPANY_ISIN = "company_isin"
+    COMPANY_ISIC = "isic"
+    NETZERO_DATE = 'netzero_date'
+    TARGET_TYPE = 'target_type'
+    TARGET_SCOPE = 'target_scope'
+    TARGET_START_YEAR = 'target_start_year'
+    TARGET_BASE_YEAR = 'target_base_year'
+    TARGET_BASE_MAGNITUDE = 'target_base_year_qty'
+    TARGET_BASE_UNITS = 'target_base_year_unit'
+    TARGET_YEAR = 'target_year'
+    TARGET_REDUCTION_VS_BASE = 'target_reduction_ambition'
+    
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
     PROJECTED_EI = "projected_ei_in_Wh"
     PROJECTED_PRODUCTION = "projected_production"
     PROJECTED_TARGET = "projected_target"
     HISTORIC_DATA = "historic_data"
+    TEMPLATE_INPUT_DATA = 'ITR input data'
+    TEMPLATE_TARGET_DATA = 'ITR target input data'
 
 
 class PortfolioAggregationConfig:
@@ -94,6 +129,7 @@ class PortfolioAggregationConfig:
 
 class TemperatureScoreConfig(PortfolioAggregationConfig):
     TEMPERATURE_RESULTS = 'temperature_results'
+    # Unfortunately we need to cross over to interfaces.py
     CONTROLS_CONFIG = TemperatureScoreControls(
         base_year=2019,
         target_end_year=2050,

@@ -293,10 +293,63 @@ class IHistoricEIScopes(PintModel):
     S1S2S3: List[IEIRealization]
 
 
+class EScope(SortableEnum):
+    S1 = "S1"
+    S2 = "S2"
+    S3 = "S3"
+    S1S2 = "S1+S2"
+    S1S2S3 = "S1+S2+S3"
+
+    @classmethod
+    def get_scopes(cls) -> List[str]:
+        """
+        Get a list of all scopes.
+        :return: A list of EScope string values
+        """
+        return ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3']
+
+    @classmethod
+    def get_result_scopes(cls) -> List['EScope']:
+        """
+        Get a list of scopes that should be calculated if the user leaves it open.
+
+        :return: A list of EScope objects
+        """
+        return [cls.S1S2, cls.S3, cls.S1S2S3]
+
+
+class ETimeFrames(SortableEnum):
+    """
+    TODO: add support for multiple timeframes. Long currently corresponds to 2050.
+    """
+    SHORT = "short"
+    MID = "mid"
+    LONG = "long"
+
+
+class ECarbonBudgetScenario(Enum):
+    P25 = "25 percentile"
+    P75 = "75 percentile"
+    MEAN = "Average"
+
+
 class IHistoricData(PintModel):
     productions: Optional[List[IProductionRealization]]
     emissions: Optional[IHistoricEmissionsScopes]
     emission_intensities: Optional[IHistoricEIScopes]
+
+
+class ITargetData(PintModel):
+    netzero_date: Optional[int]
+    target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
+    target_scope: EScope
+    start_year: Optional[int]
+    base_year: int
+    end_year: int
+    
+    target_base_qty: float
+    target_base_unit: str
+    target_reduction_pct: float
 
 
 class ICompanyData(PintModel):
@@ -305,14 +358,15 @@ class ICompanyData(PintModel):
 
     region: str  # TODO: make SortableEnums
     sector: str  # TODO: make SortableEnums
-    target_probability: float
+    target_probability: float = 0.5
 
+    target_data: Optional[List[ITargetData]]
     historic_data: Optional[IHistoricData]
-    projected_targets: Optional[ICompanyEIProjectionsScopes]
-    projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
     country: Optional[str]
-    production_metric: Optional[ProductionMetric]
+    production_metric: str
+    
+    # These two instance variables match against financial data below, but are incomplete as historic_data and target_data
     ghg_s1s2: Optional[Quantity[ProductionMetric]]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
     ghg_s3: Optional[Quantity[ProductionMetric]]
 
@@ -327,6 +381,11 @@ class ICompanyData(PintModel):
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
     
+    # Initialized later when we have benchmark information.  It is OK to initialize as None and fix later.
+    # They will show up as {'S1S2': { 'projections': [ ... ] }}
+    projected_targets: Optional[ICompanyEIProjectionsScopes]
+    projected_intensities: Optional[ICompanyEIProjectionsScopes]
+
     # TODO: Do we want to do some sector inferencing here?
     def _fixup_historic_productions(self, historic_productions, production_metric):
         if historic_productions is None or production_metric is None:
@@ -352,8 +411,6 @@ class ICompanyData(PintModel):
                 error ("no source of production metrics")
             self.production_metric = parse_obj_as(ProductionMetric,{'units':units})
             production_metric = {'units':units}
-        if historic_data:
-            self.historic_data.productions = self._fixup_historic_productions(historic_data.get('productions',None), production_metric)
         if ghg_s1s2:
             self.ghg_s1s2=pint_ify(ghg_s1s2, self.production_metric.units)
         if ghg_s3:
@@ -367,6 +424,9 @@ class ICompanyAggregates(ICompanyData):
     benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
 
+    projected_targets: Optional[ICompanyEIProjectionsScopes]
+    # projected_intensities: Optional[ICompanyEIProjectionsScopes]
+
     def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
         super().__init__(
             cumulative_budget=pint_ify(cumulative_budget, 't CO2'),
@@ -375,35 +435,6 @@ class ICompanyAggregates(ICompanyData):
             benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
             benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
             *args, **kwargs)
-
-
-class SortableEnum(Enum):
-    def __str__(self):
-        return self.name
-
-    def __ge__(self, other):
-        if self.__class__ is other.__class__:
-            order = list(self.__class__)
-            return order.index(self) >= order.index(other)
-        return NotImplemented
-
-    def __gt__(self, other):
-        if self.__class__ is other.__class__:
-            order = list(self.__class__)
-            return order.index(self) > order.index(other)
-        return NotImplemented
-
-    def __le__(self, other):
-        if self.__class__ is other.__class__:
-            order = list(self.__class__)
-            return order.index(self) <= order.index(other)
-        return NotImplemented
-
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            order = list(self.__class__)
-            return order.index(self) < order.index(other)
-        return NotImplemented
 
 
 class TemperatureScoreControls(PintModel):
