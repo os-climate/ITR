@@ -373,7 +373,7 @@ class EmissionIntensityProjector(object):
             [ColumnsConfig.COMPANY_ID, ColumnsConfig.VARIABLE, ColumnsConfig.SCOPE])
 
     def _historic_productions_to_dict(self, id: str, productions: List[IProductionRealization]) -> Dict[str, str]:
-        prods = {prod['year']: prod['value'] for prod in productions}
+        prods = {prod.year: prod.value for prod in productions}
         return {ColumnsConfig.COMPANY_ID: id, ColumnsConfig.VARIABLE: VariablesConfig.PRODUCTIONS,
                 ColumnsConfig.SCOPE: 'Production', **prods}
 
@@ -404,28 +404,38 @@ class EmissionIntensityProjector(object):
             production_key = (company.company_id, VariablesConfig.PRODUCTIONS, 'Production')
             emission_keys = {scope: (company.company_id, VariablesConfig.EMISSIONS, scope) for scope in scopes}
             ei_keys = {scope: (company.company_id, VariablesConfig.EMISSION_INTENSITIES, scope) for scope in scopes}
+            this_missing_data = []
+            append_this_missing_data = True
             for scope in scopes:
-                if ei_keys[scope] not in historic_data.index:  # Emission intensities not yet computed for this scope
-                    if scope == 'S1S2':
-                        try:  # Try to add S1 and S2 emission intensities
-                            historic_data.loc[ei_keys[scope]] = historic_data.loc[ei_keys['S1']] + \
-                                                                historic_data.loc[ei_keys['S2']]
-                        except KeyError:  # Either S1 or S2 emission intensities not readily available
-                            try:  # Try to compute S1+S2 EIs from S1+S2 emissions and productions
-                                historic_data.loc[ei_keys[scope]] = historic_data.loc[emission_keys[scope]] / \
-                                                                    historic_data.loc[production_key]
-                            except KeyError:
-                                missing_data.append(f"{company.company_id} - {scope}")
-                    elif scope == 'S1S2S3':  # Implement when S3 data is available
-                        pass
-                    elif scope == 'S3':  # Remove when S3 data is available - will be handled by 'else'
-                        pass
-                    else:  # S1 and S2 cannot be computed from other EIs, so use emissions and productions
-                        try:
+                if ei_keys[scope] in historic_data.index:
+                    append_this_missing_data = False
+                    continue
+                # Emission intensities not yet computed for this scope
+                if scope == 'S1S2':
+                    try:  # Try to add S1 and S2 emission intensities
+                        historic_data.loc[ei_keys[scope]] = historic_data.loc[ei_keys['S1']] + \
+                                                            historic_data.loc[ei_keys['S2']]
+                        append_this_missing_data = False
+                    except KeyError:  # Either S1 or S2 emission intensities not readily available
+                        try:  # Try to compute S1+S2 EIs from S1+S2 emissions and productions
                             historic_data.loc[ei_keys[scope]] = historic_data.loc[emission_keys[scope]] / \
                                                                 historic_data.loc[production_key]
+                            append_this_missing_data = False
                         except KeyError:
-                            missing_data.append(f"{company.company_id} - {scope}")
+                            this_missing_data.append(f"{company.company_id} - {scope}")
+                elif scope == 'S1S2S3':  # Implement when S3 data is available
+                    pass
+                elif scope == 'S3':  # Remove when S3 data is available - will be handled by 'else'
+                    pass
+                else:  # S1 and S2 cannot be computed from other EIs, so use emissions and productions
+                    try:
+                        historic_data.loc[ei_keys[scope]] = historic_data.loc[emission_keys[scope]] / \
+                                                            historic_data.loc[production_key]
+                        append_this_missing_data = False
+                    except KeyError:
+                        this_missing_data.append(f"{company.company_id} - {scope}")
+            if this_missing_data and append_this_missing_data:
+                missing_data.extend(this_missing_data)
         assert not missing_data, f"Provide either historic emission intensity data, or historic emission and " \
                                  f"production data for these company - scope combinations: {missing_data}"
 
@@ -434,7 +444,7 @@ class EmissionIntensityProjector(object):
             results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, 'S1S2')]
             if company.production_metric:
                 # These are already stored in the correct compact format
-                units = f"t CO2/{company.production_metric.units}"
+                units = f"t CO2/{company.production_metric}"
             elif company.sector=='Steel':
                 units = "t CO2/Fe_ton"
             elif company.sector=='Electricity Utilities':

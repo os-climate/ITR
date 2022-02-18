@@ -113,6 +113,7 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
         self._convert_excel_to_model = convert_intensity_benchmark_excel_to_model
         EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
                                                      column_config.REGION, column_config.SECTOR)
+        # TODO: Fix units for Steel
         super().__init__(
             IEmissionIntensityBenchmarkScopes(benchmark_metric={'units':'t CO2/MWh'}, S1S2=EI_benchmarks,
                                               benchmark_temperature=benchmark_temperature,
@@ -285,7 +286,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         get the historic data for list of companies
         :param company_ids: list of company ids
         :param historic_data: Dataframe Productions, Emissions, and Emission Intensities mixed together
-        :return: historic data with unit attributes added on a per-element basis
+        :return: historic data with unit attributes added to yearly data on a per-element basis
         """
         # We don't need this reset/set index dance because we set the index to COMPANY_ID to get units sorted
         # historic_data = historic_data.reset_index().drop(columns=['index']).set_index(ColumnsConfig.COMPANY_ID)

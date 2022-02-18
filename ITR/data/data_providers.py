@@ -4,7 +4,7 @@ import pandas as pd
 
 import numpy as np
 
-from ITR.configs import ProjectionConfig, TabsConfig, VariablesConfig, ColumnsConfig, TemperatureScoreConfig
+from ITR.configs import ProjectionConfig, TabsConfig, ColumnsConfig, VariablesConfig, TemperatureScoreConfig
 from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
     IHistoricEIScopes, ICompanyEIProjection, ICompanyEIProjectionsScopes, ICompanyEIProjections
 
