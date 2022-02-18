@@ -19,7 +19,7 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, Va
 from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEmissionIntensityBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, IProjection
-from ITR.data.target_utils import target_projection
+from ITR.data.target_utils import project_targets
 
 import logging
 import inspect
@@ -51,6 +51,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param EI_bm: An Emissions Intensity Benchmark (multi-sector, single-scope, 2020-2050)
         """
         for c in self._companies:
+            if c.projected_targets is not None:
+                continue
+            else:
+                c.projected_targets = project_targets(c.target_data)
             print(c.target_data)
         exit()
     
