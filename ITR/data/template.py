@@ -63,8 +63,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     self.column_config.SECTOR: c.sector,
                     self.column_config.REGION: c.region
                 }, index=[0])
-                bm_production_data = production_bm.get_company_projected_production(company_sector_region_info).astype(f'pint[{str(base_year_production.units)}]')
-                c.projected_targets = project_targets(c.target_data, c.historic_data, bm_production_data)
+                bm_production_data = (production_bm.get_company_projected_production(company_sector_region_info)
+                                      # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
+                                      .iloc[0].T
+                                      .astype(f'pint[{str(base_year_production.units)}]'))
+                try:
+                    c.projected_targets = project_targets(c.target_data, c.historic_data, bm_production_data)
+                except TypeError as e:
+                    print(e)
             print(c.target_data)
         exit()
     
@@ -122,7 +128,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                          .apply(lambda x: x.map(lambda y: Q_(y, df_fundamentals.loc[df_fundamentals.company_id==x.name[0],
                                                                                     'production_metric'].squeeze())), axis=1),
                          df3.xs(VariablesConfig.EMISSIONS,level=1,drop_level=False)
-                         .applymap(lambda x: Q_(x, 't CO2'))])
+                         .apply(lambda x: x.map(lambda y: Q_(y, df_fundamentals.loc[df_fundamentals.company_id==x.name[0],
+                                                                                    'emissions_metric'].squeeze())), axis=1)])
         df4 = df3.xs(VariablesConfig.EMISSIONS,level=1) / df3.xs((VariablesConfig.PRODUCTIONS,'production'),level=[1,2])
         df4['variable'] = VariablesConfig.EMISSION_INTENSITIES
         df4 = df4.reset_index().set_index(['company_id', 'variable', 'scope'])
