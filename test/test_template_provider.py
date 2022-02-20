@@ -39,7 +39,19 @@ class TestTemplateProvider(unittest.TestCase):
         #     columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
     def test_target_projections(self):
-        comids = ['US00130H1059', 'US0185223007', 'US0188021085', 'US0236081024', 'US0255371017', 'US05351W1036', 'US0921131092']
+        comids = ['US00130H1059', 'US0185223007',
+                  # 'US0138721065', 'US0158577090',
+                  'US0188021085',
+                  'US0236081024', 'US0255371017',
+                  # 'US0298991011',
+                  'US05351W1036',
+                  # 'US05379B1070',
+                  'US0921131092',
+                  # 'CA1125851040',
+                  'US1442851036', 'US1258961002', 'US2017231034',
+                  'US18551QAA58', 'US2091151041', 'US2333311072', 'US25746U1097', 'US26441C2044',
+                  'US29364G1031', 'US30034W1062',
+                  ]
         
         for id in comids:
             print(target_projection(isin, data_target, data_emissions, data_prod))
@@ -54,9 +66,11 @@ class TestTemplateProvider(unittest.TestCase):
                   'US05351W1036',
                   # 'US05379B1070',
                   'US0921131092',
-                  # 'CA1125851040', 'US1442851036', 'US1258961002', 'US2017231034',
-                  # 'US18551QAA58', 'US2091151041', 'US2333311072', 'US25746U1097', 'US26441C2044',
-                  # 'US29364G1031', 'US30034W1062', 'US30040W1080', 'US30161N1019', 'US3379321074',
+                  # 'CA1125851040',
+                  'US1442851036', 'US1258961002', 'US2017231034',
+                  'US18551QAA58', 'US2091151041', 'US2333311072', 'US25746U1097', 'US26441C2044',
+                  'US29364G1031', 'US30034W1062',
+                  # 'US30040W1080', 'US30161N1019', 'US3379321074',
                   # 'CA3495531079', 'US3737371050', 'US4198701009', 'US5526901096', 'US6703461052',
                   # 'US6362744095', 'US6680743050', 'US6708371033', 'US6896481032', 'US69331C1080',
                   # 'US69349H1077', 'KR7005490008', 'US69351T1060', 'US7234841010', 'US7365088472',

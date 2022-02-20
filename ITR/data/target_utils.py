@@ -40,7 +40,7 @@ def compute_CAGR(first, last, period):
 # Returns a dataframe of a single ISIN, Region, Sector, Data for years 2020-2050:
 # Also Emission, Production, intensity, CAGR, CAGR_emission, CAGR_production
 # Also forecast_target, forecast_emission, forecast_production, forecast_intensity
-def project_targets(targets: List[ITargetData], isin=None, data_emissions=None, data_prod=None) -> ICompanyEIProjectionsScopes:
+def project_targets(targets: List[ITargetData], isin=None, data_emissions: pd.DataFrame=None, data_prod=None) -> ICompanyEIProjectionsScopes:
     """Input:
     @isin: isin of the company for which to compute the projection
     @data_emission: database with emission with emissions, intensity, sector and region columns

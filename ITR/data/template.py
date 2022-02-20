@@ -54,6 +54,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             if c.projected_targets is not None:
                 continue
             else:
+                # targets: List[ITargetData], isin=None, data_emissions: pd.DataFrame=None, data_prod=None
                 c.projected_targets = project_targets(c.target_data)
             print(c.target_data)
         exit()
@@ -181,7 +182,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 else:
                     company_data[ColumnsConfig.HISTORIC_DATA] = None
 
-                if df_target_data is not None:
+                if df_target_data is not None and company_id in df_target_data.index:
                     company_data[ColumnsConfig.TARGET_DATA] = [td.dict() for td in self._convert_target_data(
                         df_target_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index())]
                 else:
@@ -313,8 +314,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         if productions.empty:
             return None
 
-        production_realizations = \
-            [IProductionRealization(year=year, value=productions[year].squeeze()) for year in self.historic_years]
+        try:
+            production_realizations = \
+                [IProductionRealization(year=year, value=productions[year].squeeze()) for year in self.historic_years]
+        except TypeError as e:
+            print(e)
         return production_realizations
 
     def _convert_to_historic_emission_intensities(self, intensities: pd.DataFrame) \
@@ -331,7 +335,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         for scope in EScope.get_scopes():
             results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
-            intensity_scopes[scope] = [] \
-                if results.empty \
-                else [IEIRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
+            try:
+                intensity_scopes[scope] = [] \
+                    if results.empty \
+                    else [IEIRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
+            except TypeError as e:
+                print(e)
         return IHistoricEIScopes(**intensity_scopes)

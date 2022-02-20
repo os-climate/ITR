@@ -254,9 +254,9 @@ class IProductionRealization(PintModel):
     value: Optional[Quantity[ProductionMetric]]
 
     def __init__(self, year, value=None):
-        super().__init__(year=year, value=Q_(value) if value else None)
+        super().__init__(year=year, value=value)
         if value is None:
-            self.value = np.nan
+            self.value = None
 
 
 class IEmissionRealization(PintModel):
@@ -265,6 +265,8 @@ class IEmissionRealization(PintModel):
 
     def __init__(self, year, value):
         super().__init__(year=year, value=pint_ify(value, 't CO2'))
+        if value is None:
+            self.value = None
 
 
 class IHistoricEmissionsScopes(PintModel):
@@ -280,9 +282,9 @@ class IEIRealization(PintModel):
     value: Optional[Quantity[EmissionIntensity]]
 
     def __init__(self, year, value):
-        super().__init__(year=year, value=Q_(value) if value else None)
+        super().__init__(year=year, value=value)
         if value is None:
-            self.value = np.nan
+            self.value = None
 
 
 class IHistoricEIScopes(PintModel):
