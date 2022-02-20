@@ -65,8 +65,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 }, index=[0])
                 bm_production_data = production_bm.get_company_projected_production(company_sector_region_info).astype(f'pint[{str(base_year_production.units)}]')
                 c.projected_targets = project_targets(c.target_data, c.historic_data, bm_production_data)
-            print(c.target_data)
-        exit()
     
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
