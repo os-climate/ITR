@@ -42,8 +42,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         super().__init__(self._companies, column_config, tempscore_config)
 
     def _calculate_target_projections(self,
-                                      Production_bm: Type[BaseProviderProductionBenchmark],
-                                      EI_bm: Type[BaseProviderIntensityBenchmark]):
+                                      production_bm: BaseProviderProductionBenchmark,
+                                      EI_bm: BaseProviderIntensityBenchmark):
         """
         We cannot calculate target projections until after we have loaded benchmark data.
         
@@ -54,8 +54,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             if c.projected_targets is not None:
                 continue
             else:
-                # targets: List[ITargetData], isin=None, data_emissions: pd.DataFrame=None, data_prod=None
-                c.projected_targets = project_targets(c.target_data, c.historic_data)
+                base_year_production = next((p.value for p in c.historic_data.productions if p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
+                company_sector_region_info = pd.DataFrame({
+                    self.column_config.COMPANY_ID: c.company_id,
+                    # self.column_config.GHG_SCOPE12 is incorrect in production_bm.get_company_projected_production.
+                    # Should be production value at base_year as defined in temp_config.CONTROLS_CONFIG
+                    self.column_config.GHG_SCOPE12: base_year_production.magnitude,
+                    self.column_config.SECTOR: c.sector,
+                    self.column_config.REGION: c.region
+                }, index=[0])
+                bm_production_data = production_bm.get_company_projected_production(company_sector_region_info).astype(f'pint[{str(base_year_production.units)}]')
+                c.projected_targets = project_targets(c.target_data, c.historic_data, bm_production_data)
             print(c.target_data)
         exit()
     
