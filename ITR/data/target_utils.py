@@ -50,7 +50,12 @@ def compute_CAGR(first, last, period):
 # Returns a dataframe of a single ISIN, Region, Sector, Data for years 2020-2050:
 # Also Emission, Production, intensity, CAGR, CAGR_emission, CAGR_production
 # Also forecast_target, forecast_emission, forecast_production, forecast_intensity
-def project_targets(targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.DataFrame = None,
+
+# Remember that pd.Series are always well-behaved with pint[] quantities.  pd.DataFrame columns are well-behaved,
+# but data across columns is not always well-behaved.  We therefore make this function assume we are projecting targets
+# for a specific company, in a specific sector.  If we want to project targets for multiple sectors, we have to call it multiple times.
+# This function doesn't need to know what sector it's computing for...only tha there is only one such, for however many scopes.
+def project_targets(targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.Series = None,
                     data_prod=None) -> ICompanyEIProjectionsScopes:
     """Input:
     @isin: isin of the company for which to compute the projection
@@ -108,12 +113,13 @@ def project_targets(targets: List[ITargetData], historic_data: IHistoricData, pr
             CAGR = compute_CAGR(value_last_year, target_value, (target_year - last_year))
             emission_projections = [value_last_year * (1 + CAGR) ** (y + 1)
                                     for y, year in enumerate(range(1 + last_year, 1 + target_year))]
-            emission_projections = pd.DataFrame([emission_projections], columns=range(last_year + 1, target_year + 1))
-            production_projections = production_bm.loc[:, last_year + 1: target_year]
+            emission_projections = pd.Series(emission_projections, index=range(last_year + 1, target_year + 1),
+                                             dtype=f'pint[{target.target_base_unit}]')
+            production_projections = production_bm.loc[last_year + 1: target_year]
             ei_projections = emission_projections / production_projections
 
             target_ei_projections = ICompanyEIProjections(projections=
-                                                          [ICompanyEIProjection(year=year, value=ei_projections[year].values.quantity)
+                                                          [ICompanyEIProjection(year=year, value=ei_projections[year])
                                                            for year in range(last_year + 1, target_year + 1)]
                                                           )
 
