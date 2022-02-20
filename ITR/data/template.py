@@ -72,7 +72,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 except TypeError as e:
                     print(e)
             print(c.target_data)
-        exit()
     
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
