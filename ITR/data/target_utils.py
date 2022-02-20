@@ -31,8 +31,14 @@ def compute_CAGR(first, last, period):
         # TODO: Replace ugly fix => pint unit error in below expression
         # CAGR doesn't work well with 100% reduction, so set it to small
         if last == 0:
+            if first == 0:
+                # If we hit a zero target early, we keep it stead with CAGR of zero, avoiding divide-by-zero
+                return 0
             last = first/201.0
-        res = (last / first).magnitude ** (1 / period) - 1
+        try:
+            res = (last / first).magnitude ** (1 / period) - 1
+        except ZeroDivisionError as e:
+            print(e)
     return res
 
 
