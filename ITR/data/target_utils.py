@@ -31,7 +31,7 @@ def compute_CAGR(first, last, period):
         # TODO: Replace ugly fix => pint unit error in below expression
         # CAGR doesn't work well with 100% reduction, so set it to small
         if last == 0:
-            last = 0.000001
+            last = first/201.0
         res = (last / first).magnitude ** (1 / period) - 1
     return res
 
