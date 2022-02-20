@@ -53,6 +53,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         for c in self._companies:
             if c.projected_targets is not None:
                 continue
+            elif c.target_data is None:
+                print(f"no target data for {c.company_name}")
+                continue
             else:
                 base_year_production = next((p.value for p in c.historic_data.productions if p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
                 company_sector_region_info = pd.DataFrame({
