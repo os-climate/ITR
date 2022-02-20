@@ -51,6 +51,8 @@ class TestTemplateProvider(unittest.TestCase):
                   'US1442851036', 'US1258961002', 'US2017231034',
                   'US18551QAA58', 'US2091151041', 'US2333311072', 'US25746U1097', 'US26441C2044',
                   'US29364G1031', 'US30034W1062',
+                  'US30040W1080', 'US30161N1019', 'US3379321074',
+                  'CA3495531079', 'US3737371050', 
                   ]
         
         for id in comids:
