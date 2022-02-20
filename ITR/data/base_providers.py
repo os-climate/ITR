@@ -346,7 +346,7 @@ class EmissionIntensityProjector(object):
         projection_years = range(max(historic_years), ProjectionConfig.TARGET_YEAR)
         # historic_intensities.loc[historic_intensities.index.get_level_values('company_id')=='US6293775085']
         
-        historic_intensities = historic_data[historic_years]
+        historic_intensities = historic_data[historic_years].query('variable=="Emission Intensities"')
         standardized_intensities = self._standardize(historic_intensities)
         intensity_trends = self._get_trends(standardized_intensities)
         extrapolated = self._extrapolate(intensity_trends, projection_years, historic_data)
@@ -461,7 +461,7 @@ class EmissionIntensityProjector(object):
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
         # When columns are years and rows are all different intensity types, we cannot winsorize
         # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
-        intensities = intensities.T
+        intensities = intensities.T#.loc[2016:2020]
         for col in intensities.columns:
             s = intensities[col]
             if s.notnull().any():
@@ -471,6 +471,14 @@ class EmissionIntensityProjector(object):
                     # Don't remember why this was needed, but theory is "no harm, no foul"
                     pass
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
+        for col in winsorized_intensities.columns:
+            s = winsorized_intensities[col]
+            if s.notnull().any():
+                try:
+                    winsorized_intensities[col] = s.astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
+                except:
+                    # Don't remember why this was needed, but theory is "no harm, no foul"
+                    pass
         standardized_intensities: pd.DataFrame = self._interpolate(winsorized_intensities)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
@@ -480,10 +488,13 @@ class EmissionIntensityProjector(object):
     def _winsorize(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+            # quantile doesn't handle pd.NA inside Quantity
+            historic_intensities = historic_intensities.applymap(lambda x: np.nan if pd.isnull(x.m) else x)
             # See https://github.com/hgrecco/pint-pandas/issues/114
             winsorized: pd.DataFrame = historic_intensities.clip(
-                lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='index', numeric_only=True),
-                upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='index', numeric_only=True),
+                # Must set numeric_only to false to process Quantities
+                lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='index', numeric_only=False),
+                upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='index', numeric_only=False),
                 axis='columns'
             )
         return winsorized
