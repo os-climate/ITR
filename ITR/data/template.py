@@ -55,7 +55,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 continue
             else:
                 # targets: List[ITargetData], isin=None, data_emissions: pd.DataFrame=None, data_prod=None
-                c.projected_targets = project_targets(c.target_data)
+                c.projected_targets = project_targets(c.target_data, c.historic_data)
             print(c.target_data)
         exit()
     
