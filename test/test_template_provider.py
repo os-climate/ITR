@@ -28,7 +28,7 @@ class TestTemplateProvider(unittest.TestCase):
         self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=Q_(1.5, ureg.delta_degC),
                                                            benchmark_global_budget=Q_(396, ureg('Gt CO2')), is_AFOLU_included=False)
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
-        self.template_company_data._calculate_target_projections(Production_bm=self.excel_production_bm, EI_bm=self.excel_EI_bm)
+        self.template_company_data._calculate_target_projections(production_bm=self.excel_production_bm, EI_bm=self.excel_EI_bm)
         self.excel_provider = DataWarehouse(self.template_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US00130H1059", "US26441C2044", "US6703461052", "KR7005490008"]
         # self.company_info_at_base_year = pd.DataFrame(
