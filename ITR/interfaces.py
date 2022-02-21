@@ -155,29 +155,34 @@ def UScopes_to_IScopes(uscopes):
     return iscopes
 
 class PowerGenerationWh(BaseModel):
-    units: Literal['MWh']
+    units: Union[Literal['MWh'],Literal['GWh'],Literal['TWh']]
 class PowerGenerationJ(BaseModel):
-    units: Union[Literal['GJ'],Literal['gigajoule']]
+    units: Union[Literal['GJ'],Literal['gigajoule'],Literal['GP'],Literal['petajoule']]
 PowerGeneration = Annotated[Union[PowerGenerationWh, PowerGenerationJ], Field(discriminator='units')]
 
 
 class ManufactureSteel(BaseModel):
-    units: Literal['Fe_ton']
+    units: Union[Literal['Fe_ton'],Literal['M Fe_ton']]
 Manufacturing = Annotated[Union[ManufactureSteel], Field(discriminator='units')]
 
 
 ProductionMetric = Annotated[Union[PowerGeneration, ManufactureSteel], Field(discriminator='units')]
 
+class EmissionsCO2(BaseModel):
+    units: Union[Literal['t CO2'], Literal['kt CO2'], Literal['Mt CO2'], Literal['Gt CO2']]
+
+EmissionsMetric = Annotated[EmissionsCO2, Field(discriminator='units')]
+
 
 class EmissionIntensity(BaseModel):
-    units: Union[Literal['t CO2/MWh'],Literal['t CO2/GJ'],Literal['t CO2/Fe_ton']]
+    units: Union[Literal['t CO2/MWh'],Literal['t CO2/GWh'],Literal['t CO2/TWh'],Literal['t CO2/GJ'],Literal['t CO2/PJ'],Literal['t CO2/Fe_ton']]
 
 
 class DimensionlessNumber(BaseModel):
     units: Literal['dimensionless']
 
 
-OSC_Metric = Annotated[Union[ProductionMetric,EmissionIntensity,DimensionlessNumber], Field(discriminator='units')]
+OSC_Metric = Annotated[Union[ProductionMetric,EmissionsMetric,EmissionIntensity,DimensionlessNumber], Field(discriminator='units')]
 
 # U is Unquantified
 class UProjection(BaseModel):
@@ -400,7 +405,8 @@ class ICompanyData(PintModel):
     historic_data: Optional[IHistoricData]
 
     country: Optional[str]
-    production_metric: str
+    emissions_metric: Optional[EmissionsMetric]     # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
+    production_metric: Optional[ProductionMetric] # Optional because it can be inferred from sector and region
     
     # These two instance variables match against financial data below, but are incomplete as historic_data and target_data
     ghg_s1s2: Optional[Quantity[ProductionMetric]]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
@@ -430,23 +436,30 @@ class ICompanyData(PintModel):
         return UProjections_to_IProjections(historic_productions,production_metric)
 
     def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None,
-                       production_metric=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
+                       emissions_metric=None, production_metric=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
         super().__init__(historic_data=historic_data,
                          projected_targets=projected_targets,
                          projected_intensities=projected_intensities,
+                         emissions_metric=emissions_metric,
                          production_metric=production_metric,
                          *args, **kwargs)
         # In-bound parameters are dicts, which are converted to models by __super__ and stored as instance variables
         if production_metric is None:
             if self.sector=='Electricity Utilities':
-                # units = 'MWh' if self.region=='North America' else 'GJ'
-                units = 'GJ'
+                units = 'MWh' if self.region=='North America' else 'GJ'
             elif self.sector=='Steel':
                 units = 'Fe_ton'
             else:
                 error ("no source of production metrics")
             self.production_metric = parse_obj_as(ProductionMetric,{'units':units})
-            production_metric = {'units':units}
+            if emissions_metric is None:
+                self.emissions_metric = parse_obj_as(EmissionsMetric,{'units':'t CO2'})
+        elif emissions_metric is None:
+            if self.production_metric.units in ['TWh', 'PJ']:
+                self.emissions_metric = parse_obj_as(EmissionsMetric,{'units':'Mt CO2'})
+            else:
+                self.emissions_metric = parse_obj_as(EmissionsMetric,{'units':'t CO2'})
+            # TODO: Should raise a warning here
         if ghg_s1s2:
             self.ghg_s1s2=pint_ify(ghg_s1s2, self.production_metric.units)
         if ghg_s3:

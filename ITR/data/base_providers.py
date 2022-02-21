@@ -444,7 +444,7 @@ class EmissionIntensityProjector(object):
             results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, 'S1S2')]
             if company.production_metric:
                 # These are already stored in the correct compact format
-                units = f"t CO2/{company.production_metric}"
+                units = f"{company.emissions_metric}/{company.production_metric}"
             elif company.sector=='Steel':
                 units = "t CO2/Fe_ton"
             elif company.sector=='Electricity Utilities':
@@ -452,11 +452,11 @@ class EmissionIntensityProjector(object):
             try:
                 projections = [IProjection(year=int(year), value=Q_(value, units)) for year, value in results.items()
                                if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                company.projected_intensities = ICompanyEIProjectionsScopes(
+                    S1S2=ICompanyEIProjections(projections=projections)
+                )
             except:
                 pass
-            company.projected_intensities = ICompanyEIProjectionsScopes(
-                S1S2=ICompanyEIProjections(projections=projections)
-            )
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
         # When columns are years and rows are all different intensity types, we cannot winsorize
