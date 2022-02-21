@@ -205,7 +205,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         df_target_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index())]
                 else:
                     company_data[ColumnsConfig.TARGET_DATA] = None
-                
+
+                if company_data[ColumnsConfig.PRODUCTION_METRIC]:
+                    company_data[ColumnsConfig.PRODUCTION_METRIC] = { 'units': company_data[ColumnsConfig.PRODUCTION_METRIC]}
+                if company_data[ColumnsConfig.EMISSIONS_METRIC]:
+                    company_data[ColumnsConfig.EMISSIONS_METRIC] = { 'units': company_data[ColumnsConfig.EMISSIONS_METRIC]}
+
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError as e:
                 logger.warning(

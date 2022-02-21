@@ -30,7 +30,7 @@ class TestTemplateProvider(unittest.TestCase):
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         self.template_company_data._calculate_target_projections(production_bm=self.excel_production_bm, EI_bm=self.excel_EI_bm)
         self.excel_provider = DataWarehouse(self.template_company_data, self.excel_production_bm, self.excel_EI_bm)
-        self.company_ids = ["US00130H1059", "US26441C2044", "US6703461052", "KR7005490008"]
+        self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
         # self.company_info_at_base_year = pd.DataFrame(
         #     [[Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
         #      [Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
