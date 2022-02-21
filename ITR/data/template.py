@@ -105,8 +105,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
         
         company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
-        # The nightmare of naming columns 20xx_metric instead of metric_20xx...
-        historic_columns = [col for col in df_fundamentals.columns if col.startswith('20')]
+        # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
+        historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
         historic_scopes = ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3', 'production']
         df_historic = df_fundamentals[['company_id'] + historic_columns].dropna(axis=1,how='all')
         df_fundamentals = df_fundamentals[df_fundamentals.columns.difference(historic_columns, sort=False)]

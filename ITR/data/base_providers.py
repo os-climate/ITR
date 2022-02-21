@@ -441,22 +441,29 @@ class EmissionIntensityProjector(object):
 
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
-            results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, 'S1S2')]
-            if company.production_metric:
-                # These are already stored in the correct compact format
-                units = f"{company.emissions_metric}/{company.production_metric}"
-            elif company.sector=='Steel':
-                units = "t CO2/Fe_ton"
-            elif company.sector=='Electricity Utilities':
-                units = "Mt CO2/GJ"
-            try:
-                projections = [IProjection(year=int(year), value=Q_(value, units)) for year, value in results.items()
-                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-                company.projected_intensities = ICompanyEIProjectionsScopes(
-                    S1S2=ICompanyEIProjections(projections=projections)
-                )
-            except:
-                pass
+            for targets in company.target_data:
+                for scope in targets.target_scope:
+                    results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, scope)]
+                    # Should we be doing this inference here, or should we use target_base_unit instead???
+                    # I don't know because I don't yet know the phasing relationship of extrapolations and targets and whether we should
+                    # loop through targets generally or find the target that's right for the extrapolation.
+                    if company.production_metric:
+                        # These are already stored in the correct compact format
+                        units = f"{company.emissions_metric}/{company.production_metric}"
+                    elif company.sector=='Steel':
+                        units = "t CO2/Fe_ton"
+                    elif company.sector=='Electricity Utilities':
+                        units = "Mt CO2/GJ"
+                    try:
+                        # Why would we use temp score base year when we have a target base year?
+                        projections = [IProjection(year=int(year), value=Q_(value, units)) for year, value in results.items()
+                                       if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                        # Yikes!  I don't know the pythonic way to pick the parameter we are passing to based on SCOPE
+                        company.projected_intensities = ICompanyEIProjectionsScopes(
+                            S1S2=ICompanyEIProjections(projections=projections)
+                        )
+                    except:
+                        pass
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
         # When columns are years and rows are all different intensity types, we cannot winsorize
@@ -465,20 +472,25 @@ class EmissionIntensityProjector(object):
         for col in intensities.columns:
             s = intensities[col]
             if s.notnull().any():
-                try:
-                    intensities[col] = s.astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
-                except:
-                    # Don't remember why this was needed, but theory is "no harm, no foul"
-                    pass
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    try:
+                        intensities[col] = s.map(lambda x: Q_(np.nan, x.u)
+                                                 if x.m is pd.NA else x).astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
+                    except TypeError as e:
+                        print(e)
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         for col in winsorized_intensities.columns:
             s = winsorized_intensities[col]
             if s.notnull().any():
-                try:
-                    winsorized_intensities[col] = s.astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
-                except:
-                    # Don't remember why this was needed, but theory is "no harm, no foul"
-                    pass
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    try:
+                        # Convert the NaNs created in winsorize function back into a Quantity.  The [5:-1] strips the pint[] from the quantity type
+                        winsorized_intensities[col] = s.map(lambda x: Q_(np.nan, str(intensities[col].dtype)[5:-1])
+                                                            if x is np.nan else x).astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
+                    except TypeError as e:
+                        print(e)
         standardized_intensities: pd.DataFrame = self._interpolate(winsorized_intensities)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
