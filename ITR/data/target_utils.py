@@ -31,14 +31,16 @@ def compute_CAGR(first, last, period):
         # TODO: Replace ugly fix => pint unit error in below expression
         # CAGR doesn't work well with 100% reduction, so set it to small
         if last == 0:
-            if first == 0:
-                # If we hit a zero target early, we keep it stead with CAGR of zero, avoiding divide-by-zero
-                return 0
             last = first/201.0
         try:
             res = (last / first).magnitude ** (1 / period) - 1
         except ZeroDivisionError as e:
-            print(e)
+            if last > 0:
+                print("last > 0 and first==0 in CAGR...setting CAGR to 0.5")
+                res = 0.5
+            else:
+                # It's all zero from here on out...clamp down on any emissions that poke up
+                res = 1
     return res
 
 
@@ -61,7 +63,7 @@ def compute_CAGR(first, last, period):
 # but data across columns is not always well-behaved.  We therefore make this function assume we are projecting targets
 # for a specific company, in a specific sector.  If we want to project targets for multiple sectors, we have to call it multiple times.
 # This function doesn't need to know what sector it's computing for...only tha there is only one such, for however many scopes.
-def project_targets(targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.Series = None,
+def project_ei_targets(targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.Series = None,
                     data_prod=None) -> ICompanyEIProjectionsScopes:
     """Input:
     @isin: isin of the company for which to compute the projection
@@ -83,7 +85,7 @@ def project_targets(targets: List[ITargetData], historic_data: IHistoricData, pr
             if target.target_type == "intensity":
                 # Simple case: the target is in intensity
                 # Get the intensity data
-                intensity_data = historic_data.emission_intensities.__getattribute__(scope)
+                intensity_data = historic_data.emissions_intensities.__getattribute__(scope)
 
                 # Get last year data with non-null value
                 if ei_projection_scopes[scope] is not None:
@@ -114,14 +116,14 @@ def project_targets(targets: List[ITargetData], historic_data: IHistoricData, pr
                 # Complicated case, the target must be switched from absolute value to intensity.
                 # We use the benchmark production data
                 # Compute Emission CAGR
-                emission_data = historic_data.emissions.__getattribute__(scope)
+                emissions_data = historic_data.emissions.__getattribute__(scope)
 
                 # Get last year data with non-null value
                 if ei_projection_scopes[scope] is not None:
                     last_year = ei_projection_scopes[scope].projections[-1].year
-                    last_year_data = next((e for e in emission_data if e.year == last_year), None)
+                    last_year_data = next((e for e in emissions_data if e.year == last_year), None)
                 else:
-                    last_year_data = next((e for e in reversed(emission_data) if type(e.value.magnitude) != NAType),
+                    last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
                                           None)
 
                 if last_year_data is None or base_year >= last_year_data.year:
@@ -136,12 +138,12 @@ def project_targets(targets: List[ITargetData], historic_data: IHistoricData, pr
 
                     if not scope_targets:  # Check if there are no more targets for this scope
                         target_year = 2050  # Value should come from somewhere else
-                    emission_projections = [value_last_year * (1 + CAGR) ** (y + 1)
-                                            for y, year in enumerate(range(last_year + 1, target_year + 1))]
-                    emission_projections = pd.Series(emission_projections, index=range(last_year + 1, target_year + 1),
-                                                     dtype=f'pint[{target.target_base_unit}]')
+                    emissions_projections = [value_last_year * (1 + CAGR) ** (y + 1)
+                                             for y, year in enumerate(range(last_year + 1, target_year + 1))]
+                    emissions_projections = pd.Series(emissions_projections, index=range(last_year + 1, target_year + 1),
+                                                      dtype=f'pint[{target.target_base_unit}]')
                     production_projections = production_bm.loc[last_year + 1: target_year]
-                    ei_projections = emission_projections / production_projections
+                    ei_projections = emissions_projections / production_projections
 
                     ei_projections = [ICompanyEIProjection(year=year, value=ei_projections[year])
                                       for year in range(last_year + 1, target_year + 1)]

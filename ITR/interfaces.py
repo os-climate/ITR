@@ -162,7 +162,7 @@ PowerGeneration = Annotated[Union[PowerGenerationWh, PowerGenerationJ], Field(di
 
 
 class ManufactureSteel(BaseModel):
-    units: Union[Literal['Fe_ton'],Literal['M Fe_ton']]
+    units: Union[Literal['Fe_ton'],Literal['kiloFe_ton'],Literal['megaFe_ton']]
 Manufacturing = Annotated[Union[ManufactureSteel], Field(discriminator='units')]
 
 
@@ -174,7 +174,7 @@ class EmissionsCO2(BaseModel):
 EmissionsMetric = Annotated[EmissionsCO2, Field(discriminator='units')]
 
 
-class EmissionIntensity(BaseModel):
+class EmissionsIntensity(BaseModel):
     units: Union[Literal['t CO2/MWh'],Literal['t CO2/GWh'],Literal['t CO2/TWh'],Literal['t CO2/GJ'],Literal['t CO2/PJ'],Literal['t CO2/Fe_ton']]
 
 
@@ -182,7 +182,7 @@ class DimensionlessNumber(BaseModel):
     units: Literal['dimensionless']
 
 
-OSC_Metric = Annotated[Union[ProductionMetric,EmissionsMetric,EmissionIntensity,DimensionlessNumber], Field(discriminator='units')]
+OSC_Metric = Annotated[Union[ProductionMetric,EmissionsMetric,EmissionsIntensity,DimensionlessNumber], Field(discriminator='units')]
 
 # U is Unquantified
 class UProjection(BaseModel):
@@ -233,7 +233,7 @@ class IProductionBenchmarkScopes(BaseModel):
     S1S2S3: Optional[IBenchmarks]
 
 
-class IEmissionIntensityBenchmarkScopes(PintModel):
+class IEIBenchmarkScopes(PintModel):
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
@@ -264,7 +264,7 @@ class ICompanyProjection(BaseModel):
 
 class ICompanyEIProjection(PintModel):
     year: int
-    value: Optional[Quantity[EmissionIntensity]]
+    value: Optional[Quantity[EmissionsIntensity]]
 
     def __init__(self, year, value):
         super().__init__(year=year, value=pint_ify(value, 't CO2/MWh'))
@@ -318,7 +318,7 @@ class IHistoricEmissionsScopes(PintModel):
 
 class IEIRealization(PintModel):
     year: int
-    value: Optional[Quantity[EmissionIntensity]]
+    value: Optional[Quantity[EmissionsIntensity]]
 
     def __init__(self, year, value):
         super().__init__(year=year, value=value)
@@ -377,7 +377,7 @@ class ECarbonBudgetScenario(Enum):
 class IHistoricData(PintModel):
     productions: Optional[List[IProductionRealization]]
     emissions: Optional[IHistoricEmissionsScopes]
-    emission_intensities: Optional[IHistoricEIScopes]
+    emissions_intensities: Optional[IHistoricEIScopes]
 
 
 class ITargetData(PintModel):

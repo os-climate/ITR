@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, VariablesConfig, TabsConfig
-from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, IEmissionRealization, IEIRealization, IProjection
 
@@ -115,7 +115,7 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                                                      column_config.REGION, column_config.SECTOR)
         # TODO: Fix units for Steel
         super().__init__(
-            IEmissionIntensityBenchmarkScopes(benchmark_metric={'units':'t CO2/MWh'}, S1S2=EI_benchmarks,
+            IEIBenchmarkScopes(benchmark_metric={'units':'t CO2/MWh'}, S1S2=EI_benchmarks,
                                               benchmark_temperature=benchmark_temperature,
                                               benchmark_global_budget=benchmark_global_budget,
                                               is_AFOLU_included=is_AFOLU_included), column_config,
@@ -313,11 +313,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         """
         productions = historic.loc[historic[ColumnsConfig.VARIABLE] == VariablesConfig.PRODUCTIONS]
         emissions = historic.loc[historic[ColumnsConfig.VARIABLE] == VariablesConfig.EMISSIONS]
-        emission_intensities = historic.loc[historic[ColumnsConfig.VARIABLE] == VariablesConfig.EMISSION_INTENSITIES]
+        emissions_intensities = historic.loc[historic[ColumnsConfig.VARIABLE] == VariablesConfig.EMISSIONS_INTENSITIES]
         return IHistoricData(
             productions=self._convert_to_historic_productions(productions),
             emissions=self._convert_to_historic_emissions(emissions),
-            emission_intensities=self._convert_to_historic_emission_intensities(emission_intensities)
+            emissionss_intensities=self._convert_to_historic_ei(emissions_intensities)
         )
 
     # Note that for the three following functions, we pd.Series.squeeze() the results because it's just one year / one company
@@ -330,13 +330,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         if emissions.empty:
             return None
 
-        emission_scopes = {}
+        emissions_scopes = {}
         for scope in EScope.get_scopes():
             results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
-            emission_scopes[scope] = [] \
+            emissions_scopes[scope] = [] \
                 if results.empty \
                 else [IEmissionRealization(year=year, value=Q_(*results[year].squeeze().split(' ', 1))) for year in self.historic_years]
-        return IHistoricEmissionsScopes(**emission_scopes)
+        return IHistoricEmissionsScopes(**emissions_scopes)
 
     def _convert_to_historic_productions(self, productions: pd.DataFrame) \
             -> Optional[List[IProductionRealization]]:
@@ -351,7 +351,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             [IProductionRealization(year=year, value=Q_(*productions[year].squeeze().split(' ', 1))) for year in self.historic_years]
         return production_realizations
 
-    def _convert_to_historic_emission_intensities(self, intensities: pd.DataFrame) \
+    def _convert_to_historic_ei(self, intensities: pd.DataFrame) \
             -> Optional[IHistoricEIScopes]:
         """
         :param historic: historic production, emission and emission intensity data for a company
