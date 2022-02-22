@@ -462,8 +462,20 @@ class ICompanyData(PintModel):
             # TODO: Should raise a warning here
         if ghg_s1s2:
             self.ghg_s1s2=pint_ify(ghg_s1s2, self.production_metric.units)
+        elif self.historic_data.productions:
+            # TODO: This is a hack to get things going.
+            year = kwargs['report_date'].year
+            for i in range(len(self.historic_data.productions)):
+                if self.historic_data.productions[-1-i].year == year:
+                    self.ghg_s1s2 = self.historic_data.productions[-1-i].value
+                    break
+            if self.ghg_s1s2 is None:
+                raise ValueError("invalid historic data for ghg_s1s2")
+        else:
+            raise ValueError("missing historic data for ghg_s1s2")
         if ghg_s3:
             self.ghg_s3=pint_ify(ghg_s3, self.production_metric.units)
+        # TODO: We don't need to worry about missing S3 scope data yet
 
 
 class ICompanyAggregates(ICompanyData):
