@@ -1,28 +1,22 @@
 import warnings # needed until apply behaves better with Pint quantities in arrays
-from typing import Type, List, Union, Optional
+from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
 
-from pint import Quantity
-# from pint_pandas import PintArray
 
 import pint
-import pint_pandas
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
-# PA_ = pint_pandas.PintArray
 
 from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark, EITargetProjector
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, VariablesConfig, TabsConfig
-from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
-    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig
+from ITR.interfaces import ICompanyData, EScope, \
+    IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, IProjection
-from ITR.data.target_utils import project_ei_targets
 
 import logging
-import inspect
 
 class TemplateProviderCompany(BaseCompanyDataProvider):
     """
