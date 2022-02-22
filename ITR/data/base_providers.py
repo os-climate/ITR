@@ -4,6 +4,8 @@ import pandas as pd
 
 import pint
 import pint_pandas
+from pandas._libs.missing import NAType
+
 from ITR.data.osc_units import ureg, Q_, PA_
 
 from typing import List, Type, Dict
@@ -45,7 +47,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         companies_without_projections = [c for c in companies if not c.projected_intensities]
         if companies_without_projections:
             companies_with_projections = [c for c in companies if c.projected_intensities]
-            return companies_with_projections + EI_TrajectoryProjector().project_ei_trajectories(companies_without_projections)
+            return companies_with_projections + EITrajectoryProjector().project_ei_trajectories(companies_without_projections)
         else:
             return companies
 
@@ -561,8 +563,7 @@ class EITargetProjector(object):
     def __init__(self):
         pass
 
-    @staticmethod
-    def project_ei_targets(targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.Series) -> ICompanyEIProjectionsScopes:
+    def project_ei_targets(self, targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.Series) -> ICompanyEIProjectionsScopes:
         """Input:
         @targets: a list of a company's targets
         @historic_data: a company's historic production, emissions, and emission intensities realizations per scope
@@ -601,7 +602,7 @@ class EITargetProjector(object):
                         # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                         target_value = pint_ify(target.target_base_qty * (1 - target.target_reduction_pct),
                                                 target.target_base_unit)
-                        CAGR = compute_CAGR(value_last_year, target_value, (target_year - last_year))
+                        CAGR = self._compute_CAGR(value_last_year, target_value, (target_year - last_year))
                         if not scope_targets:  # Check if there are no more targets for this scope
                             target_year = 2050  # Value should come from somewhere else
                         ei_projections = [ICompanyEIProjection(year=year, value=value_last_year * (1 + CAGR) ** (y + 1))
@@ -619,15 +620,13 @@ class EITargetProjector(object):
 
                     # Get last year data with non-null value
                     if ei_projection_scopes[scope] is not None:
-                        last_year = ei_projection_scopes[scope].projections[-1].year
-                        last_year_data = next((e for e in emissions_data if e.year == last_year), None)
-                    else:
                         last_year_ei_data = ei_projection_scopes[scope].projections[-1]
                         last_year = last_year_ei_data.year
                         last_year_prod = production_bm.loc[last_year]
                         last_year_data = IEmissionRealization(year=last_year, value=last_year_ei_data.value*last_year_prod)
-                        # last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
-                        #                       None)
+                    else:
+                        last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
+                                              None)
 
                     if last_year_data is None or base_year >= last_year_data.year:
                         ei_projection_scopes[scope] = None
@@ -637,7 +636,7 @@ class EITargetProjector(object):
                         # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                         target_value = pint_ify(target.target_base_qty * (1 - target.target_reduction_pct),
                                                 target.target_base_unit)
-                        CAGR = compute_CAGR(value_last_year, target_value, (target_year - last_year))
+                        CAGR = self._compute_CAGR(value_last_year, target_value, (target_year - last_year))
 
                         if not scope_targets:  # Check if there are no more targets for this scope
                             target_year = 2050  # Value should come from somewhere else
@@ -660,3 +659,27 @@ class EITargetProjector(object):
                     ei_projection_scopes[scope] = None
 
         return ICompanyEIProjectionsScopes(**ei_projection_scopes)
+
+    def _compute_CAGR(self, first, last, period):
+        """Input:
+        @first: first value
+        @last: last value
+        @period: number of periods in the CAGR"""
+
+        if period == 0:
+            res = 1
+        else:
+            # TODO: Replace ugly fix => pint unit error in below expression
+            # CAGR doesn't work well with 100% reduction, so set it to small
+            if last == 0:
+                last = first/201.0
+            try:
+                res = (last / first).magnitude ** (1 / period) - 1
+            except ZeroDivisionError as e:
+                if last > 0:
+                    print("last > 0 and first==0 in CAGR...setting CAGR to 0.5")
+                    res = 0.5
+                else:
+                    # It's all zero from here on out...clamp down on any emissions that poke up
+                    res = 1
+        return res
