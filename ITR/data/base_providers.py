@@ -559,6 +559,11 @@ class EITargetProjector(object):
     This class projects emissions intensities from a company's targets and historic data. Targets are specified per
     scope in terms of either emissions or emission intensity reduction. Interpolation between last known historic data
     and (a) target(s) is CAGR-based.
+
+    Remember that pd.Series are always well-behaved with pint[] quantities.  pd.DataFrame columns are well-behaved,
+    but data across columns is not always well-behaved.  We therefore make this function assume we are projecting targets
+    for a specific company, in a specific sector.  If we want to project targets for multiple sectors, we have to call it multiple times.
+    This function doesn't need to know what sector it's computing for...only tha there is only one such, for however many scopes.
     """
     def __init__(self):
         pass
