@@ -56,10 +56,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        units = company.dict()[self.column_config.PRODUCTION_METRIC]['units']
+        production_units = company.dict()[self.column_config.PRODUCTION_METRIC]['units']
+        emissions_units = company.dict()[self.column_config.EMISSIONS_METRIC]['units']
         return pd.Series(
             {p['year']: p['value'] for p in company.dict()[feature][str(scope)]['projections'] },
-            name=company.company_id, dtype=f'pint[t CO2/{units}]')
+            name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
 
     # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
