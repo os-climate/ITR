@@ -576,8 +576,6 @@ class EITargetProjector(object):
 
         If the company has no target or the target can't be processed, then the output the emission database, unprocessed
         """
-
-        # TODO: production_bm should be per scope!
         ei_projection_scopes = {"S1": None, "S2": None, "S1S2": None, "S3": None, "S1S2S3": None}
         for scope in ei_projection_scopes.keys():
             scope_targets = [target for target in targets if target.target_scope.name == scope]
