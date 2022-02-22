@@ -131,7 +131,7 @@ def project_ei_targets(targets: List[ITargetData], historic_data: IHistoricData,
                                                            for year in range(last_year + 1, target_year + 1)]
                                                           )
 
-    ei_projection_scopes = {"S1S2": None, "S3": None, "S1S2S3": None}
+    ei_projection_scopes = {"S1": None, "S2": None, "S1S2": None, "S3": None, "S1S2S3": None}
     for scope in ei_projection_scopes.keys():
         scope_targets = [target for target in targets if target.target_scope.name == scope]
         scope_targets.sort(key=lambda target: (target.target_scope, target.end_year))
