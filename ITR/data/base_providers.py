@@ -13,7 +13,8 @@ from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkData
 
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, ICompanyProjection, IHistoricEIScopes, \
-    IHistoricEmissionsScopes, IProductionRealization
+    IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, pint_ify, \
+    IEmissionRealization
 
 
 # TODO handling of scopes in benchmarks
@@ -329,7 +330,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         return benchmark_projection
 
 
-class EI_TrajectoryProjector(object):
+class EITrajectoryProjector(object):
     """
     This class projects emissions intensities on company level based on historic data on:
     - A company's emission history (in t CO2)
@@ -549,3 +550,113 @@ class EI_TrajectoryProjector(object):
 
     def _year_on_year_ratio(self, arr: np.ndarray) -> float:
         return (arr[1] / arr[0]) - 1.0
+
+
+class EITargetProjector(object):
+    """
+    This class projects emissions intensities from a company's targets and historic data. Targets are specified per
+    scope in terms of either emissions or emission intensity reduction. Interpolation between last known historic data
+    and (a) target(s) is CAGR-based.
+    """
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def project_ei_targets(targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.Series) -> ICompanyEIProjectionsScopes:
+        """Input:
+        @targets: a list of a company's targets
+        @historic_data: a company's historic production, emissions, and emission intensities realizations per scope
+        @production_bm: company's production projection computed from region-sector benchmark growth rates
+
+        If the company has no target or the target can't be processed, then the output the emission database, unprocessed
+        """
+
+        # TODO: production_bm should be per scope!
+        ei_projection_scopes = {"S1S2": None, "S3": None, "S1S2S3": None}
+        for scope in ei_projection_scopes.keys():
+            scope_targets = [target for target in targets if target.target_scope.name == scope]
+            scope_targets.sort(key=lambda target: (target.target_scope, target.end_year))
+            while scope_targets:
+                target = scope_targets.pop(0)
+                base_year = target.base_year
+
+                # Solve for intensity and absolute
+                if target.target_type == "intensity":
+                    # Simple case: the target is in intensity
+                    # Get the intensity data
+                    intensity_data = historic_data.emissions_intensities.__getattribute__(scope)
+
+                    # Get last year data with non-null value
+                    if ei_projection_scopes[scope] is not None:
+                        last_year_data = ei_projection_scopes[scope].projections[-1]
+                    else:
+                        last_year_data = next((i for i in reversed(intensity_data) if type(i.value.magnitude) != NAType),
+                                              None)
+
+                    if last_year_data is None or base_year >= last_year_data.year:
+                        ei_projection_scopes[scope] = None
+                    else:  # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
+                        last_year, value_last_year = last_year_data.year, last_year_data.value
+                        target_year = target.end_year
+                        # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
+                        target_value = pint_ify(target.target_base_qty * (1 - target.target_reduction_pct),
+                                                target.target_base_unit)
+                        CAGR = compute_CAGR(value_last_year, target_value, (target_year - last_year))
+                        if not scope_targets:  # Check if there are no more targets for this scope
+                            target_year = 2050  # Value should come from somewhere else
+                        ei_projections = [ICompanyEIProjection(year=year, value=value_last_year * (1 + CAGR) ** (y + 1))
+                                          for y, year in enumerate(range(1 + last_year, 1 + target_year))]
+                        if ei_projection_scopes[scope] is not None:
+                            ei_projection_scopes[scope].projections.extend(ei_projections)
+                        else:
+                            ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections)
+
+                elif target.target_type == "absolute":
+                    # Complicated case, the target must be switched from absolute value to intensity.
+                    # We use the benchmark production data
+                    # Compute Emission CAGR
+                    emissions_data = historic_data.emissions.__getattribute__(scope)
+
+                    # Get last year data with non-null value
+                    if ei_projection_scopes[scope] is not None:
+                        last_year = ei_projection_scopes[scope].projections[-1].year
+                        last_year_data = next((e for e in emissions_data if e.year == last_year), None)
+                    else:
+                        last_year_ei_data = ei_projection_scopes[scope].projections[-1]
+                        last_year = last_year_ei_data.year
+                        last_year_prod = production_bm.loc[last_year]
+                        last_year_data = IEmissionRealization(year=last_year, value=last_year_ei_data.value*last_year_prod)
+                        # last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
+                        #                       None)
+
+                    if last_year_data is None or base_year >= last_year_data.year:
+                        ei_projection_scopes[scope] = None
+                    else:  # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
+                        last_year, value_last_year = last_year_data.year, last_year_data.value
+                        target_year = target.end_year
+                        # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
+                        target_value = pint_ify(target.target_base_qty * (1 - target.target_reduction_pct),
+                                                target.target_base_unit)
+                        CAGR = compute_CAGR(value_last_year, target_value, (target_year - last_year))
+
+                        if not scope_targets:  # Check if there are no more targets for this scope
+                            target_year = 2050  # Value should come from somewhere else
+                        emissions_projections = [value_last_year * (1 + CAGR) ** (y + 1)
+                                                 for y, year in enumerate(range(last_year + 1, target_year + 1))]
+                        emissions_projections = pd.Series(emissions_projections, index=range(last_year + 1, target_year + 1),
+                                                          dtype=f'pint[{target.target_base_unit}]')
+                        production_projections = production_bm.loc[last_year + 1: target_year]
+                        ei_projections = emissions_projections / production_projections
+
+                        ei_projections = [ICompanyEIProjection(year=year, value=ei_projections[year])
+                                          for year in range(last_year + 1, target_year + 1)]
+                        if ei_projection_scopes[scope] is not None:
+                            ei_projection_scopes[scope].projections.extend(ei_projections)
+                        else:
+                            ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections)
+
+                else:
+                    # No target (type) specified
+                    ei_projection_scopes[scope] = None
+
+        return ICompanyEIProjectionsScopes(**ei_projection_scopes)
