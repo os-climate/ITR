@@ -281,6 +281,8 @@ class ICompanyEIProjections(BaseModel):
 
 
 class ICompanyEIProjectionsScopes(BaseModel):
+    S1: Optional[ICompanyEIProjections]
+    S2: Optional[ICompanyEIProjections]
     S1S2: Optional[ICompanyEIProjections]
     S3: Optional[ICompanyEIProjections]
     S1S2S3: Optional[ICompanyEIProjections]
