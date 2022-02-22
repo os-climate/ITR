@@ -1,6 +1,7 @@
 import warnings # needed until quantile behaves better with Pint quantities in arrays
 import numpy as np
 import pandas as pd
+from functools import reduce, partial
 
 import pint
 import pint_pandas
@@ -59,11 +60,31 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        production_units = company.dict()[self.column_config.PRODUCTION_METRIC]['units']
-        emissions_units = company.dict()[self.column_config.EMISSIONS_METRIC]['units']
+        company_dict = company.dict()
+        production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
+        emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
+        if company_dict[feature][scope.name]:
+            projections = company_dict[feature][scope.name]['projections']
+        else:
+            scopes = scope.value.split('+')
+            projection_scopes = {s:company_dict[feature][s]['projections'] for s in scopes if company_dict[feature][s]}
+            if len(projection_scopes)>1:
+                projection_series = {}
+                for s in scopes:
+                    projection_series[s] = pd.Series(
+                        {p['year']: p['value'] for p in company_dict[feature][s]['projections']  },
+                         name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+                series_adder = partial(pd.Series.add, fill_value=0)
+                res = reduce(series_adder, projection_series.values())
+                return res
+            elif len(projection_scopes)==0:
+                print(f"missing target scope data for {company.company_name} :: {scope}")
+                error()
+            else:
+                projections = company_dict[feature][scopes[0]]['projections']
         return pd.Series(
-            {p['year']: p['value'] for p in company.dict()[feature][str(scope)]['projections'] },
-            name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+            {p['year']: p['value'] for p in projections },
+             name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
 
     # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
@@ -597,7 +618,7 @@ class EITargetProjector(object):
                         last_year_data = next((i for i in reversed(intensity_data) if type(i.value.magnitude) != NAType),
                                               None)
 
-                    if last_year_data is None or base_year >= last_year_data.year:
+                    if last_year_data is None or base_year > last_year_data.year:
                         ei_projection_scopes[scope] = None
                     else:  # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
                         last_year, value_last_year = last_year_data.year, last_year_data.value
@@ -631,7 +652,7 @@ class EITargetProjector(object):
                         last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
                                               None)
 
-                    if last_year_data is None or base_year >= last_year_data.year:
+                    if last_year_data is None or base_year > last_year_data.year:
                         ei_projection_scopes[scope] = None
                     else:  # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
                         last_year, value_last_year = last_year_data.year, last_year_data.value
