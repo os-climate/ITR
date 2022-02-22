@@ -573,7 +573,7 @@ class EITargetProjector(object):
         """
 
         # TODO: production_bm should be per scope!
-        ei_projection_scopes = {"S1S2": None, "S3": None, "S1S2S3": None}
+        ei_projection_scopes = {"S1": None, "S2": None, "S1S2": None, "S3": None, "S1S2S3": None}
         for scope in ei_projection_scopes.keys():
             scope_targets = [target for target in targets if target.target_scope.name == scope]
             scope_targets.sort(key=lambda target: (target.target_scope, target.end_year))
