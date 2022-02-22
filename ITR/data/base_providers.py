@@ -52,6 +52,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         else:
             return companies
 
+    # Because this presently defaults to S1S2 always, targets spec'd for S1 only ro S1+S2+S3 are not well-handled.
     def _convert_projections_to_series(self, company: ICompanyData, feature: str,
                                        scope: EScope = EScope.S1S2) -> pd.Series:
         """
