@@ -65,12 +65,12 @@ class ColumnsConfig:
     TARGET_PROBABILITY = 'target_probability'
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
-    BASE_EI = 'emission_intensity_at_base_year'
+    BASE_EI = 'ei_at_base_year'
     PROJECTED_EI = 'projected_intensities'
     PROJECTED_TARGETS = 'projected_targets'
     HISTORIC_PRODUCTIONS = 'historic_productions'
     HISTORIC_EMISSIONS = 'historic_emissions'
-    HISTORIC_EI = 'historic_emission_intensities'
+    HISTORIC_EI = 'historic_ei'
 
     TRAJECTORY_SCORE = 'trajectory_score'
     TRAJECTORY_OVERSHOOT = 'trajectory_overshoot_ratio'
@@ -95,7 +95,7 @@ class SectorsConfig:
 class VariablesConfig:
     EMISSIONS = "Emissions"
     PRODUCTIONS = "Productions"
-    EMISSION_INTENSITIES = "Emission Intensities"
+    EMISSIONS_INTENSITIES = "Emissions Intensities"
 
 
 class TargetConfig:

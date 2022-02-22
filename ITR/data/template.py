@@ -16,10 +16,10 @@ from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, VariablesConfig, TabsConfig
-from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, IProjection
-from ITR.data.target_utils import project_targets
+from ITR.data.target_utils import project_ei_targets
 
 import logging
 import inspect
@@ -133,7 +133,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                          .apply(lambda x: x.map(lambda y: Q_(y, df_fundamentals.loc[df_fundamentals.company_id==x.name[0],
                                                                                     'emissions_metric'].squeeze())), axis=1)])
         df4 = df3.xs(VariablesConfig.EMISSIONS,level=1) / df3.xs((VariablesConfig.PRODUCTIONS,'production'),level=[1,2])
-        df4['variable'] = VariablesConfig.EMISSION_INTENSITIES
+        df4['variable'] = VariablesConfig.EMISSIONS_INTENSITIES
         df4 = df4.reset_index().set_index(['company_id', 'variable', 'scope'])
         df5 = pd.concat([df3, df4])
         df_historic_data = df5
@@ -304,10 +304,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         historic.set_index('variable', drop=False, inplace=True)
         productions = historic.loc[[VariablesConfig.PRODUCTIONS]]
         emissions = historic.loc[[VariablesConfig.EMISSIONS]]
-        emission_intensities = historic.loc[[VariablesConfig.EMISSION_INTENSITIES]]
+        emissions_intensities = historic.loc[[VariablesConfig.EMISSIONS_INTENSITIES]]
         hd = IHistoricData(productions=self._convert_to_historic_productions(productions),
                            emissions=self._convert_to_historic_emissions(emissions),
-                           emission_intensities=self._convert_to_historic_emission_intensities(emission_intensities))
+                           emissions_intensities=self._convert_to_historic_ei(emissions_intensities))
         return hd
 
     # Note that for the three following functions, we pd.Series.squeeze() the results because it's just one year / one company
@@ -320,13 +320,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         if emissions.empty:
             return None
 
-        emission_scopes = {}
+        emissions_scopes = {}
         for scope in EScope.get_scopes():
             results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
-            emission_scopes[scope] = [] \
+            emissions_scopes[scope] = [] \
                 if results.empty \
                 else [IEmissionRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
-        return IHistoricEmissionsScopes(**emission_scopes)
+        return IHistoricEmissionsScopes(**emissions_scopes)
 
     def _convert_to_historic_productions(self, productions: pd.DataFrame) \
             -> Optional[List[IProductionRealization]]:
@@ -344,7 +344,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             print(e)
         return production_realizations
 
-    def _convert_to_historic_emission_intensities(self, intensities: pd.DataFrame) \
+    def _convert_to_historic_ei(self, intensities: pd.DataFrame) \
             -> Optional[IHistoricEIScopes]:
         """
         :param historic: historic production, emission and emission intensity data for a company

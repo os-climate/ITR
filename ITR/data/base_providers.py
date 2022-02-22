@@ -11,7 +11,7 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig, ProjectionConfig,
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
 
-from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, ICompanyProjection, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization
 
@@ -44,7 +44,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         companies_without_projections = [c for c in companies if not c.projected_intensities]
         if companies_without_projections:
             companies_with_projections = [c for c in companies if c.projected_intensities]
-            return companies_with_projections + EmissionIntensityProjector().project_intensities(companies_without_projections)
+            return companies_with_projections + EI_TrajectoryProjector().project_ei_trajectories(companies_without_projections)
         else:
             return companies
 
@@ -234,7 +234,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
 
 class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
-    def __init__(self, EI_benchmarks: IEmissionIntensityBenchmarkScopes,
+    def __init__(self, EI_benchmarks: IEIBenchmarkScopes,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(EI_benchmarks.benchmark_temperature, EI_benchmarks.benchmark_global_budget,
@@ -328,9 +328,9 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         return benchmark_projection
 
 
-class EmissionIntensityProjector(object):
+class EI_TrajectoryProjector(object):
     """
-    This class projects emission intensities on company level based on historic data on:
+    This class projects emissions intensities on company level based on historic data on:
     - A company's emission history (in t CO2)
     - A company's production history (units depend on industry, e.g. TWh for electricity)
     """
@@ -338,15 +338,15 @@ class EmissionIntensityProjector(object):
     def __init__(self):
         pass
 
-    def project_intensities(self, companies: List[ICompanyData]) -> List[ICompanyData]:
+    def project_ei_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
         historic_data = self._extract_historic_data(companies)
-        self._compute_missing_historic_emission_intensities(companies, historic_data)
+        self._compute_missing_historic_ei(companies, historic_data)
 
         historic_years = [column for column in historic_data.columns if type(column) == int]
         projection_years = range(max(historic_years), ProjectionConfig.TARGET_YEAR)
         # historic_intensities.loc[historic_intensities.index.get_level_values('company_id')=='US6293775085']
         
-        historic_intensities = historic_data[historic_years].query('variable=="Emission Intensities"')
+        historic_intensities = historic_data[historic_years].query('variable=="Emissions Intensities"')
         standardized_intensities = self._standardize(historic_intensities)
         intensity_trends = self._get_trends(standardized_intensities)
         extrapolated = self._extrapolate(intensity_trends, projection_years, historic_data)
@@ -363,9 +363,9 @@ class EmissionIntensityProjector(object):
                 data.append(self._historic_productions_to_dict(company.company_id, company.historic_data.productions))
             if company.historic_data.emissions:
                 data.extend(self._historic_emissions_to_dicts(company.company_id, company.historic_data.emissions))
-            if company.historic_data.emission_intensities:
-                data.extend(self._historic_emission_intensities_to_dicts(company.company_id,
-                                                                         company.historic_data.emission_intensities))
+            if company.historic_data.emissions_intensities:
+                data.extend(self._historic_ei_to_dicts(company.company_id,
+                                                                         company.historic_data.emissions_intensities))
         if not data:
             print("No historic data anywhere")
             print(companies)
@@ -377,48 +377,48 @@ class EmissionIntensityProjector(object):
         return {ColumnsConfig.COMPANY_ID: id, ColumnsConfig.VARIABLE: VariablesConfig.PRODUCTIONS,
                 ColumnsConfig.SCOPE: 'Production', **prods}
 
-    def _historic_emissions_to_dicts(self, id: str, emission_scopes: IHistoricEmissionsScopes) -> List[Dict[str, str]]:
+    def _historic_emissions_to_dicts(self, id: str, emissions_scopes: IHistoricEmissionsScopes) -> List[Dict[str, str]]:
         data = []
-        for scope, emissions in emission_scopes.dict().items():
+        for scope, emissions in emissions_scopes.dict().items():
             if emissions:
                 ems = {em['year']: em['value'] for em in emissions}
                 data.append({ColumnsConfig.COMPANY_ID: id, ColumnsConfig.VARIABLE: VariablesConfig.EMISSIONS,
                              ColumnsConfig.SCOPE: scope, **ems})
         return data
 
-    def _historic_emission_intensities_to_dicts(self, id: str, intensities_scopes: IHistoricEIScopes) \
+    def _historic_ei_to_dicts(self, id: str, intensities_scopes: IHistoricEIScopes) \
             -> List[Dict[str, str]]:
         data = []
         for scope, intensities in intensities_scopes.dict().items():
             if intensities:
                 intsties = {intsty['year']: intsty['value'] for intsty in intensities}
-                data.append({ColumnsConfig.COMPANY_ID: id, ColumnsConfig.VARIABLE: VariablesConfig.EMISSION_INTENSITIES,
+                data.append({ColumnsConfig.COMPANY_ID: id, ColumnsConfig.VARIABLE: VariablesConfig.EMISSIONS_INTENSITIES,
                              ColumnsConfig.SCOPE: scope, **intsties})
         return data
 
-    def _compute_missing_historic_emission_intensities(self, companies, historic_data):
+    def _compute_missing_historic_ei(self, companies, historic_data):
         scopes = EScope.get_scopes()
         missing_data = []
         for company in companies:
             # Create keys to index historic_data DataFrame for readability
             production_key = (company.company_id, VariablesConfig.PRODUCTIONS, 'Production')
-            emission_keys = {scope: (company.company_id, VariablesConfig.EMISSIONS, scope) for scope in scopes}
-            ei_keys = {scope: (company.company_id, VariablesConfig.EMISSION_INTENSITIES, scope) for scope in scopes}
+            emissions_keys = {scope: (company.company_id, VariablesConfig.EMISSIONS, scope) for scope in scopes}
+            ei_keys = {scope: (company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, scope) for scope in scopes}
             this_missing_data = []
             append_this_missing_data = True
             for scope in scopes:
                 if ei_keys[scope] in historic_data.index:
                     append_this_missing_data = False
                     continue
-                # Emission intensities not yet computed for this scope
+                # Emissions intensities not yet computed for this scope
                 if scope == 'S1S2':
-                    try:  # Try to add S1 and S2 emission intensities
+                    try:  # Try to add S1 and S2 emissions intensities
                         historic_data.loc[ei_keys[scope]] = historic_data.loc[ei_keys['S1']] + \
                                                             historic_data.loc[ei_keys['S2']]
                         append_this_missing_data = False
-                    except KeyError:  # Either S1 or S2 emission intensities not readily available
+                    except KeyError:  # Either S1 or S2 emissions intensities not readily available
                         try:  # Try to compute S1+S2 EIs from S1+S2 emissions and productions
-                            historic_data.loc[ei_keys[scope]] = historic_data.loc[emission_keys[scope]] / \
+                            historic_data.loc[ei_keys[scope]] = historic_data.loc[emissions_keys[scope]] / \
                                                                 historic_data.loc[production_key]
                             append_this_missing_data = False
                         except KeyError:
@@ -429,41 +429,35 @@ class EmissionIntensityProjector(object):
                     pass
                 else:  # S1 and S2 cannot be computed from other EIs, so use emissions and productions
                     try:
-                        historic_data.loc[ei_keys[scope]] = historic_data.loc[emission_keys[scope]] / \
+                        historic_data.loc[ei_keys[scope]] = historic_data.loc[emissions_keys[scope]] / \
                                                             historic_data.loc[production_key]
                         append_this_missing_data = False
                     except KeyError:
                         this_missing_data.append(f"{company.company_id} - {scope}")
             if this_missing_data and append_this_missing_data:
                 missing_data.extend(this_missing_data)
-        assert not missing_data, f"Provide either historic emission intensity data, or historic emission and " \
+        assert not missing_data, f"Provide either historic emissions intensity data, or historic emission and " \
                                  f"production data for these company - scope combinations: {missing_data}"
 
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
-            for targets in company.target_data:
-                for scope in targets.target_scope:
-                    results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSION_INTENSITIES, scope)]
-                    # Should we be doing this inference here, or should we use target_base_unit instead???
-                    # I don't know because I don't yet know the phasing relationship of extrapolations and targets and whether we should
-                    # loop through targets generally or find the target that's right for the extrapolation.
-                    if company.production_metric:
-                        # These are already stored in the correct compact format
-                        units = f"{company.emissions_metric}/{company.production_metric}"
-                    elif company.sector=='Steel':
-                        units = "t CO2/Fe_ton"
-                    elif company.sector=='Electricity Utilities':
-                        units = "Mt CO2/GJ"
-                    try:
-                        # Why would we use temp score base year when we have a target base year?
-                        projections = [IProjection(year=int(year), value=Q_(value, units)) for year, value in results.items()
-                                       if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-                        # Yikes!  I don't know the pythonic way to pick the parameter we are passing to based on SCOPE
-                        company.projected_intensities = ICompanyEIProjectionsScopes(
-                            S1S2=ICompanyEIProjections(projections=projections)
-                        )
-                    except:
-                        pass
+            scope_projections = {}
+            for scope in ICompanyEIProjectionsScopes.__fields__.keys():
+                if not company.historic_data.emissions.__getattribute__(scope):
+                    continue
+                results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, scope)]
+                if company.emissions_metric and company.production_metric:
+                    # These are already stored in the correct compact format
+                    units = f"{company.emissions_metric.units}/{company.production_metric.units}"
+                elif company.sector=='Steel':
+                    units = "t CO2/Fe_ton"
+                elif company.sector=='Electricity Utilities':
+                    units = 't CO2/' + 'MWh' if company.region=='North America' else 'GJ'
+                projections = [IProjection(year=year, value=value) for year, value in results.items()
+                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                scope_projections[scope] = ICompanyEIProjections(projections=projections)
+            company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
+
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
         # When columns are years and rows are all different intensity types, we cannot winsorize
@@ -523,7 +517,7 @@ class EmissionIntensityProjector(object):
         return interpolated
 
     def _get_trends(self, intensities: pd.DataFrame):
-        # Compute year-on-year growth ratios of emission intensities
+        # Compute year-on-year growth ratios of emissions intensities
         
         # Transpose so we can work with homogeneous units in columns.  This means rows are years.
         # pd.Series(intensities.iloc[:,0].values.quantity.m).rolling(window=2, axis='index', closed='right').apply(func=self._year_on_year_ratio, raw=True)
@@ -541,7 +535,13 @@ class EmissionIntensityProjector(object):
         return trends.T
 
     def _extrapolate(self, trends: pd.DataFrame, projection_years: range, historic_data: pd.DataFrame) -> pd.DataFrame:
-        projected_intensities = historic_data.copy()
+        projected_intensities = historic_data.loc[historic_data.index.intersection(trends.index)].copy()
+        # We need to do a mini-extrapolation if we don't have complete historic data
+        for year in historic_data.columns.tolist()[1:-1]:
+            m = projected_intensities[year+1].apply(lambda x: x.m is pd.NA)
+            projected_intensities.loc[m,year+1] = projected_intensities.loc[m,year] * (1 + trends.loc[m])
+
+        # Now the big extrapolation
         for year in projection_years:
             projected_intensities[year + 1] = projected_intensities[year] * (1 + trends)
         return projected_intensities
