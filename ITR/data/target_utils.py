@@ -16,7 +16,7 @@ from pandas._libs.missing import NAType
 
 from ITR.data.base_providers import BaseProviderProductionBenchmark
 from ITR.interfaces import ICompanyEIProjectionsScopes, ICompanyEIProjections, ITargetData, IHistoricData, \
-    ICompanyEIProjection, pint_ify
+    ICompanyEIProjection, pint_ify, IEmissionRealization
 
 
 def compute_CAGR(first, last, period):
@@ -123,8 +123,12 @@ def project_ei_targets(targets: List[ITargetData], historic_data: IHistoricData,
                     last_year = ei_projection_scopes[scope].projections[-1].year
                     last_year_data = next((e for e in emissions_data if e.year == last_year), None)
                 else:
-                    last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
-                                          None)
+                    last_year_ei_data = ei_projection_scopes[scope].projections[-1]
+                    last_year = last_year_ei_data.year
+                    last_year_prod = production_bm.loc[last_year]
+                    last_year_data = IEmissionRealization(year=last_year, value=last_year_ei_data.value*last_year_prod)
+                    # last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
+                    #                       None)
 
                 if last_year_data is None or base_year >= last_year_data.year:
                     ei_projection_scopes[scope] = None
