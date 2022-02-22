@@ -70,7 +70,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                       # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                       .iloc[0].T
                                       .astype(f'pint[{str(base_year_production.units)}]'))
-                c.projected_targets = EITargetProjector.project_ei_targets(c.target_data, c.historic_data, bm_production_data)
+                c.projected_targets = EITargetProjector().project_ei_targets(c.target_data, c.historic_data, bm_production_data)
     
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
