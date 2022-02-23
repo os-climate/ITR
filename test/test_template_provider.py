@@ -62,11 +62,24 @@ class TestTemplateProvider(unittest.TestCase):
             print(target_projection(isin, data_target, data_emissions, data_prod))
         
 
+    def test_temp_score(self):
+        df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
+        companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
+        
+        temperature_score = TemperatureScore(               
+            time_frames = [ETimeFrames.LONG],     
+            scopes=[EScope.S1S2],    
+            aggregation_method=PortfolioAggregationMethod.WATS # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS.
+        )
+        amended_portfolio = temperature_score.calculate(data_warehouse=self.excel_provider, portfolio=companies)
+        print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
+        
     def test_temp_score_from_excel_data(self):
         comids = ['US00130H1059', 'US0185223007',
                   # 'US0138721065', 'US0158577090',
                   'US0188021085',
-                  'US0236081024', 'US0255371017',
+                  'US0236081024', 'US0255371017',]
+        other_comids = [
                   # 'US0298991011',
                   'US05351W1036',
                   # 'US05379B1070',
@@ -221,5 +234,5 @@ class TestTemplateProvider(unittest.TestCase):
 if __name__ == "__main__":
     test = TestTemplateProvider()
     test.setUp()
-    test.test_temp_score_from_excel_data()
+    test.test_temp_score()
     test.get_target_projections()
