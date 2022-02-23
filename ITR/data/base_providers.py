@@ -687,24 +687,27 @@ class EITargetProjector(object):
 
     def _compute_CAGR(self, first, last, period):
         """Input:
-        @first: first value
-        @last: last value
+        @first: the value of the first datapoint in the Calculation (most recent actual datapoint)
+        @last: last value (value at future target year)
         @period: number of periods in the CAGR"""
 
         if period == 0:
-            res = 1
+            res = 0
         else:
             # TODO: Replace ugly fix => pint unit error in below expression
             # CAGR doesn't work well with 100% reduction, so set it to small
             if last == 0:
                 last = first/201.0
+            elif last > first:
+                # If we have a slack target, i.e., target goal is actually above current data, clamp so CAGR computes as zero
+                last = first
             try:
-                res = (last / first).magnitude ** (1 / period) - 1
+                res = (last / first).to_base_units().magnitude ** (1 / period) - 1
             except ZeroDivisionError as e:
                 if last > 0:
-                    print("last > 0 and first==0 in CAGR...setting CAGR to 0.5")
-                    res = 0.5
+                    print("last > 0 and first==0 in CAGR...setting CAGR to 0-.5")
+                    res = -0.5
                 else:
                     # It's all zero from here on out...clamp down on any emissions that poke up
-                    res = 1
+                    res = -1
         return res
