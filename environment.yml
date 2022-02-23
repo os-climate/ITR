@@ -92,7 +92,7 @@ dependencies:
           - nose2==0.9.2
           - notebook==6.4.0
           - numpy==1.19.5
-          - openpyxl==3.0.7
+          - openpyxl==3.0.9
           - openscm-units=0.5.0
           - orjson==3.6.4
           - packaging==21.0
