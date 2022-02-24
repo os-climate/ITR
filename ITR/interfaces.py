@@ -349,7 +349,7 @@ class IHistoricData(PintModel):
 
 
 class ITargetData(PintModel):
-    netzero_date: Optional[int]
+    netzero_year: Optional[int]
     target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
     target_scope: EScope
     start_year: Optional[int]
