@@ -143,3 +143,5 @@ docker-compose_aws.yml
 
 # Misc
 .noseids
+test/.DS_Store
+.DS_Store
