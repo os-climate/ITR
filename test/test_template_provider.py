@@ -65,7 +65,7 @@ class TestTemplateProvider(unittest.TestCase):
 
     def test_temp_score(self):
         df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
-        df_porfolio = df_portfolio[[df_portfolio.company_id=='US26441C2044']]
+        # df_portfolio = df_portfolio[df_portfolio.company_id=='US00130H1059']
         companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
         
         temperature_score = TemperatureScore(               

@@ -56,7 +56,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     self.column_config.COMPANY_ID: c.company_id,
                     # self.column_config.GHG_SCOPE12 is incorrect in production_bm.get_company_projected_production.
                     # Should be production value at base_year as defined in temp_config.CONTROLS_CONFIG
-                    self.column_config.GHG_SCOPE12: base_year_production.magnitude,
+                    # Do not confuse this base year metric with any target base year.
+                    # Historic data is given in terms of its own EMISSIONS_METRIC and PRODUCTION_METRIC
+                    # TODO: don't use c.production_metric; rather, grovel through c to address appropriately using PRODUCTION_METRIC text string.
+                    self.column_config.GHG_SCOPE12: base_year_production.to(c.production_metric.units).magnitude,
                     self.column_config.SECTOR: c.sector,
                     self.column_config.REGION: c.region
                 }, index=[0])
@@ -94,7 +97,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         self._check_company_data(df_company_data)
 
-        df_fundamentals = df_company_data[TabsConfig.TEMPLATE_INPUT_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False).convert_dtypes()
+        input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA
+        if "Test input data" in df_company_data:
+            input_data_sheet = "Test input data"
+        df_fundamentals = df_company_data[input_data_sheet].set_index(ColumnsConfig.COMPANY_ID, drop=False).convert_dtypes()
         # GH https://github.com/pandas-dev/pandas/issues/46044
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
         
@@ -130,14 +136,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # df_historic now ready for conversion to model for each company
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
-        
-        df_target_data = df_company_data[TabsConfig.TEMPLATE_TARGET_DATA].set_index('company_id').convert_dtypes()
+        input_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
+        if "Test target data" in df_company_data:
+            input_target_sheet = "Test target data"
+        df_target_data = df_company_data[input_target_sheet].set_index('company_id').convert_dtypes()
         
         # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
         df_target_data.loc[df_target_data.target_start_year.isna(), 'target_start_year'] = 2020
-        df_target_data.loc[df_target_data.netzero_date.isna(), 'netzero_date'] = 2050
+        df_target_data.loc[df_target_data.netzero_year.isna(), 'netzero_year'] = 2050
         
-        # company_id, netzero_date, target_type, target_scope, target_start_year, target_base_year, target_base_year_qty, target_base_year_unit, target_year, target_reduction_ambition
+        # company_id, netzero_year, target_type, target_scope, target_start_year, target_base_year, target_base_year_qty, target_base_year_unit, target_year, target_reduction_ambition
         # df_target_data now ready for conversion to model for each company
         return self._company_df_to_model(df_fundamentals, df_target_data, df_historic_data)
 
@@ -234,12 +242,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/114
-            projected_emissions_s1s2 = projected_emissions_s1s2.apply(lambda x: x.astype(f'pint[t CO2/({production_metric[x.name]})]'), axis=1)
+            projected_emissions_s1s2 = projected_emissions_s1s2.apply(lambda x: x.astype(f'pint[??t CO2/({production_metric[x.name]})]'), axis=1)
 
         return projected_emissions_s1s2
 
 # class ITargetData(PintModel):
-#     netzero_date: int
+#     netzero_year: int
 #     target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
 #     target_scope: EScope
 #     start_year: Optional[int]
