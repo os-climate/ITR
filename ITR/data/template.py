@@ -53,17 +53,19 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 continue
             else:
                 base_year_production = next((p.value for p in c.historic_data.productions if p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
-                company_sector_region_info = pd.DataFrame({
-                    self.column_config.COMPANY_ID: [ c.company_id ],
-                    # self.column_config.GHG_SCOPE12 is incorrect in production_bm.get_company_projected_production.
-                    # Should be production value at base_year as defined in temp_config.CONTROLS_CONFIG
-                    # Do not confuse this base year metric with any target base year.
-                    # Historic data is given in terms of its own EMISSIONS_METRIC and PRODUCTION_METRIC
-                    # TODO: don't use c.production_metric; rather, grovel through c to address appropriately using PRODUCTION_METRIC text string.
-                    self.column_config.GHG_SCOPE12: [ base_year_production.to(c.production_metric.units) ],
-                    self.column_config.SECTOR: [ c.sector ],
-                    self.column_config.REGION: [ c.region ],
-                }, index=[0])
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    company_sector_region_info = pd.DataFrame({
+                        self.column_config.COMPANY_ID: [ c.company_id ],
+                        # self.column_config.GHG_SCOPE12 is incorrect in production_bm.get_company_projected_production.
+                        # Should be production value at base_year as defined in temp_config.CONTROLS_CONFIG
+                        # Do not confuse this base year metric with any target base year.
+                        # Historic data is given in terms of its own EMISSIONS_METRIC and PRODUCTION_METRIC
+                        # TODO: don't use c.production_metric; rather, grovel through c to address appropriately using PRODUCTION_METRIC text string.
+                        self.column_config.GHG_SCOPE12: [ base_year_production.to(c.production_metric.units) ],
+                        self.column_config.SECTOR: [ c.sector ],
+                        self.column_config.REGION: [ c.region ],
+                    }, index=[0])
                 bm_production_data = (production_bm.get_company_projected_production(company_sector_region_info)
                                       # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                       .iloc[0].T
