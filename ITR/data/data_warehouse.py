@@ -24,7 +24,7 @@ class DataWarehouse(ABC):
 
     def __init__(self, company_data: CompanyDataProvider,
                  benchmark_projected_production: ProductionBenchmarkDataProvider,
-                 benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider,
+                 benchmarks_projected_ei: IntensityBenchmarkDataProvider,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         """
@@ -34,11 +34,12 @@ class DataWarehouse(ABC):
         :param benchmark_projected_production: ProductionBenchmarkDataProvider
         :param benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider
         """
-        self.company_data = company_data
         self.benchmark_projected_production = benchmark_projected_production
-        self.benchmarks_projected_emission_intensity = benchmarks_projected_emission_intensity
+        self.benchmarks_projected_emission_intensity = benchmarks_projected_ei
         self.temp_config = tempscore_config
         self.column_config = column_config
+        self.company_data = company_data
+        self.company_data._calculate_target_projections(benchmark_projected_production, benchmarks_projected_ei)
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """

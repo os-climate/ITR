@@ -487,7 +487,7 @@ class ICompanyAggregates(ICompanyData):
     benchmark_temperature: Quantity['delta_degC']
     benchmark_global_budget: Quantity['CO2']
 
-    projected_targets: Optional[ICompanyEIProjectionsScopes]
+    # projected_targets: Optional[ICompanyEIProjectionsScopes]
     # projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
     def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
