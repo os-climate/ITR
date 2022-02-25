@@ -5,6 +5,7 @@ import pandas as pd
 
 from numpy.testing import assert_array_equal
 import ITR
+from ITR.data.base_providers import EITargetProjector
 from ITR.data.excel import ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
 from ITR.data.data_warehouse import DataWarehouse
@@ -13,7 +14,8 @@ from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 
-from ITR.data.osc_units import ureg, Q_, PA_
+from ITR.data.osc_units import ureg, Q_
+
 
 class TestTemplateProvider(unittest.TestCase):
     """
@@ -59,7 +61,7 @@ class TestTemplateProvider(unittest.TestCase):
                   ]
         
         for id in comids:
-            print(target_projection(isin, data_target, data_emissions, data_prod))
+            print(EITargetProjector().project_ei_targets(isin, data_target, data_emissions, data_prod))
         
 
     def test_temp_score(self):
@@ -68,7 +70,7 @@ class TestTemplateProvider(unittest.TestCase):
         companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
         
         temperature_score = TemperatureScore(               
-            time_frames = [ETimeFrames.LONG],     
+            time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],    
             aggregation_method=PortfolioAggregationMethod.WATS # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS.
         )
@@ -153,7 +155,7 @@ class TestTemplateProvider(unittest.TestCase):
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
                                      index=self.company_ids,
                                      dtype='pint[t CO2/GJ]').astype('object')
-        pd.testing.assert_frame_equal(self.excel_company_data.get_company_projected_trajectories(self.company_ids),
+        pd.testing.assert_frame_equal(self.template_company_data.get_company_projected_trajectories(self.company_ids),
                                       expected_data, check_names=False)
 
     def test_get_benchmark(self):
@@ -228,7 +230,7 @@ class TestTemplateProvider(unittest.TestCase):
                                    10283015132.0],
                                   index=pd.Index(self.company_ids, name='company_id'),
                                   name='company_revenue')
-        pd.testing.assert_series_equal(self.excel_company_data.get_value(company_ids=self.company_ids,
+        pd.testing.assert_series_equal(self.template_company_data.get_value(company_ids=self.company_ids,
                                                                          variable_name=ColumnsConfig.COMPANY_REVENUE),
                                        expected_data)
 
@@ -236,4 +238,4 @@ if __name__ == "__main__":
     test = TestTemplateProvider()
     test.setUp()
     test.test_temp_score()
-    test.get_target_projections()
+    test.test_target_projections()

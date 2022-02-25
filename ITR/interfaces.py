@@ -68,7 +68,7 @@ def pint_ify(x, units='error'):
         units = units['units']
     if x is None:
         return Q_(np.nan, units)
-    if type(x)==str:
+    if type(x) == str:
         if x.startswith('nan '):
             return Q_(np.nan, units)
         return ureg(x)
@@ -98,7 +98,7 @@ def UProjections_to_IProjections(ul, metric):
 def UProjection_to_IProjection(u, metric):
     if u is None or u['value'] is np.nan:
         return pint_ify(np.nan, metric['units'])
-    if not isinstance(u,dict):
+    if not isinstance(u, dict):
         return u
     p = dict(u)
     p['value'] = pint_ify(p['value'], metric['units'])
@@ -106,7 +106,7 @@ def UProjection_to_IProjection(u, metric):
 
 
 def UScopes_to_IScopes(uscopes):
-    if not isinstance(uscopes,dict):
+    if not isinstance(uscopes, dict):
         return uscopes
     iscopes = dict(uscopes)
     for skey, sval in iscopes.items():
@@ -120,35 +120,47 @@ def UScopes_to_IScopes(uscopes):
             u_2_i_list[i] = iscope
     return iscopes
 
+
 class PowerGenerationWh(BaseModel):
-    units: Union[Literal['MWh'],Literal['GWh'],Literal['TWh']]
+    units: Union[Literal['MWh'], Literal['GWh'], Literal['TWh']]
+
+
 class PowerGenerationJ(BaseModel):
-    units: Union[Literal['GJ'],Literal['gigajoule'],Literal['GP'],Literal['petajoule']]
+    units: Union[Literal['GJ'], Literal['gigajoule'], Literal['GP'], Literal['petajoule']]
+
+
 PowerGeneration = Annotated[Union[PowerGenerationWh, PowerGenerationJ], Field(discriminator='units')]
 
 
 class ManufactureSteel(BaseModel):
-    units: Union[Literal['Fe_ton'],Literal['kiloFe_ton'],Literal['megaFe_ton']]
-Manufacturing = Annotated[Union[ManufactureSteel], Field(discriminator='units')]
+    units: Union[Literal['Fe_ton'], Literal['kiloFe_ton'], Literal['megaFe_ton']]
 
+
+Manufacturing = Annotated[Union[ManufactureSteel], Field(discriminator='units')]
 
 ProductionMetric = Annotated[Union[PowerGeneration, ManufactureSteel], Field(discriminator='units')]
 
+
 class EmissionsCO2(BaseModel):
     units: Union[Literal['t CO2'], Literal['kt CO2'], Literal['Mt CO2'], Literal['Gt CO2']]
+
 
 EmissionsMetric = Annotated[EmissionsCO2, Field(discriminator='units')]
 
 
 class EmissionsIntensity(BaseModel):
-    units: Union[Literal['t CO2/MWh'],Literal['t CO2/GWh'],Literal['t CO2/TWh'],Literal['t CO2/GJ'],Literal['t CO2/PJ'],Literal['t CO2/Fe_ton']]
+    units: Union[
+        Literal['t CO2/MWh'], Literal['t CO2/GWh'], Literal['t CO2/TWh'], Literal['t CO2/GJ'], Literal['t CO2/PJ'],
+        Literal['t CO2/Fe_ton']]
 
 
 class DimensionlessNumber(BaseModel):
     units: Literal['dimensionless']
 
 
-OSC_Metric = Annotated[Union[ProductionMetric,EmissionsMetric,EmissionsIntensity,DimensionlessNumber], Field(discriminator='units')]
+OSC_Metric = Annotated[
+    Union[ProductionMetric, EmissionsMetric, EmissionsIntensity, DimensionlessNumber], Field(discriminator='units')]
+
 
 # U is Unquantified
 class UProjection(BaseModel):
@@ -164,6 +176,7 @@ class UBenchmark(BaseModel):
 
     def __getitem__(self, item):
         return getattr(self, item)
+
 
 # I means we have quantified values.  Normally we'd need to __init__ this, but it's always handled in UProjection_to_IProjection
 class IProjection(PintModel):
@@ -255,6 +268,7 @@ class ICompanyEIProjectionsScopes(BaseModel):
 
     def __getitem__(self, item):
         return getattr(self, item)
+
 
 class IProductionRealization(PintModel):
     year: int
@@ -350,12 +364,12 @@ class IHistoricData(PintModel):
 
 class ITargetData(PintModel):
     netzero_year: Optional[int]
-    target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
+    target_type: Union[Literal['intensity'], Literal['absolute'], Literal['other']]
     target_scope: EScope
     start_year: Optional[int]
     base_year: int
     end_year: int
-    
+
     target_base_qty: float
     target_base_unit: str
     target_reduction_pct: float
@@ -373,11 +387,12 @@ class ICompanyData(PintModel):
     historic_data: Optional[IHistoricData]
 
     country: Optional[str]
-    emissions_metric: Optional[EmissionsMetric]     # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
-    production_metric: Optional[ProductionMetric] # Optional because it can be inferred from sector and region
-    
+    emissions_metric: Optional[EmissionsMetric]  # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
+    production_metric: Optional[ProductionMetric]  # Optional because it can be inferred from sector and region
+
     # These two instance variables match against financial data below, but are incomplete as historic_data and target_data
-    ghg_s1s2: Optional[Quantity[ProductionMetric]]    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
+    ghg_s1s2: Optional[Quantity[
+        ProductionMetric]]  # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
     ghg_s3: Optional[Quantity[ProductionMetric]]
 
     industry_level_1: Optional[str]
@@ -390,7 +405,7 @@ class ICompanyData(PintModel):
     company_enterprise_value: Optional[float]
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
-    
+
     # Initialized later when we have benchmark information.  It is OK to initialize as None and fix later.
     # They will show up as {'S1S2': { 'projections': [ ... ] }}
     projected_targets: Optional[ICompanyEIProjectionsScopes]
@@ -401,10 +416,10 @@ class ICompanyData(PintModel):
         if historic_productions is None or production_metric is None:
             # We have absolutely no production data of any kind...too bad!
             return self.historic_data.productions
-        return UProjections_to_IProjections(historic_productions,production_metric)
+        return UProjections_to_IProjections(historic_productions, production_metric)
 
     def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None,
-                       emissions_metric=None, production_metric=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
+                 emissions_metric=None, production_metric=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
         super().__init__(historic_data=historic_data,
                          projected_targets=projected_targets,
                          projected_intensities=projected_intensities,
@@ -413,36 +428,36 @@ class ICompanyData(PintModel):
                          *args, **kwargs)
         # In-bound parameters are dicts, which are converted to models by __super__ and stored as instance variables
         if production_metric is None:
-            if self.sector=='Electricity Utilities':
-                units = 'MWh' if self.region=='North America' else 'GJ'
-            elif self.sector=='Steel':
+            if self.sector == 'Electricity Utilities':
+                units = 'MWh' if self.region == 'North America' else 'GJ'
+            elif self.sector == 'Steel':
                 units = 'Fe_ton'
             else:
-                error ("no source of production metrics")
-            self.production_metric = parse_obj_as(ProductionMetric,{'units':units})
+                raise ValueError("No source of production metrics")
+            self.production_metric = parse_obj_as(ProductionMetric, {'units': units})
             if emissions_metric is None:
-                self.emissions_metric = parse_obj_as(EmissionsMetric,{'units':'t CO2'})
+                self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
         elif emissions_metric is None:
             if self.production_metric.units in ['TWh', 'PJ']:
-                self.emissions_metric = parse_obj_as(EmissionsMetric,{'units':'Mt CO2'})
+                self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 'Mt CO2'})
             else:
-                self.emissions_metric = parse_obj_as(EmissionsMetric,{'units':'t CO2'})
+                self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
             # TODO: Should raise a warning here
         if ghg_s1s2:
-            self.ghg_s1s2=pint_ify(ghg_s1s2, self.production_metric.units)
-        elif self.historic_data.productions:
+            self.ghg_s1s2 = pint_ify(ghg_s1s2, self.production_metric.units)
+        elif self.historic_data and self.historic_data.productions:
             # TODO: This is a hack to get things going.
             year = kwargs['report_date'].year
             for i in range(len(self.historic_data.productions)):
-                if self.historic_data.productions[-1-i].year == year:
-                    self.ghg_s1s2 = self.historic_data.productions[-1-i].value
+                if self.historic_data.productions[-1 - i].year == year:
+                    self.ghg_s1s2 = self.historic_data.productions[-1 - i].value
                     break
             if self.ghg_s1s2 is None:
                 raise ValueError("invalid historic data for ghg_s1s2")
         else:
             raise ValueError("missing historic data for ghg_s1s2")
         if ghg_s3:
-            self.ghg_s3=pint_ify(ghg_s3, self.production_metric.units)
+            self.ghg_s3 = pint_ify(ghg_s3, self.production_metric.units)
         # TODO: We don't need to worry about missing S3 scope data yet
 
 
@@ -456,7 +471,8 @@ class ICompanyAggregates(ICompanyData):
     # projected_targets: Optional[ICompanyEIProjectionsScopes]
     # projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
-    def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
+    def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target, benchmark_temperature,
+                 benchmark_global_budget, *args, **kwargs):
         super().__init__(
             cumulative_budget=pint_ify(cumulative_budget, 't CO2'),
             cumulative_trajectory=pint_ify(cumulative_trajectory, 't CO2'),

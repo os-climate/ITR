@@ -2,7 +2,7 @@ import json
 import unittest
 import os
 
-from ITR.data.base_providers import EmissionIntensityProjector
+from ITR.data.base_providers import EITrajectoryProjector
 from ITR.interfaces import ICompanyData
 
 def mystr(s):
@@ -29,10 +29,10 @@ class TestProjector(unittest.TestCase):
         with open(self.source_path, 'r') as file:
             company_dicts = json.load(file)
         self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
-        self.projector = EmissionIntensityProjector()
+        self.projector = EITrajectoryProjector()
 
     def test_project(self):
-        projections = self.projector.project_intensities(self.companies)
+        projections = self.projector.project_ei_trajectories(self.companies)
         with open(self.json_reference_path, 'r') as file:
             reference_projections = json.load(file)
 

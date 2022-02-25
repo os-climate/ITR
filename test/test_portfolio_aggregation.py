@@ -2,6 +2,7 @@ import warnings
 
 import unittest
 
+import numpy as np
 import pandas as pd
 
 from ITR.portfolio_aggregation import PortfolioAggregationMethod, PortfolioAggregation
@@ -60,7 +61,7 @@ class TestPortfolioAggregation(unittest.TestCase):
     def test_check_column(self):
         PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.COMPANY_REVENUE)
 
-        self.data.loc[0, ColumnsConfig.MARKET_CAP] = pd.NA
+        self.data.loc[0, ColumnsConfig.TEMPERATURE_SCORE] = np.nan
         with self.assertRaises(ValueError):
             PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.TEMPERATURE_SCORE)
 
