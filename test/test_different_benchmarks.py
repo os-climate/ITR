@@ -7,11 +7,10 @@ import ITR
 
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes
 
 from ITR.data.osc_units import ureg, Q_, PA_
@@ -47,19 +46,19 @@ class TestEIBenchmarks(unittest.TestCase):
         # OECM
         with open(self.benchmark_EI_OECM) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.OECM_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         # TPI
         with open(self.benchmark_EI_TPI) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.TPI_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         # TPI below 2
         with open(self.benchmark_EI_TPI_below_2) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.TPI_below_2_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         self.OECM_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_bm)
