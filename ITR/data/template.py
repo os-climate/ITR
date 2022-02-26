@@ -9,7 +9,7 @@ ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
 
 from pydantic import ValidationError
-from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
+from ITR.data.base_providers import BaseCompanyDataProvider, \
     BaseProviderIntensityBenchmark, EITargetProjector
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig
 from ITR.interfaces import ICompanyData, EScope, \
