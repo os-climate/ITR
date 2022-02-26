@@ -4,6 +4,7 @@
 
 
 import pandas as pd
+import numpy as np
 import json
 import os
 import base64
@@ -34,6 +35,8 @@ from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, IProductionBenchmarkScopes
 
 from ITR.data.osc_units import ureg, Q_, PA_
+from pint import Quantity
+from pint_pandas import PintType
 
 # Initial calculations
 print('Start!!!!!!!!!')
@@ -106,6 +109,31 @@ portfolio_data = ITR.utils.get_data(OECM_warehouse, companies)
 amended_portfolio_global = temperature_score.calculate(portfolio_data)
 initial_portfolio = amended_portfolio_global
 print('got till here 2')
+
+# matplotlib is integrated with Pint's units system: https://pint.readthedocs.io/en/0.18/plotting.html
+# But not so plotly.  This function attempts to dequantify all units and return the magnitudes in their natural base units.
+
+def dequantify_plotly(px_func, df, **kwargs):
+    new_df = df.copy()
+    for col in ['x', 'y']:
+        s = df[kwargs[col]]
+        if isinstance(s.dtype, PintType):
+            new_df[kwargs[col]] = s.values.quantity.to_base_units().m
+        elif s.map(lambda x: isinstance(x, Quantity)).any():
+            item0 = s.values[0]
+            s = s.astype(f"pint[{item0.u}]")
+            new_df[kwargs[col]] = s.values.quantity.m
+    if 'hover_data' in kwargs.keys():
+        for col in kwargs['hover_data']:
+            s = df[col]
+            if isinstance(s.dtype, PintType):
+                new_df[col] = s.values.quantity.to_base_units().m
+            elif s.map(lambda x: isinstance(x, Quantity)).any():
+                item0 = s.values[0]
+                s = s.astype(f"pint[{item0.u}]")
+                new_df[col] = s.values.quantity.m
+
+    return px_func (new_df, **kwargs)
 
 
 # nice cheatsheet for managing layout via className attribute: https://hackerthemes.com/bootstrap-cheatsheet/
@@ -531,8 +559,6 @@ def update_graph(
         initial_portfolio = amended_portfolio_global
 
         # carbon_mask = (initial_portfolio.cumulative_budget >= ca_bu[0]) & (initial_portfolio.cumulative_budget <= ca_bu[1])
-        print(type(initial_portfolio.temperature_score))
-        print(initial_portfolio.temperature_score)
         temp_score_mask = (initial_portfolio.temperature_score >= Q_(te_sc[0],'delta_degC')) & (initial_portfolio.temperature_score <= Q_(te_sc[1],'delta_degC'))
 
         # Dropdown filters
@@ -561,7 +587,8 @@ def update_graph(
         return [agg_method.value,aggregated_scores.long.S1S2.all.score]
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
-    df_temp_score = pd.DataFrame(agg_temp_scores)
+    methods, scores = list(map(list, zip(*agg_temp_scores)))
+    df_temp_score = pd.DataFrame(data={0:pd.Series(methods,dtype='string'), 1:pd.Series(scores, dtype='pint[delta_degC]')})
     # Separate column for names on Bar chart
     # Highlight WATS and TETS
     Weight_Dict = {'WATS': 'Investment<Br>weighted', # <Br> is needed to wrap x-axis label
@@ -572,9 +599,11 @@ def update_graph(
                    'ROTS': "Revenues<Br>weigted",
                    'MOTS': 'Market Cap<Br>weighted'}
     df_temp_score['Weight_method'] = df_temp_score[0].map(Weight_Dict) # Mapping code to text
-    df_temp_score[1]=df_temp_score[1].round(decimals = 2)
-    # Creating barchart
-    fig4 = px.bar(df_temp_score, x='Weight_method', y=1, text=1,title = "Score by weighting scheme <br><sup>Assess the influence of weighting schemes on scores</sup>")
+    # 1 is the label of the row we will be graphing
+    # .map(lambda x: Q_(round(x.m, 2), x.u))
+    df_temp_score[1]=df_temp_score[1].astype('pint[delta_degC]')
+    # Creating barchart, plotting values of column `1`
+    fig4 = dequantify_plotly (px.bar, df_temp_score, x='Weight_method', y=1, text=1,title = "Score by weighting scheme <br><sup>Assess the influence of weighting schemes on scores</sup>")
     fig4.update_traces(textposition='inside', textangle=0)
     fig4.update_yaxes(title_text='Temperature score', range = [1,3])
     fig4.update_xaxes(title_text=None, tickangle=0)
@@ -591,31 +620,26 @@ def update_graph(
 
 
     # Scatter plot
-    fig1 = px.scatter(filt_df, x="cumulative_target", y="cumulative_budget", 
-                    size="investment_value", 
-                    color = "sector", labels={"color": "Sector"}, 
-                    hover_data=["company_name", "investment_value", "temperature_score"],
-                    title="Overview of portfolio")
+    fig1 = dequantify_plotly (px.scatter, filt_df, x="cumulative_target", y="cumulative_budget", 
+                              size="investment_value", 
+                              color = "sector", labels={"color": "Sector"}, 
+                              hover_data=["company_name", "investment_value", "temperature_score"],
+                              title="Overview of portfolio")
     fig1.update_layout({'legend_title_text': '','transition_duration':500})
     fig1.update_layout(legend=dict(orientation = "h",yanchor="bottom",y=1,xanchor="center",x=0.5))
     
 
     # Covered companies analysis
-    coverage=filt_df[['company_id','ghg_s1s2','cumulative_target']]
-    def f(row):
-        if (pd.isna(row['ghg_s1s2']) and row['cumulative_target']==Q_(0, 't CO2')):
-            val = "Not Covered"
-        elif (pd.isna(row['ghg_s1s2']) and row['cumulative_target']>Q_(0, 't CO2')):
-            val = "Covered only<Br>by target"
-        elif (row['ghg_s1s2']>0 and row['cumulative_target']==Q_(0, 't CO2')):
-            val = "Covered only<Br>by emissions"
-        else:
-            val = "Covered by<Br>emissions and targets"
-        return val
-    coverage['coverage_category'] = coverage.apply(f, axis=1)
+    coverage=filt_df[['company_id','ghg_s1s2','cumulative_target']].copy()
+    zeroE = Q_(0, 't CO2')
+    coverage['coverage_category'] = np.where(coverage['ghg_s1s2'].isnull(),
+                                             np.where(coverage['cumulative_target']==zeroE, "Not Covered", "Covered only<Br>by target"),
+                                             np.where((coverage['ghg_s1s2'] >zeroE) & (coverage['cumulative_target']==zeroE),
+                                                      "Covered only<Br>by emissions",
+                                                      "Covered by<Br>emissions and targets"))
     dfg=coverage.groupby('coverage_category').count().reset_index()
     dfg['portfolio']='Portfolio' # 1 column to have just 1 bar. I didn't figure out how to do it more ellegant
-    fig5 = px.bar(dfg, x='portfolio',y="company_id", color="coverage_category",text='company_id',title="Coverage of companies in portfolio")
+    fig5 = dequantify_plotly (px.bar, dfg, x='portfolio',y="company_id", color="coverage_category",text='company_id',title="Coverage of companies in portfolio")
     fig5.update_xaxes(visible=False) # hide axis
     fig5.update_yaxes(visible=False) # hide axis
     fig5.update_layout({'legend_title_text': '','transition_duration':500, 'plot_bgcolor':'white'})
@@ -625,7 +649,7 @@ def update_graph(
     trace = go.Heatmap(
                     x = filt_df.sector,
                     y = filt_df.region,
-                    z = filt_df.temperature_score,
+                    z = filt_df.temperature_score.map(lambda x: x.m),
                     type = 'heatmap',
                     colorscale = 'Temps',
                     )
@@ -633,34 +657,32 @@ def update_graph(
     fig2 = go.Figure(data = data)
     fig2.update_layout(title = "Industry vs Region ratings")
 
-
-    fig3 = px.bar(filt_df.query("temperature_score > Q_(2, 'delta_degC')"), 
-                    x="company_name", y="temperature_score", 
-                    text ="temperature_score",
-                    color="sector",title="Highest temperature scores by company")
+    fig3 = dequantify_plotly (px.bar, filt_df.query("temperature_score > @Q_(2, 'delta_degC')"), 
+                              x="company_name", y="temperature_score", 
+                              text ="temperature_score",
+                              color="sector",title="Highest temperature scores by company")
     fig3.update_traces(textposition='inside', textangle=0)
     fig3.update_yaxes(title_text='Temperature score', range = [1,4])
     fig3.update_layout({'legend_title_text': '','transition_duration':500})
     fig3.update_layout(xaxis_title = None,legend=dict(orientation = "h",yanchor="bottom",y=1,xanchor="center",x=0.5))
     
-
     # Carbon budget slider update
     # drop_d_min = initial_portfolio.cumulative_budget.min()
     # drop_d_max = initial_portfolio.cumulative_budget.max()
 
-    df=amended_portfolio_global[['company_name', 'company_id','region','sector','cumulative_budget','investment_value','trajectory_score', 'target_score','temperature_score']]    
-    df['temperature_score']=df['temperature_score'].map(lambda x: Q_(x.m.round(decimals = 2), x.u)) # formating column
-    df['trajectory_score']=df['trajectory_score'].map(lambda x: Q_(x.m.round(decimals = 2), x.u)) # formating column
-    df['target_score']=df['target_score'].map(lambda x: Q_(x.m.round(decimals = 2), x.u)) # formating column
-    df['cumulative_budget'] = df['cumulative_budget'].apply(lambda x: "{:,.1f}".format((x/1000000))) # formating column
+    df=amended_portfolio_global[['company_name', 'company_id','region','sector','cumulative_budget','investment_value','trajectory_score', 'target_score','temperature_score']].copy()  
+    df['temperature_score']=df['temperature_score'].astype('pint[delta_degC]').values.quantity.m
+    df['trajectory_score']=df['trajectory_score'].astype('pint[delta_degC]').values.quantity.m
+    df['target_score']=df['target_score'].astype('pint[delta_degC]').values.quantity.m
+    df['cumulative_budget'] = df['cumulative_budget'].astype('pint[Mt CO2]').values.quantity.m
     df['investment_value'] = df['investment_value'].apply(lambda x: "${:,.1f} Mn".format((x/1000000))) # formating column
     df.rename(columns={'company_name':'Name', 'company_id':'ISIN','region':'Region','sector':'Industry','cumulative_budget':'Emissions budget','investment_value':'Notional','trajectory_score':'Historical emissions score', 'target_score':'Target score','temperature_score':'Weighted temperature score'}, inplace=True)
 
     return (
         fig1, fig5, fig2, fig3, fig4,
         "{:.2f}".format(aggregated_scores.long.S1S2.all.score), # portfolio score
-        {'color': 'ForestGreen'} if aggregated_scores.long.S1S2.all.score < Q_(2, 'delta_degC') else {'color': 'Red'}, # conditional color
-        str(round((filt_df.company_enterprise_value.sum()+filt_df.company_cash_equivalents.sum())/10**9,0)), 
+        {'color': 'ForestGreen'} if aggregated_scores.long.S1S2.all.score.m < 2 else {'color': 'Red'}, # conditional color
+        str(round((filt_df.company_ev_plus_cash.sum())/10**9,0)), 
         str(filt_df.investment_value.sum()/10**6),
         str(len(filt_df)), # num of companies
         # str(len(filt_df.sector.unique())),  # num of sectors in pf
