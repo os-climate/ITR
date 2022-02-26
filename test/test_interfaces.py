@@ -47,6 +47,7 @@ class TestInterfaces(unittest.TestCase):
             company_id="US6293775085",
             region="Europe",
             sector="Steel",
+            emissions_metric={ "units": "t CO2"},
             production_metric={ "units": "Fe_ton"},
             target_probability=0.123,
             projected_targets = None,

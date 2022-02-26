@@ -422,13 +422,14 @@ class ICompanyData(PintModel):
     historic_data: Optional[IHistoricData]
 
     country: Optional[str]
-    emissions_metric: Optional[EmissionsMetric]  # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
-    production_metric: Optional[ProductionMetric]  # Optional because it can be inferred from sector and region
 
-    # These two instance variables match against financial data below, but are incomplete as historic_data and target_data
-    ghg_s1s2: Optional[Quantity[
-        ProductionMetric]]  # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
-    ghg_s3: Optional[Quantity[ProductionMetric]]
+    emissions_metric: Optional[EmissionsMetric]     # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
+    production_metric: Optional[ProductionMetric] # Optional because it can be inferred from sector and region
+    
+    # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
+    base_year_production: Optional[Quantity[ProductionMetric]]
+    ghg_s1s2: Optional[Quantity[EmissionsMetric]]
+    ghg_s3: Optional[Quantity[EmissionsMetric]]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -438,6 +439,7 @@ class ICompanyData(PintModel):
     company_revenue: Optional[float]
     company_market_cap: Optional[float]
     company_enterprise_value: Optional[float]
+    company_ev_plus_cash: Optional[float]
     company_total_assets: Optional[float]
     company_cash_equivalents: Optional[float]
 
@@ -454,7 +456,8 @@ class ICompanyData(PintModel):
         return UProjections_to_IProjections(historic_productions, production_metric)
 
     def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None,
-                 emissions_metric=None, production_metric=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
+                       emissions_metric=None, production_metric=None,
+                       base_year_production=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
         super().__init__(historic_data=historic_data,
                          projected_targets=projected_targets,
                          projected_intensities=projected_intensities,
@@ -478,21 +481,41 @@ class ICompanyData(PintModel):
             else:
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
             # TODO: Should raise a warning here
-        if ghg_s1s2:
-            self.ghg_s1s2 = pint_ify(ghg_s1s2, self.production_metric.units)
-        elif self.historic_data and self.historic_data.productions:
+        if base_year_production:
+            self.base_year_production=pint_ify(base_year_production, self.production_metric.units)
+        elif self.historic_data.productions:
             # TODO: This is a hack to get things going.
             year = kwargs['report_date'].year
             for i in range(len(self.historic_data.productions)):
                 if self.historic_data.productions[-1 - i].year == year:
-                    self.ghg_s1s2 = self.historic_data.productions[-1 - i].value
+                    self.base_year_production = self.historic_data.productions[-1 - i].value
+                    break
+            if self.base_year_production is None:
+                raise ValueError("invalid historic data for base_year_production")
+        else:
+            raise ValueError("missing historic data for base_year_production")
+        if ghg_s1s2:
+            self.ghg_s1s2=pint_ify(ghg_s1s2, self.emissions_metric.units)
+        elif self.historic_data.emissions:
+            # TODO: This is a hack to get things going.
+            year = kwargs['report_date'].year
+            for i in range(len(self.historic_data.emissions.S1S2)):
+                if self.historic_data.emissions.S1S2[-1  -i].year == year:
+                    self.ghg_s1s2 = self.historic_data.emissions.S1S2[-1 - i].value
                     break
             if self.ghg_s1s2 is None:
-                raise ValueError("invalid historic data for ghg_s1s2")
+                # TODO: cheap hack to treat S1 as S1S2, which we do for now for Consolidated Edison, Inc.
+                for i in range(len(self.historic_data.emissions.S1)):
+                    if self.historic_data.emissions.S1[-1 - i].year == year:
+                        self.ghg_s1s2 = self.historic_data.emissions.S1[-1 - i].value
+                        break
+                if self.ghg_s1s2 is None:
+                    print(self.company_name)
+                    raise ValueError("invalid historic data for ghg_s1s2")
         else:
             raise ValueError("missing historic data for ghg_s1s2")
         if ghg_s3:
-            self.ghg_s3 = pint_ify(ghg_s3, self.production_metric.units)
+            self.ghg_s3 = pint_ify(ghg_s3, self.emissions_metric.units)
         # TODO: We don't need to worry about missing S3 scope data yet
 
 

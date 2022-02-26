@@ -134,7 +134,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
-                          self.column_config.PRODUCTION_METRIC,
+                          self.column_config.BASE_YEAR_PRODUCTION,
                           self.column_config.GHG_SCOPE12]]
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
@@ -230,7 +230,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
         benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info)
-        company_production = company_sector_region_info[self.column_config.GHG_SCOPE12]
+        company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
                     company_production, axis=0) # .astype(f"pint[{units}]")
 

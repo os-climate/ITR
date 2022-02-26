@@ -14,15 +14,11 @@ class ColumnsConfig:
     COMPANY_LEI = "company_lei"
     COMPANY_ISIN = "company_isin"
     COMPANY_ISIC = "isic"
-    MARKET_CAP = "company_market_cap"
-    TEMPLATE_MARKET_CAP = "market_cap"
+    COMPANY_MARKET_CAP = "company_market_cap"
     INVESTMENT_VALUE = "investment_value"
     COMPANY_ENTERPRISE_VALUE = "company_enterprise_value"
     COMPANY_EV_PLUS_CASH = "company_ev_plus_cash"
     COMPANY_TOTAL_ASSETS = "company_total_assets"
-    TEMPLATE_ENTERPRISE_VALUE = "ev"
-    TEMPLATE_EV_PLUS_CASH = "evic"
-    COMPANY_TOTAL_ASSETS = "assets"
     SCOPE = "scope"
     START_YEAR = "start_year"
     VARIABLE = "variable"
@@ -38,7 +34,8 @@ class ColumnsConfig:
     TEMPLATE_REPORT_DATE = 'report_date'
     EMISSIONS_METRIC = 'emissions_metric'
     PRODUCTION_METRIC = 'production_metric'    # The unit of production (i.e., power generated, tons of steel produced, vehicles manufactured, etc.)
-    GHG_SCOPE12 = 'ghg_s1s2'    # This seems to be the base year PRODUCTION number, nothing at all to do with any quantity of actual S1S2 emissions
+    BASE_YEAR_PRODUCTION = 'base_year_production'
+    GHG_SCOPE12 = 'ghg_s1s2'
     GHG_SCOPE3 = 'ghg_s3'
     TEMPLATE_SCOPE1 = 'em_s1'
     TEMPLATE_SCOPE2 = 'em_s2'
@@ -49,7 +46,6 @@ class ColumnsConfig:
     TARGET_DATA = "target_data"
     TEMPLATE_PRODUCTION = 'production'
     COMPANY_REVENUE = 'company_revenue'
-    TEMPLAET_REVENUE = 'revenue'
     CASH_EQUIVALENTS = 'company_cash_equivalents'
     BASE_YEAR = 'base_year'
     END_YEAR = 'end_year'
