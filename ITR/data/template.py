@@ -57,12 +57,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     warnings.simplefilter("ignore")
                     company_sector_region_info = pd.DataFrame({
                         self.column_config.COMPANY_ID: [ c.company_id ],
-                        # self.column_config.GHG_SCOPE12 is incorrect in production_bm.get_company_projected_production.
-                        # Should be production value at base_year as defined in temp_config.CONTROLS_CONFIG
-                        # Do not confuse this base year metric with any target base year.
-                        # Historic data is given in terms of its own EMISSIONS_METRIC and PRODUCTION_METRIC
-                        # TODO: don't use c.production_metric; rather, grovel through c to address appropriately using PRODUCTION_METRIC text string.
-                        self.column_config.GHG_SCOPE12: [ base_year_production.to(c.production_metric.units) ],
+                        self.column_config.BASE_YEAR_PRODUCTION: [ base_year_production.to(c.production_metric.units) ],
+                        self.column_config.GHG_SCOPE12: [ c.ghg_s1s2 ],
                         self.column_config.SECTOR: [ c.sector ],
                         self.column_config.REGION: [ c.region ],
                     }, index=[0])
@@ -101,12 +97,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 suffix = suffix.upper()
             return f"{suffix}-{prefix}"
         
-        df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)        
         self._check_company_data(df_company_data)
 
         input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA
         if "Test input data" in df_company_data:
             input_data_sheet = "Test input data"
+
+        # TODO: Fix market_cap column naming inconsistency
+        df_company_data[input_data_sheet].rename(columns={'revenue':'company_revenue', 'market_cap':'company_market_cap',
+                                                          'ev':'company_enterprise_value', 'evic':'company_ev_plus_cash',
+                                                          'assets':'company_total_assets'}, inplace=True)
+
         df_fundamentals = df_company_data[input_data_sheet].set_index(ColumnsConfig.COMPANY_ID, drop=False).convert_dtypes()
         # GH https://github.com/pandas-dev/pandas/issues/46044
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
@@ -216,6 +218,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 if company_data[ColumnsConfig.EMISSIONS_METRIC]:
                     company_data[ColumnsConfig.EMISSIONS_METRIC] = { 'units': company_data[ColumnsConfig.EMISSIONS_METRIC]}
 
+                # TODO: need better handling of missing market cap data
+                if company_data[ColumnsConfig.COMPANY_MARKET_CAP] is pd.NA:
+                    company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
+
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError as e:
                 logger.warning(
@@ -245,13 +251,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                          TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
-        projected_emissions_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
+        projected_ei_s1s2 = projections.groupby(level=0, sort=False).agg(TemplateProviderCompany._np_sum)  # add scope 1 and 2
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/114
-            projected_emissions_s1s2 = projected_emissions_s1s2.apply(lambda x: x.astype(f'pint[??t CO2/({production_metric[x.name]})]'), axis=1)
+            projected_ei_s1s2 = projected_ei_s1s2.apply(lambda x: x.astype(f'pint[??t CO2/({production_metric[x.name]})]'), axis=1)
 
-        return projected_emissions_s1s2
+        return projected_ei_s1s2
 
 # class ITargetData(PintModel):
 #     netzero_year: int
