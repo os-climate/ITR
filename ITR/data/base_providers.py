@@ -22,160 +22,6 @@ from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEI
 
 # TODO handling of scopes in benchmarks
 
-class BaseCompanyDataProvider(CompanyDataProvider):
-    """
-    Data provider skeleton for JSON files parsed by the fastAPI json encoder. This class serves primarily for connecting
-    to the ITR tool via API.
-
-    :param companies: A list of ICompanyData objects that each contain fundamental company data
-    :param column_config: An optional ColumnsConfig object containing relevant variable names
-    :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
-    """
-
-    def __init__(self,
-                 companies: List[ICompanyData],
-                 column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__()
-        self._companies = self._validate_projected_trajectories(companies)
-        self.column_config = column_config
-        self.temp_config = tempscore_config
-
-    def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
-        companies_without_data = [c.company_id for c in companies if not c.historic_data and not c.projected_intensities]
-        assert not companies_without_data, \
-            f"Provide either historic emission data or projections for companies with IDs {companies_without_data}"
-        companies_without_projections = [c for c in companies if not c.projected_intensities]
-        if companies_without_projections:
-            companies_with_projections = [c for c in companies if c.projected_intensities]
-            return companies_with_projections + EITrajectoryProjector().project_ei_trajectories(companies_without_projections)
-        else:
-            return companies
-
-    # Because this presently defaults to S1S2 always, targets spec'd for S1 only ro S1+S2+S3 are not well-handled.
-    def _convert_projections_to_series(self, company: ICompanyData, feature: str,
-                                       scope: EScope = EScope.S1S2) -> pd.Series:
-        """
-        extracts the company projected intensities or targets for a given scope
-        :param feature: PROJECTED_TRAJECTORIES or PROJECTED_TARGETS (both are intensities)
-        :param scope: a scope
-        :return: pd.Series
-        """
-        company_dict = company.dict()
-        production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
-        emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
-        if company_dict[feature][scope.name]:
-            projections = company_dict[feature][scope.name]['projections']
-        else:
-            scopes = scope.value.split('+')
-            projection_scopes = {s:company_dict[feature][s]['projections'] for s in scopes if company_dict[feature][s]}
-            if len(projection_scopes)>1:
-                projection_series = {}
-                for s in scopes:
-                    projection_series[s] = pd.Series(
-                        {p['year']: p['value'] for p in company_dict[feature][s]['projections']  },
-                         name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
-                series_adder = partial(pd.Series.add, fill_value=0)
-                res = reduce(series_adder, projection_series.values())
-                return res
-            elif len(projection_scopes)==0:
-                print(f"missing target scope data for {company.company_name} :: {scope}")
-                error()
-            else:
-                projections = company_dict[feature][scopes[0]]['projections']
-        return pd.Series(
-            {p['year']: p['value'] for p in projections },
-             name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
-
-    # ??? Why prefer TRAJECTORY over TARGET?
-    def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
-        """
-        Returns projected intensities for a given set of companies and year
-        :param year: calendar year
-        :param company_ids: List of company ids
-        :return: pd.Series with intensities for given company ids
-        """
-        return self.get_company_projected_trajectories(company_ids)[year]
-
-    def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
-        """
-        Get all relevant data for a list of company ids. This method should return a list of ICompanyData
-        instances.
-
-        :param company_ids: A list of company IDs (ISINs)
-        :return: A list containing the company data
-        """
-        company_data = [company for company in self._companies if company.company_id in company_ids]
-
-        if len(company_data) is not len(company_ids):
-            missing_ids = [company.company_id for company in self._companies if company.company_id not in company_ids]
-            assert not missing_ids, f"Company IDs not found in fundamental data: {missing_ids}"
-
-        return company_data
-
-    def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
-        """
-        Gets the value of a variable for a list of companies ids
-        :param company_ids: list of company ids
-        :param variable_name: variable name of the projected feature
-        :return: series of values
-        """
-        return self.get_company_fundamentals(company_ids)[variable_name]
-
-    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        overrides subclass method
-        :param: company_ids: list of company ids
-        :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.BASE_EI,
-        ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        """
-        df_fundamentals = self.get_company_fundamentals(company_ids)
-        base_year = self.temp_config.CONTROLS_CONFIG.base_year
-        company_info = df_fundamentals.loc[
-            company_ids, [self.column_config.SECTOR, self.column_config.REGION,
-                          self.column_config.BASE_YEAR_PRODUCTION,
-                          self.column_config.GHG_SCOPE12]]
-        ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
-        return company_info.merge(ei_at_base, left_index=True, right_index=True)
-
-    def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        :param company_ids: A list of company IDs
-        :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
-        """
-        return pd.DataFrame.from_records(
-            [ICompanyData.parse_obj(c.dict()).dict() for c in self.get_company_data(company_ids)],
-            exclude=['projected_targets', 'projected_intensities', 'historic_data']).set_index(self.column_config.COMPANY_ID)
-
-    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        :param company_ids: A list of company IDs
-        :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id
-        """
-        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI) for c in
-             self.get_company_data(company_ids)]
-        if trajectory_list:
-            with warnings.catch_warnings():
-                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
-                warnings.simplefilter("ignore")
-                return pd.DataFrame(trajectory_list)
-        return pd.DataFrame()
-
-    def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
-        """
-        :param company_ids: A list of company IDs
-        :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
-        """
-        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
-             self.get_company_data(company_ids)]
-        if target_list:
-            with warnings.catch_warnings():
-                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
-                warnings.simplefilter("ignore")
-                return pd.DataFrame(target_list)
-        return pd.DataFrame()
-
 # This is actual output production (whatever the output production units may be).
 # Not to be confused with the term "projected production" as it relates to energy intensity.
 
@@ -352,6 +198,194 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                                                               self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
         benchmark_projection.index = sectors.index
         return benchmark_projection
+
+
+class BaseCompanyDataProvider(CompanyDataProvider):
+    """
+    Data provider skeleton for JSON files parsed by the fastAPI json encoder. This class serves primarily for connecting
+    to the ITR tool via API.
+
+    :param companies: A list of ICompanyData objects that each contain fundamental company data
+    :param column_config: An optional ColumnsConfig object containing relevant variable names
+    :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
+    """
+
+    def __init__(self,
+                 companies: List[ICompanyData],
+                 column_config: Type[ColumnsConfig] = ColumnsConfig,
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+        super().__init__()
+        self._companies = self._validate_projected_trajectories(companies)
+        self.column_config = column_config
+        self.temp_config = tempscore_config
+
+    def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
+        companies_without_data = [c.company_id for c in companies if not c.historic_data and not c.projected_intensities]
+        assert not companies_without_data, \
+            f"Provide either historic emission data or projections for companies with IDs {companies_without_data}"
+        companies_without_projections = [c for c in companies if not c.projected_intensities]
+        if companies_without_projections:
+            companies_with_projections = [c for c in companies if c.projected_intensities]
+            return companies_with_projections + EITrajectoryProjector().project_ei_trajectories(companies_without_projections)
+        else:
+            return companies
+
+    # Because this presently defaults to S1S2 always, targets spec'd for S1 only ro S1+S2+S3 are not well-handled.
+    def _convert_projections_to_series(self, company: ICompanyData, feature: str,
+                                       scope: EScope = EScope.S1S2) -> pd.Series:
+        """
+        extracts the company projected intensities or targets for a given scope
+        :param feature: PROJECTED_TRAJECTORIES or PROJECTED_TARGETS (both are intensities)
+        :param scope: a scope
+        :return: pd.Series
+        """
+        company_dict = company.dict()
+        production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
+        emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
+        if company_dict[feature][scope.name]:
+            projections = company_dict[feature][scope.name]['projections']
+        else:
+            scopes = scope.value.split('+')
+            projection_scopes = {s:company_dict[feature][s]['projections'] for s in scopes if company_dict[feature][s]}
+            if len(projection_scopes)>1:
+                projection_series = {}
+                for s in scopes:
+                    projection_series[s] = pd.Series(
+                        {p['year']: p['value'] for p in company_dict[feature][s]['projections']  },
+                         name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+                series_adder = partial(pd.Series.add, fill_value=0)
+                res = reduce(series_adder, projection_series.values())
+                return res
+            elif len(projection_scopes)==0:
+                print(f"missing target scope data for {company.company_name} :: {scope}")
+                error()
+            else:
+                projections = company_dict[feature][scopes[0]]['projections']
+        return pd.Series(
+            {p['year']: p['value'] for p in projections },
+             name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+
+    def _calculate_target_projections(self,
+                                      production_bm: BaseProviderProductionBenchmark,
+                                      EI_bm: BaseProviderIntensityBenchmark):
+        """
+        We cannot calculate target projections until after we have loaded benchmark data.
+        We do so when companies are associated with benchmarks, in the DataWarehouse construction
+        
+        :param Production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
+        :param EI_bm: An Emissions Intensity Benchmark (multi-sector, single-scope, 2020-2050)
+        """
+        for c in self._companies:
+            if c.projected_targets is not None:
+                continue
+            elif c.target_data is None:
+                print(f"no target data for {c.company_name}")
+                continue
+            else:
+                base_year_production = next((p.value for p in c.historic_data.productions if p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    company_sector_region_info = pd.DataFrame({
+                        self.column_config.COMPANY_ID: [ c.company_id ],
+                        self.column_config.BASE_YEAR_PRODUCTION: [ base_year_production.to(c.production_metric.units) ],
+                        self.column_config.GHG_SCOPE12: [ c.ghg_s1s2 ],
+                        self.column_config.SECTOR: [ c.sector ],
+                        self.column_config.REGION: [ c.region ],
+                    }, index=[0])
+                bm_production_data = (production_bm.get_company_projected_production(company_sector_region_info)
+                                      # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
+                                      .iloc[0].T
+                                      .astype(f'pint[{str(base_year_production.units)}]'))
+                c.projected_targets = EITargetProjector().project_ei_targets(c.target_data, c.historic_data, bm_production_data)
+    
+    # ??? Why prefer TRAJECTORY over TARGET?
+    def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
+        """
+        Returns projected intensities for a given set of companies and year
+        :param year: calendar year
+        :param company_ids: List of company ids
+        :return: pd.Series with intensities for given company ids
+        """
+        return self.get_company_projected_trajectories(company_ids)[year]
+
+    def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
+        """
+        Get all relevant data for a list of company ids. This method should return a list of ICompanyData
+        instances.
+
+        :param company_ids: A list of company IDs (ISINs)
+        :return: A list containing the company data
+        """
+        company_data = [company for company in self._companies if company.company_id in company_ids]
+
+        if len(company_data) is not len(company_ids):
+            missing_ids = [company.company_id for company in self._companies if company.company_id not in company_ids]
+            assert not missing_ids, f"Company IDs not found in fundamental data: {missing_ids}"
+
+        return company_data
+
+    def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
+        """
+        Gets the value of a variable for a list of companies ids
+        :param company_ids: list of company ids
+        :param variable_name: variable name of the projected feature
+        :return: series of values
+        """
+        return self.get_company_fundamentals(company_ids)[variable_name]
+
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        overrides subclass method
+        :param: company_ids: list of company ids
+        :return: DataFrame the following columns :
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.BASE_EI,
+        ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        """
+        df_fundamentals = self.get_company_fundamentals(company_ids)
+        base_year = self.temp_config.CONTROLS_CONFIG.base_year
+        company_info = df_fundamentals.loc[
+            company_ids, [self.column_config.SECTOR, self.column_config.REGION,
+                          self.column_config.BASE_YEAR_PRODUCTION,
+                          self.column_config.GHG_SCOPE12]]
+        ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
+        return company_info.merge(ei_at_base, left_index=True, right_index=True)
+
+    def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: A list of company IDs
+        :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
+        """
+        return pd.DataFrame.from_records(
+            [ICompanyData.parse_obj(c.dict()).dict() for c in self.get_company_data(company_ids)],
+            exclude=['projected_targets', 'projected_intensities', 'historic_data']).set_index(self.column_config.COMPANY_ID)
+
+    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: A list of company IDs
+        :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id
+        """
+        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI) for c in
+             self.get_company_data(company_ids)]
+        if trajectory_list:
+            with warnings.catch_warnings():
+                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
+                warnings.simplefilter("ignore")
+                return pd.DataFrame(trajectory_list)
+        return pd.DataFrame()
+
+    def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: A list of company IDs
+        :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
+        """
+        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
+             self.get_company_data(company_ids)]
+        if target_list:
+            with warnings.catch_warnings():
+                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
+                warnings.simplefilter("ignore")
+                return pd.DataFrame(target_list)
+        return pd.DataFrame()
 
 
 class EITrajectoryProjector(object):

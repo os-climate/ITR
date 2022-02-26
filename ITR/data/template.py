@@ -9,7 +9,7 @@ ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
 
 from pydantic import ValidationError
-from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
+from ITR.data.base_providers import BaseCompanyDataProvider, \
     BaseProviderIntensityBenchmark, EITargetProjector
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig
 from ITR.interfaces import ICompanyData, EScope, \
@@ -35,39 +35,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # self.historic_years = None
         super().__init__(self._companies, column_config, tempscore_config)
 
-    def _calculate_target_projections(self,
-                                      production_bm: BaseProviderProductionBenchmark,
-                                      EI_bm: BaseProviderIntensityBenchmark):
-        """
-        We cannot calculate target projections until after we have loaded benchmark data.
-        We do so when companies are associated with benchmarks, in the DataWarehouse construction
-        
-        :param Production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
-        :param EI_bm: An Emissions Intensity Benchmark (multi-sector, single-scope, 2020-2050)
-        """
-        for c in self._companies:
-            if c.projected_targets is not None:
-                continue
-            elif c.target_data is None:
-                print(f"no target data for {c.company_name}")
-                continue
-            else:
-                base_year_production = next((p.value for p in c.historic_data.productions if p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    company_sector_region_info = pd.DataFrame({
-                        self.column_config.COMPANY_ID: [ c.company_id ],
-                        self.column_config.BASE_YEAR_PRODUCTION: [ base_year_production.to(c.production_metric.units) ],
-                        self.column_config.GHG_SCOPE12: [ c.ghg_s1s2 ],
-                        self.column_config.SECTOR: [ c.sector ],
-                        self.column_config.REGION: [ c.region ],
-                    }, index=[0])
-                bm_production_data = (production_bm.get_company_projected_production(company_sector_region_info)
-                                      # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
-                                      .iloc[0].T
-                                      .astype(f'pint[{str(base_year_production.units)}]'))
-                c.projected_targets = EITargetProjector().project_ei_targets(c.target_data, c.historic_data, bm_production_data)
-    
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
         Checks if the company data excel contains the data in the right format
