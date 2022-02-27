@@ -13,7 +13,6 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-
 from ITR.data.osc_units import ureg, Q_
 
 

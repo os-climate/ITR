@@ -21,7 +21,7 @@ class TestPortfolioAggregation(unittest.TestCase):
         self.data = pd.DataFrame()
         self.data.loc[:, ColumnsConfig.COMPANY_NAME] = ["Company A", "Company B", "Company C"]
         self.data.loc[:, ColumnsConfig.COMPANY_REVENUE] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.MARKET_CAP] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.COMPANY_MARKET_CAP] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = [1.0, 2.0, 3.0]
         self.data.loc[:, ColumnsConfig.SCOPE] = [EScope.S1S2, EScope.S1S2, EScope.S1S2S3]
         self.data.loc[:, ColumnsConfig.GHG_SCOPE12] = pd.Series([1.0, 2.0, 3.0], dtype='pint[MWh]')
@@ -44,7 +44,7 @@ class TestPortfolioAggregation(unittest.TestCase):
 
     def test_get_value_column(self):
         self.assertEqual(PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.MOTS, ColumnsConfig),
-                         ColumnsConfig.MARKET_CAP)
+                         ColumnsConfig.COMPANY_MARKET_CAP)
         self.assertEqual(PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.EOTS, ColumnsConfig),
                          ColumnsConfig.COMPANY_ENTERPRISE_VALUE)
         self.assertEqual(PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.ECOTS, ColumnsConfig),
@@ -54,9 +54,9 @@ class TestPortfolioAggregation(unittest.TestCase):
         self.assertEqual(PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.ROTS, ColumnsConfig),
                          ColumnsConfig.COMPANY_REVENUE)
         self.assertEqual(PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.WATS, ColumnsConfig),
-                         ColumnsConfig.MARKET_CAP)
+                         ColumnsConfig.COMPANY_MARKET_CAP)
         self.assertEqual(PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.TETS, ColumnsConfig),
-                         ColumnsConfig.MARKET_CAP)
+                         ColumnsConfig.COMPANY_MARKET_CAP)
 
     def test_check_column(self):
         PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.COMPANY_REVENUE)
