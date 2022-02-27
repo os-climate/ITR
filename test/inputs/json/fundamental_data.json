@@ -4950,8 +4950,8 @@
       "S1S2S3": null
     },
     "country": "Australia",
-    "ghg_s1s2": null,
-    "ghg_s3": null,
+    "ghg_s1s2": 10220008.91046342,
+    "ghg_s3": 10220008.91046342,
     "base_year_production": 28090000.2335485,
     "industry_level_1": null,
     "industry_level_2": null,
@@ -5242,8 +5242,8 @@
       "S1S2S3": null
     },
     "country": "Taiwan",
-    "ghg_s1s2": null,
-    "ghg_s3": null,
+    "ghg_s1s2": 21533599.6290368,
+    "ghg_s3": 21533599.6290368,
     "base_year_production": 2156173206.8114123,
     "industry_level_1": null,
     "industry_level_2": null,
@@ -7578,8 +7578,8 @@
       "S1S2S3": null
     },
     "country": "South Korea",
-    "ghg_s1s2": null,
-    "ghg_s3": null,
+    "ghg_s1s2": 80242000.851335864,
+    "ghg_s3": 80242000.851335864,
     "base_year_production": 15520041.6310296,
     "industry_level_1": null,
     "industry_level_2": null,
@@ -8746,8 +8746,8 @@
       "S1S2S3": null
     },
     "country": "Germany",
-    "ghg_s1s2": null,
-    "ghg_s3": null,
+    "ghg_s1s2": 22700004.74733483,
+    "ghg_s3": 22700004.74733483,
     "base_year_production": 33630004.3464472,
     "industry_level_1": null,
     "industry_level_2": null,

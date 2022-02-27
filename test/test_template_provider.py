@@ -203,7 +203,7 @@ class TestTemplateProvider(unittest.TestCase):
                                             dtype='pint[GJ]')
         expected_data = pd.Series([10.0, 50.0], dtype='pint[Mt CO2]')
         pd.testing.assert_series_equal(
-            self.excel_provider._get_cumulative_emission(projected_emission_intensity=projected_emission,
+            self.excel_provider._get_cumulative_emissions(projected_emission_intensity=projected_emission,
                                                          projected_production=projected_production), expected_data)
 
     def test_get_company_data(self):

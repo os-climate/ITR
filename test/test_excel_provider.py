@@ -13,6 +13,8 @@ from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 
 from ITR.data.osc_units import ureg, Q_, PA_
+from test_base_providers import assert_pint_frame_equal, assert_pint_series_equal
+
 
 class TestExcelProvider(unittest.TestCase):
     """
@@ -99,8 +101,8 @@ class TestExcelProvider(unittest.TestCase):
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
                                      index=self.company_ids,
                                      dtype='pint[t CO2/GJ]').astype('object')
-        pd.testing.assert_frame_equal(self.excel_company_data.get_company_projected_trajectories(self.company_ids),
-                                      expected_data, check_names=False)
+        trajectories = self.excel_company_data.get_company_projected_trajectories(self.company_ids)
+        assert_pint_frame_equal(self, trajectories, expected_data)
 
     def test_get_benchmark(self):
         expected_data = pd.DataFrame([pd.Series([1.698247435, 1.581691084, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
@@ -128,9 +130,8 @@ class TestExcelProvider(unittest.TestCase):
                                      index=self.company_ids,
                                      columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
-        pd.testing.assert_frame_equal(
-            self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year),
-            expected_data)
+        benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
+        assert_pint_frame_equal(self, benchmarks, expected_data)
 
     def test_get_projected_production(self):
         expected_data_2025 = pd.Series([1.06866370e+08, 6.10584093e+08, 1.28474171e+08],
@@ -147,9 +148,9 @@ class TestExcelProvider(unittest.TestCase):
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]],
                                             dtype='pint[GJ]')
         expected_data = pd.Series([10.0, 50.0], dtype='pint[Mt CO2]')
-        pd.testing.assert_series_equal(
-            self.excel_provider._get_cumulative_emission(projected_emission_intensity=projected_emission,
-                                                         projected_production=projected_production), expected_data)
+        emissions = self.excel_provider._get_cumulative_emissions(projected_emission_intensity=projected_emission,
+                                                                  projected_production=projected_production)
+        assert_pint_series_equal(self, emissions, expected_data)
 
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities

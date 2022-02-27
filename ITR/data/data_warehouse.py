@@ -58,13 +58,13 @@ class DataWarehouse(ABC):
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year).sort_index()
 
-        df_trajectory = self._get_cumulative_emission(
+        df_trajectory = self._get_cumulative_emissions(
             projected_emission_intensity=self.company_data.get_company_projected_trajectories(company_ids),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
-        df_target = self._get_cumulative_emission(
+        df_target = self._get_cumulative_emissions(
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
-        df_budget = self._get_cumulative_emission(
+        df_budget = self._get_cumulative_emissions(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
@@ -108,13 +108,7 @@ class DataWarehouse(ABC):
                 pass
         return model_companies
 
-    def _weighted_mean(df, values, weights, groupby):
-        df = df.copy()
-        grouped = df.groupby(groupby)
-        df['weighted_average'] = df[values] / grouped[weights].transform('sum') * df[weights]
-        return grouped['weighted_average'].sum(min_count=1) #min_count is required for Grouper objects
-
-    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
+    def _get_cumulative_emissions(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
                                  ) -> pd.Series:
         """
         get the weighted sum of the projected emission_intensity times the projected production
@@ -122,13 +116,5 @@ class DataWarehouse(ABC):
         :param projected_production: PintArray of projected production amounts
         :return: cumulative emissions based on weighted sum of production
         """
-        df = projected_emission_intensity.multiply(projected_production)
-        try:
-            s = df.sum(axis=1).astype('pint[Mt CO2]')
-            return s
-        except:
-            display(df.sum(axis=1))
-            display(df)
-            display(projected_emission_intensity)
-            display(projected_production)
-            error()
+        projected_emissions = projected_emission_intensity.multiply(projected_production)
+        return projected_emissions.sum(axis=1).astype('pint[Mt CO2]')
