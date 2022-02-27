@@ -455,9 +455,8 @@ class ICompanyData(PintModel):
             return self.historic_data.productions
         return UProjections_to_IProjections(historic_productions, production_metric)
 
-    def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None,
-                       emissions_metric=None, production_metric=None,
-                       base_year_production=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
+    def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None, emissions_metric=None,
+                 production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
         super().__init__(historic_data=historic_data,
                          projected_targets=projected_targets,
                          projected_intensities=projected_intensities,
@@ -482,8 +481,8 @@ class ICompanyData(PintModel):
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
             # TODO: Should raise a warning here
         if base_year_production:
-            self.base_year_production=pint_ify(base_year_production, self.production_metric.units)
-        elif self.historic_data.productions:
+            self.base_year_production = pint_ify(base_year_production, self.production_metric.units)
+        elif self.historic_data and self.historic_data.productions:
             # TODO: This is a hack to get things going.
             year = kwargs['report_date'].year
             for i in range(len(self.historic_data.productions)):
@@ -496,7 +495,7 @@ class ICompanyData(PintModel):
             raise ValueError("missing historic data for base_year_production")
         if ghg_s1s2:
             self.ghg_s1s2=pint_ify(ghg_s1s2, self.emissions_metric.units)
-        elif self.historic_data.emissions:
+        elif self.historic_data and self.historic_data.emissions:
             # TODO: This is a hack to get things going.
             year = kwargs['report_date'].year
             for i in range(len(self.historic_data.emissions.S1S2)):

@@ -2,7 +2,6 @@ import json
 import unittest
 import os
 import pandas as pd
-from numpy.testing import assert_array_equal
 import ITR
 
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
@@ -11,10 +10,10 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes
+from ITR.data.osc_units import ureg, Q_
 
-from ITR.data.osc_units import ureg, Q_, PA_
 
 class TestBaseProvider(unittest.TestCase):
     """
@@ -43,7 +42,7 @@ class TestBaseProvider(unittest.TestCase):
         # load intensity benchmarks
         with open(self.benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         self.base_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.base_EI_bm)
@@ -72,8 +71,7 @@ class TestBaseProvider(unittest.TestCase):
                 company_id=company,
                 investment_value=100,
                 company_isin=company,
-            )
-            )
+            ))
         # portfolio data
         portfolio_data = ITR.utils.get_data(self.base_warehouse, portfolio)
         scores = temp_score.calculate(portfolio_data)
@@ -84,7 +82,6 @@ class TestBaseProvider(unittest.TestCase):
         pd.testing.assert_series_equal(scores.temperature_score, expected)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.11, ureg.delta_degC), places=2)
-
 
     def test_get_benchmark(self):
         seq_index = pd.RangeIndex.from_range(range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
@@ -111,8 +108,7 @@ class TestBaseProvider(unittest.TestCase):
                            0.00617251, 0.005400365
                            ], index=seq_index, dtype="pint[t CO2/GJ]")]
         expected_data = pd.concat(data, axis=1, ignore_index=True).T
-        expected_data.index=self.company_ids
-
+        expected_data.index = self.company_ids
 
         pd.testing.assert_frame_equal(
             self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year),
