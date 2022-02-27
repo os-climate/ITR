@@ -58,13 +58,13 @@ class DataWarehouse(ABC):
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year).sort_index()
 
-        df_trajectory = self._get_cumulative_emission(
+        df_trajectory = self._get_cumulative_emissions(
             projected_emission_intensity=self.company_data.get_company_projected_trajectories(company_ids),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
-        df_target = self._get_cumulative_emission(
+        df_target = self._get_cumulative_emissions(
             projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
-        df_budget = self._get_cumulative_emission(
+        df_budget = self._get_cumulative_emissions(
             projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)

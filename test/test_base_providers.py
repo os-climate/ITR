@@ -1,6 +1,7 @@
 import json
 import unittest
 import os
+
 import pandas as pd
 import ITR
 
@@ -13,6 +14,33 @@ from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProduct
 from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes
 from ITR.data.osc_units import ureg, Q_
+
+
+def assert_pint_series_equal(case: unittest.case, left: pd.Series, right: pd.Series):
+    # Helper function to avoid bug in pd.testing.assert_series_equal concerning pint series
+    for d, data in enumerate(left):
+        case.assertAlmostEqual(data, right[d])
+
+    for d, data in enumerate(right):
+        case.assertAlmostEqual(data, left[d])
+
+
+def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.DataFrame):
+    # Helper function to avoid bug in pd.testing.assert_frame_equal concerning pint series
+    left_flat = left.values.flatten()
+    right_flat = right.values.flatten()
+
+    errors = []
+    for d, data in enumerate(left_flat):
+        try:
+            case.assertAlmostEqual(data, right_flat[d])
+        except AssertionError as e:
+            errors.append(e.args[0])
+    if errors:
+        raise AssertionError('\n'.join(errors))
+
+    for d, data in enumerate(right_flat):
+        case.assertAlmostEqual(data, left_flat[d])
 
 
 class TestBaseProvider(unittest.TestCase):
@@ -54,7 +82,8 @@ class TestBaseProvider(unittest.TestCase):
              [Q_(0.476586931582279, 't CO2/GJ'), Q_(5.98937002e+08, 'MWh'), {'units':'MWh'}, 'Electricity Utilities', 'North America'],
              [Q_(0.22457393169277, 't CO2/GJ'), Q_(1.22472003e+08, 'MWh'), {'units':'MWh'}, 'Electricity Utilities', 'Europe']],
             index=self.company_ids,
-            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC,
+                     ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
     def test_temp_score_from_json_data(self):
         # Calculate Temp Scores
@@ -86,7 +115,7 @@ class TestBaseProvider(unittest.TestCase):
     def test_get_benchmark(self):
         seq_index = pd.RangeIndex.from_range(range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
-        data = [pd.Series([1.698247435, 1.581691084, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
+        data = [pd.Series([1.698247435, 1.581436210, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
                            0.782935186, 0.677935928, 0.572936671, 0.467937413, 0.362938156, 0.257938898,
                            0.233746281, 0.209553665, 0.185361048, 0.161168432, 0.136975815, 0.124810886,
                            0.112645956, 0.100481026, 0.088316097, 0.076151167, 0.062125588, 0.048100009,
@@ -109,19 +138,17 @@ class TestBaseProvider(unittest.TestCase):
                            ], index=seq_index, dtype="pint[t CO2/GJ]")]
         expected_data = pd.concat(data, axis=1, ignore_index=True).T
         expected_data.index = self.company_ids
+        benchmarks = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
 
-        pd.testing.assert_frame_equal(
-            self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year),
-            expected_data.astype('object'))
+        assert_pint_frame_equal(self, benchmarks, expected_data)
 
     def test_get_projected_production(self):
-        expected_data_2025 = pd.Series([1.06866370e+08, 6.10584093e+08, 1.28474171e+08],
+        expected_data_2025 = pd.Series([106866369.91163988, 610584093.0081439, 128474170.5748834],
                                        index=self.company_ids,
                                        name=2025,
                                        dtype='pint[MWh]')
-        pd.testing.assert_series_equal(
-            self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025],
-            expected_data_2025, check_dtype=False)
+        productions = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        assert_pint_series_equal(self, expected_data_2025, productions)
 
     def test_get_cumulative_value(self):
         projected_ei = pd.DataFrame([[Q_(1.0, 't CO2/MWh'), Q_(2.0, 't CO2/MWh')], [Q_(3.0, 't CO2/MWh'), Q_(4.0, 't CO2/MWh')]], dtype='pint[t CO2/MWh]')
@@ -129,9 +156,9 @@ class TestBaseProvider(unittest.TestCase):
         expected_data = pd.Series([10.0, 50.0],
                                     index=[0, 1],
                                     dtype='pint[Mt CO2]')
-        pd.testing.assert_series_equal(
-            self.base_warehouse._get_cumulative_emission(projected_emission_intensity=projected_ei,
-                                                         projected_production=projected_production), expected_data)
+        cumulative_emissions = self.base_warehouse._get_cumulative_emissions(projected_emission_intensity=projected_ei,
+                                                                              projected_production=projected_production)
+        assert_pint_series_equal(self, cumulative_emissions, expected_data)
 
     def test_get_company_data(self):
         company_1 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[0]
@@ -140,8 +167,8 @@ class TestBaseProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, 'MWh'))    # These are apparently production numbers, not emissions numbers
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, 'MWh'))    # These are apparently production numbers, not emissions numbers
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, 't CO2'))    # These are apparently production numbers, not emissions numbers
+        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, 't CO2'))    # These are apparently production numbers, not emissions numbers
         self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, 't CO2'), places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, 't CO2'), places=4)
         self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, 't CO2'), places=4)
@@ -158,6 +185,7 @@ class TestBaseProvider(unittest.TestCase):
         pd.testing.assert_series_equal(self.base_company_data.get_value(company_ids=self.company_ids,
                                                                         variable_name=ColumnsConfig.COMPANY_REVENUE),
                                        expected_data)
+
 
 if __name__ == "__main__":
     test = TestBaseProvider()

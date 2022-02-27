@@ -2,20 +2,15 @@ import warnings # needed until quantile behaves better with Pint quantities in a
 import numpy as np
 import pandas as pd
 from functools import reduce, partial
-
-import pint
-import pint_pandas
 from pandas._libs.missing import NAType
-
-from ITR.data.osc_units import ureg, Q_, PA_
-
 from typing import List, Type, Dict
+
+from ITR.data.osc_units import Q_, PA_
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, ProjectionConfig, VariablesConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
-
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
-    IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, ICompanyProjection, IHistoricEIScopes, \
+    IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, \
     IEmissionRealization
 
