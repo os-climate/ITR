@@ -1,3 +1,9 @@
+from pathlib import Path
+
+# If this file is moved, the computation of get_project_root may also need to change
+def get_project_root() -> Path:
+    return Path(__file__).parent
+
 import pandas as pd
 from typing import List, Optional, Tuple
 
