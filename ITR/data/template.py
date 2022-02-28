@@ -16,7 +16,29 @@ from ITR.interfaces import ICompanyData, EScope, \
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
 
+from ITR.utils import get_project_root
+pkg_root = get_project_root()
+df_country_regions = pd.read_csv(f"{pkg_root}/data/country_region_info.csv")
 
+def ITR_country_to_region(country):
+    if len(country)==2:
+        regions = df_country_regions[df_country_regions.alpha_2==country].region_ar6_10
+    elif len(country)==3:
+        regions = df_country_regions[df_country_regions.alpha_3==country].region_ar6_10
+    else:
+        if country in df_country_regions.name:
+            regions = df_country_regions[df_country_regions.name==country].region_ar6_10
+        elif country in df_country_regions.common_name:
+            regions = df_country_regions[df_country_regions.common_name==country].region_ar6_10
+        else:
+            raise ValueError(f"country {country} not found")
+    region = regions.squeeze()
+    if region in ['North America', 'Europe']:
+        return region
+    if 'Asia' in region:
+        return 'Asia'
+    return 'Global'
+            
 class TemplateProviderCompany(BaseCompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
@@ -102,14 +124,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         if "Test input data" in df_company_data:
             input_data_sheet = "Test input data"
 
+        df = df_company_data[input_data_sheet]
         # TODO: Fix market_cap column naming inconsistency
-        df_company_data[input_data_sheet].rename(
+        df.rename(
             columns={'revenue': 'company_revenue', 'market_cap': 'company_market_cap',
                      'ev': 'company_enterprise_value', 'evic': 'company_ev_plus_cash',
                      'assets': 'company_total_assets'}, inplace=True)
+        df.loc[df.region.isnull(), 'region'] = df.apply(lambda x: ITR_country_to_region(x.country), axis=1)
 
-        df_fundamentals = df_company_data[input_data_sheet].set_index(ColumnsConfig.COMPANY_ID,
-                                                                      drop=False).convert_dtypes()
+        df_fundamentals = df.set_index(ColumnsConfig.COMPANY_ID, drop=False).convert_dtypes()
         # GH https://github.com/pandas-dev/pandas/issues/46044
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
 
@@ -149,10 +172,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # df_historic now ready for conversion to model for each company
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
-        input_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
+        test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
         if "Test target data" in df_company_data:
-            input_target_sheet = "Test target data"
-        df_target_data = df_company_data[input_target_sheet].set_index('company_id').convert_dtypes()
+            test_target_sheet = "Test target data"
+        df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
 
         # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
         df_target_data.loc[df_target_data.target_start_year.isna(), 'target_start_year'] = 2020
