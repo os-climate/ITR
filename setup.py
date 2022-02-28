@@ -14,11 +14,11 @@ setup(
     author_email='joris.cramwinckel@ortec-finance.com',
     packages=find_packages(),
     download_url = "https://pypi.org/project/ITR-Temperature-Alignment-Tool/",
-    url="https://github.com/os-c/ITR",
+    url="https://github.com/os-climate/ITR",
     project_urls={
-        "Bug Tracker": "https://github.com/os-c/ITR",
-        "Documentation": 'https://github.com/os-c/ITR',
-        "Source Code": "https://github.com/os-c/ITR",
+        "Bug Tracker": "https://github.com/os-climate/ITR",
+        "Documentation": 'https://github.com/os-climate/ITR',
+        "Source Code": "https://github.com/os-climate/ITR",
     },
     keywords = ['Climate', 'ITR', 'Finance'],
     package_data={
@@ -28,7 +28,7 @@ setup(
     install_requires=['pandas',
                       'xlrd',
                       'pydantic'],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     extras_require={
         'dev': [
             'nose2',
