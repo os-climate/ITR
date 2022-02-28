@@ -2,6 +2,7 @@ import os
 import unittest
 
 import pandas as pd
+import numpy as np
 
 from numpy.testing import assert_array_equal
 import ITR
@@ -33,7 +34,6 @@ class TestTemplateProvider(unittest.TestCase):
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         self.excel_provider = DataWarehouse(self.template_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
-        # self.company_ids = ["US26441C2044"]
         self.company_info_at_base_year = pd.DataFrame(
             [[Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
              [Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
@@ -144,29 +144,22 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.259, ureg.delta_degC), places=2)
 
     def test_get_projected_value(self):
-        expected_data = pd.DataFrame([[1.698247435, 1.698247435, 1.590828573, 1.492707987, 1.403890821, 1.325025884,
-                                       1.256900833, 1.199892962, 1.153286422, 1.115132019, 1.082871619, 1.054062505,
-                                       1.026649109, 0.99885963, 0.969029076, 0.935600151, 0.897456359, 0.854466423,
-                                       0.807721858, 0.759088111, 0.710432718, 0.663134402, 0.618007985, 0.575439357,
-                                       0.535546775, 0.498300211, 0.463594864, 0.431292461, 0.401243246, 0.373297218,
-                                       0.347309599, 0.32314329],
-                                      [0.476586932, 0.476586932, 0.464695628, 0.464754889, 0.466332369, 0.469162115,
-                                       0.472725797, 0.47629738, 0.479176649, 0.480954576, 0.481532513, 0.480898667,
-                                       0.478873144, 0.474920056, 0.468037326, 0.456822975, 0.439924142, 0.416868713,
-                                       0.38867473, 0.357527534, 0.325789571, 0.295235835, 0.266872969, 0.241107715,
-                                       0.21798084, 0.197345262, 0.178974681, 0.162622136, 0.148048657, 0.135035628,
-                                       0.123388813, 0.112938349],
-                                      [0.224573932, 0.258012985, 0.261779459, 0.26416071, 0.266503379, 0.268691114,
-                                       0.270569413, 0.271980435, 0.272823337, 0.273080838, 0.272767105, 0.27183449,
-                                       0.270090124, 0.267129877, 0.262302026, 0.254777592, 0.243845281, 0.229393209,
-                                       0.212192429, 0.193616639, 0.175038148, 0.157423255, 0.141276866, 0.12676707,
-                                       0.113867496, 0.102458357, 0.092385201, 0.083489223, 0.0756213, 0.068647473,
-                                       0.062450199, 0.056927654]],
-                                     columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1),
-                                     index=self.company_ids,
-                                     dtype='pint[t CO2/GJ]').astype('object')
-        trajectories = self.template_company_data.get_company_projected_trajectories(self.company_ids)
+        company_ids = ["US00130H1059", "KR7005490008"]
+        expected_data = pd.DataFrame([pd.Series(
+            [605.1694925804982,574.1215117186019,555.4511355634547,537.3879182390771,519.9121149988865,
+             503.0046231935541,486.6469613900634,470.8212491698162,455.5101875837016,440.6970402427642,
+             426.36561502380243,412.5002463698985,399.08577816653377,386.10754717457115,373.5513670019951,
+             361.4035125968896,349.65070524470207,338.28009805339593,327.2792619106238,316.6361718975723,
+             306.3391941446274,296.3770731144923,286.7389192988567,277.4141973151697,268.39271439050435,
+             259.66460921992547,251.22034118718275,243.05067993594568,235.14669528018078,227.49974744264256,
+             220.10147761080776,212.94379879992977], name='US0079031078', dtype='pint[t CO2/GWh]'),
+                                      pd.Series(
+            [2.1951083625828733,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,
+             2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0], name='KR7005490008', dtype='pint[t CO2/Fe_ton]')],
+                                     index=company_ids)
+        expected_data.columns = range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                      TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)
+        trajectories = self.template_company_data.get_company_projected_trajectories(company_ids)
         assert_pint_frame_equal(self, trajectories, expected_data)
 
     def test_get_benchmark(self):

@@ -255,7 +255,9 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 print(f"missing target scope data for {company.company_name} :: {scope}")
                 error()
             else:
-                projections = company_dict[feature][scopes[0]]['projections']
+                # This clause is only accessed if the scope is S1S2 or S1S2S3 of which only one scope is provided.
+                # projections = company_dict[feature][scopes[0]]['projections']
+                projections = []
         return pd.Series(
             {p['year']: p['value'] for p in projections },
              name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
