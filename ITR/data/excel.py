@@ -116,9 +116,10 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
         # TODO: Fix units for Steel
         super().__init__(
             IEIBenchmarkScopes(benchmark_metric={'units':'t CO2/MWh'}, S1S2=EI_benchmarks,
-                                              benchmark_temperature=benchmark_temperature,
-                                              benchmark_global_budget=benchmark_global_budget,
-                                              is_AFOLU_included=is_AFOLU_included), column_config,
+                               benchmark_temperature=benchmark_temperature,
+                               benchmark_global_budget=benchmark_global_budget,
+                               is_AFOLU_included=is_AFOLU_included),
+            column_config,
             tempscore_config)
 
     def _check_sector_data(self) -> None:

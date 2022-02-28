@@ -69,24 +69,24 @@ class DataWarehouse(ABC):
                 company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
         df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
-        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget]*
-                                                                                            len(df_company_data), dtype='pint[Gt CO2]',
-                                                                               index=df_company_data.index)
-        df_company_data[self.column_config.BENCHMARK_TEMP] = pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature]*
-                                                                                   len(df_company_data), dtype='pint[delta_degC]',
-                                                                               index=df_company_data.index)
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
+            pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget] * len(df_company_data),
+                      dtype='pint[Gt CO2]',
+                      index=df_company_data.index)
+        df_company_data[self.column_config.BENCHMARK_TEMP] = \
+            pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature] * len(df_company_data),
+                      dtype='pint[delta_degC]',
+                      index=df_company_data.index)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/114
-            for col in [ self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
+            for col in [self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
                 df_company_data[col] = df_company_data[col].apply(lambda x: str(x))
         companies = df_company_data.to_dict(orient="records")
-        aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
-                                                            companies]
+        aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
         return aggregate_company_data
 
     def _convert_df_to_model(self, df_company_data: pd.DataFrame) -> List[ICompanyAggregates]:
-
         """
         transforms Dataframe Company data and preprocessed values into list of ICompanyAggregates instances
 

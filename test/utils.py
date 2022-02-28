@@ -26,4 +26,9 @@ def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.D
         raise AssertionError('\n'.join(errors))
 
     for d, data in enumerate(right_flat):
-        case.assertAlmostEqual(data, left_flat[d])
+        try:
+            case.assertAlmostEqual(data, left_flat[d])
+        except AssertionError as e:
+            errors.append((e.args[0]))
+    if errors:
+        raise AssertionError('\n'.join(errors))

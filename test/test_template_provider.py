@@ -20,7 +20,7 @@ from test_base_providers import assert_pint_series_equal
 
 class TestTemplateProvider(unittest.TestCase):
     """
-    Test the excel provider
+    Test the excel template provider
     """
 
     def setUp(self) -> None:
@@ -170,31 +170,37 @@ class TestTemplateProvider(unittest.TestCase):
         assert_pint_frame_equal(self, trajectories, expected_data)
 
     def test_get_benchmark(self):
-        expected_data = pd.DataFrame([pd.Series([1.698247435, 1.581691084, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
-                                       0.782935186, 0.677935928, 0.572936671, 0.467937413, 0.362938156, 0.257938898,
-                                       0.233746281, 0.209553665, 0.185361048, 0.161168432, 0.136975815, 0.124810886,
-                                       0.112645956, 0.100481026, 0.088316097, 0.076151167, 0.062125588, 0.048100009,
-                                       0.034074431, 0.020048852, 0.006023273, 0.005843878, 0.005664482, 0.005485087,
-                                       0.005305691, 0.005126296
-                                       ],name='US0079031078', dtype='pint[t CO2/GJ]'),
-                                      pd.Series([0.476586932, 0.444131055, 0.389650913, 0.335170772, 0.28069063, 0.226210489,
-                                       0.22171226, 0.192474531, 0.163236802, 0.133999073, 0.104761344, 0.075523615,
-                                       0.068787023, 0.062050431, 0.055313839, 0.048577247, 0.041840655, 0.038453251,
-                                       0.035065847, 0.031678443, 0.028291039, 0.024903635, 0.020998121, 0.017092607,
-                                       0.013187093, 0.009281579, 0.005376065, 0.005326111, 0.005276157, 0.005226203,
-                                       0.005176249, 0.005126296
-                                       ],name='US00724F1012', dtype='pint[t CO2/GJ]'),
-                                      pd.Series([0.224573932, 0.17975612, 0.163761501, 0.147766883, 0.131772265, 0.115777646,
-                                       0.099783028, 0.090628361, 0.081473693, 0.072319026, 0.063164359, 0.054009692,
-                                       0.050089853, 0.046170015, 0.042250176, 0.038330338, 0.034410499, 0.031104249,
-                                       0.027797999, 0.024491748, 0.021185498, 0.017879248, 0.016155615, 0.014431983,
-                                       0.012708351, 0.010984719, 0.009261087, 0.008488943, 0.007716798, 0.006944654,
-                                       0.00617251, 0.005400365
-                                       ],name='FR0000125338', dtype='pint[t CO2/GJ]')
+        expected_data = pd.DataFrame([pd.Series([1.6982474347547,1.58143621150052,1.3853579488631413,1.1892796862257624,
+                                                 0.9932014235883839,0.7971231609510052,0.7809336851788673,0.6757048271942354,
+                                                 0.5704759692096036,0.46524711122497175,0.3600182532403398,0.2547893952557078,
+                                                 0.23054387703774004,0.20629835881977232,0.1820528406018046,0.15780732238383688,
+                                                 0.1335618041658692,0.12137027360245764,0.10917874303904605,0.09698721247563447,
+                                                 0.08479568191222286,0.07260415134881128,0.058547903118739995,0.044491654888668734,
+                                                 0.030435406658597484,0.016379158428526226,0.002322910198454965,0.0021431223587553565,
+                                                 0.0019633345190557478,0.001783546679356139,0.0016037588396565301,0.0014239709999569286
+                                                 ], name='US0079031078', dtype='pint[t CO2/GJ]'),
+                                      pd.Series([0.476586931582279,0.4438761824346462,0.3889682148288414,0.33406024722303657,
+                                                 0.2791522796172317,0.2242443120114269,0.21971075893269795,0.19024342967498475,
+                                                 0.16077610041727156,0.13130877115955836,0.10184144190184515,0.07237411264413192,
+                                                 0.06558461894405697,0.05879512524398202,0.05200563154390709,0.045216137843832147,
+                                                 0.038426644143757224,0.03501263916310838,0.03159863418245954,0.028184629201810696,
+                                                 0.024770624221161847,0.021356619240513006,0.017420435738605664,0.013484252236698325,
+                                                 0.009548068734790988,0.005611885232883652,0.0016757017309763137,0.0016253555847724364,
+                                                 0.001575009438568559,0.0015246632923646814,0.0014743171461608039,0.0014239709999569286
+                                                 ], name='US00724F1012', dtype='pint[t CO2/GJ]'),
+                                      pd.Series([0.22457393169277, 0.17895857241820134, 0.16267932465294896, 0.1464000768876966,
+                                                 0.130120829122444, 0.11384158135719184, 0.09756233359193943, 0.0882447561051738,
+                                                 0.078927178618408, 0.06960960113164248, 0.06029202364487683, 0.0509744461581112,
+                                                 0.046984852960782, 0.04299525976345229, 0.03900566656612284, 0.0350160733687934,
+                                                 0.031026480171464, 0.02766139400289410, 0.02429630783432425, 0.0209312216657544,
+                                                 0.017566135497185, 0.01420104932861466, 0.01244674461183282, 0.0106924398950510,
+                                                 0.008938135178269, 0.00718383046148729, 0.00542952574470545, 0.0046436408978128,
+                                                 0.003857756050920, 0.00307187120402739, 0.00228598635713470, 0.0015001015102420],
+                                                name='FR0000125338', dtype='pint[t CO2/GJ]')
                                      ],
-                                     index=self.company_ids,
-                                     columns=range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                   TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
+                                     index=self.company_ids)
+        expected_data.columns = list(range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
+                                           TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
         benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
@@ -222,14 +228,14 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Duke Energy Corp.")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "US26441C2044")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, ureg('t CO2')))
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, ureg('t CO2')))
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(5912426347.23670, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(3745094638.52858, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(8631481789.38558, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(43215000.0, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(82018839.2, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(47988154.144799985, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(673654041.4715265, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(287877763.61957714, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(1072738125.127108, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(1018535561.45581, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2933704424.3851283, ureg('t CO2')), places=7)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,
