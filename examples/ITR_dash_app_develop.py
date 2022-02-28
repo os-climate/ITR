@@ -38,6 +38,10 @@ from ITR.data.osc_units import ureg, Q_, PA_
 from pint import Quantity
 from pint_pandas import PintType
 
+from ITR.utils import get_project_root
+pkg_root = get_project_root()
+
+
 # Initial calculations
 print('Start!!!!!!!!!')
 
@@ -52,6 +56,8 @@ benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
 
 root = os.path.dirname(os.path.abspath("__file__"))
+print(f"root = {root}; pkg_root = {pkg_root}")
+
 # root = os.path.dirname(os.path.abspath(__file__))
 # company_json = os.path.join(root, directory1, directory2, directory3, company_json_file)
 benchmark_prod_json = os.path.join(root, directory1, directory2, directory3, benchmark_prod_json_file)
@@ -306,9 +312,9 @@ app.layout = dbc.Container( # always start with container
                                 ],
                                 width=2,
                             ), 
-                            dbc.Col(html.Div(dbc.Button('Get template', size="lg", color="secondary",
-                                                        href="https://raw.githubusercontent.com/os-c/ITR/e772349117d41e1b62e3f9bcfb904b7e9c5e6c35/examples/data/example_portfolio.csv?token=AD3GZXC7GFH2O6EC7Z3X3KLBOE5MO",
-                                                        download="Dummy_portfolio.csv.txt",
+                            dbc.Col(html.Div(dbc.Button('Get template (needs implementation)', size="lg", color="secondary",
+                                                        href="https://docs.faculty.ai/user-guide/apps/examples/dash_file_upload_download.html",
+                                                        download="dash_file_upload_download.html",
                                                         external_link=True,
                                             ),
                                     ),
@@ -484,7 +490,7 @@ def parse_contents(contents, filename):
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename: # Assume that the user uploaded a CSV file
-            df = pd.read_csv(io.StringIO(decoded.decode('iso-8859-1')))
+            df = pd.read_csv(io.StringIO(decoded.decode('iso-8859-1')),sep=';')
         elif 'xls' in filename: # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
         # print(df)
