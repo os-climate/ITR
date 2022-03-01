@@ -46,9 +46,9 @@
         TS---TS_U
         TS_U[Temperature<br>Score]-->Weighted_TS
         Weighting_Method-->Weighted_TS
-        WATS-->Weighting_Method
-        TETS-->Weighting_Method
-        Fundamentals-->Weighting_Method
+        WATS[WATS<br>Investment Value]-->Weighting_Method
+        TETS[TETS<br>Total Emissions]-->Weighting_Method
+        Fundamentals[Weighting by Fundamentals:<br>Market Cap<br>Revenue<br>Enterprise Value<br>EVIC<br>Assets]-->Weighting_Method
         TS -.- Fundamentals
       end
       Dev-.-Quant
