@@ -52,9 +52,12 @@ class TestBaseProvider(unittest.TestCase):
                             "US00724F1012",
                             "FR0000125338"]
         self.company_info_at_base_year = pd.DataFrame(
-            [[Q_(1.6982474347547, 't CO2/GJ'), Q_(1.04827859e+08, 'MWh'), {'units':'MWh'}, 'Electricity Utilities', 'North America'],
-             [Q_(0.476586931582279, 't CO2/GJ'), Q_(5.98937002e+08, 'MWh'), {'units':'MWh'}, 'Electricity Utilities', 'North America'],
-             [Q_(0.22457393169277, 't CO2/GJ'), Q_(1.22472003e+08, 'MWh'), {'units':'MWh'}, 'Electricity Utilities', 'Europe']],
+            [[Q_(1.6982474347547, 't CO2/GJ'), Q_(1.04827859e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
+              'North America'],
+             [Q_(0.476586931582279, 't CO2/GJ'), Q_(5.98937002e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
+              'North America'],
+             [Q_(0.22457393169277, 't CO2/GJ'), Q_(1.22472003e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
+              'Europe']],
             index=self.company_ids,
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC,
                      ColumnsConfig.SECTOR, ColumnsConfig.REGION])
@@ -89,27 +92,28 @@ class TestBaseProvider(unittest.TestCase):
     def test_get_benchmark(self):
         seq_index = pd.RangeIndex.from_range(range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                    TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
-        data = [pd.Series([1.698247435, 1.581436210, 1.386040647, 1.190390211, 0.994739774, 0.799089338,
-                           0.782935186, 0.677935928, 0.572936671, 0.467937413, 0.362938156, 0.257938898,
-                           0.233746281, 0.209553665, 0.185361048, 0.161168432, 0.136975815, 0.124810886,
-                           0.112645956, 0.100481026, 0.088316097, 0.076151167, 0.062125588, 0.048100009,
-                           0.034074431, 0.020048852, 0.006023273, 0.005843878, 0.005664482, 0.005485087,
-                           0.005305691, 0.005126296
-                           ], index=seq_index, dtype="pint[t CO2/GJ]"),
-                pd.Series([0.476586932, 0.444131055, 0.389650913, 0.335170772, 0.28069063, 0.226210489,
-                           0.22171226, 0.192474531, 0.163236802, 0.133999073, 0.104761344, 0.075523615,
-                           0.068787023, 0.062050431, 0.055313839, 0.048577247, 0.041840655, 0.038453251,
-                           0.035065847, 0.031678443, 0.028291039, 0.024903635, 0.020998121, 0.017092607,
-                           0.013187093, 0.009281579, 0.005376065, 0.005326111, 0.005276157, 0.005226203,
-                           0.005176249, 0.005126296
-                           ], index=seq_index, dtype="pint[t CO2/GJ]"),
-                pd.Series([0.224573932, 0.17975612, 0.163761501, 0.147766883, 0.131772265, 0.115777646,
-                           0.099783028, 0.090628361, 0.081473693, 0.072319026, 0.063164359, 0.054009692,
-                           0.050089853, 0.046170015, 0.042250176, 0.038330338, 0.034410499, 0.031104249,
-                           0.027797999, 0.024491748, 0.021185498, 0.017879248, 0.016155615, 0.014431983,
-                           0.012708351, 0.010984719, 0.009261087, 0.008488943, 0.007716798, 0.006944654,
-                           0.00617251, 0.005400365
-                           ], index=seq_index, dtype="pint[t CO2/GJ]")]
+        data = [
+            pd.Series([1.6982474347547, 1.5814362115005, 1.385357948863141, 1.18927968622576, 0.9932014235884,
+                       0.7971231609510, 0.7809336851789, 0.675704827194235, 0.57047596920960, 0.4652471112250,
+                       0.3600182532403, 0.2547893952557, 0.230543877037740, 0.20629835881977, 0.1820528406018,
+                       0.1578073223838, 0.1335618041659, 0.121370273602458, 0.10917874303905, 0.0969872124756,
+                       0.0847956819122, 0.0726041513488, 0.058547903118731, 0.04449165488867, 0.0304354066586,
+                       0.0163791584285, 0.0023229101985, 0.002143122358755, 0.00196333451906, 0.0017835466794,
+                       0.0016037588397, 0.0014239710000], index=seq_index, dtype="pint[t CO2/GJ]"),
+            pd.Series([0.476586931582279, 0.4438761824346, 0.3889682148288414, 0.33406024722304, 0.27915227961723,
+                       0.224244312011427, 0.2197107589327, 0.1902434296749848, 0.16077610041727, 0.13130877115956,
+                       0.101841441901845, 0.0723741126441, 0.0655846189440570, 0.05879512524398, 0.05200563154391,
+                       0.045216137843832, 0.0384266441438, 0.0350126391631084, 0.03159863418246, 0.02818462920181,
+                       0.024770624221162, 0.0213566192405, 0.0174204357386057, 0.01348425223670, 0.00954806873479,
+                       0.005611885232884, 0.0016757017310, 0.0016253555847724, 0.00157500943857, 0.00152466329236,
+                       0.001474317146161, 0.0014239710000], index=seq_index, dtype="pint[t CO2/GJ]"),
+            pd.Series([0.2245739316928, 0.1789585724182, 0.16267932465295, 0.146400076887697, 0.1301208291224,
+                       0.1138415813572, 0.0975623335919, 0.08824475610517, 0.078927178618408, 0.0696096011316,
+                       0.0602920236449, 0.0509744461581, 0.04698485296078, 0.042995259763452, 0.0390056665661,
+                       0.0350160733688, 0.0310264801715, 0.02766139400289, 0.024296307834324, 0.0209312216658,
+                       0.0175661354972, 0.0142010493286, 0.01244674461183, 0.010692439895051, 0.0089381351783,
+                       0.0071838304615, 0.0054295257447, 0.00464364089781, 0.003857756050920, 0.0030718712040,
+                       0.0022859863571, 0.0015001015102], index=seq_index, dtype="pint[t CO2/GJ]")]
         expected_data = pd.concat(data, axis=1, ignore_index=True).T
         expected_data.index = self.company_ids
         benchmarks = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
@@ -125,13 +129,16 @@ class TestBaseProvider(unittest.TestCase):
         assert_pint_series_equal(self, expected_data_2025, productions)
 
     def test_get_cumulative_value(self):
-        projected_ei = pd.DataFrame([[Q_(1.0, 't CO2/MWh'), Q_(2.0, 't CO2/MWh')], [Q_(3.0, 't CO2/MWh'), Q_(4.0, 't CO2/MWh')]], dtype='pint[t CO2/MWh]')
-        projected_production = pd.DataFrame([[Q_(2.0, 'TWh'), Q_(4.0, 'TWh')], [Q_(6.0, 'TWh'), Q_(8.0, 'TWh')]], dtype='pint[TWh]')
+        projected_ei = pd.DataFrame(
+            [[Q_(1.0, 't CO2/MWh'), Q_(2.0, 't CO2/MWh')], [Q_(3.0, 't CO2/MWh'), Q_(4.0, 't CO2/MWh')]],
+            dtype='pint[t CO2/MWh]')
+        projected_production = pd.DataFrame([[Q_(2.0, 'TWh'), Q_(4.0, 'TWh')], [Q_(6.0, 'TWh'), Q_(8.0, 'TWh')]],
+                                            dtype='pint[TWh]')
         expected_data = pd.Series([10.0, 50.0],
-                                    index=[0, 1],
-                                    dtype='pint[Mt CO2]')
+                                  index=[0, 1],
+                                  dtype='pint[Mt CO2]')
         cumulative_emissions = self.base_warehouse._get_cumulative_emissions(projected_emission_intensity=projected_ei,
-                                                                              projected_production=projected_production)
+                                                                             projected_production=projected_production)
         assert_pint_series_equal(self, cumulative_emissions, expected_data)
 
     def test_get_company_data(self):
@@ -141,14 +148,14 @@ class TestBaseProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, 't CO2'))    # These are apparently production numbers, not emissions numbers
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, 't CO2'))    # These are apparently production numbers, not emissions numbers
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(1362284467.0830, 't CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(2262242040.68059, 't CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(3769096510.09909, 't CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(5912426347.23670, 't CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(3745094638.52858, 't CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(8631481789.38558, 't CO2'), places=4)
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(104827858.636039, 't CO2'))
+        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(598937001.892059, 't CO2'))
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(4904224081.498916, 't CO2'))
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(8144071346.450123, 't CO2'))
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(13568747436.356716, 't CO2'))
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(21284734850.052108, 't CO2'))
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(13482340698.702868, 't CO2'))
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(31073334441.78807, 't CO2'))
 
     def test_get_value(self):
         expected_data = pd.Series([20248547997.0,
