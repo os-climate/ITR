@@ -123,15 +123,6 @@ class PortfolioAggregation(ABC):
 
         elif PortfolioAggregationMethod.is_emissions_based(portfolio_aggregation_method):
             # These four methods only differ in the way the company is valued.
-            if portfolio_aggregation_method == PortfolioAggregationMethod.ECOTS:
-                if True:
-                    self._check_column(data, self.c.COLS.COMPANY_EV_PLUS_CASH)
-                else:
-                    self._check_column(data, self.c.COLS.COMPANY_ENTERPRISE_VALUE)
-                    self._check_column(data, self.c.COLS.CASH_EQUIVALENTS)
-                    data[self.c.COLS.COMPANY_EV_PLUS_CASH] = data[self.c.COLS.COMPANY_ENTERPRISE_VALUE] + \
-                                                             data[self.c.COLS.CASH_EQUIVALENTS]
-
             value_column = PortfolioAggregationMethod.get_value_column(portfolio_aggregation_method, self.c.COLS)
 
             # Calculate the total owned emissions of all companies
