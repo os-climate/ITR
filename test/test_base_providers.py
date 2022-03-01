@@ -27,7 +27,6 @@ class TestBaseProvider(unittest.TestCase):
         self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
         self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM.json")
-        # self.excel_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
 
         # load company data
         with open(self.company_json) as json_file:
