@@ -499,7 +499,7 @@ class EITrajectoryProjector(object):
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
             scope_projections = {}
-            for scope in ICompanyEIProjectionsScopes.__fields__.keys():
+            for scope in ICompanyEIProjectionsScopes.__fields__:
                 if not company.historic_data.emissions.__getattribute__(scope):
                     continue
                 results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, scope)]
@@ -631,7 +631,7 @@ class EITargetProjector(object):
         If the company has no target or the target can't be processed, then the output the emission database, unprocessed
         """
         ei_projection_scopes = {"S1": None, "S2": None, "S1S2": None, "S3": None, "S1S2S3": None}
-        for scope in ei_projection_scopes.keys():
+        for scope in ei_projection_scopes:
             scope_targets = [target for target in targets if target.target_scope.name == scope]
             if not scope_targets:
                 continue

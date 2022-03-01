@@ -129,7 +129,7 @@ def dequantify_plotly(px_func, df, **kwargs):
             item0 = s.values[0]
             s = s.astype(f"pint[{item0.u}]")
             new_df[kwargs[col]] = s.values.quantity.m
-    if 'hover_data' in kwargs.keys():
+    if 'hover_data' in kwargs:
         for col in kwargs['hover_data']:
             s = df[col]
             if isinstance(s.dtype, PintType):

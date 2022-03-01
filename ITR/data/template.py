@@ -99,7 +99,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :return: None
         """
         required_tabs = [TabsConfig.TEMPLATE_INPUT_DATA, TabsConfig.TEMPLATE_TARGET_DATA]
-        missing_tabs = [tab for tab in required_tabs if tab not in df.keys()]
+        missing_tabs = [tab for tab in required_tabs if tab not in df]
         assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
 
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
