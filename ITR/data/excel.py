@@ -154,7 +154,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         """
         required_tabs = [TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET]
         optional_tabs = [TabsConfig.PROJECTED_EI, TabsConfig.HISTORIC_DATA]
-        missing_tabs = [tab for tab in required_tabs + optional_tabs if tab not in df.keys()]
+        missing_tabs = [tab for tab in required_tabs + optional_tabs if tab not in df]
         assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
         assert not all(tab in missing_tabs for tab in optional_tabs), f"Either of the tabs {optional_tabs} is required."
 
@@ -172,11 +172,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         df_fundamentals[ColumnsConfig.PRODUCTION_METRIC] = df_fundamentals[ColumnsConfig.SECTOR].map(sector_to_production_metric)
         company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
         df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
-        if TabsConfig.PROJECTED_EI in df_company_data.keys():
+        if TabsConfig.PROJECTED_EI in df_company_data:
             df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
         else:
             df_ei = None
-        if TabsConfig.HISTORIC_DATA in df_company_data.keys():
+        if TabsConfig.HISTORIC_DATA in df_company_data:
             df_historic = df_company_data[TabsConfig.HISTORIC_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False)
             df_historic = df_historic.merge(df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].rename('units'), left_index=True, right_index=True)
             df_historic.loc[df_historic.variable=='Emissions', 'units'] = 't CO2'
