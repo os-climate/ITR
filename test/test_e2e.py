@@ -35,13 +35,15 @@ class EndToEndTest(unittest.TestCase):
     """
 
     def setUp(self):
+        # base_year is 2019
         company_id = "BaseCompany"
         self.BASE_COMP_SCORE = Q_(3.85, ureg.delta_degC)
         self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,
-            ghg_s1s2=IProjection.parse_obj({"year": 2019, "value":Q_(100.0, ureg('Fe_ton'))}),
-            ghg_s3=IProjection.parse_obj({"year": 2019, "value":Q_(0.0, ureg('Fe_ton'))}),
+            base_year_production=IProjection.parse_obj({"year": 2019, "value":Q_(1000000.0, ureg('Fe_ton'))}).value,
+            ghg_s1s2=IProjection.parse_obj({"year": 2019, "value":Q_(1698247.4347547039, ureg('t CO2'))}).value,
+            ghg_s3=IProjection.parse_obj({"year": 2019, "value":Q_(0.0, ureg('t CO2'))}).value,
             company_revenue=100,
             company_market_cap=100,
             company_enterprise_value=100,
