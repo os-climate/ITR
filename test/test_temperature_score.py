@@ -1,15 +1,13 @@
 import warnings
-
 import os
 import unittest
-
 import pandas as pd
 
 from ITR.interfaces import ETimeFrames, EScope
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.data.osc_units import ureg, Q_
 
-from ITR.data.osc_units import ureg, Q_, PA_
 
 class TestTemperatureScore(unittest.TestCase):
     """

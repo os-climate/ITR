@@ -1,13 +1,10 @@
-import warnings
-
 import unittest
-
 import numpy as np
 import pandas as pd
-
 from ITR.portfolio_aggregation import PortfolioAggregationMethod, PortfolioAggregation
 from ITR.configs import ColumnsConfig
 from ITR.interfaces import EScope
+from utils import assert_pint_series_equal
 
 
 class TestPortfolioAggregation(unittest.TestCase):
@@ -69,71 +66,50 @@ class TestPortfolioAggregation(unittest.TestCase):
         pa_WATS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
                                                           input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                           portfolio_aggregation_method=PortfolioAggregationMethod.WATS)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd.testing.assert_series_equal(pa_WATS,
-                                           pd.Series([0.166667, 0.666667, 1.5], dtype='pint[delta_degC]'))
+        expected = pd.Series([0.1666667, 0.6666667, 1.5], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, pa_WATS, expected)
 
     def test_calculate_aggregate_score_TETS(self):
         pa_TETS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
                                                           input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                           portfolio_aggregation_method=PortfolioAggregationMethod.TETS)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd.testing.assert_series_equal(
-                pa_TETS,
-                pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
+        expected = pd.Series([0.1111111, 0.4444444, 2.0], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, pa_TETS, expected)
 
     def test_calculate_aggregate_score_ECOTS(self):
         pa_ECOTS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
                                                           input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                           portfolio_aggregation_method=PortfolioAggregationMethod.ECOTS)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd.testing.assert_series_equal(
-                pa_ECOTS,
-                pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
+        expected = pd.Series([0.1111111, 0.4444444, 2.0], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, pa_ECOTS, expected)
 
     def test_calculate_aggregate_score_MOTS(self):
         pa_MOTS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
                                                           input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                           portfolio_aggregation_method=PortfolioAggregationMethod.MOTS)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd.testing.assert_series_equal(
-                pa_MOTS,
-                pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
+        expected = pd.Series([0.1111111, 0.4444444, 2.0], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, pa_MOTS, expected)
 
     def test_calculate_aggregate_score_EOTS(self):
         pa_EOTS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
                                                           input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                           portfolio_aggregation_method=PortfolioAggregationMethod.EOTS)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd.testing.assert_series_equal(
-                pa_EOTS,
-                pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
+        expected = pd.Series([0.1111111, 0.4444444, 2.0], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, pa_EOTS, expected)
 
     def test_calculate_aggregate_score_AOTS(self):
         pa_AOTS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
                                                           input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                           portfolio_aggregation_method=PortfolioAggregationMethod.AOTS)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd.testing.assert_series_equal(
-                pa_AOTS,
-                pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
+        expected = pd.Series([0.11111111, 0.44444444, 2.0], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, pa_AOTS, expected)
 
     def test_calculate_aggregate_score_ROTS(self):
         pa_ROTS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
                                                           input_column=ColumnsConfig.TEMPERATURE_SCORE,
                                                           portfolio_aggregation_method=PortfolioAggregationMethod.ROTS)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            pd.testing.assert_series_equal(
-                pa_ROTS,
-                pd.Series([0.111111, 0.444444, 2.0], dtype='pint[delta_degC]'))
-
+        expected = pd.Series([0.1111111, 0.4444444, 2.0], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, pa_ROTS, expected)
 
 if __name__ == "__main__":
     test = TestPortfolioAggregation()
