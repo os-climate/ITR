@@ -173,7 +173,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -505,7 +505,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -778,7 +778,7 @@
         "historic_data": {
             "productions": null,
             "emissions": null,
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -1216,7 +1216,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -1654,7 +1654,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -2092,7 +2092,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -2530,7 +2530,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -2968,7 +2968,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -3406,7 +3406,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -3844,7 +3844,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -4282,7 +4282,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -4720,7 +4720,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -5158,7 +5158,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -5596,7 +5596,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -6034,7 +6034,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -6472,7 +6472,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": null
+            "emissions_intensities": null
         },
         "projected_targets": null,
         "projected_intensities": {
@@ -6798,7 +6798,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -7236,7 +7236,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -7674,7 +7674,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -8112,7 +8112,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -8550,7 +8550,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -8988,7 +8988,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -9426,7 +9426,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -9864,7 +9864,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -10302,7 +10302,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -10740,7 +10740,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -11178,7 +11178,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -11616,7 +11616,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -12054,7 +12054,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,
@@ -12492,7 +12492,7 @@
                 "S3": [],
                 "S1S2S3": []
             },
-            "emission_intensities": {
+            "emissions_intensities": {
                 "S1": [
                     {
                         "year": 2009,

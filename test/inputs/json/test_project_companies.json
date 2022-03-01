@@ -173,7 +173,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -356,7 +356,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -478,7 +478,7 @@
     "sector": "Electricity Utilities",
     "target_probability": 0.4285714285714285,
     "historic_data": {
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -767,7 +767,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -1056,7 +1056,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -1345,7 +1345,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -1634,7 +1634,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -1923,7 +1923,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -2212,7 +2212,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -2501,7 +2501,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -2790,7 +2790,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -3079,7 +3079,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -3368,7 +3368,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -3657,7 +3657,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -3946,7 +3946,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -4235,7 +4235,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": null
+      "emissions_intensities": null
     }
   },
   {
@@ -4412,7 +4412,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -4701,7 +4701,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -4990,7 +4990,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -5279,7 +5279,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -5568,7 +5568,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -5857,7 +5857,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -6146,7 +6146,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -6435,7 +6435,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -6724,7 +6724,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -7013,7 +7013,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -7302,7 +7302,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -7591,7 +7591,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -7880,7 +7880,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
@@ -8169,7 +8169,7 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emission_intensities": {
+      "emissions_intensities": {
         "S1": [
           {
             "year": 2009,
