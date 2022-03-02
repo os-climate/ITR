@@ -1,12 +1,11 @@
+import numpy as np
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
 from typing_extensions import Annotated
-from pydantic import BaseModel, Field, ValidationError, parse_obj_as
-
+from pydantic import BaseModel, Field, parse_obj_as
 from pint import Quantity
+
 from ITR.data.osc_units import ureg, Q_
-import numpy as np
-import pandas as pd
 
 class AggregationContribution(BaseModel):
     company_name: str
@@ -389,7 +388,7 @@ class ICompanyData(PintModel):
     country: Optional[str]
 
     emissions_metric: Optional[EmissionsMetric]     # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
-    production_metric: Optional[ProductionMetric] # Optional because it can be inferred from sector and region
+    production_metric: Optional[ProductionMetric]  # Optional because it can be inferred from sector and region
     
     # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
     base_year_production: Optional[Quantity[ProductionMetric]]
@@ -464,7 +463,7 @@ class ICompanyData(PintModel):
             # TODO: This is a hack to get things going.
             year = kwargs['report_date'].year
             for i in range(len(self.historic_data.emissions.S1S2)):
-                if self.historic_data.emissions.S1S2[-1  -i].year == year:
+                if self.historic_data.emissions.S1S2[-1 - i].year == year:
                     self.ghg_s1s2 = self.historic_data.emissions.S1S2[-1 - i].value
                     break
             if self.ghg_s1s2 is None:

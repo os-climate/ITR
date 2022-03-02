@@ -99,7 +99,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         :param scope:
         :return:
         """
-        return self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].reset_index().set_index(
+        return self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].set_index(
             [self.column_config.REGION, self.column_config.SECTOR])
 
 
