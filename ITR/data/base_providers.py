@@ -73,7 +73,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info)
         company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-                    company_production, axis=0) # .astype(f"pint[{units}]")
+                    company_production, axis=0)
 
     def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame,
                                   scope: EScope = EScope.S1S2) -> pd.DataFrame:
@@ -92,11 +92,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         benchmark_regions.loc[~mask] = "Global"
 
-        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors)),
-                                                        range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                                              self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors))]
         benchmark_projection.index = sectors.index
-
         return benchmark_projection
 
 
@@ -188,9 +185,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         benchmark_regions.loc[~mask] = "Global"
 
-        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors)),
-                                                        range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                                              self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
+        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors))]
         benchmark_projection.index = sectors.index
         return benchmark_projection
 
@@ -259,8 +254,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 # projections = company_dict[feature][scopes[0]]['projections']
                 projections = []
         return pd.Series(
-            {p['year']: p['value'] for p in projections },
-             name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+            {p['year']: p['value'] for p in projections},
+            name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
 
     def _calculate_target_projections(self,
                                       production_bm: BaseProviderProductionBenchmark,

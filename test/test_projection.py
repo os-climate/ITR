@@ -5,16 +5,19 @@ import os
 from ITR.data.base_providers import EITrajectoryProjector
 from ITR.interfaces import ICompanyData
 
+
 def mystr(s):
     t = str(s).replace('CO2 * metric_ton', 't CO2').replace('gigajoule','GJ').replace(' / ', '/')
     if t.startswith('nan'):
         return json.loads('NaN')
     return t
 
+
 def refstr(s):
     if s!=s:
         return json.loads('NaN')
     return str(s)
+
 
 class TestProjector(unittest.TestCase):
     """

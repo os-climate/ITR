@@ -1,23 +1,18 @@
+import pandas as pd
 from pathlib import Path
+from typing import List, Optional, Tuple
+from pint import Quantity
+
+from .configs import ColumnsConfig, TemperatureScoreConfig
+from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
+from .data.data_warehouse import DataWarehouse
+from .portfolio_aggregation import PortfolioAggregationMethod
+
 
 # If this file is moved, the computation of get_project_root may also need to change
 def get_project_root() -> Path:
     return Path(__file__).parent
 
-import pandas as pd
-from typing import List, Optional, Tuple
-
-from pint import Quantity
-from .data.osc_units import ureg, Q_, PA_
-# ureg = pint.get_application_registry()
-
-from .configs import ColumnsConfig, TemperatureScoreConfig
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
-
-from .temperature_score import TemperatureScore
-from .portfolio_aggregation import PortfolioAggregationMethod
-
-from .data.data_warehouse import DataWarehouse
 
 def _flatten_user_fields(record: PortfolioCompany):
     """
