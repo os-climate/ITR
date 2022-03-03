@@ -280,7 +280,8 @@ class ICompanyEIProjections(BaseModel):
     projections: List[ICompanyEIProjection]
 
     def __init__(self, ei_metric, projections, *args, **kwargs):
-        super().__init__(ei_metric=ei_metric, projections=UProjections_to_IProjections(ICompanyEIProjection, projections, ei_metric),
+        super().__init__(ei_metric=ei_metric, projections=UProjections_to_IProjections(ICompanyEIProjection, projections,
+                                                                                       ei_metric.dict() if isinstance(ei_metric, BaseModel) else  ei_metric),
                          *args, **kwargs)
 
     def __getitem__(self, item):
