@@ -5,7 +5,7 @@ import pandas as pd
 
 from ITR.data.osc_units import ureg, Q_, PA_
 
-from ITR.interfaces import EScope, PowerGenerationWh, IProjection, IBenchmark, ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections
+from ITR.interfaces import EScope, PowerGenerationWh, IntensityMetric, IProjection, IBenchmark, ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections
 
 
 class TestInterfaces(unittest.TestCase):
@@ -38,7 +38,7 @@ class TestInterfaces(unittest.TestCase):
                        index=[2019, 2020, 2021],
                        name='nl_steel')
         p = [IProjection(year=int(k), value=Q_(v, ureg('Fe_ton'))) for k, v in row.items()]
-        S1S2=ICompanyEIProjections(projections=p)
+        S1S2=ICompanyEIProjections(projections=p, ei_metric=IntensityMetric.parse_obj({'units':'t CO2/Fe_ton'}))
         x = ICompanyEIProjectionsScopes(S1S2=S1S2)
 
     def test_ICompanyData(self):
