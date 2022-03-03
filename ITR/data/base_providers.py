@@ -247,12 +247,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 res = reduce(series_adder, projection_series.values())
                 return res
             elif len(projection_scopes)==0:
-                print(f"missing target scope data for {company.company_name} :: {scope}")
-                error()
+                raise ValueError(f"missing target scope data for {company.company_name} :: {scope}")
             else:
                 # This clause is only accessed if the scope is S1S2 or S1S2S3 of which only one scope is provided.
-                # projections = company_dict[feature][scopes[0]]['projections']
-                projections = []
+                projections = company_dict[feature][scopes[0]]['projections']
+                # projections = []
         return pd.Series(
             {p['year']: p['value'] for p in projections},
             name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
@@ -271,7 +270,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             if c.projected_targets is not None:
                 continue
             elif c.target_data is None:
-                print(f"no target data for {c.company_name}")
+                raise ValueError(f"no target data for {c.company_name}")
                 continue
             else:
                 base_year_production = next((p.value for p in c.historic_data.productions if p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
@@ -417,10 +416,10 @@ class EITrajectoryProjector(object):
                 data.extend(self._historic_emissions_to_dicts(company.company_id, company.historic_data.emissions))
             if company.historic_data.emissions_intensities:
                 data.extend(self._historic_ei_to_dicts(company.company_id,
-                                                                         company.historic_data.emissions_intensities))
+                                                       company.historic_data.emissions_intensities))
         if not data:
-            print("No historic data anywhere")
             print(companies)
+            raise ValueError("No historic data anywhere")
         return pd.DataFrame.from_records(data).set_index(
             [ColumnsConfig.COMPANY_ID, ColumnsConfig.VARIABLE, ColumnsConfig.SCOPE])
 
@@ -495,19 +494,14 @@ class EITrajectoryProjector(object):
         for company in companies:
             scope_projections = {}
             for scope in ICompanyEIProjectionsScopes.__fields__:
-                if not company.historic_data.emissions.__getattribute__(scope):
+                if not company.historic_data.emissions_intensities or not company.historic_data.emissions_intensities.__getattribute__(scope):
+                    scope_projections[scope] = None
                     continue
                 results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, scope)]
-                if company.emissions_metric and company.production_metric:
-                    # These are already stored in the correct compact format
-                    units = f"{company.emissions_metric.units}/{company.production_metric.units}"
-                elif company.sector=='Steel':
-                    units = "t CO2/Fe_ton"
-                elif company.sector=='Electricity Utilities':
-                    units = 't CO2/' + 'MWh' if company.region=='North America' else 'GJ'
+                units = f"{results.values[0].u:~P}"
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-                scope_projections[scope] = ICompanyEIProjections(projections=projections)
+                scope_projections[scope] = ICompanyEIProjections(ei_metric={'units':units}, projections=projections)
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
 
@@ -517,26 +511,18 @@ class EITrajectoryProjector(object):
         intensities = intensities.T#.loc[2016:2020]
         for col in intensities.columns:
             s = intensities[col]
+            ei_units = f"{s.loc[s.first_valid_index()].u:~P}"
             if s.notnull().any():
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     try:
-                        intensities[col] = s.map(lambda x: Q_(np.nan, x.u)
-                                                 if x.m is pd.NA else x).astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
+                        intensities[col] = s.map(lambda x: Q_(np.nan, ei_units)
+                                                 if x.m is np.nan or x.m is pd.NA else x).astype(f"pint[{ei_units}]")
                     except TypeError as e:
                         print(e)
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         for col in winsorized_intensities.columns:
-            s = winsorized_intensities[col]
-            if s.notnull().any():
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    try:
-                        # Convert the NaNs created in winsorize function back into a Quantity.  The [5:-1] strips the pint[] from the quantity type
-                        winsorized_intensities[col] = s.map(lambda x: Q_(np.nan, str(intensities[col].dtype)[5:-1])
-                                                            if x is np.nan else x).astype(f"pint[{s.loc[s.first_valid_index()].u:~P}]")
-                    except TypeError as e:
-                        print(e)
+            winsorized_intensities[col] = winsorized_intensities[col].astype(intensities[col].dtype)
         standardized_intensities: pd.DataFrame = self._interpolate(winsorized_intensities)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
@@ -655,8 +641,8 @@ class EITargetProjector(object):
                         last_year, value_last_year = last_year_data.year, last_year_data.value
                         target_year = target.end_year
                         # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
-                        target_value = Q_(target.target_base_qty * (1 - target.target_reduction_pct),
-                                          target.target_base_unit)
+                        target_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
+                                          target.target_base_year_unit)
                         CAGR = self._compute_CAGR(value_last_year, target_value, (target_year - last_year))
                         ei_projections = [ICompanyEIProjection(year=year, value=value_last_year * (1 + CAGR) ** (y + 1))
                                           for y, year in enumerate(range(1 + last_year, 1 + target_year))]
@@ -665,12 +651,12 @@ class EITargetProjector(object):
                         else:
                             ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections)
                         if not scope_targets and netzero_year > target_year: # add in netzero target at the end
-                            CAGR = self._compute_CAGR(target_value, Q_(0, target.target_base_unit), (netzero_year - target_year))
+                            CAGR = self._compute_CAGR(target_value, Q_(0, target.target_base_year_unit), (netzero_year - target_year))
                             ei_projections = [ICompanyEIProjection(year=year, value=target_value * (1 + CAGR) ** (y + 1))
                                               for y, year in enumerate(range(1 + target_year, 1 + netzero_year))]
                             ei_projection_scopes[scope].projections.extend(ei_projections)
                             target_year = netzero_year
-                            target_value = Q_(0, target.target_base_unit)
+                            target_value = Q_(0, target.target_base_year_unit)
                         if not scope_targets and target_year < 2050:
                             # Assume everything stays flat until 2050
                             ei_projection_scopes[scope].projections.extend(
@@ -699,14 +685,14 @@ class EITargetProjector(object):
                         last_year, value_last_year = last_year_data.year, last_year_data.value
                         target_year = target.end_year
                         # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
-                        target_value = Q_(target.target_base_qty * (1 - target.target_reduction_pct),
-                                                target.target_base_unit)
+                        target_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
+                                                target.target_base_year_unit)
                         CAGR = self._compute_CAGR(value_last_year, target_value, (target_year - last_year))
 
                         emissions_projections = [value_last_year * (1 + CAGR) ** (y + 1)
                                                  for y, year in enumerate(range(last_year + 1, target_year + 1))]
                         emissions_projections = pd.Series(emissions_projections, index=range(last_year + 1, target_year + 1),
-                                                          dtype=f'pint[{target.target_base_unit}]')
+                                                          dtype=f'pint[{target.target_base_year_unit}]')
                         production_projections = production_bm.loc[last_year + 1: target_year]
                         ei_projections = emissions_projections / production_projections
 

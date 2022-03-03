@@ -44,6 +44,8 @@ class EndToEndTest(unittest.TestCase):
             base_year_production=IProjection.parse_obj({"year": 2019, "value":Q_(1000000.0, ureg('Fe_ton'))}).value,
             ghg_s1s2=IProjection.parse_obj({"year": 2019, "value":Q_(1698247.4347547039, ureg('t CO2'))}).value,
             ghg_s3=IProjection.parse_obj({"year": 2019, "value":Q_(0.0, ureg('t CO2'))}).value,
+            emissions_metric={'units':'t CO2'},
+            production_metric={'units':'Fe_ton'},
             company_revenue=100,
             company_market_cap=100,
             company_enterprise_value=100,
@@ -58,39 +60,40 @@ class EndToEndTest(unittest.TestCase):
             region='Europe',
             benchmark_global_budget="396 Gt CO2",
             benchmark_temperature="1.5 delta_degC",
-            production_metric = { "units": "Fe_ton" },
             projected_intensities=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
+                    "ei_metric": {'units': "t CO2/Fe_ton"},
                     "projections": [
                         {
                             "year": "2019",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/Fe_ton"
                         },
                         {
                             "year": "2020",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/Fe_ton"
                         },
                         {
                             "year": "2021",
-                            "value": 1.5908285727976157
+                            "value": "1.5908285727976157 t CO2/Fe_ton"
                         }
                     ]
                 }
             }),
             projected_targets=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
+                    "ei_metric": {'units': "t CO2/Fe_ton"},
                     "projections": [
                         {
                             "year": "2019",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/Fe_ton"
                         },
                         {
                             "year": "2020",
-                            "value": 1.6982474347547039
+                            "value": "1.6982474347547039 t CO2/Fe_ton"
                         },
                         {
                             "year": "2021",
-                            "value": 1.5577542305393455
+                            "value": "1.5577542305393455 t CO2/Fe_ton"
                         }
                     ]
                 }

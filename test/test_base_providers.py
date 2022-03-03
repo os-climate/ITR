@@ -31,6 +31,12 @@ class TestBaseProvider(unittest.TestCase):
         # load company data
         with open(self.company_json) as json_file:
             parsed_json = json.load(json_file)
+        for company_data in parsed_json:
+            company_data['emissions_metric'] = {'units':'t CO2'}
+            if company_data['sector'] == 'Electricity Utilities':
+                company_data['production_metric'] = {'units':'MWh'}
+            elif company_data['sector'] == 'Steel':
+                company_data['production_metric'] = {'units':'Fe_ton'}
         self.companies = [ICompanyData.parse_obj(company_data) for company_data in parsed_json]
         self.base_company_data = BaseCompanyDataProvider(self.companies)
 
@@ -171,3 +177,4 @@ if __name__ == "__main__":
     test = TestBaseProvider()
     test.setUp()
     test.test_get_projected_production()
+    test.test_get_company_data()
