@@ -25,8 +25,8 @@ class TestTemperatureScore(unittest.TestCase):
                                              "data_test_temperature_score.csv"), sep=";")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df['ghg_s1s2'] = df['ghg_s1s2'].astype('pint[MWh]')
-            df['ghg_s3'] = df['ghg_s3'].astype('pint[MWh]')
+            df['ghg_s1s2'] = df['ghg_s1s2'].astype('pint[t CO2]')
+            df['ghg_s3'] = df['ghg_s3'].astype('pint[t CO2]')
             for cumulative in ['cumulative_budget', 'cumulative_target', 'cumulative_trajectory']:
                 df[cumulative] = df[cumulative].astype('pint[Mt CO2]')
             df['benchmark_global_budget'] = df['benchmark_global_budget'].astype('pint[Gt CO2]')
