@@ -1,6 +1,7 @@
 import json
 import unittest
 import os
+import datetime
 
 from ITR.data.base_providers import EITrajectoryProjector
 from ITR.interfaces import ICompanyData
@@ -31,6 +32,9 @@ class TestProjector(unittest.TestCase):
 
         with open(self.source_path, 'r') as file:
             company_dicts = json.load(file)
+        for company_dict in company_dicts:
+            # TODO: fix json input and reference files!
+            company_dict['report_date'] = datetime.date(2021, 12, 31)
         self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
         self.projector = EITrajectoryProjector()
 
