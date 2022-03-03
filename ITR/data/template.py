@@ -295,12 +295,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
     #     netzero_year: int
     #     target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
     #     target_scope: EScope
-    #     start_year: Optional[int]
-    #     base_year: int
-    #     end_year: int
+    #     target_start_year: Optional[int]
+    #     target_base_year: int
+    #     target_end_year: int
 
-    #     target_base_qty: float
-    #     target_base_unit: str
+    #     target_base_year_qty: float
+    #     target_base_year_unit: str
     #     target_reduction_pct: float
 
     def _convert_target_data(self, target_data: pd.DataFrame) -> List[ITargetData]:
@@ -308,12 +308,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param historic: historic production, emission and emission intensity data for a company
         :return: IHistoricData Pydantic object
         """
-        target_data = target_data.rename(columns={'target_base_year': 'base_year',
-                                                  'target_start_year': 'start_year',
-                                                  'target_year': 'end_year',
-                                                  'target_reduction_ambition': 'target_reduction_pct',
-                                                  'target_base_year_qty': 'target_base_qty',
-                                                  'target_base_year_unit': 'target_base_unit'})
+        target_data = target_data.rename(columns={'target_year': 'target_end_year', 'target_reduction_ambition': 'target_reduction_pct',})
         return [ITargetData(**td) for td in target_data.to_dict('records')]
 
     def _get_historic_data(self, company_ids: List[str], historic_data: pd.DataFrame) -> pd.DataFrame:
