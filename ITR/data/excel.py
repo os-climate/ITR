@@ -16,7 +16,7 @@ from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, VariablesConfig, TabsConfig
-from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
+from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, IEmissionRealization, IEIRealization, IProjection
 
@@ -186,13 +186,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             df_historic = None
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
-    def _convert_series_to_IProjections(self, projections: pd.Series) -> [IProjection]:
+    def _convert_series_to_projections(self, projections: pd.Series, ProjectionType: BaseModel) -> [IProjection]:
         """
         Converts a Pandas Series to a list of IProjection
         :param projections: Pandas Series with years as indices
         :return: List of IProjection objects
         """
-        return [IProjection(year=y, value=v) for y, v in projections.items()]
+        return [ProjectionType(year=y, value=v) for y, v in projections.items()]
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame, df_targets: pd.DataFrame, df_ei: pd.DataFrame,
                              df_historic: pd.DataFrame) -> List[ICompanyData]:
@@ -225,8 +225,10 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 # company_data.update({ColumnsConfig.PROJECTED_EI: {'S1S2': {'projections': df_ei}}})
 
                 company_id = company_data[ColumnsConfig.COMPANY_ID]
-                units = sector_to_production_metric[company_data[ColumnsConfig.SECTOR]]
-                company_data[ColumnsConfig.PRODUCTION_METRIC] = {'units': units}
+                production_metric = sector_to_production_metric[company_data[ColumnsConfig.SECTOR]]
+                intensity_metric = sector_to_intensity_metric[company_data[ColumnsConfig.SECTOR]]
+                company_data[ColumnsConfig.PRODUCTION_METRIC] = {'units': production_metric}
+                company_data[ColumnsConfig.EMISSIONS_METRIC] = {'units': 't CO2'}
                 # pint automatically handles any unit conversions required
 
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE12].squeeze()
@@ -236,9 +238,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE3].squeeze()
                 company_data[ColumnsConfig.GHG_SCOPE3] = Q_(v or np.nan, 't CO2')
                 company_data[ColumnsConfig.PROJECTED_TARGETS] = {'S1S2': {
-                    'projections': self._convert_series_to_IProjections (df_targets.loc[company_id, :])}}
+                    'projections': self._convert_series_to_projections (df_targets.loc[company_id, :], ICompanyEIProjection),
+                    'ei_metric': {'units': intensity_metric}}}
                 company_data[ColumnsConfig.PROJECTED_EI] = {'S1S2': {
-                    'projections': self._convert_series_to_IProjections (df_ei.loc[company_id, :])}}
+                    'projections': self._convert_series_to_projections (df_ei.loc[company_id, :], ICompanyEIProjection),
+                    'ei_metric': {'units': intensity_metric}}}
 
                 if df_historic is not None:
                     company_data[TabsConfig.HISTORIC_DATA] = self._convert_historic_data(
