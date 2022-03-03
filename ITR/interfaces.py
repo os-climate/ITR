@@ -390,8 +390,9 @@ class ICompanyData(PintModel):
     
     def _fixup_year_value_list(self, ListType, u_list, metric, inferred_metric):
         # u_list is unprocessed; i_list is processed; r_list is returned list
-        i_list = [{'year':ul['year']} | {'value':Q_(ul['value'])
-                                         if ul['value'] is not None else Q_(np.nan, metric)}
+        i_list = [ul.dict() if isinstance(ul, BaseModel)
+                  else {'year':ul['year']} | {'value':Q_(ul['value'])
+                                              if ul['value'] is not None else Q_(np.nan, metric)}
                   for ul in u_list]
         if not i_list:
             return []
