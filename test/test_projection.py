@@ -1,6 +1,7 @@
 import json
 import unittest
 import os
+import datetime
 
 from ITR.data.base_providers import EITrajectoryProjector
 from ITR.interfaces import ICompanyData
@@ -31,6 +32,9 @@ class TestProjector(unittest.TestCase):
 
         with open(self.source_path, 'r') as file:
             company_dicts = json.load(file)
+        for company_dict in company_dicts:
+            # TODO: fix json input and reference files!
+            company_dict['report_date'] = datetime.date(2021, 12, 31)
         self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
         self.projector = EITrajectoryProjector()
 
@@ -44,13 +48,22 @@ class TestProjector(unittest.TestCase):
         # json.dumps(projections_dict[0],default=mystr)
         # json.dumps(reference_projections[0],default=refstr)
         for i in range(len(projections_dict)):
-            del(projections_dict[i]['production_metric'])
+            del(projections_dict[i]['target_data']) # We are testing trajectory projections, not target projections
+            del(projections_dict[i]['base_year_production']) # Use for target, not trajectory projections
+            del(projections_dict[i]['company_ev_plus_cash']) # Not computed by trajectory code
+            del(projections_dict[i]['emissions_metric']) # Not used by trajectory code
+            del(projections_dict[i]['production_metric']) # Not used by trajectory code
             if json.dumps(projections_dict[i],default=mystr)!=json.dumps(reference_projections[i],default=refstr):
                 print(f"Differences in projections_dict[{i}]: company_name = {projections_dict[i]['company_name']}; company_id = {projections_dict[i]['company_id']}")
                 for k, v in projections_dict[i].items():
-                    vref = reference_projections[i][k]
-                    if json.dumps(v,default=mystr)!=json.dumps(vref,default=refstr):
-                        print(f"{k}:\n{json.dumps(v,default=mystr)}\n\n{json.dumps(vref,default=refstr)}\n\n")
+                    if k == 'ghg_s1s2' and not reference_projections[i].get(k):
+                        continue
+                    try:
+                        vref = reference_projections[i][k]
+                        if json.dumps(v,default=mystr)!=json.dumps(vref,default=refstr):
+                            print(f"computed {k}:\n{json.dumps(v,default=mystr)}\n\nreference {k}:\n{json.dumps(vref,default=refstr)}\n\n")
+                    except KeyError as e:
+                        print(f"missing in reference: {k}: {json.dumps(v,default=mystr)}\n\n")
 
         self.assertEqual(json.dumps(projections_dict,default=mystr), json.dumps(reference_projections,default=refstr))
 
