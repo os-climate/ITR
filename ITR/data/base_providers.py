@@ -12,7 +12,7 @@ from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkData
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, \
-    IEmissionRealization
+    IEmissionRealization, IntensityMetric
 
 
 # TODO handling of scopes in benchmarks
@@ -617,10 +617,10 @@ class EITargetProjector(object):
             if not scope_targets:
                 continue
             netzero_year = max([t.netzero_year for t in scope_targets if t.netzero_year] + [0])
-            scope_targets.sort(key=lambda target: (target.target_scope, target.end_year))
+            scope_targets.sort(key=lambda target: (target.target_scope, target.target_end_year))
             while scope_targets:
                 target = scope_targets.pop(0)
-                base_year = target.base_year
+                base_year = target.target_base_year
 
                 # Solve for intensity and absolute
                 if target.target_type == "intensity":
@@ -639,7 +639,7 @@ class EITargetProjector(object):
                         ei_projection_scopes[scope] = None
                     else:  # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
                         last_year, value_last_year = last_year_data.year, last_year_data.value
-                        target_year = target.end_year
+                        target_year = target.target_end_year
                         # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                         target_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
                                           target.target_base_year_unit)
@@ -649,7 +649,8 @@ class EITargetProjector(object):
                         if ei_projection_scopes[scope] is not None:
                             ei_projection_scopes[scope].projections.extend(ei_projections)
                         else:
-                            ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections)
+                            ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections,
+                                                                                ei_metric=IntensityMetric.parse_obj({'units':target.target_base_year_unit}))
                         if not scope_targets and netzero_year > target_year: # add in netzero target at the end
                             CAGR = self._compute_CAGR(target_value, Q_(0, target.target_base_year_unit), (netzero_year - target_year))
                             ei_projections = [ICompanyEIProjection(year=year, value=target_value * (1 + CAGR) ** (y + 1))
@@ -683,10 +684,10 @@ class EITargetProjector(object):
                         ei_projection_scopes[scope] = None
                     else:  # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
                         last_year, value_last_year = last_year_data.year, last_year_data.value
-                        target_year = target.end_year
+                        target_year = target.target_end_year
                         # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                         target_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
-                                                target.target_base_year_unit)
+                                          target.target_base_year_unit)
                         CAGR = self._compute_CAGR(value_last_year, target_value, (target_year - last_year))
 
                         emissions_projections = [value_last_year * (1 + CAGR) ** (y + 1)
@@ -703,7 +704,8 @@ class EITargetProjector(object):
                         if ei_projection_scopes[scope] is not None:
                             ei_projection_scopes[scope].projections.extend(ei_projections)
                         else:
-                            ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections)
+                            ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections,
+                                                                                ei_metric=IntensityMetric.parse_obj({'units':f"{target_value.u:~P}"}))
                         if not scope_targets and netzero_year > target_year: # add in netzero target at the end
                             CAGR = self._compute_CAGR(target_value, Q_(0, target_value.u), (netzero_year - target_year))
                             # Because zero intensity implies zero emissions, we can work with intensities from here out

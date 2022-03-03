@@ -39,10 +39,12 @@ EmissionsMetric = Annotated[EmissionsCO2, Field(discriminator='units')]
 
 class EmissionsIntensity(BaseModel):
     units: Union[
-        Literal['t CO2/MWh'], Literal['t CO2/GWh'], Literal['t CO2/TWh'], Literal['t CO2/GJ'], Literal['t CO2/PJ'],
-        Literal['t CO2/Fe_ton'],
-        Literal['CO2·t/MWh'], Literal['CO2·t/GWh'], Literal['CO2·t/TWh'], Literal['CO2·t/GJ'], Literal['CO2·t/PJ'],
-        Literal['CO2·t/Fe_ton']]
+        Literal['t CO2/MWh'], Literal['kt CO2/MWh'], Literal['t CO2/GWh'], Literal['Mt CO2/GWh'], Literal['t CO2/TWh'], Literal['Mt CO2/TWh'],
+        Literal['t CO2/GJ'], Literal['t CO2/PJ'], Literal['Mt CO2/PJ'],
+        Literal['t CO2/Fe_ton'], Literal['Mt CO2/MFe_ton'],
+        Literal['CO2·t/MWh'], Literal['CO2·kt/MWh'], Literal['CO2·t/GWh'], Literal['CO2·Mt/GWh'], Literal['CO2·t/TWh'], Literal['CO2·Mt/TWh'],
+        Literal['CO2·t/GJ'], Literal['CO2·t/PJ'], Literal['CO2·Mt/PJ'],
+        Literal['CO2·t/Fe_ton'], Literal['CO2·t/MFe_ton'], Literal['CO2·Mt/MFe_ton']]
 
 IntensityMetric = Annotated[EmissionsIntensity, Field(discriminator='units')]
 
