@@ -39,6 +39,7 @@ class TestProjector(unittest.TestCase):
         self.projector = EITrajectoryProjector()
 
     def test_project(self):
+        test_failed = False
         projections = self.projector.project_ei_trajectories(self.companies)
         with open(self.json_reference_path, 'r') as file:
             reference_projections = json.load(file)
