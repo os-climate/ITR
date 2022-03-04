@@ -157,12 +157,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df3 = df2.reset_index().set_index(['company_id', 'variable', 'scope'])
         df3 = pd.concat([df3.xs(VariablesConfig.PRODUCTIONS, level=1, drop_level=False)
             .apply(
-            lambda x: x.map(lambda y: Q_(y, df_fundamentals.loc[df_fundamentals.company_id == x.name[0],
-                                                                'production_metric'].squeeze())), axis=1),
+            lambda x: x.map(lambda y: Q_(y if y is not pd.NA else np.nan,
+                                         df_fundamentals.loc[df_fundamentals.company_id == x.name[0],
+                                                             'production_metric'].squeeze())), axis=1),
             df3.xs(VariablesConfig.EMISSIONS, level=1, drop_level=False)
             .apply(lambda x: x.map(
-                lambda y: Q_(y, df_fundamentals.loc[df_fundamentals.company_id == x.name[0],
-                                                    'emissions_metric'].squeeze())), axis=1)])
+                lambda y: Q_(y if y is not pd.NA else np.nan,
+                             df_fundamentals.loc[df_fundamentals.company_id == x.name[0],
+                                                 'emissions_metric'].squeeze())), axis=1)])
         df4 = df3.xs(VariablesConfig.EMISSIONS, level=1) / df3.xs((VariablesConfig.PRODUCTIONS, 'production'),
                                                                   level=[1, 2])
         df4['variable'] = VariablesConfig.EMISSIONS_INTENSITIES
