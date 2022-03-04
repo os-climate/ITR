@@ -585,7 +585,7 @@ class EITrajectoryProjector(object):
         projected_intensities = historic_data.loc[historic_data.index.intersection(trends.index)].copy()
         # We need to do a mini-extrapolation if we don't have complete historic data
         for year in historic_data.columns.tolist()[:-1]:
-            m = projected_intensities[year+1].apply(lambda x: x.m is pd.NA)
+            m = projected_intensities[year+1].apply(lambda x: np.isnan(x.m))
             projected_intensities.loc[m,year+1] = projected_intensities.loc[m,year] * (1 + trends.loc[m])
 
         # Now the big extrapolation
@@ -640,7 +640,7 @@ class EITargetProjector(object):
                     if ei_projection_scopes[scope] is not None:
                         last_year_data = ei_projection_scopes[scope].projections[-1]
                     else:
-                        last_year_data = next((i for i in reversed(intensity_data) if type(i.value.magnitude) != NAType),
+                        last_year_data = next((i for i in reversed(intensity_data) if np.isfinite(i.value.magnitude)),
                                               None)
 
                     if last_year_data is None or base_year > last_year_data.year:
@@ -685,7 +685,7 @@ class EITargetProjector(object):
                         last_year_prod = production_bm.loc[last_year]
                         last_year_data = IEmissionRealization(year=last_year, value=last_year_ei_data.value*last_year_prod)
                     else:
-                        last_year_data = next((e for e in reversed(emissions_data) if type(e.value.magnitude) != NAType),
+                        last_year_data = next((e for e in reversed(emissions_data) if np.isfinite(e.value.magnitude)),
                                               None)
 
                     if last_year_data is None or base_year > last_year_data.year:
