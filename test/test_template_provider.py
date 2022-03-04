@@ -79,14 +79,17 @@ class TestTemplateProvider(unittest.TestCase):
     def test_temp_score(self):
         df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
         # df_portfolio = df_portfolio[df_portfolio.company_id=='US00130H1059']
-        companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
+        portfolio = ITR.utils.dataframe_to_portfolio(df_portfolio)
         
         temperature_score = TemperatureScore(               
             time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],    
             aggregation_method=PortfolioAggregationMethod.WATS # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS.
         )
-        amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, portfolio=companies)
+
+        portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)     
+        
+        amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
         
     def test_temp_score_from_excel_data(self):
