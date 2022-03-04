@@ -493,15 +493,23 @@ class EITrajectoryProjector(object):
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
             scope_projections = {}
+            scope_dfs = {}
             for scope in ICompanyEIProjectionsScopes.__fields__:
                 if not company.historic_data.emissions_intensities or not company.historic_data.emissions_intensities.__getattribute__(scope):
                     scope_projections[scope] = None
                     continue
                 results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, scope)]
                 units = f"{results.values[0].u:~P}"
+                scope_dfs[scope] = results.astype(f"pint[{units}]")
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
                 scope_projections[scope] = ICompanyEIProjections(ei_metric={'units':units}, projections=projections)
+            if scope_projections.get('S1') and scope_projections.get('S2') and not scope_projections.get('S1S2'):
+                results = scope_dfs['S1'] + scope_dfs['S2']
+                units = f"{results.values[0].u:~P}"
+                projections = [IProjection(year=year, value=value) for year, value in results.items()
+                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                scope_projections['S1S2'] = ICompanyEIProjections(ei_metric={'units':units}, projections=projections)
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
 

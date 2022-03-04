@@ -39,6 +39,7 @@ class TestProjector(unittest.TestCase):
         self.projector = EITrajectoryProjector()
 
     def test_project(self):
+        test_failed = False
         projections = self.projector.project_ei_trajectories(self.companies)
         with open(self.json_reference_path, 'r') as file:
             reference_projections = json.load(file)
@@ -57,15 +58,33 @@ class TestProjector(unittest.TestCase):
                 print(f"Differences in projections_dict[{i}]: company_name = {projections_dict[i]['company_name']}; company_id = {projections_dict[i]['company_id']}")
                 for k, v in projections_dict[i].items():
                     if k == 'ghg_s1s2' and not reference_projections[i].get(k):
+                        print("ghg_s1s2")
+                        continue
+                    if k == 'projected_intensities':
+                        for scope in projections_dict[i][k]:
+                            if reference_projections[i][k].get(scope):
+                                vref = reference_projections[i][k]
+                                if not v.get(scope):
+                                    print(f"projection has no scope {scope} for projection_intensities")
+                                    test_failed = True
+                                elif json.dumps(v[scope]['projections'],default=mystr)!=json.dumps(vref[scope]['projections'],default=refstr):
+                                    print(f"projected_intensities differ for scope {scope}")
+                                    print(f"computed {k}:\n{json.dumps(v[scope]['projections'],default=mystr)}\n\nreference {k}:\n{json.dumps(vref[scope]['projections'],default=refstr)}\n\n")
+                                    test_failed = True
+                            elif v.get(scope):
+                                print(f"reference has no scope {scope} for projection_intensities")
+                                # ???? test_failed = True
                         continue
                     try:
                         vref = reference_projections[i][k]
                         if json.dumps(v,default=mystr)!=json.dumps(vref,default=refstr):
                             print(f"computed {k}:\n{json.dumps(v,default=mystr)}\n\nreference {k}:\n{json.dumps(vref,default=refstr)}\n\n")
+                            test_failed = True
                     except KeyError as e:
                         print(f"missing in reference: {k}: {json.dumps(v,default=mystr)}\n\n")
+                        test_failed = True
 
-        self.assertEqual(json.dumps(projections_dict,default=mystr), json.dumps(reference_projections,default=refstr))
+        self.assertEqual(test_failed, False)
 
 import pandas as pd
 
