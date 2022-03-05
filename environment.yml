@@ -100,8 +100,8 @@ dependencies:
           - pandocfilters==1.4.3
           - parso==0.8.2
           - pickleshare==0.7.5
-          - pint=0.18
-          - pint-pandas=0.2
+          - pint==0.18
+          - pint-pandas==0.2
           - plotly==5.3.1
           - prometheus-client==0.11.0
           - prompt-toolkit==3.0.19
