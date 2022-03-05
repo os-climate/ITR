@@ -369,8 +369,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
         """
-        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS) for c in
-             self.get_company_data(company_ids)]
+        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS)
+                       for c in self.get_company_data(company_ids)]
         if target_list:
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!

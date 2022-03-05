@@ -474,6 +474,20 @@ class ICompanyData(PintModel):
         model_historic_data = IHistoricData(productions=productions, emissions=emissions, emissions_intensities=emissions_intensities)
         return model_historic_data
 
+    def _get_base_realization_from_historic(self, realized_values: List[PintModel], units, base_year=None):
+        valid_realizations = [rv for rv in realized_values if np.isfinite(rv.year)]
+        if not valid_realizations:
+            retval = realized_values[0].copy()
+            retval.year = None
+            return retval
+        valid_realizations.sort(key=lambda x:x.year, reverse=True)
+        if base_year and valid_realizations[0].year != base_year:
+            retval = realized_values[0].copy()
+            retval.year = base_year
+            retval.value = Q_(np.nan, units)
+            return retval
+        return valid_realizations[0]
+
     def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None, emissions_metric=None,
                  production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
         super().__init__(historic_data=self._fixup_historic_data(historic_data, production_metric, emissions_metric, kwargs.get('sector')),
@@ -495,23 +509,19 @@ class ICompanyData(PintModel):
             if emissions_metric is None:
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
         elif emissions_metric is None:
-            if self.production_metric.units in ['TWh', 'PJ']:
+            if self.production_metric.units in ['TWh', 'PJ', 'MFe_ton', 'megaFe_ton']:
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 'Mt CO2'})
             else:
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
             # TODO: Should raise a warning here
+        base_year = None
         if base_year_production:
             self.base_year_production = pint_ify(base_year_production, self.production_metric.units)
         elif self.historic_data and self.historic_data.productions:
             # TODO: This is a hack to get things going.
-            year = kwargs['report_date'].year
-            for i in range(len(self.historic_data.productions)):
-                if self.historic_data.productions[-1 - i].year == year:
-                    self.base_year_production = self.historic_data.productions[-1 - i].value
-                    break
-            if self.base_year_production is None:
-                # raise ValueError(f"invalid historic data for base_year_production for {self.company_name}")
-                self.base_year_production = Q_(np.nan, self.production_metric.units)
+            base_realization = self._get_base_realization_from_historic(self.historic_data.productions, self.production_metric.units, base_year)
+            base_year = base_realization.year
+            self.base_year_production = base_realization.value
         else:
             # raise ValueError(f"missing historic data for base_year_production for {self.company_name}")
             self.base_year_production = Q_(np.nan, self.production_metric.units)
@@ -519,56 +529,26 @@ class ICompanyData(PintModel):
             self.ghg_s1s2=pint_ify(ghg_s1s2, self.emissions_metric.units)
         elif self.historic_data and self.historic_data.emissions:
             if self.historic_data.emissions.S1S2:
-                year = kwargs['report_date'].year
-                for i in range(len(self.historic_data.emissions.S1S2)):
-                    if self.historic_data.emissions.S1S2[-1  - i].year == year:
-                        self.ghg_s1s2 = self.historic_data.emissions.S1S2[-1 - i].value
-                        break
-                if self.ghg_s1s2 is None:
-                    raise ValueError(f"invalid historic data for ghg_s1s2 for {self.company_name}")
+                base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S1S2, self.emissions_metric.units, base_year)
+                base_year = base_year or base_realization.year
+                self.ghg_s1s2 = base_realization.value
             elif self.historic_data.emissions.S1 and self.historic_data.emissions.S2:
-                # TODO: This is also a hack to get things going.
-                year = kwargs['report_date'].year
-                for i in range(len(self.historic_data.emissions.S1)):
-                    if self.historic_data.emissions.S1[-1 - i].year == year:
-                        ghg_s1 = self.historic_data.emissions.S1[-1 - i].value
-                        break
-                for i in range(len(self.historic_data.emissions.S2)):
-                    if self.historic_data.emissions.S2[-1 - i].year == year:
-                        ghg_s2 = self.historic_data.emissions.S2[-1 - i].value
-                        break
-                try:
-                    if ghg_s1 is None or ghg_s2 is None:
-                        self.ghg_s1s2 = Q_(np.nan, self.emissions_metric.units)
-                    else:
-                        self.ghg_s1s2 = ghg_s1 + ghg_s2
-                except ValueError:
-                    raise ValueError(f"missing historic data for ghg_s1 and/or ghg_s2 for {self.company_name}")
+                base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions.S1, self.emissions_metric.units, base_year)
+                base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions.S2, self.emissions_metric.units, base_year)
+                base_year = base_year or base_realization_s1.year
+                self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
         if self.ghg_s1s2 is None:
             if self.historic_data.emissions_intensities:
+                intensity_units = (self.emissions_metric.units / self.production_metric.units).units
                 if self.historic_data.emissions_intensities.S1S2:
-                    year = kwargs['report_date'].year
-                    for i in range(len(self.historic_data.emissions_intensities.S1S2)):
-                        if self.historic_data.emissions_intensities.S1S2[-1 - i].year == year:
-                            self.ghg_s1s2 = self.historic_data.emissions_intensities.S1S2[-1 - i].value * self.base_year_production
-                            break
-                    if self.ghg_s1s2 is None:
-                        raise ValueError(f"invalid historic S1S2 intensity data for {self.company_name}")
+                    base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
+                    base_year = base_year or base_realization.year
+                    self.ghg_s1s2 = base_realization.value * self.base_year_production
                 elif self.historic_data.emissions_intensities.S1 and self.historic_data.emissions_intensities.S2:
-                    # TODO: This is also a hack to get things going.
-                    year = kwargs['report_date'].year
-                    for i in range(len(self.historic_data.emissions_intensities.S1)):
-                        if self.historic_data.emissions_intensities.S1[-1 - i].year == year:
-                            ei_s1 = self.historic_data.emissions_intensities.S1[-1 - i].value
-                            break
-                    for i in range(len(self.historic_data.emissions_intensities.S2)):
-                        if self.historic_data.emissions_intensities.S2[-1 - i].year == year:
-                            ei_s2 = self.historic_data.emissions_intensities.S2[-1 - i].value
-                            break
-                    try:
-                        self.ghg_s1s2 = (ei_s1 + ei_s2) * self.base_year_production
-                    except ValueError:
-                        raise ValueError(f"missing historic S1 and/or S2 intensity data for {self.company_name}")
+                    base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1, intensity_units, base_year)
+                    base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S2, intensity_units, base_year)
+                    base_year = base_year or base_realization_s1.year
+                    self.ghg_s1s2 = (base_realization_s1.value + base_realization_s2.value) * self.base_year_production
                 else:
                     raise ValueError(f"missing S1S2 historic intensity data for {self.company_name}")
         if self.ghg_s1s2 is None:
