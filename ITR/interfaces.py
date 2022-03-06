@@ -539,7 +539,7 @@ class ICompanyData(PintModel):
                 self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
         if self.ghg_s1s2 is None:
             if self.historic_data.emissions_intensities:
-                intensity_units = (self.emissions_metric.units / self.production_metric.units).units
+                intensity_units = (Q_(1.0, self.emissions_metric.units) / Q_(1.0, self.production_metric.units)).units
                 if self.historic_data.emissions_intensities.S1S2:
                     base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
                     base_year = base_year or base_realization.year
