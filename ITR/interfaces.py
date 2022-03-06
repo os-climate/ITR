@@ -357,7 +357,7 @@ class ICompanyData(PintModel):
         return model_historic_data
 
     def _get_base_realization_from_historic(self, realized_values: List[PintModel], units, base_year=None):
-        valid_realizations = [rv for rv in realized_values if np.isfinite(rv.year)]
+        valid_realizations = [rv for rv in realized_values if np.isfinite(rv.value)]
         if not valid_realizations:
             retval = realized_values[0].copy()
             retval.year = None
