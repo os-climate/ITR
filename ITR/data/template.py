@@ -125,6 +125,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             input_data_sheet = "Test input data"
 
         df = df_company_data[input_data_sheet]
+        df['exposure'].fillna('presumed_equity', inplace=True)
         # TODO: Fix market_cap column naming inconsistency
         df.rename(
             columns={'revenue': 'company_revenue', 'market_cap': 'company_market_cap',
@@ -210,7 +211,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         logger = logging.getLogger(__name__)
         # set NaN to None since NaN is float instance
-        df_fundamentals = df_fundamentals.where(pd.notnull(df_fundamentals), None).replace({np.nan: None})
+        df_fundamentals = df_fundamentals.where(pd.notnull(df_fundamentals), None).replace(to_replace=np.nan, value=None)
 
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
