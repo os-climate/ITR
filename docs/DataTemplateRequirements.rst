@@ -1,6 +1,6 @@
-********************
+**************************
 Data Template Requirements
-********************
+**************************
 
 The ITR Data Template comes with two sheets dedicated to documentation
 (Read me, Definitions) and three to be filled by data by users (ITR
@@ -48,9 +48,9 @@ that financial information is rooted to a date that can be fed onward
 to other BI analysis.
 
 The fundamental financial data includes:
+
 - market_cap (public float)
-- revenue (could be FY, CY, TTM, or any period that's consistent
-  across all rows)
+- revenue (could be FY, CY, TTM, or any period that's consistent across all rows)
 - ev (enterprise value = public float + debt - cash equivalents)
 - evic (enterprise value including cash = public float + debt)
 - assets (the sum total of valorized assets on the balance sheet)
@@ -93,20 +93,10 @@ so there may be some rows that have only 2016-2020 data.  Some
 companies--for whatever reason--may have also skipped a year in
 between their 2016 disclosure and their latest (2020, 2021, or 2022)
 disclosures.  The tool deals with three types of missing data:
-- If the data is missing from the left (ie., there's no data for 2016
-  or years until a certain date), the tool ignores the missing
-  data.  As long as there is data present for the base year of the
-  temperature score (typically 2019 or 2020), it will work.
-- If the data is missing between two points, the tool fills the data
-  with a linear interpolation.  So if data from 2017 is missing, it
-  would average data from 2016 and 2018 if those years are available.
-- If the data is missing to the right, it will extrapolate the data
-  until it has filled in all cells up to the latest reported data.  If
-  all but a few companies report 2020 data and none report 2021 data,
-  tool will extrapolation 2019 data for those companies missing 2020
-  data.  If there are also some companies with 2021 data, the tool
-  will extrapolate missing data for 2021 and, if needed, also 2020
-  data.
+
+- If the data is missing from the left (ie., there's no data for 2016 or years until a certain date), the tool ignores the missing data.  As long as there is data present for the base year of the temperature score (typically 2019 or 2020), it will work.
+- If the data is missing between two points, the tool fills the data with a linear interpolation.  So if data from 2017 is missing, it would average data from 2016 and 2018 if those years are available.
+- If the data is missing to the right, it will extrapolate the data until it has filled in all cells up to the latest reported data.  If all but a few companies report 2020 data and none report 2021 data, tool will extrapolation 2019 data for those companies missing 2020 data.  If there are also some companies with 2021 data, the tool will extrapolate missing data for 2021 and, if needed, also 2020 data.
 
 The tool handles data reports for all scopes defined by the GHG
 Protocol: Scope 1 (own emissions), Scope 2 (emissinos caused by
@@ -144,27 +134,12 @@ data`.  Most companies have set a short-term reduction ambition target
 by 2030) and a long-term net-zero target (the tool does not presently
 distinguish between true zero-emissions and positive emissions with
 some kind of offset), a single row of data suffices:
-- netzero_year is the year at which the netzero ambition should be
-  realized
-- target_type defines whether the short-term ambition is based on
-  absolute emissions or intensity.  Note that when it comes to a
-  long-term netzero ambition, zero is zero, whether emissions or
-  intensity.
-- target_scope defines the scope(s) of the target.  While it is
-  possible to define S1, S2, S1+S2, S3, S1+S2+S3, at present the most
-  reliable choice is S1+S2 (because we don't have a complete theory
-  yet for interpreting the benchmarks upon which the tools is based
-  for other than S1+S2).
-- target_start_year is the year the target was set.  In the event that
-  multiple targets aim for a reduction ambition at the same year, the
-  latest start_year will be the one the tool uses and all other
-  targets for that year will be dropped.
-- target_base_year and target_base_year_qty define the "when" and the
-  "from how much" that the target_ambition_reduction applies to (and
-  hopefully is achieved by the target_year).  Because all computations
-  require units, the target_base_year_unit is needed so that target
-  quantities can be compared with other emissions, production, and
-  intensity data.
+
+- netzero_year is the year at which the netzero ambition should be realized
+- target_type defines whether the short-term ambition is based on absolute emissions or intensity.  Note that when it comes to a long-term netzero ambition, zero is zero, whether emissions or intensity.
+- target_scope defines the scope(s) of the target.  While it is possible to define S1, S2, S1+S2, S3, S1+S2+S3, at present the most reliable choice is S1+S2 (because we don't have a complete theory yet for interpreting the benchmarks upon which the tools is based for other than S1+S2).
+- target_start_year is the year the target was set.  In the event that multiple targets aim for a reduction ambition at the same year, the latest start_year will be the one the tool uses and all other targets for that year will be dropped.
+- target_base_year and target_base_year_qty define the "when" and the "from how much" that the target_ambition_reduction applies to (and hopefully is achieved by the target_year).  Because all computations require units, the target_base_year_unit is needed so that target quantities can be compared with other emissions, production, and intensity data.
 
 Some companies have set more than just one short-term target.  In that
 case, additional rows of target data can be set, one for each
@@ -191,6 +166,3 @@ be.  (And even with 90% reduction per year for 10 years, there's still
 that 0.0000000001 to go...)  To make the math square with reality, we
 interpret reducing emissions to less than half-a-percent of the
 initial amount as rounding down to zero.
-
-
-
