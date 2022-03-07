@@ -142,7 +142,7 @@ class TestBaseProvider(unittest.TestCase):
         expected_data = pd.Series([10.0, 50.0],
                                   index=[0, 1],
                                   dtype='pint[Mt CO2]')
-        cumulative_emissions = self.base_warehouse._get_cumulative_emissions(projected_emission_intensity=projected_ei,
+        cumulative_emissions = self.base_warehouse._get_cumulative_emissions(projected_ei=projected_ei,
                                                                              projected_production=projected_production)
         assert_pint_series_equal(self, cumulative_emissions, expected_data)
 
