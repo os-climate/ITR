@@ -170,7 +170,7 @@ initial amount as rounding down to zero.
 Installation Notes
 ------------------
 
-The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will also need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .
+The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .  We also assume you have a `conda <https://docs.conda.io/en/latest/miniconda.html>` environment with Python 3.9 installed on your system.
 
 - Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git`
 - Switch to the correct branch: `git checkout develop-pint-steel-projections`
