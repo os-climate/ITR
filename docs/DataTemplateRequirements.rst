@@ -177,7 +177,8 @@ The first step is to request an invitation to join the OS-Climate GitHub team.  
 2. Switch to the correct branch: `git checkout develop-pint-steel-projections`
 3. In the top-level ITR directory, create the `conda` itr_env: `conda env create -f environment.yml`
 4. Activate that environment: `conda activate itr_env` (you may need to initialize conda by executing `conda init` for your shell first)
-5. Change to the `examples` directory
-6. Start your notebook: `jupyter-lab`
-7. Open the file `quick_template_score_calc.ipynb`
-8. Run the notebook with a fresh kernel by pressing the `>>` button 
+5. Install the ITR libraries to your local environment: `pip install -e .`
+6. Change to the `examples` directory
+7. Start your notebook: `jupyter-lab`
+8. Open the file `quick_template_score_calc.ipynb`
+9. Run the notebook with a fresh kernel by pressing the `>>` button 
