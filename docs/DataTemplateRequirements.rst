@@ -172,11 +172,12 @@ Installation Notes
 
 The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .  We also assume you have a `conda <https://docs.conda.io/en/latest/miniconda.html>` environment with Python 3.9 installed on your system.  If you are on a Windows system you will want to open the Anaconda PowerShell.  If on OSX or Linux, all shells are equally powerful, but this has been tested with bash (the Bourne Again SHell).
 
-- Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git`
-- Switch to the correct branch: `git checkout develop-pint-steel-projections`
-- In the top-level ITR directory, create the `conda` itr_env: `conda env create -f environment.yml`
-- Activate that environment: `conda activate itr_env` (you may need to initialize conda by executing `conda init` for your shell first)
-- Change to the `examples` directory
-- Start your notebook: `jupyter-lab`
-- Open the file `quick_template_score_calc.ipynb`
-- Run the notebook with a fresh kernel by pressing the `>>` button 
+0. Run `conda list` to see that you have a functioning (base) environment.
+1. Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git`
+2. Switch to the correct branch: `git checkout develop-pint-steel-projections`
+3. In the top-level ITR directory, create the `conda` itr_env: `conda env create -f environment.yml`
+4. Activate that environment: `conda activate itr_env` (you may need to initialize conda by executing `conda init` for your shell first)
+5. Change to the `examples` directory
+6. Start your notebook: `jupyter-lab`
+7. Open the file `quick_template_score_calc.ipynb`
+8. Run the notebook with a fresh kernel by pressing the `>>` button 
