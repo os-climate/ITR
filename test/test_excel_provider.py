@@ -169,7 +169,7 @@ class TestExcelProvider(unittest.TestCase):
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]],
                                             dtype='pint[GJ]')
         expected_data = pd.Series([10.0, 50.0], dtype='pint[t CO2]')
-        emissions = self.excel_provider._get_cumulative_emissions(projected_emission_intensity=projected_emission,
+        emissions = self.excel_provider._get_cumulative_emissions(projected_ei=projected_emission,
                                                                   projected_production=projected_production)
         assert_pint_series_equal(self, emissions, expected_data)
 
