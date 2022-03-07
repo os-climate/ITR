@@ -170,12 +170,12 @@ initial amount as rounding down to zero.
 Installation Notes
 ------------------
 
-The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will also need a Personal Access Token, which you can get by [following these instructions](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will also need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .
 
-- Clone the [ITR repository](https://github.com/os-climate/ITR.git)
+- Clone the `ITR repository <https://github.com/os-climate/ITR.git>`  
 - In the top-level ITR directory, create the `conda` itr_env: `conda env create -f environment.yml`
 - Activate that environment: `conda activate itr_env` (you may need to initialize conda by executing `conda init` for your shell first)
 - Change to the `examples` directory
 - Start your notebook: `jupyter-lab`
 - Open the file `quick_template_score_calc.ipynb`
-- Run the notebook with a fresh kernel by pressing the @icon-forward button 
+- Run the notebook with a fresh kernel by pressing the `>>` button 
