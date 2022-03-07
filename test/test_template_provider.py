@@ -80,15 +80,15 @@ class TestTemplateProvider(unittest.TestCase):
         df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
         # df_portfolio = df_portfolio[df_portfolio.company_id=='US00130H1059']
         portfolio = ITR.utils.dataframe_to_portfolio(df_portfolio)
-        
+
         temperature_score = TemperatureScore(               
             time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],    
             aggregation_method=PortfolioAggregationMethod.WATS # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS.
         )
 
-        portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)     
-        
+        portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)
+
         amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
         
@@ -210,7 +210,7 @@ class TestTemplateProvider(unittest.TestCase):
         projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype='pint[t CO2/GJ]')
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]], dtype='pint[GJ]')
         expected_data = pd.Series([10.0, 50.0], dtype='pint[t CO2]')
-        emissions = self.data_warehouse._get_cumulative_emissions(projected_emission_intensity=projected_emission,
+        emissions = self.data_warehouse._get_cumulative_emissions(projected_ei=projected_emission,
                                                                   projected_production=projected_production)
         assert_pint_series_equal(self, emissions, expected_data)
 

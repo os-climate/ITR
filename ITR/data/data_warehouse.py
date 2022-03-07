@@ -32,10 +32,10 @@ class DataWarehouse(ABC):
 
         :param company_data: CompanyDataProvider
         :param benchmark_projected_production: ProductionBenchmarkDataProvider
-        :param benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider
+        :param benchmarks_projected_ei: IntensityBenchmarkDataProvider
         """
         self.benchmark_projected_production = benchmark_projected_production
-        self.benchmarks_projected_emission_intensity = benchmarks_projected_ei
+        self.benchmarks_projected_ei = benchmarks_projected_ei
         self.temp_config = tempscore_config
         self.column_config = column_config
         self.company_data = company_data
@@ -58,23 +58,30 @@ class DataWarehouse(ABC):
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year).sort_index()
 
+        # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
+        projected_trajectories = self.company_data.get_company_projected_trajectories(company_ids)
         df_trajectory = self._get_cumulative_emissions(
-            projected_emission_intensity=self.company_data.get_company_projected_trajectories(company_ids),
+            projected_ei=projected_trajectories,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
+        # target projections may have a ragged left edge if historic data has a ragged right edge
+        # we can use trajectory info to fill in--it will likely be historic data in that case (the first ragged year)
+        projected_targets = self.company_data.get_company_projected_targets(company_ids)
+        keep_target_data = projected_targets.applymap(lambda x: np.isfinite(x.m))
+        projected_targets = projected_targets.where(keep_target_data, projected_trajectories)
         df_target = self._get_cumulative_emissions(
-            projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
+            projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
         df_budget = self._get_cumulative_emissions(
-            projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
+            projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
         df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
-            pd.Series([self.benchmarks_projected_emission_intensity.benchmark_global_budget] * len(df_company_data),
+            pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df_company_data),
                       dtype='pint[Gt CO2]',
                       index=df_company_data.index)
         df_company_data[self.column_config.BENCHMARK_TEMP] = \
-            pd.Series([self.benchmarks_projected_emission_intensity.benchmark_temperature] * len(df_company_data),
+            pd.Series([self.benchmarks_projected_ei.benchmark_temperature] * len(df_company_data),
                       dtype='pint[delta_degC]',
                       index=df_company_data.index)
         with warnings.catch_warnings():
@@ -108,13 +115,13 @@ class DataWarehouse(ABC):
                 pass
         return model_companies
 
-    def _get_cumulative_emissions(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
+    def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame
                                  ) -> pd.Series:
         """
-        get the weighted sum of the projected emission_intensity times the projected production
-        :param projected_emission_intensity: series of projected emissions
+        get the weighted sum of the projected emission
+        :param projected_ei: series of projected emissions intensities
         :param projected_production: PintArray of projected production amounts
-        :return: cumulative emissions based on weighted sum of production
+        :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
-        projected_emissions = projected_emission_intensity.multiply(projected_production)
+        projected_emissions = projected_ei.multiply(projected_production)
         return projected_emissions.sum(axis=1).astype('pint[Mt CO2]')
