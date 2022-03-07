@@ -172,7 +172,7 @@ Installation Notes
 
 The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will also need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .
 
-- Clone the `ITR repository <https://github.com/os-climate/ITR.git>`  
+- Clone the ITR repository `git clone https://github.com/os-climate/ITR.git`
 - Switch to the correct branch: `git checkout develop-pint-steel-projections`
 - In the top-level ITR directory, create the `conda` itr_env: `conda env create -f environment.yml`
 - Activate that environment: `conda activate itr_env` (you may need to initialize conda by executing `conda init` for your shell first)
