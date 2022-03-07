@@ -1,5 +1,15 @@
 import unittest
 import pandas as pd
+import json
+from pint import Quantity
+
+
+class QuantityEncoder(json.JSONEncoder):
+    def default(self, q):
+        if isinstance(q, Quantity):
+            return str(q)
+        else:
+            super().default(q)
 
 
 def assert_pint_series_equal(case: unittest.case, left: pd.Series, right: pd.Series):
