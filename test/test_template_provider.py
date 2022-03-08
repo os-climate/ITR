@@ -138,10 +138,10 @@ class TestTemplateProvider(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = pd.Series([1.81, 1.87, 2.10, 2.18, temp_score.fallback_score], dtype='pint[delta_degC]')
+        expected = pd.Series([1.81, 1.87, 2.10, 2.18, 1.95], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.232, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.982, ureg.delta_degC), places=2)
 
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
