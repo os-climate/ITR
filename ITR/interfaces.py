@@ -7,7 +7,125 @@ from pint import Quantity
 
 from ITR.data.osc_units import ureg, Q_
 
-class AggregationContribution(BaseModel):
+
+class PintModel(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class PowerGenerationWh(BaseModel):
+    units: Union[Literal['MWh'], Literal['GWh'], Literal['TWh']]
+
+
+class PowerGenerationJ(BaseModel):
+    units: Union[Literal['GJ'], Literal['gigajoule'], Literal['GP'], Literal['petajoule']]
+
+PowerGeneration = Annotated[Union[PowerGenerationWh, PowerGenerationJ], Field(discriminator='units')]
+
+
+class ManufactureSteel(BaseModel):
+    units: Union[Literal['Fe_ton'], Literal['kiloFe_ton'], Literal['megaFe_ton']]
+
+Manufacturing = Annotated[Union[ManufactureSteel], Field(discriminator='units')]
+
+ProductionMetric = Annotated[Union[PowerGeneration, ManufactureSteel], Field(discriminator='units')]
+
+
+class EmissionsCO2(BaseModel):
+    units: Union[Literal['t CO2'], Literal['kt CO2'], Literal['Mt CO2'], Literal['Gt CO2']]
+
+EmissionsMetric = Annotated[EmissionsCO2, Field(discriminator='units')]
+
+
+class EmissionsIntensity(BaseModel):
+    units: Union[
+        Literal['t CO2/kWh'], Literal['t CO2/MWh'], Literal['kt CO2/MWh'], Literal['t CO2/GWh'], Literal['Mt CO2/GWh'], Literal['t CO2/TWh'], Literal['Mt CO2/TWh'],
+        Literal['t CO2/MJ'], Literal['t CO2/GJ'], Literal['t CO2/PJ'], Literal['Mt CO2/PJ'],
+        Literal['t CO2/Fe_ton'], Literal['Mt CO2/MFe_ton'], Literal['Mt CO2/megaFe_ton'],
+        Literal['CO2·t/kWh'], Literal['CO2·t/MWh'], Literal['CO2·kt/MWh'], Literal['CO2·t/GWh'], Literal['CO2·Mt/GWh'], Literal['CO2·t/TWh'], Literal['CO2·Mt/TWh'],
+        Literal['CO2·t/MJ'], Literal['CO2·t/GJ'], Literal['CO2·t/PJ'], Literal['CO2·Mt/PJ'],
+        Literal['CO2·t/Fe_ton'], Literal['CO2·t/MFe_ton'], Literal['CO2·Mt/megaFe_ton']], Literal['CO2·Mt/MFe_ton']]
+
+IntensityMetric = Annotated[EmissionsIntensity, Field(discriminator='units')]
+
+
+class DimensionlessNumber(BaseModel):
+    units: Literal['dimensionless']
+
+OSC_Metric = Annotated[
+    Union[ProductionMetric, EmissionsMetric, IntensityMetric, DimensionlessNumber], Field(discriminator='units')]
+
+
+class SortableEnum(Enum):
+    def __str__(self):
+        return self.name
+
+    def __ge__(self, other):
+        if self.__class__ is other.__class__:
+            order = list(self.__class__)
+            return order.index(self) >= order.index(other)
+        return NotImplemented
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            order = list(self.__class__)
+            return order.index(self) > order.index(other)
+        return NotImplemented
+
+    def __le__(self, other):
+        if self.__class__ is other.__class__:
+            order = list(self.__class__)
+            return order.index(self) <= order.index(other)
+        return NotImplemented
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            order = list(self.__class__)
+            return order.index(self) < order.index(other)
+        return NotImplemented
+
+
+class EScope(SortableEnum):
+    S1 = "S1"
+    S2 = "S2"
+    S3 = "S3"
+    S1S2 = "S1+S2"
+    S1S2S3 = "S1+S2+S3"
+
+    @classmethod
+    def get_scopes(cls) -> List[str]:
+        """
+        Get a list of all scopes.
+        :return: A list of EScope string values
+        """
+        return ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3']
+
+    @classmethod
+    def get_result_scopes(cls) -> List['EScope']:
+        """
+        Get a list of scopes that should be calculated if the user leaves it open.
+
+        :return: A list of EScope objects
+        """
+        return [cls.S1S2, cls.S3, cls.S1S2S3]
+
+
+class ETimeFrames(SortableEnum):
+    """
+    TODO: add support for multiple timeframes. Long currently corresponds to 2050.
+    """
+    SHORT = "short"
+    MID = "mid"
+    LONG = "long"
+
+
+class ECarbonBudgetScenario(Enum):
+    P25 = "25 percentile"
+    P75 = "75 percentile"
+    MEAN = "Average"
+
+
+class AggregationContribution(PintModel):
     company_name: str
     company_id: str
     temperature_score: Quantity['delta_degC']
