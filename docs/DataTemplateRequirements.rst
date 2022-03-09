@@ -135,10 +135,10 @@ by 2030) and a long-term net-zero target (the tool does not presently
 distinguish between true zero-emissions and positive emissions with
 some kind of offset), a single row of data suffices:
 
-- netzero_year is the year at which the netzero ambition should be realized
+- netzero_year is the year at which the netzero ambition should be realized.  If multiple netzero_year values are given for the same company, the tool chooses the most recently communicated (latest target_start_year).  If there are multiple such, it chooses the earliest netzero attainment date (target_end_year).
 - target_type defines whether the short-term ambition is based on absolute emissions or intensity.  Note that when it comes to a long-term netzero ambition, zero is zero, whether emissions or intensity.
 - target_scope defines the scope(s) of the target.  While it is possible to define S1, S2, S1+S2, S3, S1+S2+S3, at present the most reliable choice is S1+S2 (because we don't have a complete theory yet for interpreting the benchmarks upon which the tools is based for other than S1+S2).
-- target_start_year is the year the target was set.  In the event that multiple targets aim for a reduction ambition at the same year, the latest start_year will be the one the tool uses and all other targets for that year will be dropped.
+- target_start_year is the year the target was set.  target_end_year is the year the target is to be attained.  In the event that multiple targets aim for a reduction ambition to be attained at the target_end_year, the latest start_year will be the one the tool uses and all other targets for that year will be dropped.  If there are both intensity and absolute targets with the same target_start_year, the tool will silently choose the intensity target over the absolute target.  If there are multiple targets with that prioritization, the tool will warn that it is going to pick just one.
 - target_base_year and target_base_year_qty define the "when" and the "from how much" that the target_ambition_reduction applies to (and hopefully is achieved by the target_year).  Because all computations require units, the target_base_year_unit is needed so that target quantities can be compared with other emissions, production, and intensity data.
 
 Some companies have set more than just one short-term target.  In that
