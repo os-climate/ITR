@@ -178,13 +178,13 @@ If you don't already have a conda environment, you'll need to download one from 
 
 **Installing the ITR environment and running the Notebook**
 
-With your conda shell and environment running:
+With your conda shell and environment running, and starting from the directory in which you want to do the testing:
 
 0. Run `conda list` to see that you have a functioning (base) environment.
 1. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
 2. Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git` (if you don't have git you can `pip install git`)
 3. Switch to the correct branch: `git checkout develop-pint-steel-projections`
-4. In the top-level ITR directory, create the `conda` itr_env: `conda env create -f environment.yml`
+4. Change your directory to the top-level ITR directory (cd ITR) and create the `conda` itr_env: `conda env create -f environment.yml`
 5. Activate that environment: `conda activate itr_env`
 6. Install the ITR libraries to your local environment: `pip install -e .` (you may need `--no-cache-dir` on windows to avoid permissions errors)
 7. Change to the `examples` directory
