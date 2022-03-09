@@ -183,13 +183,14 @@ With your conda shell and environment running, and starting from the directory i
 0. Run `conda list` to see that you have a functioning (base) environment.
 1. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
 2. Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git` (if you don't have git you can `pip install git`)
-3. Switch to the correct branch: `git checkout develop-pint-steel-projections`
-4. Change your directory to the top-level ITR directory (cd ITR) and create the `conda` itr_env: `conda env create -f environment.yml`
-5. Activate that environment: `conda activate itr_env`
-6. Install the ITR libraries to your local environment: `pip install -e .` (you may need `--no-cache-dir` on windows to avoid permissions errors)
-7. Change to the `examples` directory
-8. Start your notebook: `jupyter-lab`
-9. Open the file `quick_template_score_calc.ipynb`
-10. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
+3. Change your directory to the top-level ITR directory: `cd ITR`
+4. Switch to the correct branch: `git checkout develop-pint-steel-projections`
+5. create the `conda` itr_env: `conda env create -f environment.yml`
+6. Activate that environment: `conda activate itr_env`
+7. Install the ITR libraries to your local environment: `pip install -e .` (you may need `--no-cache-dir` on windows to avoid permissions errors)
+8. Change to the `examples` directory
+9. Start your notebook: `jupyter-lab`
+10. Open the file `quick_template_score_calc.ipynb`
+11. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
 The brackets listed near the top left corner of each executable cell will change from `[ ]` (before running the notebook) to `[*]` while the cell's computation is pending, to a number (such as `[5]` for the 5th cell) when computation is complete.  If everything is working, you will see text output, graphical output, and a newly created `data_dump.xlsx` file representing the input porfolio, enhanced with temperature score data.
