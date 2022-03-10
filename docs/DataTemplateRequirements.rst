@@ -181,7 +181,7 @@ If you don't already have a conda environment, you'll need to download one from 
 With your conda shell and environment running, and starting from the directory in which you want to do the testing:
 
 0. Run `conda list` to see that you have a functioning (base) environment.
-1. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
+1. Set GITHUB_TOKEN to your GitHub access token (windows`$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
 2. Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git` (if you don't have git you can `pip install git`)
 3. Change your directory to the top-level ITR directory: `cd ITR`
 4. Switch to the correct branch: `git checkout develop-pint-steel-projections`
@@ -194,3 +194,22 @@ With your conda shell and environment running, and starting from the directory i
 11. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
 The brackets listed near the top left corner of each executable cell will change from `[ ]` (before running the notebook) to `[*]` while the cell's computation is pending, to a number (such as `[5]` for the 5th cell) when computation is complete.  If everything is working, you will see text output, graphical output, and a newly created `data_dump.xlsx` file representing the input porfolio, enhanced with temperature score data.
+
+**Loading your own data**
+1. Place your portfolio data file under the subdirectory named 'data' (found under the 'examples' directory).
+2. Start your notebook: `jupyter-lab`
+3. Open the file `quick_template_score_calc.ipynb`
+4. Scroll down to the section 'Download/load the sample template data'
+5. Change the filename to your filename in the line: for filename in ['data/<your_filename.xlsx>',
+6. Change the filename to your filename in line: template_data_path = "data/<your_filename.xlsx>"
+7. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
+
+**Running the ITR Notebook Post Install**
+1. Open GitHub Desktop
+2. Open the Anaconda PowerShell
+3. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
+4. Activate the ITR environment by typing the following command: `conda activate itr_env`
+5. Navigate to the 'examples' subdirectory under your GitHub ITR directory
+6. Start your notebook: `jupyter-lab`
+7. Open the file `quick_template_score_calc.ipynb`
+8. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
