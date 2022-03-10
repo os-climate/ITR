@@ -196,6 +196,7 @@ With your conda shell and environment running, and starting from the directory i
 The brackets listed near the top left corner of each executable cell will change from `[ ]` (before running the notebook) to `[*]` while the cell's computation is pending, to a number (such as `[5]` for the 5th cell) when computation is complete.  If everything is working, you will see text output, graphical output, and a newly created `data_dump.xlsx` file representing the input porfolio, enhanced with temperature score data.
 
 **Loading your own data**
+
 1. Place your portfolio data file under the subdirectory named 'data' (found under the 'examples' directory).
 2. Start your notebook: `jupyter-lab`
 3. Open the file `quick_template_score_calc.ipynb`
@@ -205,6 +206,7 @@ The brackets listed near the top left corner of each executable cell will change
 7. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
 **Running the ITR Notebook Post Install**
+
 1. Open GitHub Desktop
 2. Open the Anaconda PowerShell
 3. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
