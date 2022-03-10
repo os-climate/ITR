@@ -174,23 +174,35 @@ The first step is to request an invitation to join the OS-Climate GitHub team.  
 
 **Getting Started with conda**
 
-If you don't already have a conda environment, you'll need to download one from `<https://docs.conda.io/en/latest/miniconda.html>` (Python 3.9 preferred).  If you are installing conda on a Windows system you will want to open the Anaconda PowerShell after installation.  If you are on OSX or Linux system, all shells are equally powerful, but you will need to run `conda init $SHELL`.
+If you don't already have a conda environment, you'll need to download one from `<https://docs.conda.io/en/latest/miniconda.html>` (Python 3.9 preferred).
+
+If you are installing conda on a Windows system, follow these instructions: https://conda.io/projects/conda/en/latest/user-guide/install/windows.html
+You will want to open the Anaconda PowerShell after installation, which you can do from the Start menu.
+
+If you are on OSX, you will need to install parts of the (utterly massive) Xcode system.  The subset you'll need can be installed by typing `xcode-select --install` into a Terminal window (which you can open from Applications>Utilities>Terminal).  Thought it is tempting to install the `.pkg ` version of miniconda, there's nothing user-friendly about how OSX tries to manage its own concepts of system security.  It is easier to start from the `bash` version and follow those instructions.  For other installation instructions, please read https://conda.io/projects/conda/en/latest/user-guide/install/macos.html
+
+For Linux: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html.  And note that you don't have to use the fish shell.  You can use bash, csh, sh, zsh, or whatever is your favorite shell.
+
+You will know you have succeeded in the installation and initialization of conda when you can type `conda info -e` and see an environent listed as base.  If your shell cannot find a conda to run, it likely means you have not yet run `conda init --all`
+
+**Getting Started with Git**
+
+You will use `git` to access the ITR source code.  You can install git from conda thusly: `conda install -c conda-forge git`.  But you can also get it other ways: https://github.com/git-guides/install-git
 
 **Installing the ITR environment and running the Notebook**
 
-With your conda shell and environment running, and starting from the directory in which you want to do the testing:
+With your conda shell and environment running,  with git installed, and starting from the directory in which you want to do the testing:
 
-0. Run `conda list` to see that you have a functioning (base) environment.
-1. Set GITHUB_TOKEN to your GitHub access token (windows`$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
-2. Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git` (if you don't have git you can `pip install git`)
+1. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
+2. Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git`
 3. Change your directory to the top-level ITR directory: `cd ITR`
 4. Switch to the correct branch: `git checkout develop-pint-steel-projections`
 5. create the `conda` itr_env: `conda env create -f environment.yml`
 6. Activate that environment: `conda activate itr_env`
 7. Install the ITR libraries to your local environment: `pip install -e .` (you may need `--no-cache-dir` on windows to avoid permissions errors)
 8. Change to the `examples` directory
-9. Start your notebook: `jupyter-lab`
-10. Open the file `quick_template_score_calc.ipynb`
+9. Start your notebook: `jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
+10. Make the file browser to the left of the notebook wide enough to expose the full names of the files in the `examples` directory.  You should see a file named `quick_template_score_calc.ipynb`.  Double click on that file to open it.
 11. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
 The brackets listed near the top left corner of each executable cell will change from `[ ]` (before running the notebook) to `[*]` while the cell's computation is pending, to a number (such as `[5]` for the 5th cell) when computation is complete.  If everything is working, you will see text output, graphical output, and a newly created `data_dump.xlsx` file representing the input porfolio, enhanced with temperature score data.
