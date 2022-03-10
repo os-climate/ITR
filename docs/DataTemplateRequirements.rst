@@ -201,8 +201,8 @@ The brackets listed near the top left corner of each executable cell will change
 2. Start your notebook: `jupyter-lab`
 3. Open the file `quick_template_score_calc.ipynb`
 4. Scroll down to the section 'Download/load the sample template data'
-5. Change the filename to your filename in the line: for filename in ['data/<your_filename.xlsx>',
-6. Change the filename to your filename in line: template_data_path = "data/<your_filename.xlsx>"
+5. Change the filename of the .xlsx in the line: for filename in ['data/<your_filename.xlsx>',
+6. Change the filename of the .xlsx in the line: template_data_path = "data/<your_filename.xlsx>"
 7. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
 **Running the ITR Notebook Post Install**
