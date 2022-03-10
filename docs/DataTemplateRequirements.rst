@@ -227,3 +227,28 @@ The brackets listed near the top left corner of each executable cell will change
 6. Start your notebook: `jupyter-lab`
 7. Open the file `quick_template_score_calc.ipynb`
 8. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
+
+Filing Issues and Updating the ITR Repository
+---------------------------------------------
+
+Once you are able to run the `quick_template_score_calc.ipynb` sample notebook with the provided sample data (`examples/data/20220306 ITR Tool Sample Data.xlsx`), you are ready to start trying things with your own data.  The notebook explains how to do this at the heading labeled `Download/load the sample template data` before Cell 6.  As you try loading your own data, you will inevitably find errors--sometimes with the data you receive, sometimes with the data you present to the tool, sometimes with the way the tool loads or does not load your data, sometimes with the way the tool interprets or presents your data.  It is the goal of the Data Commons to streamline and simplify access to data so as to reduce the first to cases of errors, and it is the goal of the ITR project team to continuously improve the ITR tool to reduce the other cases of errors.  In all cases, the correction of errors begins with an error reporting process and ends with an effective update process.
+
+To report errors, please use the GitHub Issues interface for the ITR tool: https://github.com/os-climate/ITR/issues
+
+Immediately you will see all open issues filed against the tool, and you may find that a problem you are having has already been reported.  You can search for keywords, and usually in the process of solving issues, commentary on a specific issue may provide insights into work-arounds.  If you do not see an existing issue (you don't need to search exhaustively; just enough to save yourself time writing up an issue that's already been filed), then by all means open an issue describing the problem, ideally with a reproducible test case (such as an excel file containing the minimum amount of anonymozed data required to reproduce the problem).  The team can then assign the problem and you will see progress as the issue is worked.
+
+The collective actions of many people reporting issues and many people working collaboratively to resolve issues is one of the great advantages of open source software development, and a great opportunity to see its magic at work.
+
+At some point you will receive notice that your issue has been addressed with a new release.  There are two ways you can update to the new release.  The first (and least efficient) way is to run the installation process from top to bottom, using a new directory for the installation.  For most of us, this takes about 10 minutes, but it can take longer for various reasons.  The second way takes less than a minute:
+
+1. Close your jupyter-lab browser tab and shut down the jupyter-lab server (typing Ctrl-C or some such in the shell)
+2. Change your directory to the top of your ITR tree: cd ~/os-climate/ITR (or some such)
+3. Pull changes from upstream: git pull
+4. If git complains that you have modified some files (such as your notebook, which is "modified" every time you run it), you can
+   1. remove the notebook file: rm examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx
+   2. restore it from the updated repository: git restore examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx
+5. Restart your jupyter-lab server
+
+Over time you may do other things to your local repository that makes it difficult to sync with git.  You can file an issue for help, you can do your own research (many of us find answers on github community forums or StackOverflow), or you can go with Option #1: run the installation process from top to bottom in a new directory.
+
+At the same time, with your feedback we will also be working on making the tool and the environment easier to download, install, and manage.
