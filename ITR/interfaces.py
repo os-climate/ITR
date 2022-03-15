@@ -2,7 +2,7 @@ import numpy as np
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
 from typing_extensions import Annotated
-from pydantic import BaseModel, Field, parse_obj_as
+from pydantic import BaseModel, Field, parse_obj_as, validator
 from pint import Quantity
 
 from ITR.data.osc_units import ureg, Q_
@@ -13,47 +13,100 @@ class PintModel(BaseModel):
         arbitrary_types_allowed = True
 
 
-class PowerGenerationWh(BaseModel):
-    units: Union[Literal['MWh'], Literal['GWh'], Literal['TWh']]
-
-
-class PowerGenerationJ(BaseModel):
-    units: Union[Literal['GJ'], Literal['gigajoule'], Literal['GP'], Literal['petajoule']]
-
-PowerGeneration = Annotated[Union[PowerGenerationWh, PowerGenerationJ], Field(discriminator='units')]
-
+class PowerGeneration(BaseModel):
+    units: str 
+    @validator('units')
+    def unit_must_be_energy(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("Wh"):
+            return v
+        raise ValueError(f"cannot convert {v} to Wh")
 
 class ManufactureSteel(BaseModel):
-    units: Union[Literal['Fe_ton'], Literal['kiloFe_ton'], Literal['megaFe_ton']]
+    units: str 
+    @validator('units')
+    def units_must_be_Fe_ton(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("Fe_Ton"):
+            return v
+        raise ValueError(f"cannot convert {v} to Fe_ton")
 
-Manufacturing = Annotated[Union[ManufactureSteel], Field(discriminator='units')]
+class ProductionMetric(BaseModel):
+    units: str
+    @validator('units')
+    def unit_must_be_production(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("Wh"):
+            return v
+        if qty.is_compatible_with("Fe_ton"):
+            return v
+        raise ValueError(f"cannot convert {v} to units of production")
 
-ProductionMetric = Annotated[Union[PowerGeneration, ManufactureSteel], Field(discriminator='units')]
+
+# Right now we have only one kind of Emissions: Co2
+class EmissionsMetric(BaseModel):
+    units: str 
+    @validator('units')
+    def units_must_be_tCO2(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("t CO2"):
+            return v
+        raise ValueError(f"cannot convert {v} to t CO2")
 
 
-class EmissionsCO2(BaseModel):
-    units: Union[Literal['t CO2'], Literal['kt CO2'], Literal['Mt CO2'], Literal['Gt CO2']]
+class EmissionsIntensity_PowerGeneration(BaseModel):
+    units: str 
+    @validator('units')
+    def units_must_be_EI(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("t CO2/MWh"):
+            return v
+        raise ValueError(f"cannot convert {v} to t CO2/energy")
 
-EmissionsMetric = Annotated[EmissionsCO2, Field(discriminator='units')]
+class EmissionsIntensity_ManufactureSteel(BaseModel):
+    units: str 
+    @validator('units')
+    def units_must_be_EI(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("t CO2/Fe_ton"):
+            return v
+        raise ValueError(f"cannot convert {v} to t CO2/Fe_ton")
 
-
-class EmissionsIntensity(BaseModel):
-    units: Union[
-        Literal['t CO2/kWh'], Literal['t CO2/MWh'], Literal['kt CO2/MWh'], Literal['t CO2/GWh'], Literal['Mt CO2/GWh'], Literal['t CO2/TWh'], Literal['Mt CO2/TWh'],
-        Literal['t CO2/MJ'], Literal['t CO2/GJ'], Literal['t CO2/PJ'], Literal['Mt CO2/PJ'],
-        Literal['t CO2/Fe_ton'], Literal['Mt CO2/MFe_ton'], Literal['Mt CO2/megaFe_ton'],
-        Literal['CO2·t/kWh'], Literal['CO2·t/MWh'], Literal['CO2·kt/MWh'], Literal['CO2·t/GWh'], Literal['CO2·Mt/GWh'], Literal['CO2·t/TWh'], Literal['CO2·Mt/TWh'],
-        Literal['CO2·t/MJ'], Literal['CO2·t/GJ'], Literal['CO2·t/PJ'], Literal['CO2·Mt/PJ'],
-        Literal['CO2·t/Fe_ton'], Literal['CO2·t/MFe_ton'], Literal['CO2·Mt/megaFe_ton'], Literal['CO2·Mt/MFe_ton']]
-
-IntensityMetric = Annotated[EmissionsIntensity, Field(discriminator='units')]
+class IntensityMetric(BaseModel):
+    units: str 
+    @validator('units')
+    def units_must_be_EI(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("t CO2/MWh"):
+            return v
+        if qty.is_compatible_with("t CO2/Fe_ton"):
+            return v
+        raise ValueError(f"cannot convert {v} to t CO2/Fe_ton")
 
 
 class DimensionlessNumber(BaseModel):
     units: Literal['dimensionless']
 
-OSC_Metric = Annotated[
-    Union[ProductionMetric, EmissionsMetric, IntensityMetric, DimensionlessNumber], Field(discriminator='units')]
+
+class OSC_Metric(BaseModel):
+    units: str 
+    @validator('units')
+    def units_must_be_OSC(cls, v):
+        if v == 'dimensionless':
+            return v
+        try:
+            if ProductionMetric.unit_must_be_production(v):
+                return v
+        except ValueError:
+            try:
+                if EmissionsMetric.units_must_be_tCO2(v):
+                    return v
+            except ValueError:
+                try:
+                    if IntensityMetric.units_must_be_EI(v):
+                        return v
+                except ValueError:
+                    raise ValueError(f"cannot understand {v} as OSC_Metric")
 
 
 class SortableEnum(Enum):
@@ -321,7 +374,7 @@ class IHistoricEmissionsScopes(PintModel):
 
 class IEIRealization(PintModel):
     year: int
-    value: Optional[Quantity[EmissionsIntensity]]
+    value: Optional[Quantity[IntensityMetric]]
 
 
 class IHistoricEIScopes(PintModel):
