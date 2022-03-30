@@ -1,11 +1,17 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Union
 import pandas as pd
+
 import numpy as np
 
-from ITR.configs import ProjectionConfig, TabsConfig, VariablesConfig, ColumnsConfig, TemperatureScoreConfig
+from ITR.configs import ProjectionConfig, TabsConfig, ColumnsConfig, VariablesConfig, TemperatureScoreConfig
 from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
-    IHistoricEIScopes, ICompanyProjection, ICompanyProjectionsScopes, ICompanyProjections
+    IHistoricEIScopes, ICompanyEIProjection, ICompanyEIProjectionsScopes, ICompanyEIProjections
+
+import pint
+from pint import Quantity
+from ITR.data.osc_units import ureg
+from ITR.interfaces import ICompanyData
 
 
 class CompanyDataProvider(ABC):
@@ -58,11 +64,11 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         Gets the emission intensities for a list of companies
         :param company_ids: list of company ids
-        :return: dataframe of projected intensities for each company in company_ids
+        :return: dataframe of projected intensity trajectories for each company in company_ids
         """
         raise NotImplementedError
 
@@ -72,7 +78,7 @@ class CompanyDataProvider(ABC):
         """
         Gets the projected targets for a list of companies
         :param company_ids: list of company ids
-        :return: dataframe of projected targets for each company in company_ids
+        :return: dataframe of projected intensity targets for each company in company_ids
         """
         raise NotImplementedError
 
@@ -123,7 +129,7 @@ class IntensityBenchmarkDataProvider(ABC):
     """
     AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
 
-    def __init__(self, benchmark_temperature: float, benchmark_global_budget: float, is_AFOLU_included: bool,
+    def __init__(self, benchmark_temperature: Quantity['delta_degC'], benchmark_global_budget: Quantity['CO2'], is_AFOLU_included: bool,
                  **kwargs):
         """
         Create a new data provider instance.
@@ -147,14 +153,14 @@ class IntensityBenchmarkDataProvider(ABC):
         self._is_AFOLU_included = value
 
     @property
-    def benchmark_temperature(self) -> float:
+    def benchmark_temperature(self) -> Quantity['delta_degC']:
         """
         :return: assumed temperature for the benchmark. for OECM 1.5C for example
         """
         return self._benchmark_temperature
 
     @property
-    def benchmark_global_budget(self) -> float:
+    def benchmark_global_budget(self) -> Quantity['CO2']:
         """
         :return: Benchmark provider assumed global budget. if AFOLU is not included global budget is divided by 0.76
         """

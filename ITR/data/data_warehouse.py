@@ -1,8 +1,15 @@
+import warnings # needed until apply behaves better with Pint quantities in arrays
+
 from abc import ABC
 from typing import List
 import pandas as pd
 from pydantic import ValidationError
 import numpy as np
+
+import pint
+import pint_pandas
+from ITR.data.osc_units import ureg, Q_, PA_
+
 from ITR.interfaces import ICompanyAggregates
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
@@ -17,7 +24,7 @@ class DataWarehouse(ABC):
 
     def __init__(self, company_data: CompanyDataProvider,
                  benchmark_projected_production: ProductionBenchmarkDataProvider,
-                 benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider,
+                 benchmarks_projected_ei: IntensityBenchmarkDataProvider,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         """
@@ -25,13 +32,14 @@ class DataWarehouse(ABC):
 
         :param company_data: CompanyDataProvider
         :param benchmark_projected_production: ProductionBenchmarkDataProvider
-        :param benchmarks_projected_emission_intensity: IntensityBenchmarkDataProvider
+        :param benchmarks_projected_ei: IntensityBenchmarkDataProvider
         """
-        self.company_data = company_data
         self.benchmark_projected_production = benchmark_projected_production
-        self.benchmarks_projected_emission_intensity = benchmarks_projected_emission_intensity
+        self.benchmarks_projected_ei = benchmarks_projected_ei
         self.temp_config = tempscore_config
         self.column_config = column_config
+        self.company_data = company_data
+        self.company_data._calculate_target_projections(benchmark_projected_production, benchmarks_projected_ei)
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """
@@ -42,45 +50,52 @@ class DataWarehouse(ABC):
         :return: A list containing the company data and additional precalculated fields
         """
         company_data = self.company_data.get_company_data(company_ids)
-        df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])\
-            .set_index(self.column_config.COMPANY_ID)
-
-        missing_ids = [c_id for c_id in company_ids if c_id not in df_company_data.index]
-        assert not missing_ids, f"Company IDs are not included in the fundamental data: {missing_ids}"
+        df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
+        assert pd.Series(company_ids).isin(df_company_data.index).all(), \
+            "some of the company ids are not included in the fundamental data"
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year).sort_index()
 
-        df_company_data.loc[:, self.column_config.CUMULATIVE_TRAJECTORY] = self._get_cumulative_emission(
-            projected_emission_intensity=self.company_data.get_company_projected_intensities(company_ids),
-            projected_production=projected_production)
-
-        df_company_data.loc[:, self.column_config.CUMULATIVE_TARGET] = self._get_cumulative_emission(
-            projected_emission_intensity=self.company_data.get_company_projected_targets(company_ids),
-            projected_production=projected_production)
-
-        df_company_data.loc[:, self.column_config.CUMULATIVE_BUDGET] = self._get_cumulative_emission(
-            projected_emission_intensity=self.benchmarks_projected_emission_intensity.get_SDA_intensity_benchmarks(
+        # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
+        projected_trajectories = self.company_data.get_company_projected_trajectories(company_ids)
+        df_trajectory = self._get_cumulative_emissions(
+            projected_ei=projected_trajectories,
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
+        # target projections may have a ragged left edge if historic data has a ragged right edge
+        # we can use trajectory info to fill in--it will likely be historic data in that case (the first ragged year)
+        projected_targets = self.company_data.get_company_projected_targets(company_ids)
+        keep_target_data = projected_targets.applymap(lambda x: np.isfinite(x.m))
+        projected_targets = projected_targets.where(keep_target_data, projected_trajectories)
+        df_target = self._get_cumulative_emissions(
+            projected_ei=projected_targets,
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
+        df_budget = self._get_cumulative_emissions(
+            projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(
                 company_info_at_base_year),
-            projected_production=projected_production)
-
-        df_company_data.loc[:,
-        self.column_config.BENCHMARK_GLOBAL_BUDGET] = self.benchmarks_projected_emission_intensity.benchmark_global_budget
-        df_company_data.loc[:,
-        self.column_config.BENCHMARK_TEMP] = self.benchmarks_projected_emission_intensity.benchmark_temperature
-
-        companies = df_company_data.reset_index().to_dict(orient="records")
-
-        aggregate_company_data: List[ICompanyAggregates] = [ICompanyAggregates.parse_obj(company) for company in
-                                                            companies]
-
+            projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
+        df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
+            pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df_company_data),
+                      dtype='pint[Gt CO2]',
+                      index=df_company_data.index)
+        df_company_data[self.column_config.BENCHMARK_TEMP] = \
+            pd.Series([self.benchmarks_projected_ei.benchmark_temperature] * len(df_company_data),
+                      dtype='pint[delta_degC]',
+                      index=df_company_data.index)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # See https://github.com/hgrecco/pint-pandas/issues/114
+            for col in [self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
+                df_company_data[col] = df_company_data[col].apply(lambda x: str(x))
+        companies = df_company_data.to_dict(orient="records")
+        aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
         return aggregate_company_data
 
     def _convert_df_to_model(self, df_company_data: pd.DataFrame) -> List[ICompanyAggregates]:
-
         """
-        transforms Dataframe Company data and preprocessed values into list of IDataProviderTarget instances
+        transforms Dataframe Company data and preprocessed values into list of ICompanyAggregates instances
 
         :param df_company_data: pandas Dataframe with targets
         :return: A list containing the targets
@@ -100,12 +115,13 @@ class DataWarehouse(ABC):
                 pass
         return model_companies
 
-    def _get_cumulative_emission(self, projected_emission_intensity: pd.DataFrame, projected_production: pd.DataFrame
+    def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame
                                  ) -> pd.Series:
         """
-        get the weighted sum of the projected emission times the projected production
-        :param projected_emission_intensity: series of projected emissions
-        :param projected_production: series of projected production series
-        :return: weighted sum of production and emission
+        get the weighted sum of the projected emission
+        :param projected_ei: series of projected emissions intensities
+        :param projected_production: PintArray of projected production amounts
+        :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
-        return projected_emission_intensity.multiply(projected_production).sum(axis=1)
+        projected_emissions = projected_ei.multiply(projected_production)
+        return projected_emissions.sum(axis=1).astype('pint[Mt CO2]')
