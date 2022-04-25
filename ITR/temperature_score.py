@@ -212,7 +212,7 @@ class TemperatureScore(PortfolioAggregation):
         """
         data = data.copy()
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
-                                                          self.aggregation_method)
+                                                          self.aggregation_method).astype('pint[delta_degC]')
         data[self.c.COLS.CONTRIBUTION_RELATIVE] = pd.Series(weighted_scores / weighted_scores.sum(),
                                                             dtype='pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
@@ -256,7 +256,7 @@ class TemperatureScore(PortfolioAggregation):
                 grouped={},
                 all=score_aggregation_all,
                 influence_percentage=self._calculate_aggregate_score(
-                    filtered_data, 'DEFAULT', self.aggregation_method).sum().m * 100)
+                    filtered_data, 'DEFAULT', self.aggregation_method).sum() * 100)
 
             # If there are grouping column(s) we'll group in pandas and pass the results to the aggregation
             if len(self.grouping) > 0:
