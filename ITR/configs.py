@@ -4,13 +4,17 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from .interfaces import TemperatureScoreControls
 
+import pint
+import pint_pandas
+from ITR.data.osc_units import ureg, Q_
 
 class ColumnsConfig:
     # Define a constant for each column used in the
     COMPANY_ID = "company_id"
+    COMPANY_LEI = "company_lei"
     COMPANY_ISIN = "company_isin"
     COMPANY_ISIC = "isic"
-    MARKET_CAP = "company_market_cap"
+    COMPANY_MARKET_CAP = "company_market_cap"
     INVESTMENT_VALUE = "investment_value"
     COMPANY_ENTERPRISE_VALUE = "company_enterprise_value"
     COMPANY_EV_PLUS_CASH = "company_ev_plus_cash"
@@ -25,8 +29,22 @@ class ColumnsConfig:
     OWNED_EMISSIONS = "owned_emissions"
     COUNTRY = 'country'
     SECTOR = 'sector'
+    TEMPLATE_EXPOSURE = 'exposure'
+    TEMPLATE_CURRENCY = 'currency'
+    TEMPLATE_REPORT_DATE = 'report_date'
+    EMISSIONS_METRIC = 'emissions_metric'
+    PRODUCTION_METRIC = 'production_metric'    # The unit of production (i.e., power generated, tons of steel produced, vehicles manufactured, etc.)
+    BASE_YEAR_PRODUCTION = 'base_year_production'
     GHG_SCOPE12 = 'ghg_s1s2'
     GHG_SCOPE3 = 'ghg_s3'
+    TEMPLATE_SCOPE1 = 'em_s1'
+    TEMPLATE_SCOPE2 = 'em_s2'
+    TEMPLATE_SCOPE12 = 'em_s1s2'
+    TEMPLATE_SCOPE3 = 'em_s3'
+    TEMPLATE_SCOPE123 = 'em_s1s2s3'
+    HISTORIC_DATA = "historic_data"
+    TARGET_DATA = "target_data"
+    TEMPLATE_PRODUCTION = 'production'
     COMPANY_REVENUE = 'company_revenue'
     CASH_EQUIVALENTS = 'company_cash_equivalents'
     BASE_YEAR = 'base_year'
@@ -43,12 +61,13 @@ class ColumnsConfig:
     TARGET_PROBABILITY = 'target_probability'
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'
-    BASE_EI = 'emission_intensity_at_base_year'
+    BASE_EI = 'ei_at_base_year'
     PROJECTED_EI = 'projected_intensities'
     PROJECTED_TARGETS = 'projected_targets'
     HISTORIC_PRODUCTIONS = 'historic_productions'
     HISTORIC_EMISSIONS = 'historic_emissions'
-    HISTORIC_EI = 'historic_emission_intensities'
+    HISTORIC_EI = 'historic_ei'
+
     TRAJECTORY_SCORE = 'trajectory_score'
     TRAJECTORY_OVERSHOOT = 'trajectory_overshoot_ratio'
     TARGET_SCORE = 'target_score'
@@ -72,15 +91,32 @@ class SectorsConfig:
 class VariablesConfig:
     EMISSIONS = "Emissions"
     PRODUCTIONS = "Productions"
-    EMISSION_INTENSITIES = "Emission Intensities"
+    EMISSIONS_INTENSITIES = "Emissions Intensities"
 
 
+class TargetConfig:
+    COMPANY_ID = "company_id"
+    COMPANY_LEI = "company_lei"
+    COMPANY_ISIN = "company_isin"
+    COMPANY_ISIC = "isic"
+    NETZERO_DATE = 'netzero_date'
+    TARGET_TYPE = 'target_type'
+    TARGET_SCOPE = 'target_scope'
+    TARGET_START_YEAR = 'target_start_year'
+    TARGET_BASE_YEAR = 'target_base_year'
+    TARGET_BASE_MAGNITUDE = 'target_base_year_qty'
+    TARGET_BASE_UNITS = 'target_base_year_unit'
+    TARGET_YEAR = 'target_year'
+    TARGET_REDUCTION_VS_BASE = 'target_reduction_ambition'
+    
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
     PROJECTED_EI = "projected_ei_in_Wh"
     PROJECTED_PRODUCTION = "projected_production"
     PROJECTED_TARGET = "projected_target"
     HISTORIC_DATA = "historic_data"
+    TEMPLATE_INPUT_DATA = 'ITR input data'
+    TEMPLATE_TARGET_DATA = 'ITR target input data'
 
 
 class PortfolioAggregationConfig:
@@ -89,14 +125,15 @@ class PortfolioAggregationConfig:
 
 class TemperatureScoreConfig(PortfolioAggregationConfig):
     TEMPERATURE_RESULTS = 'temperature_results'
+    # Unfortunately we need to cross over to interfaces.py
     CONTROLS_CONFIG = TemperatureScoreControls(
         base_year=2019,
         target_end_year=2050,
         projection_start_year=2010,
         projection_end_year=2019,
-        tcre=2.2,
-        carbon_conversion=3664.0,
-        scenario_target_temperature=1.5
+        tcre=Q_(2.2, ureg.delta_degC),
+        carbon_conversion=Q_(3664.0, ureg('Gt CO2')),
+        scenario_target_temperature=Q_(1.5, ureg.delta_degC)
     )
 
 

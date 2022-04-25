@@ -7,13 +7,13 @@ import ITR
 
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes
 
+from ITR.data.osc_units import ureg, Q_, PA_
 
 class TestEIBenchmarks(unittest.TestCase):
     """
@@ -32,6 +32,12 @@ class TestEIBenchmarks(unittest.TestCase):
         # load company data
         with open(self.company_json) as json_file:
             parsed_json = json.load(json_file)
+        for company_data in parsed_json:
+            company_data['emissions_metric'] = {'units':'t CO2'}
+            if company_data['sector'] == 'Electricity Utilities':
+                company_data['production_metric'] = {'units':'MWh'}
+            elif company_data['sector'] == 'Steel':
+                company_data['production_metric'] = {'units':'Fe_ton'}
         self.companies = [ICompanyData.parse_obj(company_data) for company_data in parsed_json]
         self.base_company_data = BaseCompanyDataProvider(self.companies)
 
@@ -46,19 +52,19 @@ class TestEIBenchmarks(unittest.TestCase):
         # OECM
         with open(self.benchmark_EI_OECM) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.OECM_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         # TPI
         with open(self.benchmark_EI_TPI) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.TPI_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         # TPI below 2
         with open(self.benchmark_EI_TPI_below_2) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.TPI_below_2_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         self.OECM_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_bm)
@@ -94,10 +100,10 @@ class TestEIBenchmarks(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.05, 2.22, 2.06]
+        expected = pd.Series([2.05, 2.22, 2.06], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.11, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.11, ureg.delta_degC), places=2)
 
         # TPI
         # portfolio data
@@ -106,10 +112,10 @@ class TestEIBenchmarks(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.35, 2.39, 2.22]
+        expected = pd.Series([2.35, 2.39, 2.22], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.32, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.32, ureg.delta_degC), places=2)
 
         # TPI below 2
         # portfolio data
@@ -118,7 +124,12 @@ class TestEIBenchmarks(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = [2.11, 2.32, 2.35]
+        expected = pd.Series([2.11, 2.32, 2.35], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, 2.26, places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.26, ureg.delta_degC), places=2)
+
+if __name__ == "__main__":
+    test = TestEIBenchmarks()
+    test.setUp()
+    test.test_all_benchmarks()

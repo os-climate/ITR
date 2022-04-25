@@ -1,13 +1,18 @@
 import pandas as pd
+from pathlib import Path
 from typing import List, Optional, Tuple
+from pint import Quantity
 
 from .configs import ColumnsConfig, TemperatureScoreConfig
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
-
-from .temperature_score import TemperatureScore
+from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
 
-from .data.data_warehouse import DataWarehouse
+
+# If this file is moved, the computation of get_project_root may also need to change
+def get_project_root() -> Path:
+    return Path(__file__).parent
+
 
 def _flatten_user_fields(record: PortfolioCompany):
     """
@@ -71,7 +76,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     return portfolio_data
 
 
-def calculate(portfolio_data: pd.DataFrame, fallback_score: float, aggregation_method: PortfolioAggregationMethod,
+def calculate(portfolio_data: pd.DataFrame, fallback_score: Quantity['delta_degC'], aggregation_method: PortfolioAggregationMethod,
               grouping: Optional[List[str]], time_frames: List[ETimeFrames],
               scopes: List[EScope], anonymize: bool, aggregate: bool = True,
               controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,
