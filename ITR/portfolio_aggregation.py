@@ -101,7 +101,7 @@ class PortfolioAggregation(ABC):
                     # See https://github.com/hgrecco/pint-pandas/issues/114
                     return pd.Series(data.apply(
                         lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column] / total_investment_weight,
-                        axis=1), dtype='pint[delta_degC]')
+                        axis=1))
             except ZeroDivisionError:
                 raise ValueError("The portfolio weight is not allowed to be zero")
 
@@ -117,7 +117,7 @@ class PortfolioAggregation(ABC):
             emissions = data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12].sum() + data.loc[use_S3, self.c.COLS.GHG_SCOPE3].sum()
             try:
                 return pd.Series((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0)) \
-                            / emissions * data[input_column], dtype='pint[delta_degC]')
+                            / emissions * data[input_column])
             except ZeroDivisionError:
                 raise ValueError("The total emissions should be higher than zero")
 
@@ -148,7 +148,7 @@ class PortfolioAggregation(ABC):
                     result = data.apply(
                         lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
                         axis=1)
-                return result.astype('pint[delta_degC]')
+                return result
             except ZeroDivisionError:
                 raise ValueError("The total owned emissions can not be zero")
         else:
