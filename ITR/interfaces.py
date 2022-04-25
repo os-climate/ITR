@@ -191,6 +191,12 @@ class ECarbonBudgetScenario(Enum):
     MEAN = "Average"
 
 
+class EScoreResultType(Enum):
+    DEFAULT = "Default"
+    TRAJECTORY_ONLY = "Trajectory only"
+    COMPLETE = "Complete"
+
+
 class AggregationContribution(PintModel):
     company_name: str
     company_id: str
