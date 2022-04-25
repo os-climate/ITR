@@ -73,11 +73,17 @@ class TemperatureScore(PortfolioAggregation):
         score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
                 trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
+
         # Safeguard: If score is NaN due to missing data assign default score.
         if np.isnan(score):
-            default_score = self.get_default_score(scorable_row)
-            return default_score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(
-                1.0, ureg.delta_degC)
+            if trajectory_temperature_score:
+                # trajectory only
+                return trajectory_temperature_score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(
+                    0.0, ureg.delta_degC)
+            else:
+                default_score = self.get_default_score(scorable_row)
+                return default_score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(
+                    1.0, ureg.delta_degC)
         return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(
             0.0, ureg.delta_degC)
 
