@@ -253,11 +253,12 @@ class TemperatureScore(PortfolioAggregation):
             score_aggregation_all, \
             filtered_data[self.c.COLS.CONTRIBUTION_RELATIVE], \
             filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
+            filtered_data['DEFAULT'] = 1.0 * filtered_data[self.c.COLS.SCORE_RESULT_TYPE] == EScoreResultType.DEFAULT
             score_aggregation = ScoreAggregation(
                 grouped={},
                 all=score_aggregation_all,
-                influence_percentage=self._calculate_aggregate_score(  # TODO fix default percentage
-                    filtered_data, self.c.SCORE_RESULT_TYPE, self.aggregation_method).sum().m * 100)
+                influence_percentage=self._calculate_aggregate_score(
+                    filtered_data, 'DEFAULT', self.aggregation_method).sum().m * 100)
 
             # If there are grouping column(s) we'll group in pandas and pass the results to the aggregation
             if len(self.grouping) > 0:
