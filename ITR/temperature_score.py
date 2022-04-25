@@ -164,9 +164,9 @@ class TemperatureScore(PortfolioAggregation):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            data[self.c.COLS.TEMPERATURE_SCORE] = zip(*data.apply(
+            data[self.c.COLS.TEMPERATURE_SCORE] = data.apply(
                 lambda row: self.get_ghc_temperature_score(row, company_data), axis=1
-            ))
+            )
         return data
 
     def calculate(self, data: Optional[pd.DataFrame] = None,
