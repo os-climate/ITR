@@ -39,7 +39,8 @@ class DataWarehouse(ABC):
         self.temp_config = tempscore_config
         self.column_config = column_config
         self.company_data = company_data
-        self.company_data._calculate_target_projections(benchmark_projected_production, benchmarks_projected_ei)
+        if company_data:
+            self.company_data._calculate_target_projections(benchmark_projected_production, benchmarks_projected_ei)
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """

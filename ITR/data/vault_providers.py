@@ -188,19 +188,6 @@ where EI.ei_s1_by_year is NULL
 """).fetchall()
         assert len(companies_without_projections)==0, f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}"
 
-    # Copied from BaseCompanyDataProvider, and needed because VaultDataWarehouse is initialized from DataWarehouse.
-    # It's just a stub because the DataVault has all projections.
-    def _calculate_target_projections(self,
-                                      production_bm,
-                                      EI_bm):
-        """
-        This is just a stub.  We don't interpret these parameters.
-        
-        :param Production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
-        :param EI_bm: An Emissions Intensity Benchmark (multi-sector, single-scope, 2020-2050)
-        """
-        return
-    
     # The factors one would want to sum over companies for weighting purposes are:
     #   * market_cap_usd
     #   * enterprise_value_usd
