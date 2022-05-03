@@ -12,15 +12,16 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.vault_providers import VaultCompanyDataProvider, VaultProviderProductionBenchmark, \
     VaultProviderIntensityBenchmark, DataVaultWarehouse
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes
 
+from dotenv import load_dotenv
 import trino
 import osc_ingest_trino as osc
 from sqlalchemy.engine import create_engine
 
 ingest_catalog = 'osc_datacommons_dev'
-ingest_schema = 'demo'
+demo_schema = 'demo_dv'
 
 dotenv_dir = os.environ.get('CREDENTIAL_DOTENV_DIR', os.environ.get('PWD', '/opt/app-root/src'))
 dotenv_path = pathlib.Path(dotenv_dir) / 'credentials.env'
@@ -36,13 +37,11 @@ sqlargs = {
     'auth': trino.auth.JWTAuthentication(os.environ['TRINO_PASSWD_USER1']),
     'http_scheme': 'https',
     'catalog': ingest_catalog,
-    'schema': ingest_schema,
+    'schema': demo_schema,
 }
 engine_init = create_engine(sqlstring, connect_args = sqlargs)
 print("connecting with engine " + str(engine_init))
 connection_init = engine_init.connect()
-qres = engine_init.execute(f"create schema if not exists {ingest_schema}")
-print(qres.fetchall())
 
 class TestVaultProvider(unittest.TestCase):
     """
@@ -63,12 +62,12 @@ class TestVaultProvider(unittest.TestCase):
         # load intensity benchmarks
         with open(self.benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEmissionIntensityBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.vault_EI_bm = VaultProviderIntensityBenchmark(engine_init, benchmark_name="benchmark_ei", EI_benchmarks=ei_bms)
 
         # load company data
         # TODO: ISIC code should read as int, not float
-        self.vault_company_data = VaultCompanyDataProvider(engine_init, "rmi_company_data")
+        self.vault_company_data = VaultCompanyDataProvider(engine_init, "company_data")
 
         self.vault_warehouse = DataVaultWarehouse(engine_init, self.vault_company_data, self.vault_production_bm, self.vault_EI_bm)
 

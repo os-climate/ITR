@@ -20,24 +20,125 @@ import pandas as pd
 from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
-    IntensityBenchmarkDataProvider, EmissionIntensityProjector
+    IntensityBenchmarkDataProvider
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEmissionIntensityBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, ICompanyAggregates
-
-import boto3
-s3 = boto3.resource(
-    service_name="s3",
-    endpoint_url=os.environ["S3_DEV_ENDPOINT"],
-    aws_access_key_id=os.environ["S3_DEV_ACCESS_KEY"],
-    aws_secret_access_key=os.environ["S3_DEV_SECRET_KEY"],
-)
-trino_bucket = s3.Bucket(os.environ["S3_DEV_BUCKET"])
 
 # TODO handling of scopes in benchmarks
 
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
 
+import trino
+from sqlalchemy.engine import create_engine
+from pint import Quantity
+from pint_pandas import PintArray
+
+ingest_catalog = 'osc_datacommons_dev'
+ingest_schema = 'sandbox'
+demo_schema = 'demo_dv'
+
+sqlstring = 'trino://{user}@{host}:{port}/'.format(
+    user = os.environ['TRINO_USER'],
+    host = os.environ['TRINO_HOST'],
+    port = os.environ['TRINO_PORT']
+)
+sqlargs = {
+    'auth': trino.auth.JWTAuthentication(os.environ['TRINO_PASSWD']),
+    'http_scheme': 'https',
+    'catalog': ingest_catalog,
+    'schema': ingest_schema,
+}
+engine = create_engine(sqlstring, connect_args = sqlargs)
+connection = engine.connect()
+
+# If DF_COL contains Pint quantities (because it is a PintArray or an array of Pint Quantities),
+# return a two-column dataframe of magnitudes and units.
+# If DF_COL contains no Pint quanities, return it unchanged.
+def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
+    if type(df_col.values)==PintArray:
+        return pd.DataFrame({df_col.name: df_col.values.quantity.m,
+                             df_col.name + "_units": str(df_col.values.dtype.units)},
+                            index=df_col.index)
+    elif df_col.size==0:
+        return df_col
+    elif isinstance(df_col.iloc[0], Quantity):
+        values = df_col.map(lambda x: (x.m, x.u))
+        return pd.DataFrame({df_col.name: df_col.map(lambda x: x.m),
+                             df_col.name + "_units": df_col.map(lambda x: str(x.u))},
+                            index=df_col.index)
+    else:
+        return df_col
+
+# Rewrite dataframe DF so that columns containing Pint quantities are represented by a column for the Magnitude and column for the Units.
+# The magnitude column retains the original column name and the units column is renamed with a _units suffix.
+def dequantify_df(df: pd.DataFrame) -> pd.DataFrame:
+    return pd.concat([dequantify_column(df[col]) for col in df.columns], axis=1)
+
+# Because this DF comes from reading a Trino table, and because columns must be unqiue, we don't have to enumerate to ensure we properly handle columns with duplicated names
+def requantify_df(df: pd.DataFrame) -> pd.DataFrame:
+    units_col = None
+    columns_reversed = reversed(df.columns)
+    for col in columns_reversed:
+        if col.endswith("_units"):
+            if units_col:
+                # We expect _units column to follow a non-units column
+                raise ValueError
+            units_col = col
+            continue
+        if units_col:
+            if col + '_units' != units_col:
+                raise ValueError
+            if (df[units_col]==df[units_col][0]).all():
+                # Make a PintArray
+                new_col = PintArray(df[col], dtype=f"pint[{ureg(df[units_col][0]).u}]")
+            else:
+                # Make a pd.Series of Quantity in a way that does not throw UnitStrippedWarning
+                new_col = pd.Series(data=df[col], name=col) * pd.Series(data=df[units_col].map(lambda x: ureg(x).u), name=col)
+            df = df.drop(columns=units_col)
+            df[col] = new_col
+            units_col = None
+    return df
+
+def create_table_from_df (df: pd.DataFrame, schemaname: str, tablename: str, engine: sqlalchemy.engine.base.Engine, verbose=False):
+    drop_table = f"drop table if exists {schemaname}.{tablename}"
+    qres = engine.execute(drop_table)
+    rows = qres.fetchall()
+    if verbose:
+        print(f"SQL: {drop_table}")
+        for row in rows:
+            print(f"SQL RESULT: {row}")
+    print(df.dtypes)
+    print(df.columns)
+    print(df.index)
+    new_df = dequantify_df (df)
+    new_df.to_sql(tablename, con=engine, schema=schemaname, if_exists='append',
+                  index=False,
+                  method=osc.TrinoBatchInsert(batch_size = 5000, verbose = True))
+
+# When reading SQL tables to import into DataFrames, it is up to the user to preserve {COL}, {COL}_units pairings so they can be reconstructed.
+# If the user does a naive "select * from ..." this happens naturally.
+# We can give a warning when we see a resulting dataframe that could have, but does not have, unit information properly integrated.  But
+# fixing the query on the fly becomes difficult when we consider the fully complexity of parsing and rewriting SQL queries to put the units columns in the correct locations.
+# (i.e., properly in the principal SELECT clause (which can have arbitrarily complex terms), not confused by FROM, WHERE, GROUP BY, ORDER BY, etc.)
+
+def read_quantified_sql (sql: str, schemaname, tablename, engine: sqlalchemy.engine.base.Engine, index_col=None) -> pd.DataFrame:
+    qres = engine.execute(f"describe {schemaname}.{tablename}")
+    # tabledesc will be a list of tuples (column, type, extra, comment)
+    colnames = [x[0] for x in qres.fetchall()]
+    # read columns normally...this will be missing any unit-related information
+    sql_df = pd.read_sql(sql, engine, index_col)
+    # if the query requests columns that don't otherwise bring unit information along with them, get that information too
+    extra_unit_columns = [ (i, f"{col}_units") for i, col in enumerate(sql_df.columns) if f"{col}_units" not in sql_df.columns and f"{col}_units" in colnames ]
+    if extra_unit_columns:
+        extra_unit_columns_positions = [ (i, extra_unit_columns[i][0], extra_unit_columns[i][1]) for i in range(len(extra_unit_columns)) ]
+        for col_tuple in extra_unit_columns_positions:
+            print(f"Missing units column '{col_tuple[2]}' after original column '{udf.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)")
+        raise ValueError
+    else:
+        return requantify_df(sql_df).convert_dtypes()
+
+    
 # Basic Corp Data Asumptions
 #   5 year historical EI (else we presume single year is constant backward and forward)
 #   5 year historical Production (else we presume single year is constant backward and forward)
@@ -72,21 +173,34 @@ class VaultCompanyDataProvider(CompanyDataProvider):
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__()
         self._engine = engine
-        self._schema = company_schema or engine.dialect.default_schema_name or 'demo'
+        self._schema = company_schema or engine.dialect.default_schema_name or 'demo_dv'
         self._company_table = company_table
         self.column_config = column_config
         self.temp_config = tempscore_config
         # Validate and complete the projected trajectories
-        self._intensity_table = target_table or company_table.replace('company_', 'intensity_')
+        self._target_table = target_table or company_table.replace('company_', 'target_')
         self._trajectory_table = trajectory_table or company_table.replace('company_', 'trajectory_')
         self._production_table = company_table.replace('company_', 'production_')
         self._emissions_table = company_table.replace('company_', 'emissions_')
         companies_without_projections = self._engine.execute(f"""
-select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._intensity_table} EI on EI.company_name=C.company_name
-where EI.co2_intensity_target_by_year is NULL
+select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._target_table} EI on EI.company_name=C.company_name
+where EI.ei_s1_by_year is NULL
 """).fetchall()
         assert len(companies_without_projections)==0, f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}"
 
+    # Copied from BaseCompanyDataProvider, and needed because VaultDataWarehouse is initialized from DataWarehouse.
+    # It's just a stub because the DataVault has all projections.
+    def _calculate_target_projections(self,
+                                      production_bm,
+                                      EI_bm):
+        """
+        This is just a stub.  We don't interpret these parameters.
+        
+        :param Production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
+        :param EI_bm: An Emissions Intensity Benchmark (multi-sector, single-scope, 2020-2050)
+        """
+        return
+    
     # The factors one would want to sum over companies for weighting purposes are:
     #   * market_cap_usd
     #   * enterprise_value_usd
@@ -101,7 +215,7 @@ where EI.co2_intensity_target_by_year is NULL
         elif factor=='emissions':
             # TODO: properly interpret SCOPE parameter
             assert scope==EScope.S1S2
-            qres = self._engine.execute(f"select sum(co2_target_by_year) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}")
+            qres = self._engine.execute(f"select sum(co2_s1_by_year+co2_s2_by_year) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}")
         else:
             qres = self._engine.execute(f"select sum({factor}) as {factor}_sum from {self._schema}.{self._company_table} where year={year}")
         sres = qres.fetchall()
@@ -120,7 +234,7 @@ where EI.co2_intensity_target_by_year is NULL
         elif factor=='emissions':
             # TODO: properly interpret SCOPE parameter
             assert scope==EScope.S1S2
-            qres = self._engine.execute(f"select company_id, sum(co2_target_by_year) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id")
+            qres = self._engine.execute(f"select company_id, sum(co2_s1_by_year+co2_s2_by_year) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id")
         else:
             qres = self._engine.execute(f"select company_id, sum({factor}) as {factor} from {self._schema}.{self._company_table} group by company_id")
         sres = qres.fetchall()
@@ -166,11 +280,11 @@ where EI.co2_intensity_target_by_year is NULL
         """
         or_clause = ' or '.join([f"company_id = '{c}'" for c in company_ids])
         sql = f"select * from {self._schema}.{self._company_table} where {or_clause}"
-        df = pd.read_sql(sql, self._engine)
+        df = read_quantified_sql(sql, self._company_table, self._schema, self._engine)
         # df = df.drop(columns=['projected_targets', 'projected_intensities'])
         return df
 
-    def get_company_projected_intensities(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensities per company
@@ -183,6 +297,7 @@ where EI.co2_intensity_target_by_year is NULL
         :return: A pandas DataFrame with projected targets per company
         """
         raise NotImplementedError
+
 
 
 benchmark_scopes = ['S1S2', 'S3', 'S1S2S3']
@@ -207,9 +322,8 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
                          column_config=column_config,
                          tempscore_config=tempscore_config)
         self._engine=engine
-        self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo'
+        self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo_dv'
         self.benchmark_name=benchmark_name
-        qres = self._engine.execute(f"drop table if exists itr_mdt.{benchmark_name}")
         qres = self._engine.execute(f"drop table if exists {self._schema}.{benchmark_name}")
         qres.fetchall()
         df = pd.DataFrame()
@@ -225,9 +339,7 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         df.reset_index(inplace=True)
         df.rename(columns={'index':'year'}, inplace=True)
         df = df.convert_dtypes()
-        osc.ingest_unmanaged_parquet(df, self._schema, benchmark_name, trino_bucket)
-        qres = engine.execute(osc.unmanaged_parquet_tabledef(df, ingest_catalog, self._schema, benchmark_name, trino_bucket))
-        print(qres.fetchall())
+        create_table_from_df (df, self._schema, benchmark_name, engine)
 
     def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
         """
@@ -269,16 +381,15 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
     def __init__(self,
                  engine: sqlalchemy.engine.base.Engine,
                  benchmark_name: str,
-                 EI_benchmarks: IEmissionIntensityBenchmarkScopes,
+                 EI_benchmarks: IEIBenchmarkScopes,
                  ingest_schema: str = None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(EI_benchmarks.benchmark_temperature, EI_benchmarks.benchmark_global_budget,
                          EI_benchmarks.is_AFOLU_included)
         self._engine=engine
-        self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo'
+        self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo_dv'
         self.benchmark_name = benchmark_name
-        osc.drop_unmanaged_table(ingest_catalog, self._schema, benchmark_name, engine, trino_bucket)
         df = pd.DataFrame()
         for scope in benchmark_scopes:
             if EI_benchmarks.dict()[scope] is None:
@@ -292,9 +403,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         df.reset_index(inplace=True)
         df.rename(columns={'index':'year'}, inplace=True)
         df = df.convert_dtypes()
-        osc.ingest_unmanaged_parquet(df, self._schema, benchmark_name, trino_bucket)
-        qres = engine.execute(osc.unmanaged_parquet_tabledef(df, ingest_catalog, self._schema, benchmark_name, trino_bucket))
-        print(qres.fetchall())
+        create_table_from_df(df, self._schema, benchmark_name, engine)
 
 
     def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
@@ -381,68 +490,69 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         return benchmark_projection
 
 class DataVaultWarehouse(DataWarehouse):
-
     def __init__(self,
                  engine: sqlalchemy.engine.base.Engine,
                  company_data: VaultCompanyDataProvider,
                  benchmark_projected_production: ProductionBenchmarkDataProvider,
-                 benchmarks_projected_emissions_intensity: IntensityBenchmarkDataProvider,
+                 benchmarks_projected_ei: IntensityBenchmarkDataProvider,
                  ingest_schema: str = None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(company_data=company_data,
                          benchmark_projected_production=benchmark_projected_production,
-                         benchmarks_projected_emissions_intensity=benchmarks_projected_emissions_intensity,
+                         benchmarks_projected_ei=benchmarks_projected_ei,
                          column_config=column_config,
                          tempscore_config=tempscore_config)
         self._engine=engine
-        self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo'
-        # intensity_projections = pd.read_sql(f"select * from {self._schema}.{intensity_table}", self._engine)
+        self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo_dv'
+        # intensity_projections = read_quantified_sql(f"select * from {self._schema}.{self._target_table}", self._target_table, self._schema, self._engine)
         # intensity_projections['scope'] = 'S1+S2'
         # intensity_projections['source'] = self._schema
         
         # If there's no company data, we are just using the vault, not initializing it
         if company_data==None:
             return
-        if benchmark_projected_production is None and benchmarks_projected_emissions_intensity is None:
+        if benchmark_projected_production is None and benchmarks_projected_ei is None:
             return
 
         # The DataVaultWarehouse provides three calculations per company:
         #    * Cumulative trajectory of emissions
         #    * Cumulative target of emissions
         #    * Cumulative budget of emissions (separately for each benchmark)
-        for t in ['cumulative_emissions', 'cumulative_budget_1']:
-            osc.drop_unmanaged_table(ingest_catalog, self._schema, t, engine, trino_bucket)
 
+        qres = self._engine.execute("drop table if exists cumulative_emissions")
+        qres.fetchall()
         qres = self._engine.execute(f"""
 create table cumulative_emissions with (
-    format = 'parquet',
-    external_location = 's3a://{trino_bucket.name}/trino/{self._schema}/cumulative_emissions/'
+    format = 'ORC',
+    partitioning = array['scope']
 ) as
 select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1+S2' as scope,
-       sum(ET.co2_intensity_trajectory_by_year * P.production_by_year) as cumulative_trajectory,
-       sum(EI.co2_intensity_target_by_year * P.production_by_year) as cumulative_target
+       sum((ET.ei_s1_by_year+ET.ei_s2_by_year) * P.production_by_year) as cumulative_trajectory,
+       sum((EI.ei_s1_by_year+EI.ei_s2_by_year) * P.production_by_year) as cumulative_target
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
-     join {company_data._schema}.{company_data._intensity_table} EI on EI.company_name=C.company_name and EI.year=P.year
+     join {company_data._schema}.{company_data._target_table} EI on EI.company_name=C.company_name and EI.year=P.year
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_name=C.company_name and ET.year=P.year
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2'
 """)
         # Need to fetch so table created above is established before using in query below
         qres.fetchall()
+
+        qres = self._engine.execute("drop table if exists cumulative_budget_1")
+        qres.fetchall()
         qres = self._engine.execute(f"""
 create table cumulative_budget_1 with (
-    format = 'parquet',
-    external_location = 's3a://{trino_bucket.name}/trino/{self._schema}/cumulative_budget_1/'
+    format = 'ORC',
+    partitioning = array['scope']
 ) as
 select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1+S2' as scope, 'benchmark_1' as benchmark,
        B.global_budget, B.benchmark_temp,
        sum(B.intensity * P.production_by_year) as cumulative_budget
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
-     join demo.isic_to_sector I2S on C.isic=I2S.isic
-     join {self._schema}.benchmark_ei B on P.year=B.year and C.region=B.region and I2S.sector=B.sector
+     join {self._schema}.benchmark_ei B on P.year=B.year and C.region=B.region and C.sector=B.sector
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'benchmark_1', B.global_budget, B.benchmark_temp
 """)
@@ -457,13 +567,12 @@ group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'bench
         #    * Target and Trajectory overshoot ratios
         #    * Temperature Scores
 
-        for t in ['overshoot_ratios', 'temperature_scores']:
-            osc.drop_unmanaged_table(ingest_catalog, self._schema, t, engine, trino_bucket)
-
+        qres = self._engine.execute("drop table if exists overshoot_ratios")
+        qres.fetchall()
         qres = self._engine.execute(f"""
 create table overshoot_ratios with (
-    format = 'parquet',
-    external_location = 's3a://{trino_bucket.name}/trino/{self._schema}/overshoot_ratios/'
+    format = 'ORC',
+    partitioning = array['scope']
 ) as
 select E.company_name, E.company_id, '{company_data._schema}' as source, 'S1+S2' as scope, 'benchmark_1' as benchmark,
        B.global_budget, B.benchmark_temp,
@@ -474,10 +583,13 @@ from {self._schema}.cumulative_emissions E
 """)
         # Need to fetch so table created above is established so later queries can use it
         qres.fetchall()
+
+        qres = self._engine.execute("drop table if exists temperature_scores")
+        qres.fetchall()
         qres = self._engine.execute(f"""
 create table temperature_scores with (
-    format = 'parquet',
-    external_location = 's3a://{trino_bucket.name}/trino/{self._schema}/temperature_scores/'
+    format = 'ORC',
+    partitioning = array['scope']
 ) as
 select R.company_name, R.company_id, '{company_data._schema}' as source, 'S1+S2' as scope, 'benchmark_1' as benchmark,
        R.benchmark_temp + R.global_budget * (R.trajectory_overshoot_ratio-1) * 2.2/3664.0 as trajectory_temperature_score,
@@ -494,8 +606,8 @@ from {self._schema}.overshoot_ratios R
     def get_pa_temp_scores(self, probability: float, company_ids: List[str]) -> pd.Series:
         if probability < 0 or probability > 1:
             raise ValueError(f"probability value {probability} outside range [0.0, 1.0]")
-        temp_scores = pd.read_sql(f"select company_id, target_temperature_score, trajectory_temperature_score from {self._schema}.temperature_scores",
-                                  self._engine, index_col='company_id')
+        temp_scores = read_quantified_sql(f"select company_id, target_temperature_score, trajectory_temperature_score from {self._schema}.temperature_scores",
+                                          'temperature_scores', self._schema, self._engine, index_col='company_id')
         # We may have company_ids in our portfolio not in our database, and vice-versa.
         # Return proper pa_temp_scores for what we can find, and np.nan for those we cannot
         retval = pd.Series(data=None, index=company_ids, dtype='float64')
