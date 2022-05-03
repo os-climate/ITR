@@ -170,7 +170,7 @@ initial amount as rounding down to zero.
 Installation Notes
 ------------------
 
-The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .
+The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .  Because the ITR repository is currently Private, you will need to select `repo` privileges (the first option box) when requesting the token.  GitHub will magically select all the boxes indented under the `repo` option.
 
 **Getting Started with conda**
 
@@ -199,7 +199,7 @@ With your conda shell and environment running,  with git installed, and starting
 4. Switch to the correct branch: `git checkout develop-pint-steel-projections`
 5. create the `conda` itr_env: `conda env create -f environment.yml`
 6. Activate that environment: `conda activate itr_env`
-7. Install the ITR libraries to your local environment: `pip install -e .` (you may need `--no-cache-dir` on windows to avoid permissions errors)
+7. Install the ITR libraries to your local environment: `pip install -e .` (you may need `--no-cache-dir` on windows to avoid permissions errors; please also note that the pip install command includes the period character after the -e)
 8. Change to the `examples` directory
 9. Start your notebook: `jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
 10. Make the file browser to the left of the notebook wide enough to expose the full names of the files in the `examples` directory.  You should see a file named `quick_template_score_calc.ipynb`.  Double click on that file to open it.
