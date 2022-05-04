@@ -485,7 +485,7 @@ class DataVaultWarehouse(DataWarehouse):
                  ingest_schema: str = None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
-        super().__init__(company_data=company_data,
+        super().__init__(company_data=None,
                          benchmark_projected_production=benchmark_projected_production,
                          benchmarks_projected_ei=benchmarks_projected_ei,
                          column_config=column_config,
