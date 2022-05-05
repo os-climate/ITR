@@ -25,6 +25,8 @@ from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, ICompanyAggregates
 
+from ITR.data.osc_units import *
+
 # TODO handling of scopes in benchmarks
 
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
@@ -122,7 +124,7 @@ def create_table_from_df (df: pd.DataFrame, schemaname: str, tablename: str, eng
 # fixing the query on the fly becomes difficult when we consider the fully complexity of parsing and rewriting SQL queries to put the units columns in the correct locations.
 # (i.e., properly in the principal SELECT clause (which can have arbitrarily complex terms), not confused by FROM, WHERE, GROUP BY, ORDER BY, etc.)
 
-def read_quantified_sql (sql: str, schemaname, tablename, engine: sqlalchemy.engine.base.Engine, index_col=None) -> pd.DataFrame:
+def read_quantified_sql (sql: str, tablename, schemaname, engine: sqlalchemy.engine.base.Engine, index_col=None) -> pd.DataFrame:
     qres = engine.execute(f"describe {schemaname}.{tablename}")
     # tabledesc will be a list of tuples (column, type, extra, comment)
     colnames = [x[0] for x in qres.fetchall()]
@@ -133,7 +135,7 @@ def read_quantified_sql (sql: str, schemaname, tablename, engine: sqlalchemy.eng
     if extra_unit_columns:
         extra_unit_columns_positions = [ (i, extra_unit_columns[i][0], extra_unit_columns[i][1]) for i in range(len(extra_unit_columns)) ]
         for col_tuple in extra_unit_columns_positions:
-            print(f"Missing units column '{col_tuple[2]}' after original column '{udf.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)")
+            print(f"Missing units column '{col_tuple[2]}' after original column '{sql_df.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)")
         raise ValueError
     else:
         return requantify_df(sql_df).convert_dtypes()
@@ -202,7 +204,7 @@ where EI.ei_s1_by_year is NULL
         elif factor=='emissions':
             # TODO: properly interpret SCOPE parameter
             assert scope==EScope.S1S2
-            qres = self._engine.execute(f"select sum(co2_s1_by_year+co2_s2_by_year) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}")
+            qres = self._engine.execute(f"select sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}")
         else:
             qres = self._engine.execute(f"select sum({factor}) as {factor}_sum from {self._schema}.{self._company_table} where year={year}")
         sres = qres.fetchall()
@@ -221,7 +223,7 @@ where EI.ei_s1_by_year is NULL
         elif factor=='emissions':
             # TODO: properly interpret SCOPE parameter
             assert scope==EScope.S1S2
-            qres = self._engine.execute(f"select company_id, sum(co2_s1_by_year+co2_s2_by_year) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id")
+            qres = self._engine.execute(f"select company_id, sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id")
         else:
             qres = self._engine.execute(f"select company_id, sum({factor}) as {factor} from {self._schema}.{self._company_table} group by company_id")
         sres = qres.fetchall()
@@ -507,16 +509,16 @@ class DataVaultWarehouse(DataWarehouse):
         #    * Cumulative target of emissions
         #    * Cumulative budget of emissions (separately for each benchmark)
 
-        qres = self._engine.execute("drop table if exists cumulative_emissions")
+        qres = self._engine.execute(f"drop table if exists {self._schema}.cumulative_emissions")
         qres.fetchall()
         qres = self._engine.execute(f"""
-create table cumulative_emissions with (
+create table {self._schema}.cumulative_emissions with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
 select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1+S2' as scope,
-       sum((ET.ei_s1_by_year+ET.ei_s2_by_year) * P.production_by_year) as cumulative_trajectory,
-       sum((EI.ei_s1_by_year+EI.ei_s2_by_year) * P.production_by_year) as cumulative_target
+       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)) * P.production_by_year) as cumulative_trajectory,
+       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) as cumulative_target
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
      join {company_data._schema}.{company_data._target_table} EI on EI.company_name=C.company_name and EI.year=P.year
@@ -527,10 +529,10 @@ group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2'
         # Need to fetch so table created above is established before using in query below
         qres.fetchall()
 
-        qres = self._engine.execute("drop table if exists cumulative_budget_1")
+        qres = self._engine.execute(f"drop table if exists {self._schema}.cumulative_budget_1")
         qres.fetchall()
         qres = self._engine.execute(f"""
-create table cumulative_budget_1 with (
+create table {self._schema}.cumulative_budget_1 with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
@@ -554,10 +556,10 @@ group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'bench
         #    * Target and Trajectory overshoot ratios
         #    * Temperature Scores
 
-        qres = self._engine.execute("drop table if exists overshoot_ratios")
+        qres = self._engine.execute(f"drop table if exists {self._schema}.overshoot_ratios")
         qres.fetchall()
         qres = self._engine.execute(f"""
-create table overshoot_ratios with (
+create table {self._schema}.overshoot_ratios with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
@@ -571,16 +573,18 @@ from {self._schema}.cumulative_emissions E
         # Need to fetch so table created above is established so later queries can use it
         qres.fetchall()
 
-        qres = self._engine.execute("drop table if exists temperature_scores")
+        qres = self._engine.execute(f"drop table if exists {self._schema}.temperature_scores")
         qres.fetchall()
         qres = self._engine.execute(f"""
-create table temperature_scores with (
+create table {self._schema}.temperature_scores with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
 select R.company_name, R.company_id, '{company_data._schema}' as source, 'S1+S2' as scope, 'benchmark_1' as benchmark,
        R.benchmark_temp + R.global_budget * (R.trajectory_overshoot_ratio-1) * 2.2/3664.0 as trajectory_temperature_score,
-       R.benchmark_temp + R.global_budget * (R.target_overshoot_ratio-1) * 2.2/3664.0 as target_temperature_score
+       'delta_degC' as trajectory_temperature_score_units,
+       R.benchmark_temp + R.global_budget * (R.target_overshoot_ratio-1) * 2.2/3664.0 as target_temperature_score,
+       'delta_degC' as target_temperature_score_units
 from {self._schema}.overshoot_ratios R
 """)
         # Need to fetch so table created above is established before any might want to use later
@@ -593,7 +597,7 @@ from {self._schema}.overshoot_ratios R
     def get_pa_temp_scores(self, probability: float, company_ids: List[str]) -> pd.Series:
         if probability < 0 or probability > 1:
             raise ValueError(f"probability value {probability} outside range [0.0, 1.0]")
-        temp_scores = read_quantified_sql(f"select company_id, target_temperature_score, trajectory_temperature_score from {self._schema}.temperature_scores",
+        temp_scores = read_quantified_sql(f"select company_id, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units from {self._schema}.temperature_scores",
                                           'temperature_scores', self._schema, self._engine, index_col='company_id')
         # We may have company_ids in our portfolio not in our database, and vice-versa.
         # Return proper pa_temp_scores for what we can find, and np.nan for those we cannot
