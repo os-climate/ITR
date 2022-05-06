@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
 from typing_extensions import Annotated
@@ -649,3 +650,17 @@ class TemperatureScoreControls(PintModel):
     @property
     def tcre_multiplier(self) -> Quantity['delta_degC/CO2']:
         return self.tcre / self.carbon_conversion
+
+from dataclasses import dataclass
+from typing import Callable
+
+@dataclass
+class ProjectionControls:
+    LOWER_PERCENTILE: float = 0.1
+    UPPER_PERCENTILE: float = 0.9
+
+    LOWER_DELTA: float = -0.10
+    UPPER_DELTA: float = +0.03
+
+    TARGET_YEAR: int = 2050
+    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)
