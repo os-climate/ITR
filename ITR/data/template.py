@@ -11,7 +11,7 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, 
 from ITR.interfaces import ICompanyData, EScope, \
     IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
-    IProjection
+    IProjection, ProjectionControls
 
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
@@ -51,9 +51,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
     def __init__(self, excel_path: str,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
+                 projection_controls: Type[ProjectionControls] = ProjectionControls):
         self._companies = self._convert_from_template_company_data(excel_path)
-        super().__init__(self._companies, column_config, tempscore_config)
+        super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
     def _calculate_target_projections(self,
                                       production_bm: BaseProviderProductionBenchmark,

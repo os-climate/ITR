@@ -135,14 +135,3 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion=Q_(3664.0, ureg('Gt CO2')),
         scenario_target_temperature=Q_(1.5, ureg.delta_degC)
     )
-
-
-class ProjectionConfig:
-    LOWER_PERCENTILE: float = 0.1
-    UPPER_PERCENTILE: float = 0.9
-
-    LOWER_DELTA: float = -0.10
-    UPPER_DELTA: float = +0.03
-
-    TARGET_YEAR: int = 2050
-

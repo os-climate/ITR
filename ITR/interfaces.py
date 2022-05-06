@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
 from typing_extensions import Annotated
@@ -650,42 +651,16 @@ class TemperatureScoreControls(PintModel):
     def tcre_multiplier(self) -> Quantity['delta_degC/CO2']:
         return self.tcre / self.carbon_conversion
 
+from dataclasses import dataclass
+from typing import Callable
 
-class EScope(SortableEnum):
-    S1 = "S1"
-    S2 = "S2"
-    S3 = "S3"
-    S1S2 = "S1+S2"
-    S1S2S3 = "S1+S2+S3"
+@dataclass
+class ProjectionControls:
+    LOWER_PERCENTILE: float = 0.1
+    UPPER_PERCENTILE: float = 0.9
 
-    @classmethod
-    def get_scopes(cls) -> List[str]:
-        """
-        Get a list of all scopes.
-        :return: A list of EScope string values
-        """
-        return ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3']
+    LOWER_DELTA: float = -0.10
+    UPPER_DELTA: float = +0.03
 
-    @classmethod
-    def get_result_scopes(cls) -> List['EScope']:
-        """
-        Get a list of scopes that should be calculated if the user leaves it open.
-
-        :return: A list of EScope objects
-        """
-        return [cls.S1S2, cls.S3, cls.S1S2S3]
-
-
-class ETimeFrames(SortableEnum):
-    """
-    TODO: add support for multiple timeframes. Long currently corresponds to 2050.
-    """
-    SHORT = "short"
-    MID = "mid"
-    LONG = "long"
-
-
-class ECarbonBudgetScenario(Enum):
-    P25 = "25 percentile"
-    P75 = "75 percentile"
-    MEAN = "Average"
+    TARGET_YEAR: int = 2050
+    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)
