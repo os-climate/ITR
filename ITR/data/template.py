@@ -7,7 +7,7 @@ import pint
 from pydantic import ValidationError
 
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig
 from ITR.interfaces import ICompanyData, EScope, \
     IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
@@ -65,6 +65,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         missing_tabs = [tab for tab in required_tabs if tab not in df]
         assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
 
+
+
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
         """
         Converts the Excel template to list of ICompanyData objects. All dataprovider features will be inhereted from
@@ -88,6 +90,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             input_data_sheet = "Test input data"
 
         df = df_company_data[input_data_sheet]
+
+
         df['exposure'].fillna('presumed_equity', inplace=True)
         # TODO: Fix market_cap column naming inconsistency
         df.rename(
@@ -101,6 +105,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
 
         company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
+
+        # testing if only valid sectors are provided
+        sectors_from_df = df_fundamentals[ColumnsConfig.SECTOR].unique()
+        required_sectors = [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY]
+        out_of_scope_sec = [sec for sec in sectors_from_df if sec not in required_sectors]
+        assert len(out_of_scope_sec) == 0, f"Sector {out_of_scope_sec} are not covered by the ITR tool currently. Delete it from excel template."
+
         # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
         historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
         historic_scopes = ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3', 'production']
