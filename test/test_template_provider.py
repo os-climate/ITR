@@ -72,7 +72,9 @@ class TestTemplateProvider(unittest.TestCase):
                                   # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                   .iloc[0].T
                                   .astype(f'pint[{str(c.base_year_production.units)}]'))
-            print(f"{c.company_name}: {EITargetProjector().project_ei_targets(c.target_data, c.historic_data, bm_production_data).S1S2}")
+            projected_targets = EITargetProjector().project_ei_targets(c.target_data, c.historic_data,
+                                                                       bm_production_data, c.projected_intensities).S1S2
+            print(f"{c.company_name}: {projected_targets}")
         
 
     def test_temp_score(self):

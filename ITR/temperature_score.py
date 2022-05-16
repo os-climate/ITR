@@ -49,56 +49,46 @@ class TemperatureScore(PortfolioAggregation):
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
         :param scorable_row: The target as a row of a data frame
-        :return: The temperature score, which is a tuple of (TEMPERATURE_SCORE,TRAJECTORY_SCORE,TRAJECTORY_OVERSHOOT,TARGET_SCORE,TARGET_OVERSHOOT,TEMPERATURE_RESULTS])
+        :return: The temperature score, which is a tuple of (TEMPERATURE_SCORE, TRAJECTORY_SCORE, TRAJECTORY_OVERSHOOT,
+                        TARGET_SCORE, TARGET_OVERSHOOT, TEMPERATURE_RESULTS])
         """
 
         # If both trajectory and target data missing assign default value
-        if np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and np.isnan(
-                scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY]):
-            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, Q_(1, ureg.delta_degC)
+        if (np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
+            np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
+                scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m <= 0:
+            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
 
         # If only target data missing assign only trajectory_score to final score
-        elif np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0 \
-                or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY]:
-            target_overshoot_ratio = 0.0
-            target_temperature_score = 0.0
+        elif np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
+            target_overshoot_ratio = np.nan
+            target_temperature_score = np.nan
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
             trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
-                                           (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
-                                                   trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
+                (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
+                    self.c.CONTROLS_CONFIG.tcre_multiplier)
             score = trajectory_temperature_score
-            return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, EScoreResultType.COMPLETE
+            return score, trajectory_temperature_score, trajectory_overshoot_ratio, \
+                target_temperature_score, target_overshoot_ratio, EScoreResultType.TRAJECTORY_ONLY
 
-        elif scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m > 0:
+        else:
             target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
-        else:
-            target_overshoot_ratio = 0.0
-            trajectory_overshoot_ratio = 0.0
 
-        target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
-                                   (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
-                                           target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
-        trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
-                                       (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
-                                               trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
-        score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
+            target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (target_overshoot_ratio - 1.0) *
+                    self.c.CONTROLS_CONFIG.tcre_multiplier)
+            trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
+                    self.c.CONTROLS_CONFIG.tcre_multiplier)
+            score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
                 trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
-
-        # Safeguard: If score is NaN due to missing data assign default score.
-        if np.isnan(score):
-            if trajectory_temperature_score:
-                # trajectory only
-                return trajectory_temperature_score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, EScoreResultType.TRAJECTORY_ONLY
-            else:
-                default_score = self.get_default_score(scorable_row)
-                return default_score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(
-                    1.0, EScoreResultType.DEFAULT)
-        return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, EScoreResultType.COMPLETE
+            return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, \
+                target_overshoot_ratio, EScoreResultType.COMPLETE
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Quantity['delta_degC']:
         """
