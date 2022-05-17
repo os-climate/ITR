@@ -107,10 +107,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
 
         # testing if only valid sectors are provided
+        assert len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) == 1, f"All data should be in the same currency. Please adjust excel template input."
+
+        # testing if all data is in the same currency
         sectors_from_df = df_fundamentals[ColumnsConfig.SECTOR].unique()
         required_sectors = [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY]
         out_of_scope_sec = [sec for sec in sectors_from_df if sec not in required_sectors]
         assert len(out_of_scope_sec) == 0, f"Sector {out_of_scope_sec} are not covered by the ITR tool currently. Delete it from excel template."
+
 
         # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
         historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
