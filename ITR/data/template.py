@@ -117,6 +117,20 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         historic_scopes = ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3', 'production']
         df_historic = df_fundamentals[['company_id'] + historic_columns].dropna(axis=1, how='all')
         df_fundamentals = df_fundamentals[df_fundamentals.columns.difference(historic_columns, sort=False)]
+
+
+        # Checking if there are not many missing market cap
+        missing_cap = df_fundamentals['market_cap'].isnull().sum() * 100 / len(df_fundamentals)
+        assert missing_cap < 20, f"Too many companies with missing market capitalization. Cannot proceed."
+        # For the missing Market Cap we should use the ratio below to get dummy market cap:
+        #   (Avg for the Sector (Market Cap / Revenues) + Avg for the Sector (Market Cap / Assets)) 2
+        df_fundamentals['MCap_to_Reven']=df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]/df_fundamentals[ColumnsConfig.COMPANY_REVENUE] # new temp column with ratio
+        df_fundamentals['MCap_to_Assets']=df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]/df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] # new temp column with ratio
+        df_fundamentals['AVG_MCap_to_Reven'] = df_fundamentals.groupby(ColumnsConfig.SECTOR)['MCap_to_Reven'].transform('mean')
+        df_fundamentals['AVG_MCap_to_Assets'] = df_fundamentals.groupby(ColumnsConfig.SECTOR)['MCap_to_Assets'].transform('mean')
+        df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP] = df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].fillna(0.5*(df_fundamentals[ColumnsConfig.COMPANY_REVENUE] * df_fundamentals['AVG_MCap_to_Reven']+df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] * df_fundamentals['AVG_MCap_to_Assets']))
+        df_fundamentals.drop(['MCap_to_Reven','MCap_to_Assets','AVG_MCap_to_Reven','AVG_MCap_to_Assets'], axis=1, inplace=True) # deleting temporary columns
+
         # df_fundamentals now ready for conversion to list of models
 
         df_historic = df_historic.rename(columns={col: _fixup_name(col) for col in historic_columns})
@@ -224,7 +238,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     company_data[ColumnsConfig.EMISSIONS_METRIC] = {
                         'units': company_data[ColumnsConfig.EMISSIONS_METRIC]}
 
-                # TODO: need better handling of missing market cap data
+                # handling of missing market cap data is mainly done in _convert_from_template_company_data()
                 if company_data[ColumnsConfig.COMPANY_MARKET_CAP] is pd.NA:
                     company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
 
