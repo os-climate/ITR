@@ -51,6 +51,11 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
     PortfolioCompany model.
     :return: A list of portfolio companies
     """
+    # Adding some non-empty checks for portfolio upload
+    assert df_portfolio[ColumnsConfig.INVESTMENT_VALUE].isnull().sum() == 0, f"There is empty data for investment value for some companies in the input file. Please correct the file and try again."
+    assert df_portfolio[ColumnsConfig.COMPANY_ISIN].isnull().sum() == 0, f"There is empty data for company ISIN for some companies in the input file. Please correct the file and try again."
+    assert df_portfolio[ColumnsConfig.COMPANY_ID].isnull().sum() == 0, f"There is empty data for company ID for some companies in the input file. Please correct the file and try again."
+
     return [PortfolioCompany.parse_obj(company) for company in df_portfolio.to_dict(orient="records")]
 
 
