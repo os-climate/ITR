@@ -291,8 +291,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                                       # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                       .iloc[0].T
                                       .astype(f'pint[{str(base_year_production.units)}]'))
-                c.projected_targets = EITargetProjector()\
-                    .project_ei_targets(c.target_data, c.historic_data, bm_production_data, c.projected_intensities)
+                c.projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
     
     # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
@@ -649,8 +648,7 @@ class EITargetProjector(object):
                 target.netzero_year = netzero_year
         return unique_scope_targets
 
-    def project_ei_targets(self, targets: List[ITargetData], historic_data: IHistoricData, production_bm: pd.Series,
-                           projected_intensities: ICompanyEIProjectionsScopes) -> ICompanyEIProjectionsScopes:
+    def project_ei_targets(self, company: ICompanyData, production_bm: pd.Series) -> ICompanyEIProjectionsScopes:
         """Input:
         @targets: a list of a company's targets
         @historic_data: a company's historic production, emissions, and emission intensities realizations per scope
@@ -658,6 +656,7 @@ class EITargetProjector(object):
 
         If the company has no target or the target can't be processed, then the output the emission database, unprocessed
         """
+        targets, historic_data, projected_intensities = company.target_data, company.historic_data, company.projected_intensities
         ei_projection_scopes = {"S1": None, "S2": None, "S1S2": None, "S3": None, "S1S2S3": None}
         for scope in ei_projection_scopes:
             scope_targets = [target for target in targets if target.target_scope.name == scope]
@@ -716,6 +715,8 @@ class EITargetProjector(object):
                     if base_year > last_year_data.year:
                         trajectory_ei = projected_intensities.__getattribute__(scope).projections
                         last_year_data = next((ei for ei in trajectory_ei if ei.year == base_year), None)
+                        warnings.warn(f"Emission intensity at base year for scope {scope} target for company "
+                                      f"{company.company_name} is estimated with trajectory projection.")
 
                     # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
                     last_year, value_last_year = last_year_data.year, last_year_data.value
@@ -758,6 +759,8 @@ class EITargetProjector(object):
                         last_year = last_year_ei.year
                         last_year_prod = production_bm.loc[last_year]
                         last_year_data = IEmissionRealization(year=last_year, value=last_year_ei.value*last_year_prod)
+                        warnings.warn(f"Emissions at base year for scope {scope} target for company "
+                                      f"{company.company_name} are estimated with trajectory projection.")
 
                     last_year, value_last_year = last_year_data.year, last_year_data.value
                     target_year = target.target_end_year
