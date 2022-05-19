@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
-from typing_extensions import Annotated
-from pydantic import BaseModel, Field, parse_obj_as, validator
+from pydantic import BaseModel, parse_obj_as, validator
 from pint import Quantity
+from dataclasses import dataclass
+from typing import Callable
 
 from ITR.data.osc_units import ureg, Q_
 
@@ -651,8 +652,6 @@ class TemperatureScoreControls(PintModel):
     def tcre_multiplier(self) -> Quantity['delta_degC/CO2']:
         return self.tcre / self.carbon_conversion
 
-from dataclasses import dataclass
-from typing import Callable
 
 @dataclass
 class ProjectionControls:
