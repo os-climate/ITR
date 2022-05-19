@@ -45,7 +45,7 @@ class ProductionMetric(BaseModel):
 
 # Right now we have only one kind of Emissions: Co2
 class EmissionsMetric(BaseModel):
-    units: str 
+    units: str
     @validator('units')
     def units_must_be_tCO2(cls, v):
         qty = Q_(1, v)
@@ -80,6 +80,8 @@ class IntensityMetric(BaseModel):
         if qty.is_compatible_with("t CO2/MWh"):
             return v
         if qty.is_compatible_with("t CO2/Fe_ton"):
+            return v
+        if qty.is_compatible_with("g CO2/km"):
             return v
         raise ValueError(f"cannot convert {v} to t CO2/Fe_ton")
 
