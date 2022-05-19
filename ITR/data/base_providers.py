@@ -204,7 +204,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                  companies: List[ICompanyData],
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
-                 projection_controls: Type[ProjectionControls] = ProjectionControls):
+                 projection_controls: ProjectionControls = ProjectionControls()):
         super().__init__()
         self.column_config = column_config
         self.temp_config = tempscore_config
@@ -388,8 +388,7 @@ class EITrajectoryProjector(object):
     - A company's production history (units depend on industry, e.g. TWh for electricity)
     """
 
-    def __init__(self,
-                 projection_controls: Type[ProjectionControls]=ProjectionControls):
+    def __init__(self, projection_controls: ProjectionControls = ProjectionControls()):
         self.projection_controls = projection_controls
 
     def project_ei_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
@@ -398,8 +397,7 @@ class EITrajectoryProjector(object):
 
         historic_years = [column for column in historic_data.columns if type(column) == int]
         projection_years = range(max(historic_years), self.projection_controls.TARGET_YEAR)
-        # historic_intensities.loc[historic_intensities.index.get_level_values('company_id')=='US6293775085']
-        
+
         historic_intensities = historic_data[historic_years].query(f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'")
         standardized_intensities = self._standardize(historic_intensities)
         intensity_trends = self._get_trends(standardized_intensities)
