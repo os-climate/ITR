@@ -47,7 +47,7 @@ class ProductionMetric(BaseModel):
 
 # Right now we have only one kind of Emissions: Co2
 class EmissionsMetric(BaseModel):
-    units: str 
+    units: str
     @validator('units')
     def units_must_be_tCO2(cls, v):
         qty = Q_(1, v)
