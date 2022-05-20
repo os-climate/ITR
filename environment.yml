@@ -1,4 +1,4 @@
-name: itr_env_develop
+name: itr_env
 channels:
   - conda-forge
   - defaults

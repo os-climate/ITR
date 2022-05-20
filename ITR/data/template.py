@@ -106,15 +106,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
 
-        # testing if only valid sectors are provided
-        assert len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) == 1, f"All data should be in the same currency. Please adjust excel template input."
 
         # testing if all data is in the same currency
-        sectors_from_df = df_fundamentals[ColumnsConfig.SECTOR].unique()
-        required_sectors = [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY]
-        out_of_scope_sec = [sec for sec in sectors_from_df if sec not in required_sectors]
-        assert len(out_of_scope_sec) == 0, f"Sector {out_of_scope_sec} are not covered by the ITR tool currently. Delete it from excel template."
+        assert len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) == 1, f"All data should be in the same currency. Please adjust excel template input."
 
+        # are there empty sectors?
+        comp_with_missing_sectors = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.SECTOR].isnull()].to_list()
+        assert len(comp_with_missing_sectors) == 0, f"For {comp_with_missing_sectors} companies the sector column is empty. Correct it in excel template and try one more time."
+        # testing if only valid sectors are provided
+        sectors_from_df = df_fundamentals[ColumnsConfig.SECTOR].unique()
+        configured_sectors = SectorsConfig.get_configured_sectors()
+        not_configured_sectors = [sec for sec in sectors_from_df if sec not in configured_sectors]
+        assert len(not_configured_sectors) == 0, f"Sector {not_configured_sectors} is not covered by the ITR tool currently. Delete it from excel template."
 
         # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
         historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
@@ -122,10 +125,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_historic = df_fundamentals[['company_id'] + historic_columns].dropna(axis=1, how='all')
         df_fundamentals = df_fundamentals[df_fundamentals.columns.difference(historic_columns, sort=False)]
 
-
         # Checking if there are not many missing market cap
-        missing_cap = df_fundamentals['market_cap'].isnull().sum() * 100 / len(df_fundamentals)
-        assert missing_cap < 20, f"Too many companies with missing market capitalization. Cannot proceed."
+        missing_cap_ids = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].isnull()].to_list()
+        assert (len(missing_cap_ids)/len(df_fundamentals)) < 0.2, f"Too many companies with missing market capitalization. Cannot proceed."
         # For the missing Market Cap we should use the ratio below to get dummy market cap:
         #   (Avg for the Sector (Market Cap / Revenues) + Avg for the Sector (Market Cap / Assets)) 2
         df_fundamentals['MCap_to_Reven']=df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]/df_fundamentals[ColumnsConfig.COMPANY_REVENUE] # new temp column with ratio
@@ -134,6 +136,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals['AVG_MCap_to_Assets'] = df_fundamentals.groupby(ColumnsConfig.SECTOR)['MCap_to_Assets'].transform('mean')
         df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP] = df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].fillna(0.5*(df_fundamentals[ColumnsConfig.COMPANY_REVENUE] * df_fundamentals['AVG_MCap_to_Reven']+df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] * df_fundamentals['AVG_MCap_to_Assets']))
         df_fundamentals.drop(['MCap_to_Reven','MCap_to_Assets','AVG_MCap_to_Reven','AVG_MCap_to_Assets'], axis=1, inplace=True) # deleting temporary columns
+        
+        if missing_cap_ids is not None:
+            def custom_formatwarning(msg, *args, **kwargs):
+                return str(msg) + '\n'             # ignore everything except the message
+            warnings.formatwarning = custom_formatwarning
+            warnings.warn(f"Market capitalisation was missing for {missing_cap_ids}.\nSo the values were calculated using the average MCap/Rev and MCap/Assets from available companies.\nScript is still running")
 
         # df_fundamentals now ready for conversion to list of models
 
