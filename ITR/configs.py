@@ -7,6 +7,8 @@ from .interfaces import TemperatureScoreControls
 import pint
 import pint_pandas
 from ITR.data.osc_units import ureg, Q_
+from typing import List
+
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -86,6 +88,15 @@ class SectorsConfig:
     INDUSTRIALS = "Industrials"
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
+    AUTOMOBILE = "Autos"
+
+    @classmethod
+    def get_configured_sectors(cls) -> List[str]:
+        """
+        Get a list of sectors configured in the tool.
+        :return: A list of sectors string values
+        """
+        return [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY, SectorsConfig.AUTOMOBILE]
 
 
 class VariablesConfig:
