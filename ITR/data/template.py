@@ -7,18 +7,27 @@ import pint
 from pydantic import ValidationError
 
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, LoggingConfig
 from ITR.interfaces import ICompanyData, EScope, \
     IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
     IProjection, ProjectionControls
+from ITR.utils import get_project_root
 
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
 
-from ITR.utils import get_project_root
 pkg_root = get_project_root()
 df_country_regions = pd.read_csv(f"{pkg_root}/data/country_region_info.csv")
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter(LoggingConfig.FORMAT)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
 
 def ITR_country_to_region(country):
     if len(country)==2:
@@ -56,18 +65,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self._companies = self._convert_from_template_company_data(excel_path)
         super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
-    def _check_company_data(self, df: pd.DataFrame) -> None:
-        """
-        Checks if the company data excel contains the data in the right format
-
-        :return: None
-        """
-        required_tabs = [TabsConfig.TEMPLATE_INPUT_DATA, TabsConfig.TEMPLATE_TARGET_DATA]
-        missing_tabs = [tab for tab in required_tabs if tab not in df]
-        assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
-
-
-
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
         """
         Converts the Excel template to list of ICompanyData objects. All dataprovider features will be inhereted from
@@ -84,14 +81,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             return f"{suffix}-{prefix}"
 
         df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._check_company_data(df_company_data)
 
         input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA
-        if "Test input data" in df_company_data:
-            input_data_sheet = "Test input data"
-
-        df = df_company_data[input_data_sheet]
-
+        try:
+            df = df_company_data[input_data_sheet]
+        except KeyError as e:
+            f"Tabs {required_tabs} are required."
+            logger.error(f"Tab {input_data_sheet} is required in input Excel file.")
+            raise
 
         df['exposure'].fillna('presumed_equity', inplace=True)
         # TODO: Fix market_cap column naming inconsistency
@@ -177,9 +174,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
         test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
-        if "Test target data" in df_company_data:
-            test_target_sheet = "Test target data"
-        df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
+        try:
+            df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
+        except KeyError as e:
+            logger.error(f"Tab {test_target_sheet} is required in input Excel file.")
+            raise
 
         # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
         df_target_data.loc[df_target_data.target_start_year.isna(), 'target_start_year'] = 2020
@@ -295,18 +294,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         return projected_ei_s1s2
 
-    # class ITargetData(PintModel):
-    #     netzero_year: int
-    #     target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
-    #     target_scope: EScope
-    #     target_start_year: Optional[int]
-    #     target_base_year: int
-    #     target_end_year: int
-
-    #     target_base_year_qty: float
-    #     target_base_year_unit: str
-    #     target_reduction_pct: float
-
     def _convert_target_data(self, target_data: pd.DataFrame) -> List[ITargetData]:
         """
         :param historic: historic production, emission and emission intensity data for a company
@@ -355,8 +342,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
     # Note that for the three following functions, we pd.Series.squeeze() the results because it's just one year / one company
     def _convert_to_historic_emissions(self, emissions: pd.DataFrame) -> Optional[IHistoricEmissionsScopes]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
-        :param convert_unit: whether or not to convert the units of measure
+        :param emissions: historic emissions data for a company
         :return: List of historic emissions per scope, or None if no data are provided
         """
         if emissions.empty:
@@ -370,26 +356,19 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 else [IEmissionRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
 
-    def _convert_to_historic_productions(self, productions: pd.DataFrame) \
-            -> Optional[List[IProductionRealization]]:
+    def _convert_to_historic_productions(self, productions: pd.DataFrame) -> Optional[List[IProductionRealization]]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
+        :param productions: historic production data for a company
         :return: A list containing historic productions, or None if no data are provided
         """
         if productions.empty:
             return None
 
-        try:
-            production_realizations = \
-                [IProductionRealization(year=year, value=productions[year].squeeze()) for year in self.historic_years]
-        except TypeError as e:
-            print(e)
-        return production_realizations
+        return [IProductionRealization(year=year, value=productions[year].squeeze()) for year in self.historic_years]
 
-    def _convert_to_historic_ei(self, intensities: pd.DataFrame) \
-            -> Optional[IHistoricEIScopes]:
+    def _convert_to_historic_ei(self, intensities: pd.DataFrame) -> Optional[IHistoricEIScopes]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
+        :param intensities: historic emission intensity data for a company
         :return: A list of historic emission intensities per scope, or None if no data are provided
         """
         if intensities.empty:
@@ -400,10 +379,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         for scope in EScope.get_scopes():
             results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
-            try:
-                intensity_scopes[scope] = [] \
-                    if results.empty \
-                    else [IEIRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
-            except TypeError as e:
-                print(e)
+            intensity_scopes[scope] = [] \
+                if results.empty \
+                else [IEIRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)

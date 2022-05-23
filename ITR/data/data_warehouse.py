@@ -1,20 +1,23 @@
-import warnings # needed until apply behaves better with Pint quantities in arrays
-
-from abc import ABC
-from typing import List
+import warnings  # needed until apply behaves better with Pint quantities in arrays
+import logging
 import pandas as pd
-from pydantic import ValidationError
 import numpy as np
-
-import pint
-import pint_pandas
-from ITR.data.osc_units import ureg, Q_, PA_
+from abc import ABC
+from typing import List, Type
+from pydantic import ValidationError
 
 from ITR.interfaces import ICompanyAggregates
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from typing import Type
-import logging
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 
 class DataWarehouse(ABC):
@@ -51,8 +54,6 @@ class DataWarehouse(ABC):
         """
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
-        assert pd.Series(company_ids).isin(df_company_data.index).all(), \
-            "some of the company ids are not included in the fundamental data"
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
@@ -100,7 +101,6 @@ class DataWarehouse(ABC):
         :param df_company_data: pandas Dataframe with targets
         :return: A list containing the targets
         """
-        logger = logging.getLogger(__name__)
         df_company_data = df_company_data.where(pd.notnull(df_company_data), None).replace(
             {np.nan: None})  # set NaN to None since NaN is float instance
         companies_data_dict = df_company_data.to_dict(orient="records")
@@ -108,7 +108,7 @@ class DataWarehouse(ABC):
         for company_data in companies_data_dict:
             try:
                 model_companies.append(ICompanyAggregates.parse_obj(company_data))
-            except ValidationError as e:
+            except ValidationError:
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
