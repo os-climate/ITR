@@ -65,6 +65,15 @@ class EmissionsIntensity_PowerGeneration(BaseModel):
             return v
         raise ValueError(f"cannot convert {v} to t CO2/energy")
 
+class EmissionsIntensity_ManufactureAuto(BaseModel):
+    units: str 
+    @validator('units')
+    def units_must_be_EI(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("g CO2/km"):
+            return v
+        raise ValueError(f"cannot convert {v} to g CO2/km")
+
 class EmissionsIntensity_ManufactureSteel(BaseModel):
     units: str 
     @validator('units')
@@ -82,6 +91,8 @@ class IntensityMetric(BaseModel):
         if qty.is_compatible_with("t CO2/MWh"):
             return v
         if qty.is_compatible_with("t CO2/Fe_ton"):
+            return v
+        if qty.is_compatible_with("g CO2/km"):
             return v
         raise ValueError(f"cannot convert {v} to t CO2/Fe_ton")
 
