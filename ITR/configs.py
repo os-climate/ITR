@@ -119,7 +119,8 @@ class TargetConfig:
     TARGET_BASE_UNITS = 'target_base_year_unit'
     TARGET_YEAR = 'target_year'
     TARGET_REDUCTION_VS_BASE = 'target_reduction_ambition'
-    
+
+
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
     PROJECTED_EI = "projected_ei_in_Wh"
@@ -146,3 +147,7 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion=Q_(3664.0, ureg('Gt CO2')),
         scenario_target_temperature=Q_(1.5, ureg.delta_degC)
     )
+
+
+class LoggingConfig:
+    FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
