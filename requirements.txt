@@ -5,13 +5,13 @@ matplotlib==3.5.1
 numpy==1.22.2
 openpyxl==3.0.9
 openscm-units==0.5.0
-pandas==1.4.1
+pandas==1.4.2
 Pint-Pandas==0.2
 Pint==0.18
 pydantic==1.8.2
 pygithub==1.55
-Sphinx==3.0.3
+Sphinx==4.5.0
 sphinx-autoapi==1.8.4
-sphinx-autodoc-typehints==1.10.3
-sphinx-rtd-theme==0.4.3
+sphinx-autodoc-typehints==1.18.1
+sphinx-rtd-theme==1.0.0
 xlrd==2.0.1
