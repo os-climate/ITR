@@ -1,9 +1,11 @@
 import numpy as np
+import pandas as pd
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
-from typing_extensions import Annotated
-from pydantic import BaseModel, Field, parse_obj_as, validator
+from pydantic import BaseModel, parse_obj_as, validator
 from pint import Quantity
+from dataclasses import dataclass
+from typing import Callable
 
 from ITR.data.osc_units import ureg, Q_
 
@@ -63,6 +65,15 @@ class EmissionsIntensity_PowerGeneration(BaseModel):
             return v
         raise ValueError(f"cannot convert {v} to t CO2/energy")
 
+class EmissionsIntensity_ManufactureAuto(BaseModel):
+    units: str 
+    @validator('units')
+    def units_must_be_EI(cls, v):
+        qty = Q_(1, v)
+        if qty.is_compatible_with("g CO2/km"):
+            return v
+        raise ValueError(f"cannot convert {v} to g CO2/km")
+
 class EmissionsIntensity_ManufactureSteel(BaseModel):
     units: str 
     @validator('units')
@@ -80,6 +91,8 @@ class IntensityMetric(BaseModel):
         if qty.is_compatible_with("t CO2/MWh"):
             return v
         if qty.is_compatible_with("t CO2/Fe_ton"):
+            return v
+        if qty.is_compatible_with("g CO2/km"):
             return v
         raise ValueError(f"cannot convert {v} to t CO2/Fe_ton")
 
@@ -655,3 +668,15 @@ class TemperatureScoreControls(PintModel):
     @property
     def tcre_multiplier(self) -> Quantity['delta_degC/CO2']:
         return self.tcre / self.carbon_conversion
+
+
+@dataclass
+class ProjectionControls:
+    LOWER_PERCENTILE: float = 0.1
+    UPPER_PERCENTILE: float = 0.9
+
+    LOWER_DELTA: float = -0.10
+    UPPER_DELTA: float = +0.03
+
+    TARGET_YEAR: int = 2050
+    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)

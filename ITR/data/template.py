@@ -7,11 +7,11 @@ import pint
 from pydantic import ValidationError
 
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig
 from ITR.interfaces import ICompanyData, EScope, \
     IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
-    IProjection
+    IProjection, ProjectionControls
 
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
@@ -51,9 +51,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
     def __init__(self, excel_path: str,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
+                 projection_controls: Type[ProjectionControls] = ProjectionControls):
         self._companies = self._convert_from_template_company_data(excel_path)
-        super().__init__(self._companies, column_config, tempscore_config)
+        super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
@@ -64,6 +65,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         required_tabs = [TabsConfig.TEMPLATE_INPUT_DATA, TabsConfig.TEMPLATE_TARGET_DATA]
         missing_tabs = [tab for tab in required_tabs if tab not in df]
         assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
+
+
 
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
         """
@@ -88,6 +91,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             input_data_sheet = "Test input data"
 
         df = df_company_data[input_data_sheet]
+
+
         df['exposure'].fillna('presumed_equity', inplace=True)
         # TODO: Fix market_cap column naming inconsistency
         df.rename(
@@ -101,11 +106,44 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
 
         company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
+
+
+        # testing if all data is in the same currency
+        assert len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) == 1, f"All data should be in the same currency. Please adjust excel template input."
+
+        # are there empty sectors?
+        comp_with_missing_sectors = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.SECTOR].isnull()].to_list()
+        assert len(comp_with_missing_sectors) == 0, f"For {comp_with_missing_sectors} companies the sector column is empty. Correct it in excel template and try one more time."
+        # testing if only valid sectors are provided
+        sectors_from_df = df_fundamentals[ColumnsConfig.SECTOR].unique()
+        configured_sectors = SectorsConfig.get_configured_sectors()
+        not_configured_sectors = [sec for sec in sectors_from_df if sec not in configured_sectors]
+        assert len(not_configured_sectors) == 0, f"Sector {not_configured_sectors} is not covered by the ITR tool currently. Delete it from excel template."
+
         # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
         historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
         historic_scopes = ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3', 'production']
         df_historic = df_fundamentals[['company_id'] + historic_columns].dropna(axis=1, how='all')
         df_fundamentals = df_fundamentals[df_fundamentals.columns.difference(historic_columns, sort=False)]
+
+        # Checking if there are not many missing market cap
+        missing_cap_ids = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].isnull()].to_list()
+        assert (len(missing_cap_ids)/len(df_fundamentals)) < 0.2, f"Too many companies with missing market capitalization. Cannot proceed."
+        # For the missing Market Cap we should use the ratio below to get dummy market cap:
+        #   (Avg for the Sector (Market Cap / Revenues) + Avg for the Sector (Market Cap / Assets)) 2
+        df_fundamentals['MCap_to_Reven']=df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]/df_fundamentals[ColumnsConfig.COMPANY_REVENUE] # new temp column with ratio
+        df_fundamentals['MCap_to_Assets']=df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]/df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] # new temp column with ratio
+        df_fundamentals['AVG_MCap_to_Reven'] = df_fundamentals.groupby(ColumnsConfig.SECTOR)['MCap_to_Reven'].transform('mean')
+        df_fundamentals['AVG_MCap_to_Assets'] = df_fundamentals.groupby(ColumnsConfig.SECTOR)['MCap_to_Assets'].transform('mean')
+        df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP] = df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].fillna(0.5*(df_fundamentals[ColumnsConfig.COMPANY_REVENUE] * df_fundamentals['AVG_MCap_to_Reven']+df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] * df_fundamentals['AVG_MCap_to_Assets']))
+        df_fundamentals.drop(['MCap_to_Reven','MCap_to_Assets','AVG_MCap_to_Reven','AVG_MCap_to_Assets'], axis=1, inplace=True) # deleting temporary columns
+        
+        if missing_cap_ids is not None:
+            def custom_formatwarning(msg, *args, **kwargs):
+                return str(msg) + '\n'             # ignore everything except the message
+            warnings.formatwarning = custom_formatwarning
+            warnings.warn(f"Market capitalisation was missing for {missing_cap_ids}.\nSo the values were calculated using the average MCap/Rev and MCap/Assets from available companies.\nScript is still running")
+
         # df_fundamentals now ready for conversion to list of models
 
         df_historic = df_historic.rename(columns={col: _fixup_name(col) for col in historic_columns})
@@ -213,7 +251,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     company_data[ColumnsConfig.EMISSIONS_METRIC] = {
                         'units': company_data[ColumnsConfig.EMISSIONS_METRIC]}
 
-                # TODO: need better handling of missing market cap data
+                # handling of missing market cap data is mainly done in _convert_from_template_company_data()
                 if company_data[ColumnsConfig.COMPANY_MARKET_CAP] is pd.NA:
                     company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
 

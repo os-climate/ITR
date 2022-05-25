@@ -7,6 +7,8 @@ from .interfaces import TemperatureScoreControls
 import pint
 import pint_pandas
 from ITR.data.osc_units import ureg, Q_
+from typing import List
+
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -86,6 +88,15 @@ class SectorsConfig:
     INDUSTRIALS = "Industrials"
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
+    AUTOMOBILE = "Autos"
+
+    @classmethod
+    def get_configured_sectors(cls) -> List[str]:
+        """
+        Get a list of sectors configured in the tool.
+        :return: A list of sectors string values
+        """
+        return [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY, SectorsConfig.AUTOMOBILE]
 
 
 class VariablesConfig:
@@ -135,13 +146,3 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion=Q_(3664.0, ureg('Gt CO2')),
         scenario_target_temperature=Q_(1.5, ureg.delta_degC)
     )
-
-
-class ProjectionConfig:
-    LOWER_PERCENTILE: float = 0.1
-    UPPER_PERCENTILE: float = 0.9
-
-    LOWER_DELTA: float = -0.10
-    UPPER_DELTA: float = +0.03
-
-    TARGET_YEAR: int = 2050

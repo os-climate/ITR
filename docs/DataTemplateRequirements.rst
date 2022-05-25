@@ -18,7 +18,7 @@ means in the following sections.  At the end we will reiterate how to set up you
 ITR Input Data
 --------------
 
-The `ITR Input Data` sheet is effectively the Universe of all
+The :code:`ITR Input Data` sheet is effectively the Universe of all
 instruments the tool can analyze.  We are currently limiting our
 analysis to stock issues, but expect to support bonds in the near
 future.  We also presently make the assumption that there is a 1:1
@@ -76,10 +76,10 @@ tons (or megatons) of steel produced.  We have created the unit Fe_ton
 
 As previously mentioned, the tool accepts any imperial or SI unit for
 these metrics, and there is no trouble if one row of data reports
-`3.6 tCO2/MWh` and the next row reports `1 t CO2/GJ` (which happen to
+:code:`3.6 tCO2/MWh` and the next row reports :code:`1 t CO2/GJ` (which happen to
 be the same intensity value).  All of it will be converted as
 necessary--and can be converted to some final standard for output if
-desired.  It is quite OK to see 't CO2/MWh' and 'Mt CO2/TWh' in
+desired.  It is quite OK to see :code:`t CO2/MWh` and :code:`Mt CO2/TWh` in
 different rows, but whatever are the metrics for a given row, that's
 how the numbers will be interpreted for that row.
 
@@ -99,24 +99,24 @@ disclosures.  The tool deals with three types of missing data:
 - If the data is missing to the right, it will extrapolate the data until it has filled in all cells up to the latest reported data.  If all but a few companies report 2020 data and none report 2021 data, tool will extrapolation 2019 data for those companies missing 2020 data.  If there are also some companies with 2021 data, the tool will extrapolate missing data for 2021 and, if needed, also 2020 data.
 
 The tool handles data reports for all scopes defined by the GHG
-Protocol: Scope 1 (own emissions), Scope 2 (emissinos caused by
-utilities supplying electric power), Scope 3 (upstream and
+Protocol: :math:`Scope 1` (own emissions), :math:`Scope 2`(emissinos caused by
+utilities supplying electric power), :math:`Scope 3` (upstream and
 downstream emissions caused by transportation, use, and disposal of
-products).  The tool also handles S1+S2 as a combined emission and
-S1+S2+S3 as a combined emission.  *HOWEVER*, at the present time the
-tool does not do anything with S3 emissions.  Also, it interprets
-the benchmark data as applying to S1+S2 emissions, upon which all
-temperature scoring depeneds.  If data is given as separate S1 and
-S2 data, the tool will combine them to create S1+S2 data.  If S1,
-S2, and S1+S2 data is given, the tool will collect them all, but
-will not check the math that S1 + S2 == S1+S2.
+products).  The tool also handles :math:`S1+S2` as a combined emission and
+:math:`S1+S2+S3` as a combined emission.  *HOWEVER*, at the present time the
+tool does not do anything with :math:`S3` emissions.  Also, it interprets
+the benchmark data as applying to :math:`S1+S2` emissions, upon which all
+temperature scoring depeneds.  If data is given as separate :math:`S1` and
+:math:`S2` data, the tool will combine them to create :math:`S1+S2` data.  If :math:`S1`,
+:math:`S2`, and :math:`S1+S2` data is given, the tool will collect them all, but
+will not check the math that :math:`S1 + S2 == S1+S2`.
 
 Over time we expect the tool will be more useful with the more
 granular reporting of S1 and S2 data, more accurate in its
 interpretation of how these should combine or remain separated
 according to sectors and benchmarks, but for the present time we
-strongly encourage that all data either have both S1 and S2 data or
-combined S1+S2 data.
+strongly encourage that all data either have both :math:`S1` and :math:`S2`data or
+combined :math:`S1+S2` data.
 
 Finally, columns of the form YYYY_production are for production
 metrics.  As with the _ghg_ columns, the numbers in the production
@@ -127,19 +127,19 @@ same way as missing emissions data.
 ITR target input data
 ---------------------
 
-The same identifiers--company_name, company_lei, and company_id--are
-used to connect a row of `ITR input data` to rows of `ITR target input
+The same identifiers--*company_name*, *ompany_lei*, and *company_id*--are
+used to connect a row of :code:`ITR input data` to rows of :code:`ITR target input
 data`.  Most companies have set a short-term reduction ambition target
 (such as reduce absolute emissions by 50% compared with a base year
 by 2030) and a long-term net-zero target (the tool does not presently
 distinguish between true zero-emissions and positive emissions with
 some kind of offset), a single row of data suffices:
 
-- netzero_year is the year at which the netzero ambition should be realized.  If multiple netzero_year values are given for the same company, the tool chooses the most recently communicated (latest target_start_year).  If there are multiple such, it chooses the earliest netzero attainment date (target_end_year).
-- target_type defines whether the short-term ambition is based on absolute emissions or intensity.  Note that when it comes to a long-term netzero ambition, zero is zero, whether emissions or intensity.
-- target_scope defines the scope(s) of the target.  While it is possible to define S1, S2, S1+S2, S3, S1+S2+S3, at present the most reliable choice is S1+S2 (because we don't have a complete theory yet for interpreting the benchmarks upon which the tools is based for other than S1+S2).
-- target_start_year is the year the target was set.  target_end_year is the year the target is to be attained.  In the event that multiple targets aim for a reduction ambition to be attained at the target_end_year, the latest start_year will be the one the tool uses and all other targets for that year will be dropped.  If there are both intensity and absolute targets with the same target_start_year, the tool will silently choose the intensity target over the absolute target.  If there are multiple targets with that prioritization, the tool will warn that it is going to pick just one.
-- target_base_year and target_base_year_qty define the "when" and the "from how much" that the target_ambition_reduction applies to (and hopefully is achieved by the target_year).  Because all computations require units, the target_base_year_unit is needed so that target quantities can be compared with other emissions, production, and intensity data.
+- *netzero_year* is the year at which the netzero ambition should be realized.  If multiple netzero_year values are given for the same company, the tool chooses the most recently communicated (latest target_start_year).  If there are multiple such, it chooses the earliest netzero attainment date (target_end_year).
+- *target_type* defines whether the short-term ambition is based on absolute emissions or intensity.  Note that when it comes to a long-term netzero ambition, zero is zero, whether emissions or intensity.
+- *target_scope* defines the scope(s) of the target.  While it is possible to define :math:`S1, S2, S1+S2, S3, S1+S2+S3`, at present the most reliable choice is :math:`S1+S2` (because we don't have a complete theory yet for interpreting the benchmarks upon which the tools is based for other than :math:`S1+S2`).
+- *target_start_year* is the year the target was set.  *target_end_year* is the year the target is to be attained.  In the event that multiple targets aim for a reduction ambition to be attained at the *target_end_year*, the latest *target_start_year* will be the one the tool uses and all other targets for that year will be dropped.  If there are both intensity and absolute targets with the same *target_start_year*, the tool will silently choose the intensity target over the absolute target.  If there are multiple targets with that prioritization, the tool will warn that it is going to pick just one.
+- *target_base_year* and *target_base_year_qty* define the "when" and the "from how much" that the target_ambition_reduction applies to (and hopefully is achieved by the *target_year*).  Because all computations require units, the *target_base_year_unit* is needed so that target quantities can be compared with other emissions, production, and intensity data.
 
 Some companies have set more than just one short-term target.  In that
 case, additional rows of target data can be set, one for each
@@ -170,7 +170,7 @@ initial amount as rounding down to zero.
 Installation Notes
 ------------------
 
-The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will need a Personal Access Token, which you can get by `following these instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>` .
+The first step is to request an invitation to join the OS-Climate GitHub team.  This is required to access repositories that are not yet public.  (They will be published soon, but not yet.)  You will need a Personal Access Token, which you can get by following these instructions: <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>.  Because the ITR repository is currently Private, you will need to select :code:`repo` privileges (the first option box) when requesting the token.  GitHub will magically select all the boxes indented under the `repo` option.
 
 **Getting Started with conda**
 
@@ -179,59 +179,59 @@ If you don't already have a conda environment, you'll need to download one from 
 If you are installing conda on a Windows system, follow these instructions: https://conda.io/projects/conda/en/latest/user-guide/install/windows.html
 You will want to open the Anaconda PowerShell after installation, which you can do from the Start menu.
 
-If you are on OSX, you will need to install parts of the (utterly massive) Xcode system.  The subset you'll need can be installed by typing `xcode-select --install` into a Terminal window (which you can open from Applications>Utilities>Terminal).  Thought it is tempting to install the `.pkg ` version of miniconda, there's nothing user-friendly about how OSX tries to manage its own concepts of system security.  It is easier to start from the `bash` version and follow those instructions.  For other installation instructions, please read https://conda.io/projects/conda/en/latest/user-guide/install/macos.html
+If you are on OSX, you will need to install parts of the (utterly massive) Xcode system.  The subset you'll need can be installed by typing :code:`xcode-select --install` into a Terminal window (which you can open from Applications>Utilities>Terminal).  Thought it is tempting to install the :code:`.pkg ` version of miniconda, there's nothing user-friendly about how OSX tries to manage its own concepts of system security.  It is easier to start from the :code:`bash` version and follow those instructions.  For other installation instructions, please read https://conda.io/projects/conda/en/latest/user-guide/install/macos.html
 
 For Linux: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html.  And note that you don't have to use the fish shell.  You can use bash, csh, sh, zsh, or whatever is your favorite shell.
 
-You will know you have succeeded in the installation and initialization of conda when you can type `conda info -e` and see an environent listed as base.  If your shell cannot find a conda to run, it likely means you have not yet run `conda init --all`
+You will know you have succeeded in the installation and initialization of conda when you can type :code:`conda info -e` and see an environent listed as base.  If your shell cannot find a conda to run, it likely means you have not yet run :code:`conda init --all`
 
 **Getting Started with Git**
 
-You will use `git` to access the ITR source code.  You can install git from conda thusly: `conda install -c conda-forge git`.  But you can also get it other ways: https://github.com/git-guides/install-git
+You will use :code:`git` to access the ITR source code.  You can install git from conda thusly: :code:`conda install -c conda-forge git`.  But you can also get it other ways: https://github.com/git-guides/install-git
 
 **Installing the ITR environment and running the Notebook**
 
 With your conda shell and environment running,  with git installed, and starting from the directory in which you want to do the testing:
 
-1. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
-2. Clone the ITR repository: `git clone https://github.com/os-climate/ITR.git`
-3. Change your directory to the top-level ITR directory: `cd ITR`
-4. Switch to the correct branch: `git checkout develop-pint-steel-projections`
-5. create the `conda` itr_env: `conda env create -f environment.yml`
-6. Activate that environment: `conda activate itr_env`
-7. Install the ITR libraries to your local environment: `pip install -e .` (you may need `--no-cache-dir` on windows to avoid permissions errors)
-8. Change to the `examples` directory
-9. Start your notebook: `jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
-10. Make the file browser to the left of the notebook wide enough to expose the full names of the files in the `examples` directory.  You should see a file named `quick_template_score_calc.ipynb`.  Double click on that file to open it.
-11. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
+1. Set GITHUB_TOKEN to your GitHub access token (windows :code`$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: :code:`export GITHUB_TOKEN=your_github_token`)
+2. Clone the ITR repository: :code:`git clone https://github.com/os-climate/ITR.git`
+3. Change your directory to the top-level ITR directory: :code:`cd ITR`
+4. Switch to the correct branch: :code:`git checkout develop-pint-steel-projections`
+5. create the conda itr_env: :code:`conda env create -f environment.yml`
+6. Activate that environment: :code:`conda activate itr_env`
+7. Install the ITR libraries to your local environment: :code:`pip install -e .` (you may need :code:--no-cache-dir` on windows to avoid permissions errors; please also note that the `.` character is part of the :code:`pip install -e .` command)
+8. Change to the *examples* directory: :code:`cd ITR/examples`
+9. Start your notebook: code:`jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
+10. Make the file browser to the left of the notebook wide enough to expose the full names of the files in the *examples* directory.  You should see a file named :code:`quick_template_score_calc.ipynb`.  Double click on that file to open it.
+11. Run the notebook with a fresh kernel by pressing the :code:`>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
-The brackets listed near the top left corner of each executable cell will change from `[ ]` (before running the notebook) to `[*]` while the cell's computation is pending, to a number (such as `[5]` for the 5th cell) when computation is complete.  If everything is working, you will see text output, graphical output, and a newly created `data_dump.xlsx` file representing the input porfolio, enhanced with temperature score data.
+The brackets listed near the top left corner of each executable cell will change from :code:`[ ]` (before running the notebook) to :code:`[*]` while the cell's computation is pending, to a number (such as :code:`[5]` for the 5th cell) when computation is complete.  If everything is working, you will see text output, graphical output, and a newly created `data_dump.xlsx` file representing the input porfolio, enhanced with temperature score data.
 
 **Loading your own data**
 
-1. Place your portfolio data file under the subdirectory named 'data' (found under the 'examples' directory).
-2. Start your notebook: `jupyter-lab`
-3. Open the file `quick_template_score_calc.ipynb`
+1. Place your portfolio data file under the subdirectory named *data* (found under the *examples* directory).
+2. Start your notebook: :code:`jupyter-lab`
+3. Open the file :code:`quick_template_score_calc.ipynb`
 4. Scroll down to the section 'Download/load the sample template data'
-5. Change the filename of the .xlsx in the line: for filename in ['data/<your_filename.xlsx>',
-6. Change the filename of the .xlsx in the line: template_data_path = "data/<your_filename.xlsx>"
-7. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
+5. Change the filename of the .xlsx in the line: :code:`for filename in ['data/<your_filename.xlsx>',`
+6. Change the filename of the .xlsx in the line: :code:`template_data_path = "data/<your_filename.xlsx>"`
+7. Run the notebook with a fresh kernel by pressing the :code:`>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
 **Running the ITR Notebook Post Install**
 
 1. Open GitHub Desktop
 2. Open the Anaconda PowerShell
-3. Set GITHUB_TOKEN to your GitHub access token (windows `$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: `export GITHUB_TOKEN=your_github_token`)
-4. Activate the ITR environment by typing the following command: `conda activate itr_env`
-5. Navigate to the 'examples' subdirectory under your GitHub ITR directory
-6. Start your notebook: `jupyter-lab`
-7. Open the file `quick_template_score_calc.ipynb`
-8. Run the notebook with a fresh kernel by pressing the `>>` button.  Accept the option to Restart Kernel and clear all previous variables.
+3. Set GITHUB_TOKEN to your GitHub access token (windows :code:`$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: :code:`export GITHUB_TOKEN=your_github_token`)
+4. Activate the ITR environment by typing the following command: :code:`conda activate itr_env`
+5. Navigate to the *examples* subdirectory under your GitHub ITR directory
+6. Start your notebook: :code:`jupyter-lab`
+7. Open the file :code:`quick_template_score_calc.ipynb`
+8. Run the notebook with a fresh kernel by pressing the :code:`>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
 Filing Issues and Updating the ITR Repository
 ---------------------------------------------
 
-Once you are able to run the `quick_template_score_calc.ipynb` sample notebook with the provided sample data (`examples/data/20220306 ITR Tool Sample Data.xlsx`), you are ready to start trying things with your own data.  The notebook explains how to do this at the heading labeled `Download/load the sample template data` before Cell 6.  As you try loading your own data, you will inevitably find errors--sometimes with the data you receive, sometimes with the data you present to the tool, sometimes with the way the tool loads or does not load your data, sometimes with the way the tool interprets or presents your data.  It is the goal of the Data Commons to streamline and simplify access to data so as to reduce the first to cases of errors, and it is the goal of the ITR project team to continuously improve the ITR tool to reduce the other cases of errors.  In all cases, the correction of errors begins with an error reporting process and ends with an effective update process.
+Once you are able to run the `quick_template_score_calc.ipynb` sample notebook with the provided sample data (:code:`examples/data/20220306 ITR Tool Sample Data.xlsx`), you are ready to start trying things with your own data.  The notebook explains how to do this at the heading labeled :code:`Download/load the sample template data` before Cell 6.  As you try loading your own data, you will inevitably find errors--sometimes with the data you receive, sometimes with the data you present to the tool, sometimes with the way the tool loads or does not load your data, sometimes with the way the tool interprets or presents your data.  It is the goal of the Data Commons to streamline and simplify access to data so as to reduce the first to cases of errors, and it is the goal of the ITR project team to continuously improve the ITR tool to reduce the other cases of errors.  In all cases, the correction of errors begins with an error reporting process and ends with an effective update process.
 
 To report errors, please use the GitHub Issues interface for the ITR tool: https://github.com/os-climate/ITR/issues
 
@@ -242,11 +242,11 @@ The collective actions of many people reporting issues and many people working c
 At some point you will receive notice that your issue has been addressed with a new release.  There are two ways you can update to the new release.  The first (and least efficient) way is to run the installation process from top to bottom, using a new directory for the installation.  For most of us, this takes about 10 minutes, but it can take longer for various reasons.  The second way takes less than a minute:
 
 1. Close your jupyter-lab browser tab and shut down the jupyter-lab server (typing Ctrl-C or some such in the shell)
-2. Change your directory to the top of your ITR tree: cd ~/os-climate/ITR (or some such)
+2. Change your directory to the top of your ITR tree: :code:`cd ~/os-climate/ITR` (or some such)
 3. Pull changes from upstream: git pull
 4. If git complains that you have modified some files (such as your notebook, which is "modified" every time you run it), you can
-   1. remove the notebook file: rm examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx
-   2. restore it from the updated repository: git restore examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx
+   1. remove the notebook file: :code:`rm examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx`
+   2. restore it from the updated repository: :code:`git restore examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx`
 5. Restart your jupyter-lab server
 
 Over time you may do other things to your local repository that makes it difficult to sync with git.  You can file an issue for help, you can do your own research (many of us find answers on github community forums or StackOverflow), or you can go with Option #1: run the installation process from top to bottom in a new directory.

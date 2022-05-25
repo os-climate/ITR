@@ -6,13 +6,13 @@ from pandas._libs.missing import NAType
 from typing import List, Type, Dict
 
 from ITR.data.osc_units import Q_, PA_
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, ProjectionConfig, VariablesConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, \
-    IEmissionRealization, IntensityMetric
+    IEmissionRealization, IntensityMetric, ProjectionControls
 
 
 # TODO handling of scopes in benchmarks
@@ -203,11 +203,13 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     def __init__(self,
                  companies: List[ICompanyData],
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
+                 projection_controls: ProjectionControls = ProjectionControls()):
         super().__init__()
-        self._companies = self._validate_projected_trajectories(companies)
         self.column_config = column_config
         self.temp_config = tempscore_config
+        self.projection_controls = projection_controls
+        self._companies = self._validate_projected_trajectories(companies)
 
     def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
         companies_without_data = [c.company_id for c in companies if not c.historic_data and not c.projected_intensities]
@@ -216,7 +218,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         companies_without_projections = [c for c in companies if not c.projected_intensities]
         if companies_without_projections:
             companies_with_projections = [c for c in companies if c.projected_intensities]
-            return companies_with_projections + EITrajectoryProjector().project_ei_trajectories(companies_without_projections)
+            return companies_with_projections + EITrajectoryProjector(self.projection_controls).project_ei_trajectories(companies_without_projections)
         else:
             return companies
 
@@ -382,18 +384,17 @@ class EITrajectoryProjector(object):
     - A company's production history (units depend on industry, e.g. TWh for electricity)
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, projection_controls: ProjectionControls = ProjectionControls()):
+        self.projection_controls = projection_controls
 
     def project_ei_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
         historic_data = self._extract_historic_data(companies)
         self._compute_missing_historic_ei(companies, historic_data)
 
         historic_years = [column for column in historic_data.columns if type(column) == int]
-        projection_years = range(max(historic_years), ProjectionConfig.TARGET_YEAR)
-        # historic_intensities.loc[historic_intensities.index.get_level_values('company_id')=='US6293775085']
-        
-        historic_intensities = historic_data[historic_years].query('variable=="Emissions Intensities"')
+        projection_years = range(max(historic_years), self.projection_controls.TARGET_YEAR)
+
+        historic_intensities = historic_data[historic_years].query(f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'")
         standardized_intensities = self._standardize(historic_intensities)
         intensity_trends = self._get_trends(standardized_intensities)
         extrapolated = self._extrapolate(intensity_trends, projection_years, historic_data)
@@ -541,8 +542,8 @@ class EITrajectoryProjector(object):
             # See https://github.com/hgrecco/pint-pandas/issues/114
             winsorized: pd.DataFrame = historic_intensities.clip(
                 # Must set numeric_only to false to process Quantities
-                lower=historic_intensities.quantile(q=ProjectionConfig.LOWER_PERCENTILE, axis='index', numeric_only=False),
-                upper=historic_intensities.quantile(q=ProjectionConfig.UPPER_PERCENTILE, axis='index', numeric_only=False),
+                lower=historic_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index', numeric_only=False),
+                upper=historic_intensities.quantile(q=self.projection_controls.UPPER_PERCENTILE, axis='index', numeric_only=False),
                 axis='columns'
             )
         return winsorized
@@ -571,9 +572,9 @@ class EITrajectoryProjector(object):
         ratios: pd.DataFrame = intensities.rolling(window=2, axis='index', closed='right') \
             .apply(func=self._year_on_year_ratio, raw=True) # .dropna(how='all',axis=0) # .fillna(0)
 
-        trends: pd.DataFrame = ratios.median(axis='index', skipna=True).clip(
-            lower=ProjectionConfig.LOWER_DELTA,
-            upper=ProjectionConfig.UPPER_DELTA,
+        trends: pd.DataFrame = self.projection_controls.TREND_CALC_METHOD(ratios, axis='index', skipna=True).clip(
+            lower=self.projection_controls.LOWER_DELTA,
+            upper=self.projection_controls.UPPER_DELTA,
         )
         return trends.T
 
