@@ -135,7 +135,7 @@ class PortfolioAggregationConfig:
 
 
 class TemperatureScoreConfig(PortfolioAggregationConfig):
-    TEMPERATURE_RESULTS = 'temperature_results'
+    SCORE_RESULT_TYPE = 'score_result_type'
     # Unfortunately we need to cross over to interfaces.py
     CONTROLS_CONFIG = TemperatureScoreControls(
         base_year=2019,

@@ -39,7 +39,7 @@ class DataWarehouse(ABC):
         self.temp_config = tempscore_config
         self.column_config = column_config
         self.company_data = company_data
-        self.company_data._calculate_target_projections(benchmark_projected_production, benchmarks_projected_ei)
+        self.company_data._calculate_target_projections(benchmark_projected_production)
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """
@@ -63,17 +63,13 @@ class DataWarehouse(ABC):
         df_trajectory = self._get_cumulative_emissions(
             projected_ei=projected_trajectories,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
-        # target projections may have a ragged left edge if historic data has a ragged right edge
-        # we can use trajectory info to fill in--it will likely be historic data in that case (the first ragged year)
+
         projected_targets = self.company_data.get_company_projected_targets(company_ids)
-        keep_target_data = projected_targets.applymap(lambda x: np.isfinite(x.m))
-        projected_targets = projected_targets.where(keep_target_data, projected_trajectories)
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
         df_budget = self._get_cumulative_emissions(
-            projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(
-                company_info_at_base_year),
+            projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
         df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
@@ -115,8 +111,7 @@ class DataWarehouse(ABC):
                 pass
         return model_companies
 
-    def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame
-                                 ) -> pd.Series:
+    def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame) -> pd.Series:
         """
         get the weighted sum of the projected emission
         :param projected_ei: series of projected emissions intensities

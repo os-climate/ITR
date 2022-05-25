@@ -79,7 +79,7 @@ class TestExcelProvider(unittest.TestCase):
         expected = pd.Series(
             [2.05, 2.22, 2.06, 2.01, 1.93, 1.78, 1.71, 1.34, 2.21, 2.69, 2.65, temp_score.fallback_score, 2.89,
              1.91, 2.16, 1.76, temp_score.fallback_score, temp_score.fallback_score, 1.47, 1.72, 1.76, 1.81,
-             temp_score.fallback_score, 1.78, 1.84, temp_score.fallback_score, temp_score.fallback_score, 1.74,
+             temp_score.fallback_score, 1.78, 1.84, temp_score.fallback_score, temp_score.fallback_score, 1.79,
              1.88, temp_score.fallback_score], dtype='pint[delta_degC]')
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
