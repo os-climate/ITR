@@ -92,12 +92,14 @@ class TemperatureScore(PortfolioAggregation):
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Quantity['delta_degC']:
         """
-        Get the aggregated temperature score and a temperature result, which indicates how much of the score is based on the default score for a certain company based on the emissions of company.
+        Get the aggregated temperature score. S1+S2+S3 is an emissions weighted sum of S1+S2 and S3.
 
         :param company_data: The original data, grouped by company, time frame and scope category
         :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score)
         :return: The aggregated temperature score for a company
         """
+        # TODO: Notify user when S1+S2+S3 is built up from S1+S2 and S3 score of different ScoreResultTypes
+
         if row[self.c.COLS.SCOPE] != EScope.S1S2S3:
             return row[self.c.COLS.TEMPERATURE_SCORE]
         s1s2 = company_data.loc[(row[self.c.COLS.COMPANY_ID], row[self.c.COLS.TIME_FRAME], EScope.S1S2)]
