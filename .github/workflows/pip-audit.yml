@@ -5,7 +5,7 @@ name: OSS Audit
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, update_vulnerability_scan ]
   pull_request:
     branches: [ main, develop ]
 
@@ -25,16 +25,14 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install ossaudit
+        pip install pip-audit
     - name: Run OSS Audit
       id: run_oss_audit
       run: |
-        echo ::set-output name=audit::$(ossaudit -f requirements.txt)
+        echo ::set-output name=audit::$(pip-audit -r requirements.txt)
     - name: Check vulnerabilities
-      if: ${{!startsWith(steps.run_oss_audit.outputs.audit, 'Found 0 vulnerabilities')}}
+      if: ${{!startsWith(steps.run_oss_audit.outputs.audit, 'No known vulnerabilities found')}}
       run: |
         echo ${{steps.run_oss_audit.outputs.audit}}
         echo "::warning::Vulnerabilities found in the dependencies"
         exit 1
-
-        
