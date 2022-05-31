@@ -6,7 +6,7 @@ from pandas._libs.missing import NAType
 from typing import List, Type, Dict
 
 from ITR.data.osc_units import Q_, PA_
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, ProjectionConfig, VariablesConfig
+from ITR.configs import ColumnsConfig, SectorsConfig, TemperatureScoreConfig, ProjectionConfig, VariablesConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
@@ -179,13 +179,25 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         benchmark_projection = self._get_projected_intensities(scope)  # TODO optimize performance
-        sectors = company_sector_region_info[self.column_config.SECTOR]
-        regions = company_sector_region_info[self.column_config.REGION]
-        benchmark_regions = regions.copy()
-        mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
-        benchmark_regions.loc[~mask] = "Global"
 
-        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors))]
+        # sectors = company_sector_region_info[self.column_config.SECTOR]
+        # regions = company_sector_region_info[self.column_config.REGION]
+        # print(list(zip(regions, sectors)))
+        # benchmark_regions = regions.copy()
+        # mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
+        # benchmark_regions.loc[~mask] = "Global" # those regions from portfolio file, which are missing in EI Benchmark, are changed to "Global"
+        # mask2 = benchmark_projection.isin(list(zip(benchmark_regions, sectors)))
+        # benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors))]
+        # benchmark_projection.index = sectors.index
+
+
+        reg_sec0 = company_sector_region_info[[self.column_config.REGION,self.column_config.SECTOR]]
+        reg_sec = reg_sec0.copy() # to avoid warning: "A value is trying to be set on a copy of a slice from a DataFrame"
+        merged_df=reg_sec.reset_index().merge(benchmark_projection.reset_index()[[self.column_config.REGION,self.column_config.SECTOR]], how='left', indicator=True).set_index('index') # checking which combinations of reg-sec are missing in the benchmark
+        reg_sec.loc[merged_df._merge == 'left_only', self.column_config.REGION] = "Global" # change region in missing combination to "Global"
+        sectors = reg_sec.sector
+        regions = reg_sec.region
+        benchmark_projection = benchmark_projection.loc[list(zip(regions, sectors))]
         benchmark_projection.index = sectors.index
         return benchmark_projection
 
