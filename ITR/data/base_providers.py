@@ -219,8 +219,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
         companies_without_data = [c.company_id for c in companies if
                                   not c.historic_data and not c.projected_intensities]
-        assert not companies_without_data, \
-            f"Provide either historic emission data or projections for companies with IDs {companies_without_data}"
+        if companies_without_data:
+            error_message = f"Provide either historic emission data or projections for companies with " \
+                            f"IDs {companies_without_data}"
+            logger.error(error_message)
+            raise ValueError(error_message)
         companies_without_projections = [c for c in companies if not c.projected_intensities]
         if companies_without_projections:
             companies_with_projections = [c for c in companies if c.projected_intensities]
@@ -500,8 +503,11 @@ class EITrajectoryProjector(object):
                         this_missing_data.append(f"{company.company_id} - {scope}")
             if this_missing_data and append_this_missing_data:
                 missing_data.extend(this_missing_data)
-        assert not missing_data, f"Provide either historic emissions intensity data, or historic emission and " \
-                                 f"production data for these company - scope combinations: {missing_data}"
+        if missing_data:
+            error_message = f"Provide either historic emissions intensity data, or historic emission and " \
+                            f"production data for these company - scope combinations: {missing_data}"
+            logger.error(error_message)
+            raise ValueError(error_message)
 
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:

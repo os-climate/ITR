@@ -275,11 +275,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param production_metric: Dataframe with production_metric per company
         :return: series of projected emission intensities
         """
-
         projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
-        assert all(company_id in projections.index for company_id in company_ids), \
-            f"company ids missing in provided projections"
+        missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
+        if missing_companies:
+            error_message = f"Missing target or trajectory projections for companies: {missing_companies}"
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                          TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
@@ -309,11 +311,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param historic_data: Dataframe Productions, Emissions, and Emission Intensities mixed together
         :return: historic data with unit attributes added on a per-element basis
         """
-        # We don't need this reset/set index dance because we set the index to COMPANY_ID to get units sorted
-        # historic_data = historic_data.reset_index().drop(columns=['index']).set_index(ColumnsConfig.COMPANY_ID)
-
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
-        assert not missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
+        if missing_ids:
+            error_message = f"Company ids missing in provided historic data: {missing_ids}"
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         # There has got to be a better way to do this...
         historic_data = (

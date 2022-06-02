@@ -3,6 +3,7 @@ from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
 from pint import Quantity
+import pint
 import logging
 
 from pydantic import ValidationError
@@ -139,17 +140,21 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         self.historic_years = None
         super().__init__(self._companies, column_config, tempscore_config)
 
-    def _check_company_data(self, df: pd.DataFrame) -> None:
+    def _check_company_data(self, company_tabs: dict) -> None:
         """
         Checks if the company data excel contains the data in the right format
 
         :return: None
         """
-        required_tabs = [TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET]
-        optional_tabs = [TabsConfig.PROJECTED_EI, TabsConfig.HISTORIC_DATA]
-        missing_tabs = [tab for tab in required_tabs + optional_tabs if tab not in df]
-        assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
-        assert not all(tab in missing_tabs for tab in optional_tabs), f"Either of the tabs {optional_tabs} is required."
+        required_tabs = {TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET}
+        optional_tabs = {TabsConfig.PROJECTED_EI, TabsConfig.HISTORIC_DATA}
+        missing_tabs = (required_tabs | optional_tabs).difference(set(company_tabs))
+        if missing_tabs.intersection(required_tabs):
+            logger.error(f"Tabs {required_tabs} are required.")
+            raise ValueError(f"Tabs {required_tabs} are required.")
+        if optional_tabs.issubset(missing_tabs):
+            logger.error(f"Either of the tabs {optional_tabs} is required.")
+            raise ValueError(f"Either of the tabs {optional_tabs} is required.")
 
     def _convert_from_excel_data(self, excel_path: str) -> List[ICompanyData]:
         """
@@ -158,22 +163,22 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param excel_path: file path to excel file
         :return: List of ICompanyData objects
         """
-        df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._check_company_data(df_company_data)
+        company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_company_data(company_data)
 
-        df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL].set_index(ColumnsConfig.COMPANY_ID, drop=False)
+        df_fundamentals = company_data[TabsConfig.FUNDAMENTAL].set_index(ColumnsConfig.COMPANY_ID, drop=False)
         df_fundamentals[ColumnsConfig.PRODUCTION_METRIC] = df_fundamentals[ColumnsConfig.SECTOR].map(sector_to_production_metric)
-        company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
-        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
-        if TabsConfig.PROJECTED_EI in df_company_data:
-            df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
+        company_ids = list(df_fundamentals[ColumnsConfig.COMPANY_ID].unique())
+        df_targets = self._get_projection(company_ids, company_data[TabsConfig.PROJECTED_TARGET], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
+        if TabsConfig.PROJECTED_EI in company_data:
+            df_ei = self._get_projection(company_ids, company_data[TabsConfig.PROJECTED_EI], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
         else:
             df_ei = None
-        if TabsConfig.HISTORIC_DATA in df_company_data:
-            df_historic = df_company_data[TabsConfig.HISTORIC_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False)
+        if TabsConfig.HISTORIC_DATA in company_data:
+            df_historic = company_data[TabsConfig.HISTORIC_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False)
             df_historic = df_historic.merge(df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].rename('units'), left_index=True, right_index=True)
-            df_historic.loc[df_historic.variable=='Emissions', 'units'] = 't CO2'
-            df_historic.loc[df_historic.variable=='Emission Intensities', 'units'] = 't CO2/' + df_historic.loc[df_historic.variable=='Emission Intensities', 'units']
+            df_historic.loc[df_historic.variable == 'Emissions', 'units'] = 't CO2'
+            df_historic.loc[df_historic.variable == 'Emission Intensities', 'units'] = 't CO2/' + df_historic.loc[df_historic.variable == 'Emission Intensities', 'units']
             df_historic = self._get_historic_data(company_ids, df_historic)
         else:
             df_historic = None
@@ -198,7 +203,6 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param df_ei: pandas Dataframe with emission intensities
         :return: A list containing the ICompanyData objects
         """
-        logger = logging.getLogger(__name__)
         # set NaN to None since NaN is float instance
         df_fundamentals = df_fundamentals.where(pd.notnull(df_fundamentals), None).replace({np.nan: None})
 
@@ -248,15 +252,14 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 logger.warning(
                     f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         ColumnsConfig.COMPANY_NAME])
-                break
-                pass
         return model_companies
     
     # Workaround for bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero 
     def _np_sum(g):
         return np.sum(g.values)
 
-    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame, production_metric: pd.DataFrame) -> pd.DataFrame:
+    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame, production_metric: pd.DataFrame) \
+            -> pd.DataFrame:
         """
         get the projected emission intensities for list of companies
         :param company_ids: list of company ids
@@ -264,11 +267,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param production_metric: Dataframe with production_metric per company
         :return: series of projected emission intensities
         """
-
         projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
-        assert all(company_id in projections.index for company_id in company_ids), \
-            f"company ids missing in provided projections"
+        missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
+        if missing_companies:
+            error_message = f"Missing target or trajectory projections for companies: {missing_companies}"
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                          TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
@@ -288,12 +293,12 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param historic_data: Dataframe Productions, Emissions, and Emission Intensities mixed together
         :return: historic data with unit attributes added to yearly data on a per-element basis
         """
-        # We don't need this reset/set index dance because we set the index to COMPANY_ID to get units sorted
-        # historic_data = historic_data.reset_index().drop(columns=['index']).set_index(ColumnsConfig.COMPANY_ID)
-        
         self.historic_years = [column for column in historic_data.columns if type(column) == int]
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
-        assert not missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
+        if missing_ids:
+            error_message = f"Company ids missing in provided historic data: {missing_ids}"
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         # There has got to be a better way to do this...
         historic_data = (
