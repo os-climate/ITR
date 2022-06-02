@@ -2,11 +2,20 @@ import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Tuple
 from pint import Quantity
+import logging
 
-from .configs import ColumnsConfig, TemperatureScoreConfig
+from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter(LoggingConfig.FORMAT)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 
 # If this file is moved, the computation of get_project_root may also need to change
@@ -52,9 +61,18 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
     :return: A list of portfolio companies
     """
     # Adding some non-empty checks for portfolio upload
-    assert df_portfolio[ColumnsConfig.INVESTMENT_VALUE].isnull().sum() == 0, f"There is empty data for investment value for some companies in the input file. Please correct the file and try again."
-    assert df_portfolio[ColumnsConfig.COMPANY_ISIN].isnull().sum() == 0, f"There is empty data for company ISIN for some companies in the input file. Please correct the file and try again."
-    assert df_portfolio[ColumnsConfig.COMPANY_ID].isnull().sum() == 0, f"There is empty data for company ID for some companies in the input file. Please correct the file and try again."
+    if df_portfolio[ColumnsConfig.INVESTMENT_VALUE].isnull().any():
+        error_message = f"Investment values are missing for one or more companies in the input file."
+        logger.error(error_message)
+        raise ValueError(error_message)
+    if df_portfolio[ColumnsConfig.COMPANY_ISIN].isnull().any():
+        error_message = f"Company ISINs are missing for one or more companies in the input file."
+        logger.error(error_message)
+        raise ValueError(error_message)
+    if df_portfolio[ColumnsConfig.COMPANY_ID].isnull().any():
+        error_message = f"Company IDs are missing for one or more companies in the input file."
+        logger.error(error_message)
+        raise ValueError(error_message)
 
     return [PortfolioCompany.parse_obj(company) for company in df_portfolio.to_dict(orient="records")]
 

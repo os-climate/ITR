@@ -102,20 +102,27 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # GH https://github.com/pandas-dev/pandas/issues/46044
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
 
-        company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
-
-
         # testing if all data is in the same currency
-        assert len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) == 1, f"All data should be in the same currency. Please adjust excel template input."
+        if len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) != 1:
+            error_message = f"All data should be in the same currency."
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         # are there empty sectors?
         comp_with_missing_sectors = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.SECTOR].isnull()].to_list()
-        assert len(comp_with_missing_sectors) == 0, f"For {comp_with_missing_sectors} companies the sector column is empty. Correct it in excel template and try one more time."
+        if comp_with_missing_sectors:
+            error_message = f"For {comp_with_missing_sectors} companies the sector column is empty."
+            logger.error(error_message)
+            raise ValueError(error_message)
+
         # testing if only valid sectors are provided
         sectors_from_df = df_fundamentals[ColumnsConfig.SECTOR].unique()
         configured_sectors = SectorsConfig.get_configured_sectors()
         not_configured_sectors = [sec for sec in sectors_from_df if sec not in configured_sectors]
-        assert len(not_configured_sectors) == 0, f"Sector {not_configured_sectors} is not covered by the ITR tool currently. Delete it from excel template."
+        if not_configured_sectors:
+            error_message = f"Sector {not_configured_sectors} is not covered by the ITR tool currently."
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
         historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
@@ -125,7 +132,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         # Checking if there are not many missing market cap
         missing_cap_ids = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].isnull()].to_list()
-        assert (len(missing_cap_ids)/len(df_fundamentals)) < 0.2, f"Too many companies with missing market capitalization. Cannot proceed."
         # For the missing Market Cap we should use the ratio below to get dummy market cap:
         #   (Avg for the Sector (Market Cap / Revenues) + Avg for the Sector (Market Cap / Assets)) 2
         df_fundamentals['MCap_to_Reven']=df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]/df_fundamentals[ColumnsConfig.COMPANY_REVENUE] # new temp column with ratio
