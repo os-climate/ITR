@@ -1,6 +1,6 @@
 {
-  "benchmark_temperature": 1.75,
-  "benchmark_global_budget": 500,
+  "benchmark_temperature": "1.75 delta_degC",
+  "benchmark_global_budget": "500 Gt CO2",
   "is_AFOLU_included": false,
   "S1S2": {
     "benchmarks": [
