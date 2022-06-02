@@ -144,7 +144,7 @@
       },
       {
         "sector": "Electricity Utilities",
-        "region": "North-America",
+        "region": "North America",
         "benchmark_metric": { "units": "t CO2/MWh" },
         "projections": [
           {
