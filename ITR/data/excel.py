@@ -1,48 +1,60 @@
 import warnings # needed until apply behaves better with Pint quantities in arrays
-from typing import Type, List, Union, Optional
+from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
-
 from pint import Quantity
-# from pint_pandas import PintArray
-
-import pint
-import pint_pandas
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
-# PA_ = pint_pandas.PintArray
+import logging
 
 from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, VariablesConfig, TabsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, LoggingConfig
 from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, IEmissionRealization, IEIRealization, IProjection
 
-import logging
-import inspect
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter(LoggingConfig.FORMAT)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
-sector_to_production_metric = { 'Electricity Utilities':'GJ', 'Steel':'Fe_ton' }
-sector_to_intensity_metric = { 'Electricity Utilities':'t CO2/MWh', 'Steel':'t CO2/Fe_ton' }
+sector_to_production_metric = {'Electricity Utilities': 'GJ', 'Steel': 'Fe_ton'}
+sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't CO2/Fe_ton'}
 
 # TODO: Force validation for excel benchmarks
 
 # Utils functions:
 
-def convert_dimensionless_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
+def convert_dimensionless_benchmark_excel_to_model(df_excel: dict, sheetname: str, column_name_region: str,
                                                    column_name_sector: str) -> IBenchmarks:
     """
     Converts excel into IBenchmarks
-    :param excal_path: file path to excel
+    :param df_excel: dictionary with a pd.DataFrame for each key representing a sheet of an Excel file
+    :param sheetname: name of Excel file sheet to convert
+    :param column_name_region: name of region
+    :param column_name_sector: name of sector
     :return: IBenchmarks instance (list of IBenchmark)
     """
-    df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
+    try:
+        df_sheet = df_excel[sheetname]
+    except KeyError:
+        logger.error(f"Sheet {sheetname} not in benchmark Excel file.")
+        raise
+
+    df_ei_bms = df_sheet.reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
+
     result = []
     for index, row in df_ei_bms.iterrows():
-        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units':'dimensionless'},
+        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units': 'dimensionless'},
                         projections=[IProjection(year=int(k), value=Q_(v, ureg('dimensionless'))) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
@@ -76,22 +88,12 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._check_sector_data()
         self._convert_excel_to_model = convert_dimensionless_benchmark_excel_to_model
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
                                                       column_config.REGION, column_config.SECTOR)
         super().__init__(
-            IProductionBenchmarkScopes(benchmark_metric={'units':'dimensionless'}, S1S2=production_bms), column_config,
+            IProductionBenchmarkScopes(benchmark_metric={'units': 'dimensionless'}, S1S2=production_bms), column_config,
             tempscore_config)
-
-    def _check_sector_data(self) -> None:
-        """
-        Checks if the sector data excel contains the data in the right format
-
-        :return: None
-        """
-        assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
-            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
@@ -109,7 +111,6 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._check_sector_data()
         self._convert_excel_to_model = convert_intensity_benchmark_excel_to_model
         EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
                                                      column_config.REGION, column_config.SECTOR)
@@ -121,14 +122,6 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                                is_AFOLU_included=is_AFOLU_included),
             column_config,
             tempscore_config)
-
-    def _check_sector_data(self) -> None:
-        """
-        Checks if the sector data excel contains the data in the right format
-        :return: None
-        """
-        assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
-            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
 
 class ExcelProviderCompany(BaseCompanyDataProvider):
