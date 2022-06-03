@@ -179,13 +179,12 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         benchmark_projection = self._get_projected_intensities(scope)  # TODO optimize performance
-        sectors = company_sector_region_info[self.column_config.SECTOR]
-        regions = company_sector_region_info[self.column_config.REGION]
-        benchmark_regions = regions.copy()
-        mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
-        benchmark_regions.loc[~mask] = "Global"
-
-        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors))]
+        reg_sec = company_sector_region_info[[self.column_config.REGION,self.column_config.SECTOR]].copy()
+        merged_df=reg_sec.reset_index().merge(benchmark_projection.reset_index()[[self.column_config.REGION,self.column_config.SECTOR]], how='left', indicator=True).set_index('index') # checking which combinations of reg-sec are missing in the benchmark
+        reg_sec.loc[merged_df._merge == 'left_only', self.column_config.REGION] = "Global" # change region in missing combination to "Global"
+        sectors = reg_sec.sector
+        regions = reg_sec.region
+        benchmark_projection = benchmark_projection.loc[list(zip(regions, sectors))]
         benchmark_projection.index = sectors.index
         return benchmark_projection
 
