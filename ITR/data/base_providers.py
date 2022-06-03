@@ -733,8 +733,7 @@ class EITargetProjector(object):
                         ei_projection_scopes[scope].projections.extend(ei_projections)
                     else:
                         ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections,
-                                                                            ei_metric=IntensityMetric.parse_obj({
-                                                                                                                    'units': target.target_base_year_unit}))
+                                                                            ei_metric=IntensityMetric.parse_obj({'units': target.target_base_year_unit}))
                 elif target.target_type == "absolute":
                     # Complicated case, the target must be switched from absolute value to intensity.
                     # We use the benchmark production data
@@ -755,6 +754,7 @@ class EITargetProjector(object):
                     if last_year_data is None or base_year > last_year_data.year:
                         ei_projection_scopes[scope] = None
                         continue
+
                     # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
                     last_year, value_last_year = last_year_data.year, last_year_data.value
                     target_year = target.target_end_year

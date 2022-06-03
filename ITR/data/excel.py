@@ -209,18 +209,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
         for company_data in companies_data_dict:
-            # company_data is a dict, not a dataframe
             try:
-                # convert_unit_of_measure = company_data[ColumnsConfig.SECTOR] in self.CORRECTION_SECTORS
-                # company_targets = self._convert_series_to_projections(
-                #     df_targets.loc[company_data[ColumnsConfig.COMPANY_ID], :], convert_unit_of_measure)
-                # company_ei = self._convert_series_to_projections(
-                #     df_ei.loc[company_data[ColumnsConfig.COMPANY_ID], :],
-                #     convert_unit_of_measure)
-
-                # company_data.update({ColumnsConfig.PROJECTED_TARGETS: {'S1S2': {'projections': df_targets}}})
-                # company_data.update({ColumnsConfig.PROJECTED_EI: {'S1S2': {'projections': df_ei}}})
-
                 company_id = company_data[ColumnsConfig.COMPANY_ID]
                 production_metric = sector_to_production_metric[company_data[ColumnsConfig.SECTOR]]
                 intensity_metric = sector_to_intensity_metric[company_data[ColumnsConfig.SECTOR]]
@@ -271,7 +260,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
         if missing_companies:
-            error_message = f"Missing target or trajectory projections for companies: {missing_companies}"
+            error_message = f"Missing target or trajectory projections for companies with ID: {missing_companies}"
             logger.error(error_message)
             raise ValueError(error_message)
 

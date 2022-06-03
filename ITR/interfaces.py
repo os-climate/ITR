@@ -406,7 +406,7 @@ class IHistoricData(PintModel):
 
 class ITargetData(PintModel):
     netzero_year: Optional[int]
-    target_type: Union[Literal['intensity'], Literal['absolute'], Literal['other']]
+    target_type: Union[Literal['intensity'], Literal['absolute'], Literal['Intensity'], Literal['Absolute']]
     target_scope: EScope
     target_start_year: Optional[int]
     target_base_year: int
@@ -415,6 +415,12 @@ class ITargetData(PintModel):
     target_base_year_qty: float
     target_base_year_unit: str
     target_reduction_pct: float
+
+    @validator('target_end_year')
+    def must_be_greater_than_2022(cls, v):
+        if v < 2023:
+            raise ValueError("Target end year must be greater than 2022")
+        return v
 
 
 class ICompanyData(PintModel):

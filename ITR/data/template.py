@@ -47,7 +47,8 @@ def ITR_country_to_region(country):
     if 'Asia' in region:
         return 'Asia'
     return 'Global'
-            
+
+
 class TemplateProviderCompany(BaseCompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
@@ -86,7 +87,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         try:
             df = df_company_data[input_data_sheet]
         except KeyError as e:
-            f"Tabs {required_tabs} are required."
             logger.error(f"Tab {input_data_sheet} is required in input Excel file.")
             raise
 
@@ -141,11 +141,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP] = df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].fillna(0.5*(df_fundamentals[ColumnsConfig.COMPANY_REVENUE] * df_fundamentals['AVG_MCap_to_Reven']+df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] * df_fundamentals['AVG_MCap_to_Assets']))
         df_fundamentals.drop(['MCap_to_Reven','MCap_to_Assets','AVG_MCap_to_Reven','AVG_MCap_to_Assets'], axis=1, inplace=True) # deleting temporary columns
         
-        if missing_cap_ids is not None:
-            def custom_formatwarning(msg, *args, **kwargs):
-                return str(msg) + '\n'             # ignore everything except the message
-            warnings.formatwarning = custom_formatwarning
-            warnings.warn(f"Market capitalisation was missing for {missing_cap_ids}.\nSo the values were calculated using the average MCap/Rev and MCap/Assets from available companies.\nScript is still running")
+        if missing_cap_ids:
+            logger.warning(f"Missing market capitalisation values are estimated for companies with ID: "
+                           f"{missing_cap_ids}.")
 
         # df_fundamentals now ready for conversion to list of models
 
@@ -182,17 +180,44 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
         try:
             df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
-        except KeyError as e:
+        except KeyError:
             logger.error(f"Tab {test_target_sheet} is required in input Excel file.")
             raise
 
-        # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
-        df_target_data.loc[df_target_data.target_start_year.isna(), 'target_start_year'] = 2020
-        df_target_data.loc[df_target_data.netzero_year.isna(), 'netzero_year'] = 2050
+        df_target_data = self._validate_target_data(df_target_data)
 
         # company_id, netzero_year, target_type, target_scope, target_start_year, target_base_year, target_base_year_qty, target_base_year_unit, target_year, target_reduction_ambition
         # df_target_data now ready for conversion to model for each company
         return self._company_df_to_model(df_fundamentals, df_target_data, df_historic_data)
+
+    def _validate_target_data(self, target_data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Performs checks on the supplied target data. Some values are put in to make the tool function.
+        :param target_data:
+        :return:
+        """
+        # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
+        c_ids_without_start_year = list(target_data[target_data['target_start_year'].isna()].index)
+        if c_ids_without_start_year:
+            target_data.loc[target_data.target_start_year.isna(), 'target_start_year'] = 2021
+            logger.warning(f"Missing target start year set to 2021 for companies with ID: {c_ids_without_start_year}")
+
+        c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > 2050].index)
+        if c_ids_invalid_netzero_year:
+            error_message = f"Invalid net-zero target years (>2050) are entered for companies with ID: " \
+                            f"{c_ids_without_netzero_year}"
+            logger.error(error_message)
+            raise ValueError(error_message)
+        target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = 2050
+
+        c_ids_with_increase_target = list(target_data[target_data['target_reduction_ambition'] < 0].index)
+        if c_ids_with_increase_target:
+            error_message = f"Negative target reduction ambition is invalid and entered for companies with ID: " \
+                            f"{c_ids_with_increase_target}"
+            logger.error(error_message)
+            raise ValueError(error_message)
+
+        return target_data
 
     def _convert_series_to_IProjections(self, projections: pd.Series) -> [IProjection]:
         """
@@ -215,10 +240,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param df_historic_data: pandas Dataframe with historic emissions, intensity, and production information
         :return: A list containing the ICompanyData objects
         """
-        logger = logging.getLogger(__name__)
-        # set NaN to None since NaN is float instance
-        df_fundamentals = df_fundamentals.where(pd.notnull(df_fundamentals), None).replace(to_replace=np.nan, value=None)
-
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
         for company_data in companies_data_dict:
@@ -231,12 +252,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # the ghg_s1s2 and ghg_s3 variables are values "as of" the financial data
                 # TODO pull ghg_s1s2 and ghg_s3 from historic data as appropriate
 
-                # v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE12].squeeze()
-                # company_data[ColumnsConfig.GHG_SCOPE12] = Q_(v or np.nan, ureg(units))
-                # v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE3].squeeze()
-                # company_data[ColumnsConfig.GHG_SCOPE3] = Q_(v or np.nan, ureg(units))
-
-                # df.loc[[index]] is like df.loc[index, :] except it always returns a DataFrame and not a Series when there's only one row
                 if df_historic_data is not None:
                     company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
                         df_historic_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index()).dict()
@@ -261,9 +276,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
 
                 model_companies.append(ICompanyData.parse_obj(company_data))
-            except ValidationError as e:
+            except ValidationError:
                 logger.warning(
-                    f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    f"(One of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         ColumnsConfig.COMPANY_NAME])
                 continue
         return model_companies
@@ -285,7 +300,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
         if missing_companies:
-            error_message = f"Missing target or trajectory projections for companies: {missing_companies}"
+            error_message = f"Missing target or trajectory projections for companies with ID: {missing_companies}"
             logger.error(error_message)
             raise ValueError(error_message)
 
