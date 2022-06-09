@@ -202,7 +202,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     """
 
     def __init__(self,
-                 companies: Optional[List[ICompanyData]] = None,
+                 companies: List[ICompanyData] = None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
                  projection_controls: ProjectionControls = ProjectionControls()):
