@@ -201,15 +201,17 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     """
 
     def __init__(self,
-                 companies: List[ICompanyData],
+                 companies: List[ICompanyData] = None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
-                 projection_controls: ProjectionControls = ProjectionControls()):
+                 projection_controls: ProjectionControls = ProjectionControls(),
+                 is_final: bool = True):
         super().__init__()
         self.column_config = column_config
         self.temp_config = tempscore_config
         self.projection_controls = projection_controls
-        self._companies = self._validate_projected_trajectories(companies)
+        if is_final:
+            self._companies = self._validate_projected_trajectories(companies)
 
     def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
         companies_without_data = [c.company_id for c in companies if not c.historic_data and not c.projected_intensities]
