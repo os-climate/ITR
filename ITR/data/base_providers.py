@@ -195,23 +195,28 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     Data provider skeleton for JSON files parsed by the fastAPI json encoder. This class serves primarily for connecting
     to the ITR tool via API.
 
-    :param companies: A list of ICompanyData objects that each contain fundamental company data
+    :param companies: A optional list of ICompanyData objects that each contain fundamental company data.  If
+                      It is None if a derived class is responsible for initializing companies. 
     :param column_config: An optional ColumnsConfig object containing relevant variable names
     :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
     """
 
     def __init__(self,
-                 companies: List[ICompanyData] = None,
+                 companies: Optional[List[ICompanyData]] = None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
-                 projection_controls: ProjectionControls = ProjectionControls(),
-                 is_final: bool = True):
+                 projection_controls: ProjectionControls = ProjectionControls()):
         super().__init__()
         self.column_config = column_config
         self.temp_config = tempscore_config
         self.projection_controls = projection_controls
-        if is_final:
+        if companies is None:
+            # This creates a slot in the base class that can be overwritten by the derived classes
+            self._companies = None
+        else:
+            # We are able to finalize this list as part of BaseCompanyDataProvider initialization
             self._companies = self._validate_projected_trajectories(companies)
+
 
     def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
         companies_without_data = [c.company_id for c in companies if not c.historic_data and not c.projected_intensities]

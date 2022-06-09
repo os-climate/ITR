@@ -52,12 +52,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
     def __init__(self, excel_path: str,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
-                 projection_controls: Type[ProjectionControls] = ProjectionControls,
-                 is_final: bool = True):
-        super().__init__(None, column_config, tempscore_config, projection_controls, is_final=False)
+                 projection_controls: Type[ProjectionControls] = ProjectionControls):
+        super().__init__(None, column_config, tempscore_config, projection_controls)
         self._companies = self._convert_from_template_company_data(excel_path)
-        if is_final:
-            self._companies = self._validate_projected_trajectories(self._companies)
+        self._companies = self._validate_projected_trajectories(self._companies)
         
     def _check_company_data(self, df: pd.DataFrame) -> None:
         """
