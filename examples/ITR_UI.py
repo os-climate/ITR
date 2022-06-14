@@ -19,7 +19,6 @@ from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 import plotly.express as px
 import plotly.graph_objects as go
-# from sqlalchemy import true
 
 import ITR
 
@@ -29,38 +28,43 @@ from ITR.temperature_score import TemperatureScore
 
 from ITR.data.base_providers import BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
+from ITR.interfaces import EScope, ETimeFrames, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
+# from ITR.configs import LoggingConfig
 
-from ITR.data.osc_units import ureg, Q_, PA_
+from ITR.data.osc_units import Q_
 from pint import Quantity
 from pint_pandas import PintType
 
-from ITR.utils import get_project_root
-pkg_root = get_project_root()
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s') # LoggingConfig.FORMAT
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 
 # Initial calculations
-print('Start!')
+logger.info("Start!")
 
-
-directory1 ='' #'examples'
-directory2="data"
-directory3="json-units"
+examples_dir ='' #'examples'
+data_dir="data"
+data_json_units_dir="json-units"
 root = os.path.abspath('')
 
 # load company data
 company_data="20220415 ITR Tool Sample Data.xlsx" # this file is provided initially
-template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, directory1, directory2, company_data))
+template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, examples_dir, data_dir, company_data))
 
 # load production benchmarks
 benchmark_prod_json_file = "benchmark_production_OECM.json"
-benchmark_prod_json = os.path.join(root, directory1, directory2, directory3, benchmark_prod_json_file)
+benchmark_prod_json = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_prod_json_file)
 with open(benchmark_prod_json) as json_file:
     parsed_json = json.load(json_file)
 prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
 base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
-print('Load production benchmark from {}'.format(benchmark_prod_json_file))
+logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file))
 
 
 # Emission intensities
@@ -70,9 +74,9 @@ benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
 
 # loading dummy portfolio
-df_portfolio = pd.read_excel(os.path.join(root, directory1, directory2, company_data), sheet_name="Portfolio")
+df_portfolio = pd.read_excel(os.path.join(root, examples_dir, data_dir, company_data), sheet_name="Portfolio")
 companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
-print('Load dummy portfolio from {}. You could upload your own portfolio using the template.'.format(company_data))
+logger.info('Load dummy portfolio from {}. You could upload your own portfolio using the template.'.format(company_data))
 
 temperature_score = TemperatureScore(
     time_frames = [ETimeFrames.LONG],
@@ -91,13 +95,12 @@ def recalculate_individual_itr(scenario):
     else:
         benchmark_file = benchmark_EI_TPI_below_2_file
     # load intensity benchmarks
-    benchmark_EI = os.path.join(root, directory1, directory2, directory3, benchmark_file)
+    benchmark_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_file)
     with open(benchmark_EI) as json_file:
         parsed_json = json.load(json_file)
     EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
     Warehouse = DataWarehouse(template_company_data, base_production_bm, EI_bm)
     df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
-    # print('Temperature score for portfolio components is {:.2f}'.format(temperature_score.aggregate_scores(df).long.S1S2.all.score.m))
     return df
 
 
@@ -300,7 +303,6 @@ macro = dbc.Row(
 # Define Layout
 app.layout = dbc.Container( # always start with container
                 children=[
-                    # dcc.Store(id='memory-output'), # not used, but the idea is to use as clipboard to store dataframe
                     html.Hr(), # small space from the top
                     dbc.Row( # upload portfolio
                         [
@@ -321,28 +323,9 @@ app.layout = dbc.Container( # always start with container
                             ),
                             dbc.Col([
                                 dbc.Spinner([html.H1(id="dummy-output-info",style={'color': 'white'})],color="primary",spinner_style={"width": "3rem", "height": "3rem"}), # Spinner implementations
-                                # Upload button commented out for future release  
-                                # dcc.Upload(
-                                #     id='upload-data',
-                                #     children=html.Div(
-                                #         dbc.Button('Upload portfolio', size="lg", color="primary",className='align-bottom',),
-                                #         ),
-                                #     multiple=False # Allow multiple files to be uploaded
-                                # ),
                                 ],
                                 width=1,
                             ), 
-                            # Upload template is commented out for this release
-                            # dbc.Col( # 16.05.2022: update template link
-                            #     html.Div(dbc.Button('Get template (needs implementation)', size="lg", color="secondary",
-                            #                             href="https://docs.faculty.ai/user-guide/apps/examples/dash_file_upload_download.html",
-                            #                             download="dash_file_upload_download.html",
-                            #                             external_link=True,
-                            #                 ),
-                            #         ),
-                            #         width=2,
-                            #         className='align-middle',
-                            # )
                         ],
                         justify='between', # for this to work you need some space left (in total there 12 columns)
                         align = 'center',
@@ -444,22 +427,13 @@ app.layout = dbc.Container( # always start with container
                                         ),
                                         dbc.Row(# row with 2 graphs
                                             [
-                                                dbc.Col(dcc.Graph(id="graph-3", 
-                                                                # style={"height": "70vh", "max-height": "90vw",'title': 'Dash Data Visualization'},
-                                                        ),
-                                                ),
-                                                dbc.Col(dcc.Graph(id="graph-4", 
-                                                                # style={"height": "70vh", "max-height": "90vw",'title': 'Dash Data Visualization'},
-                                                        ),
-                                                ),
+                                                dbc.Col(dcc.Graph(id="graph-3")),
+                                                dbc.Col(dcc.Graph(id="graph-4")),
                                             ]
                                         ),
                                         dbc.Row(# row with 1 bar graph
                                             [
-                                                dbc.Col(dcc.Graph(id="graph-5", 
-                                                                # style={"height": "70vh", "max-height": "90vw",'title': 'Dash Data Visualization'},
-                                                        ),
-                                                ),
+                                                dbc.Col(dcc.Graph(id="graph-5")),
                                             ]
                                         ),
                                     ])
@@ -505,25 +479,8 @@ app.layout = dbc.Container( # always start with container
                         )
                     )
                 ],
-            style={"max-width": "1500px", 
-                    # "margin": "auto"
-                    },
+            style={"max-width": "1500px"},
             )
-
-
-def parse_contents(contents, filename): # function for read the uploaded portfolio
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-    try:
-        if 'csv' in filename: # Assume that the user uploaded a CSV file
-            df = pd.read_csv(io.StringIO(decoded.decode('iso-8859-1')),sep=';')
-        elif 'xlsx' in filename: # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
-        print(df)
-        return df
-    except Exception as e:
-        print(e)
-
 
 
 @app.callback(
@@ -542,75 +499,52 @@ def parse_contents(contents, filename): # function for read the uploaded portfol
     Output('container-button-basic', 'children'), # Table
     ],
     [
-        #Input('memory-output', 'data'), # here is our imported csv in memory
         Input("temp-score", "value"),
-        # Input("run-url", "n_clicks"), 
-        # Input("input-url", "n_submit"),
         Input("sector-dropdown", "value"), 
         Input("region-dropdown", "value"),
         Input("scenario-dropdown", "value"),
         Input('projection-method','value'),
         Input("scenarios-cutting", "value"), # winzorization slide
-        # Input('upload-data', 'contents'), # upload button commented out for now
     ],
-    [
-        # State("input-url", "value"), # url functionality
-        # State('upload-data', 'filename'), # upload functionality # upload button commented out for now
-        ],
 )
 
 def update_graph(
-                # df_store,
                 te_sc, 
                 sec, reg,
                 scenario,
                 proj_meth,
                 winz,
-                # list_of_contents, list_of_names, # related to upload
-                # url,
                 ):
 
     global amended_portfolio_global, initial_portfolio, filt_df, temperature_score, companies, company_data, template_company_data, base_production_bm
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0] # to catch which widgets were pressed
     
-    if 'upload-data' in changed_id: # if "upload new pf" button was clicked    
-        df_portfolio = parse_contents(list_of_contents, list_of_names)
-        # df_portfolio = pd.read_csv(url, encoding="iso-8859-1", sep=';')
-        companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
-        initial_portfolio = recalculate_individual_itr(scenario)
-        filt_df = initial_portfolio
-        amended_portfolio_global = filt_df
-        aggregated_scores = temperature_score.aggregate_scores(filt_df)
-
-    else: # no new portfolio
-        if 'scenarios-cutting' or 'projection-method' in changed_id: # if winzorization params were changed 
-            if  proj_meth == 'median':
-                template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.median)
-            else:
-                template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.mean)
-            template_company_data.projection_controls.LOWER_PERCENTILE = winz[0]/100
-            template_company_data.projection_controls.UPPER_PERCENTILE = winz[1]/100
-            template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, directory1, directory2, company_data))
-
-        amended_portfolio_global = recalculate_individual_itr(scenario) # we need to recalculate temperature score as we changed th
-            
-        temp_score_mask = (amended_portfolio_global.temperature_score >= Q_(te_sc[0],'delta_degC')) & (amended_portfolio_global.temperature_score <= Q_(te_sc[1],'delta_degC'))
-        # Dropdown filters
-        if sec == 'all_values':
-            sec_mask = (amended_portfolio_global.sector != 'dummy') # select all
+    if 'scenarios-cutting' or 'projection-method' in changed_id: # if winzorization params were changed 
+        if  proj_meth == 'median':
+            template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.median)
         else:
-            sec_mask = amended_portfolio_global.sector == sec
-        if reg == 'all_values':
-            reg_mask = (amended_portfolio_global.region != 'dummy') # select all
-        else:
-            reg_mask = (amended_portfolio_global.region == reg)
-        filt_df = amended_portfolio_global.loc[temp_score_mask & sec_mask & reg_mask] # filtering
-        if len(filt_df) == 0: # if after filtering the dataframe is empty
-            raise PreventUpdate
-        aggregated_scores = temperature_score.aggregate_scores(filt_df) # calc temp score for companies left in pf
-        print("Length of filtered dataframe is {}, the portfolio score is {:.2f}".format(len(filt_df),temperature_score.aggregate_scores(filt_df).long.S1S2.all.score.m)) # portfolio score
+            template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.mean)
+        template_company_data.projection_controls.LOWER_PERCENTILE = winz[0]/100
+        template_company_data.projection_controls.UPPER_PERCENTILE = winz[1]/100
+        template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, examples_dir, data_dir, company_data))
 
+    amended_portfolio_global = recalculate_individual_itr(scenario) # we need to recalculate temperature score as we changed th
+        
+    temp_score_mask = (amended_portfolio_global.temperature_score >= Q_(te_sc[0],'delta_degC')) & (amended_portfolio_global.temperature_score <= Q_(te_sc[1],'delta_degC'))
+    # Dropdown filters
+    if sec == 'all_values':
+        sec_mask = (amended_portfolio_global.sector != 'dummy') # select all
+    else:
+        sec_mask = amended_portfolio_global.sector == sec
+    if reg == 'all_values':
+        reg_mask = (amended_portfolio_global.region != 'dummy') # select all
+    else:
+        reg_mask = (amended_portfolio_global.region == reg)
+    filt_df = amended_portfolio_global.loc[temp_score_mask & sec_mask & reg_mask] # filtering
+    if len(filt_df) == 0: # if after filtering the dataframe is empty
+        raise PreventUpdate
+    aggregated_scores = temperature_score.aggregate_scores(filt_df) # calc temp score for companies left in pf
 
     # Scatter plot
     fig1 = dequantify_plotly (px.scatter, filt_df, x="cumulative_target", y="cumulative_budget", 
@@ -631,7 +565,7 @@ def update_graph(
                                                       "Covered only<Br>by emissions",
                                                       "Covered by<Br>emissions and targets"))
     dfg=coverage.groupby('coverage_category').count().reset_index()
-    dfg['portfolio']='Portfolio' # 1 column to have just 1 bar. I didn't figure out how to do it more ellegant
+    dfg['portfolio']='Portfolio'
     fig5 = dequantify_plotly (px.bar, dfg, x='portfolio',y="company_id", color="coverage_category",text='company_id',title="Coverage of companies in portfolio")
     fig5.update_xaxes(visible=False) # hide axis
     fig5.update_yaxes(visible=False) # hide axis
@@ -760,7 +694,7 @@ def reset_filters(n_clicks_reset, scenario):
     ProjectionControls.TREND_CALC_METHOD=staticmethod(pd.DataFrame.median)
     ProjectionControls.LOWER_PERCENTILE = 0.1
     ProjectionControls.UPPER_PERCENTILE = 0.9
-    template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, directory1, directory2, company_data))
+    template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, examples_dir, data_dir, company_data))
     amended_portfolio_global = recalculate_individual_itr(scenario)
     initial_portfolio = amended_portfolio_global
 
