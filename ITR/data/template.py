@@ -272,10 +272,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError:
-                logger.warning(
-                    f"(One of) the input(s) of company %s is invalid and will be skipped" % company_data[
-                        ColumnsConfig.COMPANY_NAME])
-                continue
+                logger.error(f"(One of) the input(s) of company {company_data['company_name']} is invalid")
+                raise
         return model_companies
 
     # Workaround for bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero 

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
-from pydantic import BaseModel, parse_obj_as, validator
+from pydantic import BaseModel, parse_obj_as, validator, root_validator
 from pint import Quantity
 from dataclasses import dataclass
 from typing import Callable
@@ -416,9 +416,9 @@ class ITargetData(PintModel):
     target_base_year_unit: str
     target_reduction_pct: float
 
-    @validator('target_end_year')
+    @root_validator
     def must_be_greater_than_2022(cls, v):
-        if v < 2023:
+        if v['target_end_year'] < 2023:
             raise ValueError("Target end year must be greater than 2022")
         return v
 
