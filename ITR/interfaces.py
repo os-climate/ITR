@@ -412,7 +412,7 @@ class IHistoricData(PintModel):
 
 class ITargetData(PintModel):
     netzero_year: Optional[int]
-    target_type: Union[Literal['intensity'], Literal['absolute'], Literal['Intensity'], Literal['Absolute']]
+    target_type: Union[Literal['intensity'], Literal['absolute'], Literal['other']]
     target_scope: EScope
     target_start_year: Optional[int]
     target_base_year: int
@@ -427,7 +427,7 @@ class ITargetData(PintModel):
         if v['target_end_year'] < 2023:
             raise ValueError("Target end year must be greater than 2022")
         return v
-
+      
 
 class ICompanyData(PintModel):
     company_name: str
