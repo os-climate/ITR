@@ -8,7 +8,8 @@ import itertools
 
 from pint import Quantity
 from .data.osc_units import ureg, Q_, PA_
-from ITR.interfaces import EScope, ETimeFrames, Aggregation, AggregationContribution, ScoreAggregation, \
+from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, AggregationContribution, \
+    ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
 from ITR.configs import TemperatureScoreConfig
@@ -43,68 +44,75 @@ class TemperatureScore(PortfolioAggregation):
             self.grouping = grouping
 
     def get_score(self, scorable_row: pd.Series) -> Tuple[
-        Quantity['delta_degC'], Quantity['delta_degC'], float, Quantity['delta_degC'], float, Quantity['delta_degC']]:
+        Quantity['delta_degC'], Quantity['delta_degC'], float, Quantity['delta_degC'], float, EScoreResultType]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
         :param scorable_row: The target as a row of a data frame
-        :return: The temperature score, which is a tuple of (TEMPERATURE_SCORE,TRAJECTORY_SCORE,TRAJECTORY_OVERSHOOT,TARGET_SCORE,TARGET_OVERSHOOT,TEMPERATURE_RESULTS])
+        :return: The temperature score, which is a tuple of (TEMPERATURE_SCORE, TRAJECTORY_SCORE, TRAJECTORY_OVERSHOOT,
+                        TARGET_SCORE, TARGET_OVERSHOOT, TEMPERATURE_RESULTS])
         """
-        # if either cum target or trajectory is zero return default.
-        if np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET].m) or \
-                np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY].m):
-            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, Q_(1, ureg.delta_degC)
 
-        if scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m > 0:
+        # If both trajectory and target data missing assign default value
+        if (np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
+            np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
+                scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m <= 0:
+            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
+
+        # If only target data missing assign only trajectory_score to final score
+        elif np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
+            target_overshoot_ratio = np.nan
+            target_temperature_score = np.nan
+            trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
+                self.c.COLS.CUMULATIVE_BUDGET]
+            trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
+                    self.c.CONTROLS_CONFIG.tcre_multiplier)
+            score = trajectory_temperature_score
+            return score, trajectory_temperature_score, trajectory_overshoot_ratio, \
+                target_temperature_score, target_overshoot_ratio, EScoreResultType.TRAJECTORY_ONLY
+
+        else:
             target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
-        else:
-            target_overshoot_ratio = 0
-            trajectory_overshoot_ratio = 0
 
-        target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
-                                   (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
-                                           target_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
-        trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
-                                       (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (
-                                               trajectory_overshoot_ratio - 1.0) * self.c.CONTROLS_CONFIG.tcre_multiplier)
-        score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
+            target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (target_overshoot_ratio - 1.0) *
+                    self.c.CONTROLS_CONFIG.tcre_multiplier)
+            trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
+                (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
+                    self.c.CONTROLS_CONFIG.tcre_multiplier)
+            score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
                 trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
-        # Safeguard: If score is NaN due to missing data assign default score.
-        if np.isnan(score):
-            default_score = self.get_default_score(scorable_row)
-            return default_score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(
-                1.0, ureg.delta_degC)
-        return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, target_overshoot_ratio, Q_(
-            0.0, ureg.delta_degC)
+            return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, \
+                target_overshoot_ratio, EScoreResultType.COMPLETE
 
-    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Tuple[
-        Quantity['delta_degC'], Quantity['delta_degC']]:
+    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Quantity['delta_degC']:
         """
-        Get the aggregated temperature score and a temperature result, which indicates how much of the score is based on the default score for a certain company based on the emissions of company.
+        Get the aggregated temperature score. S1+S2+S3 is an emissions weighted sum of S1+S2 and S3.
 
         :param company_data: The original data, grouped by company, time frame and scope category
         :param row: The row to calculate the temperature score for (if the scope of the row isn't s1s2s3, it will return the original score)
         :return: The aggregated temperature score for a company
         """
+        # TODO: Notify user when S1+S2+S3 is built up from S1+S2 and S3 score of different ScoreResultTypes
+
         if row[self.c.COLS.SCOPE] != EScope.S1S2S3:
-            return row[self.c.COLS.TEMPERATURE_SCORE], row[self.c.TEMPERATURE_RESULTS]
+            return row[self.c.COLS.TEMPERATURE_SCORE]
         s1s2 = company_data.loc[(row[self.c.COLS.COMPANY_ID], row[self.c.COLS.TIME_FRAME], EScope.S1S2)]
         s3 = company_data.loc[(row[self.c.COLS.COMPANY_ID], row[self.c.COLS.TIME_FRAME], EScope.S3)]
 
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
             if s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4:
-                return s1s2[self.c.COLS.TEMPERATURE_SCORE], s1s2[self.c.TEMPERATURE_RESULTS]
+                return s1s2[self.c.COLS.TEMPERATURE_SCORE]
             else:
                 company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
                 return ((s1s2[self.c.COLS.TEMPERATURE_SCORE] * s1s2[self.c.COLS.GHG_SCOPE12] +
-                         s3[self.c.COLS.TEMPERATURE_SCORE] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions,
-                        (s1s2[self.c.TEMPERATURE_RESULTS] * s1s2[self.c.COLS.GHG_SCOPE12] +
-                         s3[self.c.TEMPERATURE_RESULTS] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions)
+                         s3[self.c.COLS.TEMPERATURE_SCORE] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions)
 
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
@@ -141,12 +149,12 @@ class TemperatureScore(PortfolioAggregation):
             # See https://github.com/hgrecco/pint-pandas/issues/114
             scoring_data[self.c.COLS.TEMPERATURE_SCORE], scoring_data[self.c.COLS.TRAJECTORY_SCORE], scoring_data[
                 self.c.COLS.TRAJECTORY_OVERSHOOT], scoring_data[self.c.COLS.TARGET_SCORE], scoring_data[
-                self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.TEMPERATURE_RESULTS] = zip(*scoring_data.apply(
-                lambda row: self.get_score(row), axis=1))
+                self.c.COLS.TARGET_OVERSHOOT], scoring_data[self.c.SCORE_RESULT_TYPE] = zip(*scoring_data.apply(
+                    lambda row: self.get_score(row), axis=1))
 
         # Fix up dtypes for the new columns we just added
         for c in [self.c.COLS.TEMPERATURE_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TRAJECTORY_SCORE,
-                  self.c.COLS.TARGET_SCORE, self.c.TEMPERATURE_RESULTS]:
+                  self.c.COLS.TARGET_SCORE]:
             scoring_data[c] = scoring_data[c].astype('pint[delta_degC]')
 
         scoring_data = self.cap_scores(scoring_data)
@@ -162,14 +170,14 @@ class TemperatureScore(PortfolioAggregation):
         # Calculate the GHC
         company_data = data[
             [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
-             self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.TEMPERATURE_RESULTS]
+             self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
         ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]).mean()
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            data[self.c.COLS.TEMPERATURE_SCORE], data[self.c.TEMPERATURE_RESULTS] = zip(*data.apply(
+            data[self.c.COLS.TEMPERATURE_SCORE] = data.apply(
                 lambda row: self.get_ghc_temperature_score(row, company_data), axis=1
-            ))
+            )
         return data
 
     def calculate(self, data: Optional[pd.DataFrame] = None,
@@ -215,7 +223,7 @@ class TemperatureScore(PortfolioAggregation):
         """
         data = data.copy()
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
-                                                          self.aggregation_method)
+                                                          self.aggregation_method).astype('pint[delta_degC]')
         data[self.c.COLS.CONTRIBUTION_RELATIVE] = pd.Series(weighted_scores / weighted_scores.sum(),
                                                             dtype='pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
@@ -254,11 +262,12 @@ class TemperatureScore(PortfolioAggregation):
             score_aggregation_all, \
             filtered_data[self.c.COLS.CONTRIBUTION_RELATIVE], \
             filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
+            filtered_data['DEFAULT'] = 1.0 * (filtered_data[self.c.SCORE_RESULT_TYPE] == EScoreResultType.DEFAULT)
             score_aggregation = ScoreAggregation(
                 grouped={},
                 all=score_aggregation_all,
                 influence_percentage=self._calculate_aggregate_score(
-                    filtered_data, self.c.TEMPERATURE_RESULTS, self.aggregation_method).sum().m * 100)
+                    filtered_data, 'DEFAULT', self.aggregation_method).sum() * 100)
 
             # If there are grouping column(s) we'll group in pandas and pass the results to the aggregation
             if len(self.grouping) > 0:

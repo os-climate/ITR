@@ -1,17 +1,20 @@
-import warnings  # needed until apply behaves better with Pint quantities in arrays
-import logging
-import pandas as pd
-import numpy as np
+import warnings # needed until apply behaves better with Pint quantities in arrays
+
 from abc import ABC
-from typing import List, Type
+from typing import List
+import pandas as pd
 from pydantic import ValidationError
+import numpy as np
+
+import pint
+import pint_pandas
+from ITR.data.osc_units import ureg, Q_, PA_
 
 from ITR.interfaces import ICompanyAggregates
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
+from typing import Type
+import logging
 
 
 class DataWarehouse(ABC):
@@ -36,7 +39,7 @@ class DataWarehouse(ABC):
         self.temp_config = tempscore_config
         self.column_config = column_config
         self.company_data = company_data
-        self.company_data._calculate_target_projections(benchmark_projected_production, benchmarks_projected_ei)
+        self.company_data._calculate_target_projections(benchmark_projected_production)
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """
@@ -48,6 +51,8 @@ class DataWarehouse(ABC):
         """
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
+        assert pd.Series(company_ids).isin(df_company_data.index).all(), \
+            "some of the company ids are not included in the fundamental data"
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
         projected_production = self.benchmark_projected_production.get_company_projected_production(
@@ -58,17 +63,13 @@ class DataWarehouse(ABC):
         df_trajectory = self._get_cumulative_emissions(
             projected_ei=projected_trajectories,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
-        # target projections may have a ragged left edge if historic data has a ragged right edge
-        # we can use trajectory info to fill in--it will likely be historic data in that case (the first ragged year)
+
         projected_targets = self.company_data.get_company_projected_targets(company_ids)
-        keep_target_data = projected_targets.applymap(lambda x: np.isfinite(x.m))
-        projected_targets = projected_targets.where(keep_target_data, projected_trajectories)
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
         df_budget = self._get_cumulative_emissions(
-            projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(
-                company_info_at_base_year),
+            projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
         df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
@@ -95,6 +96,7 @@ class DataWarehouse(ABC):
         :param df_company_data: pandas Dataframe with targets
         :return: A list containing the targets
         """
+        logger = logging.getLogger(__name__)
         df_company_data = df_company_data.where(pd.notnull(df_company_data), None).replace(
             {np.nan: None})  # set NaN to None since NaN is float instance
         companies_data_dict = df_company_data.to_dict(orient="records")
@@ -102,15 +104,14 @@ class DataWarehouse(ABC):
         for company_data in companies_data_dict:
             try:
                 model_companies.append(ICompanyAggregates.parse_obj(company_data))
-            except ValidationError:
+            except ValidationError as e:
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         self.column_config.COMPANY_NAME])
                 pass
         return model_companies
 
-    def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame
-                                 ) -> pd.Series:
+    def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame) -> pd.Series:
         """
         get the weighted sum of the projected emission
         :param projected_ei: series of projected emissions intensities

@@ -47,7 +47,7 @@ class ProductionMetric(BaseModel):
 
 # Right now we have only one kind of Emissions: Co2
 class EmissionsMetric(BaseModel):
-    units: str 
+    units: str
     @validator('units')
     def units_must_be_tCO2(cls, v):
         qty = Q_(1, v)
@@ -189,6 +189,12 @@ class ECarbonBudgetScenario(Enum):
     P25 = "25 percentile"
     P75 = "75 percentile"
     MEAN = "Average"
+
+
+class EScoreResultType(Enum):
+    DEFAULT = "Default"
+    TRAJECTORY_ONLY = "Trajectory only"
+    COMPLETE = "Complete"
 
 
 class AggregationContribution(PintModel):
@@ -406,7 +412,7 @@ class IHistoricData(PintModel):
 
 class ITargetData(PintModel):
     netzero_year: Optional[int]
-    target_type: Union[Literal['intensity'], Literal['absolute'], Literal['Intensity'], Literal['Absolute']]
+    target_type: Union[Literal['intensity'], Literal['absolute'], Literal['other']]
     target_scope: EScope
     target_start_year: Optional[int]
     target_base_year: int
@@ -422,7 +428,7 @@ class ITargetData(PintModel):
             raise ValueError("Target end year must be greater than 2022")
         return v
 
-
+      
 class ICompanyData(PintModel):
     company_name: str
     company_id: str

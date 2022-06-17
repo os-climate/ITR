@@ -29,3 +29,6 @@ it is avilable in Jupyter. Virtual environments will be available by default.
 ```
 python -m ipykernel install --user --name=itr_env
 ```
+
+## User Interface
+![](ITR_demo.gif)
