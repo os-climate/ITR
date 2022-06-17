@@ -5,7 +5,8 @@ import pandas as pd
 
 from ITR.data.osc_units import ureg, Q_, PA_
 
-from ITR.interfaces import EScope, PowerGeneration, IntensityMetric, IProjection, IBenchmark, ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections
+from ITR.interfaces import EScope, PowerGeneration, IntensityMetric, IProjection, IBenchmark, ICompanyData, \
+    ICompanyEIProjectionsScopes, ICompanyEIProjections, ITargetData
 
 
 class TestInterfaces(unittest.TestCase):
@@ -58,3 +59,30 @@ class TestInterfaces(unittest.TestCase):
             base_year_production=71500001.3960884,
             company_revenue=7370536918
         )
+
+    def test_ITargetData(self):
+        target_data = ITargetData(
+            netzero_year=2022,
+            target_type='Absolute',
+            target_scope=EScope.S1S2,
+            target_start_year=2020,
+            target_base_year=2018,
+            target_end_year=2040,
+            target_base_year_qty=2.0,
+            target_base_year_unit='t CO2',
+            target_reduction_pct=0.2
+        )
+
+    def test_fail_ITargetData(self):
+        with self.assertRaises(ValueError):
+            target_data = ITargetData(
+                netzero_year=2022,
+                target_type='absolute',
+                target_scope=EScope.S1S2,
+                target_start_year=2020,
+                target_base_year=2018,
+                target_end_year=2020,  # This value should be larger than 2022
+                target_base_year_qty=2.0,
+                target_base_year_unit='t CO2',
+                target_reduction_pct=0.2
+            )

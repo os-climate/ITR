@@ -2,6 +2,8 @@
 This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
 the module, extend the respective config class and pass it to the class as the "constants" parameter.
 """
+import logging
+
 from .interfaces import TemperatureScoreControls
 
 import pint
@@ -119,7 +121,8 @@ class TargetConfig:
     TARGET_BASE_UNITS = 'target_base_year_unit'
     TARGET_YEAR = 'target_year'
     TARGET_REDUCTION_VS_BASE = 'target_reduction_ambition'
-    
+
+
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
     PROJECTED_EI = "projected_ei_in_Wh"
@@ -146,3 +149,15 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion=Q_(3664.0, ureg('Gt CO2')),
         scenario_target_temperature=Q_(1.5, ureg.delta_degC)
     )
+
+
+class LoggingConfig:
+    FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+    @classmethod
+    def add_config_to_logger(cls, logger: logging.Logger):
+        logger.setLevel(logging.INFO)
+        formatter = logging.Formatter(cls.FORMAT)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
