@@ -21,12 +21,7 @@ pkg_root = get_project_root()
 df_country_regions = pd.read_csv(f"{pkg_root}/data/country_region_info.csv")
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(LoggingConfig.FORMAT)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+LoggingConfig.add_config_to_logger(logger)
 
 
 def ITR_country_to_region(country):

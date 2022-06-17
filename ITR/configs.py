@@ -2,6 +2,8 @@
 This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
 the module, extend the respective config class and pass it to the class as the "constants" parameter.
 """
+import logging
+
 from .interfaces import TemperatureScoreControls
 
 import pint
@@ -151,3 +153,11 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
 
 class LoggingConfig:
     FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+    @classmethod
+    def add_config_to_logger(cls, logger: logging.Logger):
+        logger.setLevel(logging.INFO)
+        formatter = logging.Formatter(cls.FORMAT)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)

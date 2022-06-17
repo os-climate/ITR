@@ -15,12 +15,7 @@ from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope
     IProductionRealization, IHistoricEIScopes, IHistoricData, IEmissionRealization, IEIRealization, IProjection
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(LoggingConfig.FORMAT)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+LoggingConfig.add_config_to_logger(logger)
 
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity

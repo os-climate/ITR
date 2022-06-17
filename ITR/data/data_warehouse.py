@@ -11,12 +11,7 @@ from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkData
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(LoggingConfig.FORMAT)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+LoggingConfig.add_config_to_logger(logger)
 
 
 class DataWarehouse(ABC):
