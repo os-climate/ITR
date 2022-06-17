@@ -7,18 +7,22 @@ import pint
 from pydantic import ValidationError
 
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, LoggingConfig
 from ITR.interfaces import ICompanyData, EScope, \
     IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
     IProjection, ProjectionControls
+from ITR.utils import get_project_root
 
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
 
-from ITR.utils import get_project_root
 pkg_root = get_project_root()
 df_country_regions = pd.read_csv(f"{pkg_root}/data/country_region_info.csv")
+
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 
 def ITR_country_to_region(country):
     if len(country)==2:
@@ -38,7 +42,8 @@ def ITR_country_to_region(country):
     if 'Asia' in region:
         return 'Asia'
     return 'Global'
-            
+
+
 class TemplateProviderCompany(BaseCompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
@@ -56,18 +61,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self._companies = self._convert_from_template_company_data(excel_path)
         super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
-    def _check_company_data(self, df: pd.DataFrame) -> None:
-        """
-        Checks if the company data excel contains the data in the right format
-
-        :return: None
-        """
-        required_tabs = [TabsConfig.TEMPLATE_INPUT_DATA, TabsConfig.TEMPLATE_TARGET_DATA]
-        missing_tabs = [tab for tab in required_tabs if tab not in df]
-        assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
-
-
-
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
         """
         Converts the Excel template to list of ICompanyData objects. All dataprovider features will be inhereted from
@@ -84,14 +77,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             return f"{suffix}-{prefix}"
 
         df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._check_company_data(df_company_data)
 
         input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA
-        if "Test input data" in df_company_data:
-            input_data_sheet = "Test input data"
-
-        df = df_company_data[input_data_sheet]
-
+        try:
+            df = df_company_data[input_data_sheet]
+        except KeyError as e:
+            logger.error(f"Tab {input_data_sheet} is required in input Excel file.")
+            raise
 
         df['exposure'].fillna('presumed_equity', inplace=True)
         # TODO: Fix market_cap column naming inconsistency
@@ -105,20 +97,27 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # GH https://github.com/pandas-dev/pandas/issues/46044
         df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
 
-        company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
-
-
         # testing if all data is in the same currency
-        assert len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) == 1, f"All data should be in the same currency. Please adjust excel template input."
+        if len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) != 1:
+            error_message = f"All data should be in the same currency."
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         # are there empty sectors?
         comp_with_missing_sectors = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.SECTOR].isnull()].to_list()
-        assert len(comp_with_missing_sectors) == 0, f"For {comp_with_missing_sectors} companies the sector column is empty. Correct it in excel template and try one more time."
+        if comp_with_missing_sectors:
+            error_message = f"For {comp_with_missing_sectors} companies the sector column is empty."
+            logger.error(error_message)
+            raise ValueError(error_message)
+
         # testing if only valid sectors are provided
         sectors_from_df = df_fundamentals[ColumnsConfig.SECTOR].unique()
         configured_sectors = SectorsConfig.get_configured_sectors()
         not_configured_sectors = [sec for sec in sectors_from_df if sec not in configured_sectors]
-        assert len(not_configured_sectors) == 0, f"Sector {not_configured_sectors} is not covered by the ITR tool currently. Delete it from excel template."
+        if not_configured_sectors:
+            error_message = f"Sector {not_configured_sectors} is not covered by the ITR tool currently."
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
         historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
@@ -128,7 +127,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         # Checking if there are not many missing market cap
         missing_cap_ids = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].isnull()].to_list()
-        assert (len(missing_cap_ids)/len(df_fundamentals)) < 0.2, f"Too many companies with missing market capitalization. Cannot proceed."
         # For the missing Market Cap we should use the ratio below to get dummy market cap:
         #   (Avg for the Sector (Market Cap / Revenues) + Avg for the Sector (Market Cap / Assets)) 2
         df_fundamentals['MCap_to_Reven']=df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]/df_fundamentals[ColumnsConfig.COMPANY_REVENUE] # new temp column with ratio
@@ -138,11 +136,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP] = df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].fillna(0.5*(df_fundamentals[ColumnsConfig.COMPANY_REVENUE] * df_fundamentals['AVG_MCap_to_Reven']+df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] * df_fundamentals['AVG_MCap_to_Assets']))
         df_fundamentals.drop(['MCap_to_Reven','MCap_to_Assets','AVG_MCap_to_Reven','AVG_MCap_to_Assets'], axis=1, inplace=True) # deleting temporary columns
         
-        if missing_cap_ids is not None:
-            def custom_formatwarning(msg, *args, **kwargs):
-                return str(msg) + '\n'             # ignore everything except the message
-            warnings.formatwarning = custom_formatwarning
-            warnings.warn(f"Market capitalisation was missing for {missing_cap_ids}.\nSo the values were calculated using the average MCap/Rev and MCap/Assets from available companies.\nScript is still running")
+        if missing_cap_ids:
+            logger.warning(f"Missing market capitalisation values are estimated for companies with ID: "
+                           f"{missing_cap_ids}.")
 
         # df_fundamentals now ready for conversion to list of models
 
@@ -177,17 +173,46 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
         test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
-        if "Test target data" in df_company_data:
-            test_target_sheet = "Test target data"
-        df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
+        try:
+            df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
+        except KeyError:
+            logger.error(f"Tab {test_target_sheet} is required in input Excel file.")
+            raise
 
-        # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
-        df_target_data.loc[df_target_data.target_start_year.isna(), 'target_start_year'] = 2020
-        df_target_data.loc[df_target_data.netzero_year.isna(), 'netzero_year'] = 2050
+        df_target_data = self._validate_target_data(df_target_data)
 
         # company_id, netzero_year, target_type, target_scope, target_start_year, target_base_year, target_base_year_qty, target_base_year_unit, target_year, target_reduction_ambition
         # df_target_data now ready for conversion to model for each company
         return self._company_df_to_model(df_fundamentals, df_target_data, df_historic_data)
+
+    def _validate_target_data(self, target_data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Performs checks on the supplied target data. Some values are put in to make the tool function.
+        :param target_data:
+        :return:
+        """
+        # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
+        c_ids_without_start_year = list(target_data[target_data['target_start_year'].isna()].index)
+        if c_ids_without_start_year:
+            target_data.loc[target_data.target_start_year.isna(), 'target_start_year'] = 2021
+            logger.warning(f"Missing target start year set to 2021 for companies with ID: {c_ids_without_start_year}")
+
+        c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > 2050].index)
+        if c_ids_invalid_netzero_year:
+            error_message = f"Invalid net-zero target years (>2050) are entered for companies with ID: " \
+                            f"{c_ids_without_netzero_year}"
+            logger.error(error_message)
+            raise ValueError(error_message)
+        target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = 2050
+
+        c_ids_with_increase_target = list(target_data[target_data['target_reduction_ambition'] < 0].index)
+        if c_ids_with_increase_target:
+            error_message = f"Negative target reduction ambition is invalid and entered for companies with ID: " \
+                            f"{c_ids_with_increase_target}"
+            logger.error(error_message)
+            raise ValueError(error_message)
+
+        return target_data
 
     def _convert_series_to_IProjections(self, projections: pd.Series) -> [IProjection]:
         """
@@ -210,10 +235,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param df_historic_data: pandas Dataframe with historic emissions, intensity, and production information
         :return: A list containing the ICompanyData objects
         """
-        logger = logging.getLogger(__name__)
-        # set NaN to None since NaN is float instance
-        df_fundamentals = df_fundamentals.where(pd.notnull(df_fundamentals), None).replace(to_replace=np.nan, value=None)
-
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
         for company_data in companies_data_dict:
@@ -226,12 +247,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # the ghg_s1s2 and ghg_s3 variables are values "as of" the financial data
                 # TODO pull ghg_s1s2 and ghg_s3 from historic data as appropriate
 
-                # v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE12].squeeze()
-                # company_data[ColumnsConfig.GHG_SCOPE12] = Q_(v or np.nan, ureg(units))
-                # v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE3].squeeze()
-                # company_data[ColumnsConfig.GHG_SCOPE3] = Q_(v or np.nan, ureg(units))
-
-                # df.loc[[index]] is like df.loc[index, :] except it always returns a DataFrame and not a Series when there's only one row
                 if df_historic_data is not None:
                     company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
                         df_historic_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index()).dict()
@@ -256,9 +271,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
 
                 model_companies.append(ICompanyData.parse_obj(company_data))
-            except ValidationError as e:
+            except ValidationError:
                 logger.warning(
-                    f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
+                    f"(One of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         ColumnsConfig.COMPANY_NAME])
                 continue
         return model_companies
@@ -276,11 +291,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param production_metric: Dataframe with production_metric per company
         :return: series of projected emission intensities
         """
-
         projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
-        assert all(company_id in projections.index for company_id in company_ids), \
-            f"company ids missing in provided projections"
+        missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
+        if missing_companies:
+            error_message = f"Missing target or trajectory projections for companies with ID: {missing_companies}"
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                          TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
@@ -294,18 +311,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 lambda x: x.astype(f'pint[??t CO2/({production_metric[x.name]})]'), axis=1)
 
         return projected_ei_s1s2
-
-    # class ITargetData(PintModel):
-    #     netzero_year: int
-    #     target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
-    #     target_scope: EScope
-    #     target_start_year: Optional[int]
-    #     target_base_year: int
-    #     target_end_year: int
-
-    #     target_base_year_qty: float
-    #     target_base_year_unit: str
-    #     target_reduction_pct: float
 
     def _convert_target_data(self, target_data: pd.DataFrame) -> List[ITargetData]:
         """
@@ -322,11 +327,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param historic_data: Dataframe Productions, Emissions, and Emission Intensities mixed together
         :return: historic data with unit attributes added on a per-element basis
         """
-        # We don't need this reset/set index dance because we set the index to COMPANY_ID to get units sorted
-        # historic_data = historic_data.reset_index().drop(columns=['index']).set_index(ColumnsConfig.COMPANY_ID)
-
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
-        assert not missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
+        if missing_ids:
+            error_message = f"Company ids missing in provided historic data: {missing_ids}"
+            logger.error(error_message)
+            raise ValueError(error_message)
 
         # There has got to be a better way to do this...
         historic_data = (
@@ -355,8 +360,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
     # Note that for the three following functions, we pd.Series.squeeze() the results because it's just one year / one company
     def _convert_to_historic_emissions(self, emissions: pd.DataFrame) -> Optional[IHistoricEmissionsScopes]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
-        :param convert_unit: whether or not to convert the units of measure
+        :param emissions: historic emissions data for a company
         :return: List of historic emissions per scope, or None if no data are provided
         """
         if emissions.empty:
@@ -370,26 +374,19 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 else [IEmissionRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
 
-    def _convert_to_historic_productions(self, productions: pd.DataFrame) \
-            -> Optional[List[IProductionRealization]]:
+    def _convert_to_historic_productions(self, productions: pd.DataFrame) -> Optional[List[IProductionRealization]]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
+        :param productions: historic production data for a company
         :return: A list containing historic productions, or None if no data are provided
         """
         if productions.empty:
             return None
 
-        try:
-            production_realizations = \
-                [IProductionRealization(year=year, value=productions[year].squeeze()) for year in self.historic_years]
-        except TypeError as e:
-            print(e)
-        return production_realizations
+        return [IProductionRealization(year=year, value=productions[year].squeeze()) for year in self.historic_years]
 
-    def _convert_to_historic_ei(self, intensities: pd.DataFrame) \
-            -> Optional[IHistoricEIScopes]:
+    def _convert_to_historic_ei(self, intensities: pd.DataFrame) -> Optional[IHistoricEIScopes]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
+        :param intensities: historic emission intensity data for a company
         :return: A list of historic emission intensities per scope, or None if no data are provided
         """
         if intensities.empty:
@@ -400,10 +397,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         for scope in EScope.get_scopes():
             results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
-            try:
-                intensity_scopes[scope] = [] \
-                    if results.empty \
-                    else [IEIRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
-            except TypeError as e:
-                print(e)
+            intensity_scopes[scope] = [] \
+                if results.empty \
+                else [IEIRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)
