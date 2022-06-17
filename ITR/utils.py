@@ -10,12 +10,7 @@ from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(LoggingConfig.FORMAT)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+LoggingConfig.add_config_to_logger(logger)
 
 
 # If this file is moved, the computation of get_project_root may also need to change

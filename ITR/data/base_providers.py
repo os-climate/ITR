@@ -17,12 +17,7 @@ from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEI
 # TODO handling of scopes in benchmarks
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(LoggingConfig.FORMAT)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-logger.addHandler(stream_handler)
+LoggingConfig.add_config_to_logger(logger)
 
 
 class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
