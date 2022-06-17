@@ -427,8 +427,8 @@ class ITargetData(PintModel):
         if v['target_end_year'] < 2023:
             raise ValueError("Target end year must be greater than 2022")
         return v
-      
 
+      
 class ICompanyData(PintModel):
     company_name: str
     company_id: str

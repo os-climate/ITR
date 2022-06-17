@@ -294,18 +294,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         return projected_ei_s1s2
 
-    # class ITargetData(PintModel):
-    #     netzero_year: int
-    #     target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
-    #     target_scope: EScope
-    #     target_start_year: Optional[int]
-    #     target_base_year: int
-    #     target_end_year: int
-
-    #     target_base_year_qty: float
-    #     target_base_year_unit: str
-    #     target_reduction_pct: float
-
     def _convert_target_data(self, target_data: pd.DataFrame) -> List[ITargetData]:
         """
         :param historic: historic production, emission and emission intensity data for a company
