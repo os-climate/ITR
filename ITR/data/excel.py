@@ -1,56 +1,48 @@
 import warnings # needed until apply behaves better with Pint quantities in arrays
-from typing import Type, List, Optional
+from typing import Type, List, Union, Optional
 import pandas as pd
 import numpy as np
+
 from pint import Quantity
+# from pint_pandas import PintArray
+
 import pint
-import logging
+import pint_pandas
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+# PA_ = pint_pandas.PintArray
 
 from pydantic import ValidationError
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, LoggingConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, SectorsConfig, VariablesConfig, TabsConfig
 from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, IEmissionRealization, IEIRealization, IProjection
 
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
-
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
-
+import logging
+import inspect
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
-sector_to_production_metric = {'Electricity Utilities': 'GJ', 'Steel': 'Fe_ton'}
-sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't CO2/Fe_ton'}
+sector_to_production_metric = { 'Electricity Utilities':'GJ', 'Steel':'Fe_ton' }
+sector_to_intensity_metric = { 'Electricity Utilities':'t CO2/MWh', 'Steel':'t CO2/Fe_ton' }
 
 # TODO: Force validation for excel benchmarks
 
 # Utils functions:
 
-def convert_dimensionless_benchmark_excel_to_model(df_excel: dict, sheetname: str, column_name_region: str,
+def convert_dimensionless_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
                                                    column_name_sector: str) -> IBenchmarks:
     """
     Converts excel into IBenchmarks
-    :param df_excel: dictionary with a pd.DataFrame for each key representing a sheet of an Excel file
-    :param sheetname: name of Excel file sheet to convert
-    :param column_name_region: name of region
-    :param column_name_sector: name of sector
+    :param excal_path: file path to excel
     :return: IBenchmarks instance (list of IBenchmark)
     """
-    try:
-        df_sheet = df_excel[sheetname]
-    except KeyError:
-        logger.error(f"Sheet {sheetname} not in benchmark Excel file.")
-        raise
-
-    df_ei_bms = df_sheet.reset_index().drop(columns=['index']).set_index(
+    df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
-
     result = []
     for index, row in df_ei_bms.iterrows():
-        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units': 'dimensionless'},
+        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units':'dimensionless'},
                         projections=[IProjection(year=int(k), value=Q_(v, ureg('dimensionless'))) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
@@ -84,12 +76,22 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_sector_data()
         self._convert_excel_to_model = convert_dimensionless_benchmark_excel_to_model
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
                                                       column_config.REGION, column_config.SECTOR)
         super().__init__(
-            IProductionBenchmarkScopes(benchmark_metric={'units': 'dimensionless'}, S1S2=production_bms), column_config,
+            IProductionBenchmarkScopes(benchmark_metric={'units':'dimensionless'}, S1S2=production_bms), column_config,
             tempscore_config)
+
+    def _check_sector_data(self) -> None:
+        """
+        Checks if the sector data excel contains the data in the right format
+
+        :return: None
+        """
+        assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
+            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
@@ -107,6 +109,7 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_sector_data()
         self._convert_excel_to_model = convert_intensity_benchmark_excel_to_model
         EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
                                                      column_config.REGION, column_config.SECTOR)
@@ -118,6 +121,14 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                                is_AFOLU_included=is_AFOLU_included),
             column_config,
             tempscore_config)
+
+    def _check_sector_data(self) -> None:
+        """
+        Checks if the sector data excel contains the data in the right format
+        :return: None
+        """
+        assert pd.Series([TabsConfig.PROJECTED_PRODUCTION, TabsConfig.PROJECTED_EI]).isin(
+            self.benchmark_excel.keys()).all(), "some tabs are missing in the sector data excel"
 
 
 class ExcelProviderCompany(BaseCompanyDataProvider):
@@ -135,21 +146,17 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         self.historic_years = None
         super().__init__(self._companies, column_config, tempscore_config)
 
-    def _check_company_data(self, company_tabs: dict) -> None:
+    def _check_company_data(self, df: pd.DataFrame) -> None:
         """
         Checks if the company data excel contains the data in the right format
 
         :return: None
         """
-        required_tabs = {TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET}
-        optional_tabs = {TabsConfig.PROJECTED_EI, TabsConfig.HISTORIC_DATA}
-        missing_tabs = (required_tabs | optional_tabs).difference(set(company_tabs))
-        if missing_tabs.intersection(required_tabs):
-            logger.error(f"Tabs {required_tabs} are required.")
-            raise ValueError(f"Tabs {required_tabs} are required.")
-        if optional_tabs.issubset(missing_tabs):
-            logger.error(f"Either of the tabs {optional_tabs} is required.")
-            raise ValueError(f"Either of the tabs {optional_tabs} is required.")
+        required_tabs = [TabsConfig.FUNDAMENTAL, TabsConfig.PROJECTED_TARGET]
+        optional_tabs = [TabsConfig.PROJECTED_EI, TabsConfig.HISTORIC_DATA]
+        missing_tabs = [tab for tab in required_tabs + optional_tabs if tab not in df]
+        assert not any(tab in missing_tabs for tab in required_tabs), f"Tabs {required_tabs} are required."
+        assert not all(tab in missing_tabs for tab in optional_tabs), f"Either of the tabs {optional_tabs} is required."
 
     def _convert_from_excel_data(self, excel_path: str) -> List[ICompanyData]:
         """
@@ -158,22 +165,22 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param excel_path: file path to excel file
         :return: List of ICompanyData objects
         """
-        company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._check_company_data(company_data)
+        df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        self._check_company_data(df_company_data)
 
-        df_fundamentals = company_data[TabsConfig.FUNDAMENTAL].set_index(ColumnsConfig.COMPANY_ID, drop=False)
+        df_fundamentals = df_company_data[TabsConfig.FUNDAMENTAL].set_index(ColumnsConfig.COMPANY_ID, drop=False)
         df_fundamentals[ColumnsConfig.PRODUCTION_METRIC] = df_fundamentals[ColumnsConfig.SECTOR].map(sector_to_production_metric)
-        company_ids = list(df_fundamentals[ColumnsConfig.COMPANY_ID].unique())
-        df_targets = self._get_projection(company_ids, company_data[TabsConfig.PROJECTED_TARGET], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
-        if TabsConfig.PROJECTED_EI in company_data:
-            df_ei = self._get_projection(company_ids, company_data[TabsConfig.PROJECTED_EI], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
+        company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].unique()
+        df_targets = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_TARGET], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
+        if TabsConfig.PROJECTED_EI in df_company_data:
+            df_ei = self._get_projection(company_ids, df_company_data[TabsConfig.PROJECTED_EI], df_fundamentals[ColumnsConfig.PRODUCTION_METRIC])
         else:
             df_ei = None
-        if TabsConfig.HISTORIC_DATA in company_data:
-            df_historic = company_data[TabsConfig.HISTORIC_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False)
+        if TabsConfig.HISTORIC_DATA in df_company_data:
+            df_historic = df_company_data[TabsConfig.HISTORIC_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False)
             df_historic = df_historic.merge(df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].rename('units'), left_index=True, right_index=True)
-            df_historic.loc[df_historic.variable == 'Emissions', 'units'] = 't CO2'
-            df_historic.loc[df_historic.variable == 'Emission Intensities', 'units'] = 't CO2/' + df_historic.loc[df_historic.variable == 'Emission Intensities', 'units']
+            df_historic.loc[df_historic.variable=='Emissions', 'units'] = 't CO2'
+            df_historic.loc[df_historic.variable=='Emission Intensities', 'units'] = 't CO2/' + df_historic.loc[df_historic.variable=='Emission Intensities', 'units']
             df_historic = self._get_historic_data(company_ids, df_historic)
         else:
             df_historic = None
@@ -198,13 +205,25 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param df_ei: pandas Dataframe with emission intensities
         :return: A list containing the ICompanyData objects
         """
+        logger = logging.getLogger(__name__)
         # set NaN to None since NaN is float instance
         df_fundamentals = df_fundamentals.where(pd.notnull(df_fundamentals), None).replace({np.nan: None})
 
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
         for company_data in companies_data_dict:
+            # company_data is a dict, not a dataframe
             try:
+                # convert_unit_of_measure = company_data[ColumnsConfig.SECTOR] in self.CORRECTION_SECTORS
+                # company_targets = self._convert_series_to_projections(
+                #     df_targets.loc[company_data[ColumnsConfig.COMPANY_ID], :], convert_unit_of_measure)
+                # company_ei = self._convert_series_to_projections(
+                #     df_ei.loc[company_data[ColumnsConfig.COMPANY_ID], :],
+                #     convert_unit_of_measure)
+
+                # company_data.update({ColumnsConfig.PROJECTED_TARGETS: {'S1S2': {'projections': df_targets}}})
+                # company_data.update({ColumnsConfig.PROJECTED_EI: {'S1S2': {'projections': df_ei}}})
+
                 company_id = company_data[ColumnsConfig.COMPANY_ID]
                 production_metric = sector_to_production_metric[company_data[ColumnsConfig.SECTOR]]
                 intensity_metric = sector_to_intensity_metric[company_data[ColumnsConfig.SECTOR]]
@@ -236,14 +255,15 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 logger.warning(
                     f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         ColumnsConfig.COMPANY_NAME])
+                break
+                pass
         return model_companies
     
     # Workaround for bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero 
     def _np_sum(g):
         return np.sum(g.values)
 
-    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame, production_metric: pd.DataFrame) \
-            -> pd.DataFrame:
+    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame, production_metric: pd.DataFrame) -> pd.DataFrame:
         """
         get the projected emission intensities for list of companies
         :param company_ids: list of company ids
@@ -251,13 +271,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param production_metric: Dataframe with production_metric per company
         :return: series of projected emission intensities
         """
+
         projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)
 
-        missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
-        if missing_companies:
-            error_message = f"Missing target or trajectory projections for companies with ID: {missing_companies}"
-            logger.error(error_message)
-            raise ValueError(error_message)
+        assert all(company_id in projections.index for company_id in company_ids), \
+            f"company ids missing in provided projections"
 
         projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                                          TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
@@ -277,12 +295,12 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param historic_data: Dataframe Productions, Emissions, and Emission Intensities mixed together
         :return: historic data with unit attributes added to yearly data on a per-element basis
         """
+        # We don't need this reset/set index dance because we set the index to COMPANY_ID to get units sorted
+        # historic_data = historic_data.reset_index().drop(columns=['index']).set_index(ColumnsConfig.COMPANY_ID)
+        
         self.historic_years = [column for column in historic_data.columns if type(column) == int]
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
-        if missing_ids:
-            error_message = f"Company ids missing in provided historic data: {missing_ids}"
-            logger.error(error_message)
-            raise ValueError(error_message)
+        assert not missing_ids, f"Company ids missing in provided historic data: {missing_ids}"
 
         # There has got to be a better way to do this...
         historic_data = (

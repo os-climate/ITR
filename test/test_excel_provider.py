@@ -1,9 +1,10 @@
 import os
 import unittest
+
 import pandas as pd
+
 from numpy.testing import assert_array_equal
 import ITR
-
 from ITR.data.excel import ExcelProviderCompany, ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
