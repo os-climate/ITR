@@ -18,7 +18,7 @@ ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
 
 pkg_root = get_project_root()
-df_country_regions = pd.read_csv(f"{pkg_root}/data/country_region_info.csv")
+df_country_regions = pd.read_csv(f"{pkg_root}/data/input/country_region_info.csv")
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
