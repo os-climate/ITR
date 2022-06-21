@@ -18,7 +18,7 @@ Q_ = ureg.Quantity
 
 from ITR.utils import get_project_root
 pkg_root = get_project_root()
-df_country_regions = pd.read_csv(f"{pkg_root}/data/country_region_info.csv")
+df_country_regions = pd.read_csv(f"{pkg_root}/data/input/country_region_info.csv")
 
 def ITR_country_to_region(country):
     if len(country)==2:
