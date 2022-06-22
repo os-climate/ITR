@@ -1,15 +1,13 @@
-chardet==4.0.0
 dash==2.4.1
 dash_bootstrap_components==1.1.0
 iam-units==2021.11.12
 jupyter==1.0.0
 matplotlib==3.5.1
-numpy==1.22.2
 openpyxl==3.0.9
 openscm-units==0.5.0
 pandas==1.4.2
-Pint-Pandas==0.2
 Pint==0.18
+Pint-Pandas==0.2
 pydantic==1.8.2
 pygithub==1.55
 Sphinx==4.5.0
