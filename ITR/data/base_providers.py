@@ -253,7 +253,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 res = reduce(series_adder, projection_series.values())
                 return res
             elif len(projection_scopes) == 0:
-                raise ValueError(f"missing target scope data for {company.company_name} :: {scope}")
+                return pd.Series(
+                    {year: np.nan for year in range(self.historic_years[-1] + 1, self.projection_controls.TARGET_YEAR + 1)},
+                    name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]'
+                )
             else:
                 # This clause is only accessed if the scope is S1S2 or S1S2S3 of which only one scope is provided.
                 projections = company_dict[feature][scopes[0]]['projections']
@@ -272,8 +275,9 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         for c in self._companies:
             if c.projected_targets is not None:
                 continue
-            elif c.target_data is None:
-                raise ValueError(f"no target data for {c.company_name}")
+            if c.target_data is None:
+                logger.warning(f"No target data for {c.company_name}")
+                c.projected_targets = ICompanyEIProjectionsScopes()
             else:
                 base_year_production = next((p.value for p in c.historic_data.productions if
                                              p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
