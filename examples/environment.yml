@@ -3,9 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - git=2.28.0=0
-  - pip=20.2.1=py_0
-  - python=3.7.8=h60c2a47_1_cpython
-  - jupyter=1.0.0=py_2
+  - python=3.9.13
+  - pip=22.1.2
   - pip:
-    - git+git://https://github.com/os-c/ITR
+    # While ITR is not available on PyPI, or if environment is used for development purposes, comment out line 11, else
+    # comment out line 12 & 13.
+    # - ITR
+    - -r ../requirements.txt
+    - -e ../.
