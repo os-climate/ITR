@@ -31,8 +31,12 @@ def add_dco_signoff_to_file(repo: git.Repo, name: str, authors: List[str], email
             declaration += f"In the past I have used emails: {email_addresses}. "
     unsigned_commits = get_unsigned_commits(repo)
     authors_commits = [commit for commit in unsigned_commits if str(commit.author) in authors]
+    if not authors_commits:
+        return
+
     with open(name + '.txt', 'w') as file:
         file.write(declaration + "\n")
         for commit in authors_commits:
             message = commit.message.replace('\n', ' ')
             file.write(f"{commit.hexsha} {message}\n")
+    return
