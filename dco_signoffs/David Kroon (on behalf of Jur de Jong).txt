@@ -1,0 +1,22 @@
+I, David Kroon, as representative of Ortec Finance, hereby sign-off-by all of the past commits by Jur de Jong to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. Emails used in the past are: jur.de.jong@ortecfinance.com.
+0d0390e737b5e1f7a0573f17c56c5e989d0be39e test data 
+29c816d47bb59c3bb2dc2b432432b459759561b5 replaced sbti by itr 
+11b21499776638e81a7d704a3086f1a9ddbdf08b update notebook + notebook data 
+4c2234dc2078e1c90a2bf5ed51cb37c53f296c21 update tests 
+6899c50d9687e08f29ec439c0ac47a61cd73a3e1 test df to target model 
+493453307ae619532621199086feb344f27c22cd additional tests 
+6072b8fd0ec50f589d8a4a33ecb38539e5630d1f update data 
+c138b76b4b9f21e67ca9d7bceeae4a4e442a87e9 tests 
+9c545e1d546ccae76ed2f32dc8b4baed6d3b9659 clean up and extra checks 
+d74b6fcdc5fb94ef1d76afe07c0df017fceec4c0 added sectors and target data 
+59727783ee93a99dcf701846eb5220b61027e1e6 data provider update 
+893a951cc9b65533fe532d020cb2ff5bb06e438b target data 
+8ebb71949942f166e15ece97b9774241be122aa4 pip install . 
+be150a3c2c53bbf788c61281389f4ca9a2e56de4 fixed additional issue 
+080c858c82a88804524cdbbfe0fad7110c9416f3 data provider example 
+91d1c5fc1f4df21058670179153a7909bb2c056c fixed issue 
+dd0e8e0dd6eefc332fd61f2f964cf7e042f4fe21 use projected ei and projected production 
+4099ef991745d705e742bade352ce998af4d8ec9 update 
+96a99f5df4044fb8c8e59c35a884b81cd9092681 update 
+51463510b4338048cb25debfb46a7b39d78d2902 update 
+28cf4699c852e8fa5733e178bddcb1004e78a996 tests 
