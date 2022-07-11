@@ -1,0 +1,12 @@
+I, Heather Ackenhusen hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: 90428947+HeatherAck@users.noreply.github.com
+
+7b26a3f1a0e53986b081ba7068cdc457369148d2 updated wording in loading your own data section
+ad7e42f427d4145b0fd026f366d672ab74cb13b1 fixed formatting
+aaef94f10f1cb9a637fb78e032d26cbf2bbb26db updated documentation
+
+added steps to load own data as well as steps to run notebook (post installation)
+7b26a3f1a0e53986b081ba7068cdc457369148d2 updated wording in loading your own data section
+ad7e42f427d4145b0fd026f366d672ab74cb13b1 fixed formatting
+aaef94f10f1cb9a637fb78e032d26cbf2bbb26db updated documentation
+
+added steps to load own data as well as steps to run notebook (post installation)

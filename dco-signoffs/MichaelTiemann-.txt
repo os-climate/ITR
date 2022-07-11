@@ -1,0 +1,848 @@
+I, MichaelTiemann hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: 72577720+MichaelTiemannOSC@users.noreply.github.com
+
+077adb3a305a209b74f1b063cb8e990d222e4741 Update test_interfaces.py
+
+Fix test case to use new interfaces.py
+
+891ebc4b6bcefe407829157a72bbaa091145fc0a Update interfaces.py
+
+Rewrite metrics validation to use @validator instead of trying to exhaustively list every possible emissions unit, production unit, and intensity unit.  Closes https://github.com/os-climate/ITR/issues/43
+
+6764ec7d189c64fdb44619e42d7f416531a78228 Update interfaces.py
+
+Ugh.  Fix syntax error.
+
+66f042ddff19cf648ec825f5331fa2a71b3f98de Update interfaces.py
+
+Add Literal['CO2·Mt/MFe_ton']]
+
+e17c5f2b4490b300b2cbb90c673db3d050c9c2b8 Update interfaces.py
+
+Support kWh and MJ units, as we already support MWh, GWh, TWh, etc.
+
+ef3434e7acd9b1a5ae6c5a36f5a5e9cd9a913698 Update base_providers.py
+
+Implement prioritization logic: targets communicated later are prioritized over targets communicated earlier, and intensity targets are preferred over absolute targets to break ties.  If there are two targets of the same kind, target year, and year set, a warning is given and one is picked arbitrarily.
+
+7a238d87b81acc25248985ffab8be9af7dcdcc9b The notebook code to access the Github branch was written using PyGithub.  If you want to change to github-py, that's fine...just rewrite all the code to use that.
+
+8a348f2aacc884f92f5d617f7ceb10e1f97da3ea My OSX build environment is broken and does not tolerate building python modules from source.
+Therefore, adding explicit modules with correct version numbers so that rebuilds are not necessary.
+
+02f0769329235d59d899cd1bc9971504421f9f33 Add many more dependencies since we cannot (yet) depend on PyPi.
+
+f123581d647a4b78e2e8f734ccf52046c0393830 _emission_intensity -> _ei in test files
+
+1e87f102fb346ff6c0fd0feb6e963e30269b9c11 Draft documentation and sample data
+
+This is a first draft of user documentation, a fresh update of the Jupyter notebook, and a cleaned-up sample data spreadsheet.
+
+7463fe71dd2efa1f1275749be3a6814ed8cf7be4 Update quick_template_score_calc.ipynb
+
+Use JSON files for benchmarks and update notebook flow to invite users to choose their own data, benchmarks, and aggregation methods.
+
+ff2a3a771d060ea6ea711eb5083f39a774a36e53 Add more rows to Sample Data template spreadsheet
+
+Doubled the number of steel companies represented.  Also added some big electrical utilities, including Southern and Xcel.
+
+443d6c60a7fc7eeb93377ce8a5b4cfd5819bcc4e Update data_warehouse.py
+
+Trajectories are computed from historic data, and our extrapolation methods fill in trajectory data with historic data in cases where there is a ragged edge.
+
+Targets had a problem with ragged edges: the start of the target projections would be the earliest last date from the historic data (say, 2020) whereas the projection itself wouldn't start until after the last date of historic data (say 2021).  These changes fill in missing target data with historic data (sourced from trajectory projections).
+
+Some test cases could be written to detect how much trajectory data should or should not be consumed when constructing target projections.
+
+The real underlying problem is that when computing cumulative targets and trajectories, all companies must start at the same date, regardless of when the targets actually start according to the target data.
+
+Also, fix a few more emission_intensity -> ei name changes.
+
+2cb980066ee7f12ba170833294909fffbe070360 Update template.py
+
+When 'exposure' is not given, set to 'presumed_equity'.  Should this be just 'equity' by default?
+
+Also, change style of call to replace for clarity (parameters instead of dictionary).
+
+8a1b226c40916f175a59d292f07f4d32362ae961 Update interfaces.py
+
+Fix method for deriving intensity_units.
+
+9775f403cebf833160e3c51ba33b81f031d141cf Update interfaces.py
+
+Fix wicked typo (wrongly testing year instead of value for NaN).
+
+e4efd19d76bfe17a416692e81d8d59968585258c Update environment.yml
+
+Fix typos in pint and pint-pandas declarations.
+
+933f35c6380d3dbaab45584137a9b201544ee65c Update environment.yml
+
+Fix typo in openscm-units declaration.
+
+e57af8788f511f3a0cdf07be96e9639dad2e4d70 Don't use report_date to find most recent production/emission data
+
+New function _get_base_realization_from_historic gets the latest production/emission information.  Should complain if there are disparities between last year of production vs. emissions data (we can make it more complicated to find the most recent common year).
+
+Also, the name base_year_production in ICompany is completely confusing.  We need a new name for "the year of most recent data from which extrapolations are done."
+
+This should address https://github.com/os-climate/ITR/issues/46
+
+4985a941352ae6dd6685a227d911a636800eb2f7 Update base_providers.py
+
+Fix sloppy commit caused by GitHub desktop's overeager attempt to commit test files I never asked it to commit as part of this 3-line change.
+
+3b1ed92ccd0e66620339ae49a1e66d3bafbba865 Revert "Fixed nan vs. pd.NA confusion from previous change"
+
+This reverts commit f3879b34cd46fb6e5df6fd39239ac3dc036c3dfe.
+
+f3879b34cd46fb6e5df6fd39239ac3dc036c3dfe Fixed nan vs. pd.NA confusion from previous change
+
+This fixes the "loose wire" that disconnected temperature scores in both the notebook and the test cases.
+
+Now all test cases are working except test_projection and test_template_provider, for known reasons.  test_projection needs better reference data and test_template_provider needs its own fixes to become a valid test case.
+
+c77533a394b38d33d4c28175ff97167bb10f5ec4 Update test_template_provider.py
+
+test_temp_score was meant to be a small version of test_temp_score_from_excel_data.  Alas, it was not computing target and trajectory budgets (because it was not calling get_data).
+
+There remains a problem that is preventing the temp score calculation.  I will debug that tomorrow....
+
+6380ca563f1c9a50c87ca6d5d60f00266aa5115f Update template.py
+
+Convert <NA> to NaN when using Quantities.
+
+857c789c6b5921d8ace8882f21ae536f45dcaaad Spiff up trajectory calculation to compute S1S2 = S1+S2
+
+Somehow this sum had gotten lost and none of the trajectories were matching the scope of the reference file.  They still don't match for several reasons, but mostly now having to do with methodology questions.
+
+Also enhanced test_projections.py to read and interpret test projections more intelligently.
+
+4997425948eb0f16d630a6ef066086bc459ca3c5 test_projection WIP
+
+These changes cut out a lot of noise about comparisons not that meaningful: previously we required the input data to supply things like ghg_s1s2 emissions at the base year, but now we collect historic data, and the tool organizes that data to fill in the singular ghg_s1s2 datapoint which is helpful to have.
+
+There is one obvious problem, which is that input data of separate S1 and S2 emissions is not getting combined into S1S2 trajectories.  The next checkin should deal with that.  This checkin clears the clutter to make that problem easier to work on.
+
+8dab7adbdeb846fef79130b5a2511a4699d3b419 Also update sample data in main test area
+
+Ugh...we have two copies of the same data.  More tests should run with this updated data.
+
+04d172de0112d624f2985c7d690ffc33e7c38702 Update template sample data file for Notebook
+
+Some additional data updates were needed to get the template notebook working again.  It is working again now.
+
+cd082888b437cd4526c4fe07d40ba46ec2698da1 test_template_provider mostly working again
+
+There are a few failures, which could indicate problems with reference data.
+
+There is a wide disparity in test_get_company_data
+
+There are many disparities in test_get_projected_value
+
+2/5 tests file in test_temp_score_from_excel_data
+
+2143b2687cc2266ffeebd9b89c7f9072593d0cd9 Get test_interfaces.py working again
+
+6958e0206fd0fe626a14c764e9b697cae9a566aa Get test_excel_provider.py working again
+
+2e68d1f1a1e07b976a5e385c960c8dbd3a5c5090 Major rework of ICompanyData to handle historic data better (WIP)
+
+The more I look at the test cases and use cases of this code, the more I realize that the code needs to deal with a much greater diversity of data and assumptions than the first few test cases we got working.
+
+The biggest problem has been the ICompanyData structure, which has a fairly wide range of uses cases (beyond just the NZAOA template we've been working on).  Each of those test cases not only stresses different parts of the data structure, but also makes very different assumptions about what data can or should be derived from what other data.  Early in the tool's development we could count on a base year's ghg_s1s2 being present to do various calculations.  Now that we have historic data, the use cases assume we can collect that unspecified data ourselves.  And not all test and input data has all the units we expect, either.  Fixing one set of problems often reveals other dependencies.
+
+TL;DR: these changes have the following major components:
+
+In base_providers.py, we true up some column/variable naming so that the NZAOA template doesn't require as much renaming of columns, which will make it easier to follow error messages when something like target_base_year_qty is not correctly specified.  Other changes include better maintenance of units through the winsorization process.  And also the replacement of some simplistic unit inferencing with what's actually in the data.
+
+template.py tracks the naming changes described above.
+
+test_base_providers.py and test_different_benchmarks.py add the now necessary emissions_metric and production_metric fields after reading in the JSON input file.  A better fix would be to recreate the JSON file with the necessary fields in the file.
+
+test_e2e.py has necessary units attached to its projections.
+
+interfaces.py: lots of changes of many kinds.  The most boring of which is to make the name changes referenced above (so we can provide better error reporting).  But also...
+
+* Moved Units and Metrics up to the top of the file
+* Moved Enums to the top of the file
+* tweaks to pint_ify and UProjections_to_Projections
+* Deleted unused classes
+* ICompanyEIProjection: added ei_metric field
+* Simplify a number of IHistoric and Realization classes
+* New _fixup functions serve to convey unit information from the body of the ICompanyData object to the many lists that hang off of it (and are as likely to need unit information from the main object as they are to provide such information for inferencing purposes).
+
+Several test cases now pass, and several more do not.  Hopefully the remainder will pass soon!
+
+bd6eb7d29c7a0eaf7ea3c01cc7886062f90cf13b Update test_temperature_score.py
+
+Fix units for ghg_s1s2.
+
+a1df1f3548118c8b4554d31e7f427a2693c13800 Fix another emission_intensity -> emissions_intensity issue
+
+The JSON input files for the test_projector test case need to use emissions_intensity.
+
+TODO: we still need a way of sorting the base_year value (it is currently inferred from report_date and/or a default value in TempScoreConfig).
+
+eaa440f14285ad654249f74d6787412e9ade0d8f Update test_e2e.py
+
+Added initialization of base_year_production.
+
+Fixed wrong units being passed to ghg_s1s2 and ghg_s3.  Also fixed wrong type of data being passed by just passing 'value' part of an IProduction.
+
+Obviously it's more efficient to initialize all three from a Quantity, rather than constructing an IProjection and then drilling down to the value field of that.  The question is: do we want to revert changes to interfaces.py that preserve the base_year in the initialization of those values (and change other code to move our way through that extra data)?
+
+59e1b4a8f0e561ee4e6da33c8096e2feb635d2c6 Remove non-idiomatic use of .keys()
+
+It is non-idiomatic to use the .keys() function in certain looping contexts because python will automatically infer that from the context.  So clean up code from this:
+
+for x in dict.keys():
+
+to this:
+
+for x in dict:
+
+5656167d77dce370c1accca16d14449b2e71de5d Update ITR_dash_app_develop.py
+
+Replace obsolete link to portfolio template and replace with doc page from dash.
+
+Also, the template_portfolio to be uploaded uses a ';' separator (unless we decide to change that).
+
+TODO: need to properly use document root concept (recently introduced in ITR.utils).
+
+ea2ad319165a13a49483d80db0b5bc8754446dcd Update setup.py
+
+Update GitHub source location and python version minimum requirements.
+
+a385f6fc454c70b6cf218ad3c1cfb3181aa03a5d Enable reading local data files and read mapping file from countries to regions
+
+Added functionality to utils.py to support reading datafiles from within the package itself (using pathlib).
+
+81d51c863ed867ae494aefd9a5f0c0f46e3c9cae Create country_region_info.csv
+
+Provide data to compute missing region info from country names when ITR tool is not connected to Data Commons.
+
+d06062e9fd8fd72b7e0c2f8c7adc50099b2bc394 Update test_template_provider.py
+
+Fix test case so it actually prints intensity projections for each company.  That's not a test case per se, but it informs how we can now write a test case for projections.
+
+8da03275db7951223283bafd98fe6dc30d9b180d Add PPL data and targets
+
+One more row of data!
+
+188c115855e627c908c75ec28a8330c2684c882a Fix damage to ExcelProviders code resulting from TemplateProviders enhancements
+
+Refactor _calculate_target_projections into BaseCompanyDataProvider and reorganize class definition order to accommodate.
+
+Also fix some latent unit errors in excel.py and test_excel_provider.py resulting from GHG_SCOPE12 fixes.
+
+Update quick example notebooks.
+
+145f7f3a3d22278e54aaf3bb4f4ba254d4f788ee Update ITR_dash_app_develop.py
+
+Updated to work with with unit-aware code.
+
+2e0519f0fc7004c98f8a09c07808f90d180f879f Clean up GHG_SCOPE12 confusion
+
+There was long-standing confusion about the meaning of GHG_SCOPE12 (which, when looked at through one functional path, seemed to depend first and only on production values, and when looked at other ways, seemed to represent emissions values).  It was finally determined that this was, indeed, an emissions-based quantity, and the the production value pathway fed a ratio calculation that resolved to a dimensionless quantity (so it could be calculated just as well from emissions).  In any case, these changes principally fix these and some other problems in the way various column names and variable names work and work together.
+
+eba1f66d8bf6e9aebaf5df9a1e2abc6dfd994a63 Create unitized version of GUI app
+
+Modify the original GUI app to work with new unitized ITR backend:
+
+* Added unitized JSON files
+* Use new initialization procedures for data Template
+* Unitize quantities within the GUI, such as specific temperature score values.
+
+Not fully working: a graph of production output wrongly tries to mix Steel production numbers (Fe_ton) with Electricity production numbers (TWh).  It's good that the unit code caught it!
+
+43254b36ff8601857041cd8b5ccc849aeabed789 Update template.py
+
+Connected to previous checkin: construct company_sector_region_info DataFrame using dictionary of [] not singleton elements to make Quantity work as ArrayExtension instead of dict.
+
+0c3c47847db2334452389b2788443250d5f273bc Move _calculate_target_projections into DataWarehouse (and other cleanups)
+
+Other cleanups include:
+
+Let DataWarehouse call _calculate_target_projections so user doesn't have to worry about it.
+
+Fix more spellings of emission_ to emissions_
+
+When creating the one-row company_sector_region_info DataFrame, don't just initialize with singleton elements; put those elements into lists (so we can pass a Quantity as an ExtensionArray instead of being seen as a dict
+
+Comment highly suspect declaration of projected_targets, which are available in the base class of ICompanyAggregates
+
+09183e0aa29d5915a9f8648a0eb7a99700e9b98f Enable netzero_year functionality
+
+There was a bug in how EITargetProjector::project_ei_targets was projecting target data to 2050 absent specific targets with that as an explicit target year.  These changes fix that bug, as well as enabling the functionality of using the netzero_year field of the input template.
+
+Also update template to use netzero_year instead of netzero_date.
+
+7f7e609542bec8b520f2b1e154093177f2bb793e Correcet CAGR calculation
+
+Convert to base units before calculating magnitude (need to check elsewhere for this error!) and clamp CAGR to non-positive result.
+
+174ef8ff51437fd214b18898d6e1084099740d9c Accept Asia as a region value
+
+The current benchmark data treats Asia as "Global" but that doesn't mean we cannot properly list Asia as a distinct region for display and aggregation purposes.  Accordingly, change POSCO's region to Asia.
+
+411f6f30e1f30f6eb234fc47e025af9c4f2dcbad Update environment.yml
+
+Update openpyxl version number.
+
+59fc4ecfff862937d90e85aac17fa919aab8fb23 First draft of runnable notebook demo
+
+Fix more data errors...now somewhat demoable (but strange results when target values are well above existing attainment, such as Duke Energy).
+
+7257cddf9656171004a046bcb55af2b205ea33f5 Test cases can now run with Sample data.
+
+f99024b75ad31e7e52228b9f47c741d9c18de468 Generate target projections for S1 and S2 scopes individually
+
+Provide target projections based on S1 and S2 scopes, not only S1S2.  Also fix base year data exclusion bug (we don't have to abandon projection if base year == last_year).
+
+Also, simplify input data as we have not yet implemented  everything described in https://github.com/os-climate/ITR/issues/32
+
+b8c6923c4943bc204131b486129196346c9978a6 Update environment.yml
+
+Added openscm-units
+
+f380c25a5cc82e18f35cfcb65d113df30a428dac Update environment.yml
+
+Added mentions for pint and pint-pandas, as well as latest pandas.
+
+0c3245f8aff747d30424dcab6adadad636e43208 Added handlers for S1 and S2 targets
+
+Many companies report S1-only targets.  We should handle that, and translate to S1S2 according to methodology.
+
+0e3114f2cf10c0916d06f2920a6e7c83f70d00c8 Update base_providers.py
+
+Use EMISSIONS_UNITS; do not default to 't CO2'.
+
+52628b40c086ad357d5f93d8980b4c08dab84647 Update 20220215 ITR Tool Sample Data.xlsx
+
+Set missing S2 data to zero so we can calculate S1S2 from S1-only inputs (such as Hawaiian Electric).
+
+935ca06f7d51804c935bdf032424e9cfd6bc051f Update 20220215 ITR Tool Sample Data.xlsx
+
+Added 2020 production data for Excelon.
+
+0f2b8cfdf13630dcfc1299d08cb595cb137adb9c Infer ghg_s1s2 initialization from historic data
+
+Initialize what will become GHG_SCOPE12 production data from historic data based on the year of REPORT_DATE in the input template (if not otherwise given in the data as ghg_s1s2).
+
+Note this is a WIP: we still have problems in get_company_fundamentals, later.
+
+fb9db1102b9232e981d91dd769c37e01547e8641 Update 20220215 ITR Tool Sample Data.xlsx
+
+Update more units, as well as report_date.
+
+c497a64db9dc85a01ec50cfd0d0f37a9eccd7586 Regularize emissions_intensity/EI naming and target/trajectory naming
+
+Confusing around target and trajectory naming has been identified as a problem, and now seems like as good a time as any to address.
+
+Changed all emission_XYZ to emissions_XYZ, kept all variables/constants named emissions_intensities, but changed all ABC_emissions_intensities_UVW to ABC_EI_UVW.
+
+Enhanced _add_projections_to_companies to work for multiple scopes.
+
+Enhanced _extrapolate to work with data that doesn't quite reach the end of historic data timeframe in all rows.  Some of our data includes 2021, some does not.  _extrapolate cleans up the ragged edge and then projects from a clean edge.
+
+Fixed some typos in Sample data spreadsheet.
+
+Next thing to fix is GHG_S1S2 variables, which are no longer filled in by the template.
+
+cadff7375ac2256ac0914895dee054b50073f2cf Update 20220215 ITR Tool Sample Data.xlsx
+
+Add more companies and targets, through POSCO.  We now have 30 companies and ~ 40 targets (not including more than 20 netzero by 2050 targets).
+
+38960f815ea4167c8000c65fcd78d6fe4e742aa5 Handle columns that start with 1990s, not only 2000s data
+
+Also, update spreadsheet with new targets up through National Grid (which contains a 1990 baseline target).  And update list of company ids to match.
+
+Please look carefully at _add_projections_to_companies, which was wrong and likely is wrong still.  That needs to be fixed!
+
+2195cbf2ea78ca8403a01973b1d66e977c928623 Sort production_metric and emissions_metric so they work in template test case and do not break JSON-based test cases.
+
+Make production_metric Optional and add emission_metric (which is used in the new ITR data template).  This un-breaks older test cases based on JSON data that does not have production_metric specified.  It also relies on code to use sector (and ultimately region) to set production metric and emission_metric if not otherwise specified.
+
+There is still much work to do to make the test case work, but the infrastructure should now be there to do so.
+
+c5ea4f86b8d495e09a75ec6cc242d55594a7e08e Resolve merge conflicts (looping over scopes vs. Pint pd.Series changes)
+
+Also, don't crash if data says the company hit a zero target early.
+
+ae2623d3987d14b8049b87252149ff62ed0a94c7 This WIP checkin fixes a number of observed problems and target projections now seem to be coming back correctly.
+
+WIP check-in fixes initialization code that was using default, rather than user-provided emissions_units.  Also changed interface of project_targets to work with pd>Series rather than 1-dimensional pd.DataFrames.  Pint is so much happier working with either unitized pd.Series or unitized pd.DataFrame columns.  It can work across columns, but to make element-by-element computations work, one must do un-Pandas-ish things.
+
+Also fixed a data entry error revealed when chasing unit initialization error.
+
+44a37ef039bb70dbbe3abcdf1f6543c15b8d845e Update target_utils.py
+
+The exponential decay of CAGR is going to operate proportional to the orders of magnitude it has to close.  If we set last to be too small, we force CAGR to spend a lot of its time chasing the asymptote.  Choosing a value of first/201 means we stop when we get within less than 1/2 of a percent, which rounds down.  That also works whether first is 1000000000 t CO2 or 1.0 Gt COt.
+
+dbb2adad0e80a2181b8cc76f17abd760afbd59a5 Update test_template_provider.py
+
+And update company_id information for the test_target_projections, too...
+
+71ecaedd47931214e1fc695ee976fb733d85c387 Update test_template_provider.py
+
+Update to see new targets added (Eversource through Gerdau).
+
+9e6a784695b67579c856bc6f81494f47dade4220 Update 20220215 ITR Tool Sample Data.xlsx
+
+Added data for Fortis and Gerdau.  Now halfway done with sample dataset.
+
+9183d2324d40cb6ff14041f651022df6a0a3fca9 Expand test set data and address some conditions with NULL data
+
+The added sample data has some NULLs in the input that the tool should handle.  Some fixes address these, but not all yet.
+
+Major fixups include preserving dtypes for columns as we winsorize data, and setting numeric_only to False in the quantile function so that we can deal with Pint quantities without triggering an error message for NA values.  (Both in base_providers.py)
+
+Added some try wrappers in template.py to make it easier to debug when errors are thrown.
+
+Correct some uncaught errors in how null values are processed in interfaces.py
+
+8bd2b1c48d4b303058ea119c6b62e3b2c60cdf7f WIP to add target projections to existing trajectory projections
+
+This WIP largely connects the unitized code (previously working) with historic trajectories (previously working) and target projections (not yet working).
+
+19e7de9eb5b9aeb81c6d1702e4c24f7648b24f50 Quiet warnings due to pint_pandas/pandas disagreements
+
+There are a few basic cases that create a lot of excess noise:
+
+1.  Use of apply on dataframes
+2.  Constructing DataFrame from list of pd.Series
+3:  https://github.com/hgrecco/pint-pandas/issues/114
+
+There are a few noisy warnings left, which can be fixed by following the pattern of these changes.
+
+b0e3f718ce5a67f8483d1c1eea898b96379bf10f Integrate recently merged projections code into unit-aware code
+
+This merge was not supposed to be that hard (one feature per branch they say), but there were many changes that overlapped and a few underlying bugs that needed to be squashed.
+
+At this point, things that failed before (due to bad interactions with unittest) still give problems, but all the unittests  plus the new projection tests basically work as well as they did before.
+
+c9060bd27118ff27ddd59f2dfb445c83a7dc7fc5 Create region_classification.csv
+
+077adb3a305a209b74f1b063cb8e990d222e4741 Update test_interfaces.py
+
+Fix test case to use new interfaces.py
+
+891ebc4b6bcefe407829157a72bbaa091145fc0a Update interfaces.py
+
+Rewrite metrics validation to use @validator instead of trying to exhaustively list every possible emissions unit, production unit, and intensity unit.  Closes https://github.com/os-climate/ITR/issues/43
+
+6764ec7d189c64fdb44619e42d7f416531a78228 Update interfaces.py
+
+Ugh.  Fix syntax error.
+
+66f042ddff19cf648ec825f5331fa2a71b3f98de Update interfaces.py
+
+Add Literal['CO2·Mt/MFe_ton']]
+
+e17c5f2b4490b300b2cbb90c673db3d050c9c2b8 Update interfaces.py
+
+Support kWh and MJ units, as we already support MWh, GWh, TWh, etc.
+
+ef3434e7acd9b1a5ae6c5a36f5a5e9cd9a913698 Update base_providers.py
+
+Implement prioritization logic: targets communicated later are prioritized over targets communicated earlier, and intensity targets are preferred over absolute targets to break ties.  If there are two targets of the same kind, target year, and year set, a warning is given and one is picked arbitrarily.
+
+7a238d87b81acc25248985ffab8be9af7dcdcc9b The notebook code to access the Github branch was written using PyGithub.  If you want to change to github-py, that's fine...just rewrite all the code to use that.
+
+8a348f2aacc884f92f5d617f7ceb10e1f97da3ea My OSX build environment is broken and does not tolerate building python modules from source.
+Therefore, adding explicit modules with correct version numbers so that rebuilds are not necessary.
+
+02f0769329235d59d899cd1bc9971504421f9f33 Add many more dependencies since we cannot (yet) depend on PyPi.
+
+f123581d647a4b78e2e8f734ccf52046c0393830 _emission_intensity -> _ei in test files
+
+1e87f102fb346ff6c0fd0feb6e963e30269b9c11 Draft documentation and sample data
+
+This is a first draft of user documentation, a fresh update of the Jupyter notebook, and a cleaned-up sample data spreadsheet.
+
+7463fe71dd2efa1f1275749be3a6814ed8cf7be4 Update quick_template_score_calc.ipynb
+
+Use JSON files for benchmarks and update notebook flow to invite users to choose their own data, benchmarks, and aggregation methods.
+
+ff2a3a771d060ea6ea711eb5083f39a774a36e53 Add more rows to Sample Data template spreadsheet
+
+Doubled the number of steel companies represented.  Also added some big electrical utilities, including Southern and Xcel.
+
+443d6c60a7fc7eeb93377ce8a5b4cfd5819bcc4e Update data_warehouse.py
+
+Trajectories are computed from historic data, and our extrapolation methods fill in trajectory data with historic data in cases where there is a ragged edge.
+
+Targets had a problem with ragged edges: the start of the target projections would be the earliest last date from the historic data (say, 2020) whereas the projection itself wouldn't start until after the last date of historic data (say 2021).  These changes fill in missing target data with historic data (sourced from trajectory projections).
+
+Some test cases could be written to detect how much trajectory data should or should not be consumed when constructing target projections.
+
+The real underlying problem is that when computing cumulative targets and trajectories, all companies must start at the same date, regardless of when the targets actually start according to the target data.
+
+Also, fix a few more emission_intensity -> ei name changes.
+
+2cb980066ee7f12ba170833294909fffbe070360 Update template.py
+
+When 'exposure' is not given, set to 'presumed_equity'.  Should this be just 'equity' by default?
+
+Also, change style of call to replace for clarity (parameters instead of dictionary).
+
+8a1b226c40916f175a59d292f07f4d32362ae961 Update interfaces.py
+
+Fix method for deriving intensity_units.
+
+9775f403cebf833160e3c51ba33b81f031d141cf Update interfaces.py
+
+Fix wicked typo (wrongly testing year instead of value for NaN).
+
+e4efd19d76bfe17a416692e81d8d59968585258c Update environment.yml
+
+Fix typos in pint and pint-pandas declarations.
+
+933f35c6380d3dbaab45584137a9b201544ee65c Update environment.yml
+
+Fix typo in openscm-units declaration.
+
+e57af8788f511f3a0cdf07be96e9639dad2e4d70 Don't use report_date to find most recent production/emission data
+
+New function _get_base_realization_from_historic gets the latest production/emission information.  Should complain if there are disparities between last year of production vs. emissions data (we can make it more complicated to find the most recent common year).
+
+Also, the name base_year_production in ICompany is completely confusing.  We need a new name for "the year of most recent data from which extrapolations are done."
+
+This should address https://github.com/os-climate/ITR/issues/46
+
+4985a941352ae6dd6685a227d911a636800eb2f7 Update base_providers.py
+
+Fix sloppy commit caused by GitHub desktop's overeager attempt to commit test files I never asked it to commit as part of this 3-line change.
+
+3b1ed92ccd0e66620339ae49a1e66d3bafbba865 Revert "Fixed nan vs. pd.NA confusion from previous change"
+
+This reverts commit f3879b34cd46fb6e5df6fd39239ac3dc036c3dfe.
+
+f3879b34cd46fb6e5df6fd39239ac3dc036c3dfe Fixed nan vs. pd.NA confusion from previous change
+
+This fixes the "loose wire" that disconnected temperature scores in both the notebook and the test cases.
+
+Now all test cases are working except test_projection and test_template_provider, for known reasons.  test_projection needs better reference data and test_template_provider needs its own fixes to become a valid test case.
+
+c77533a394b38d33d4c28175ff97167bb10f5ec4 Update test_template_provider.py
+
+test_temp_score was meant to be a small version of test_temp_score_from_excel_data.  Alas, it was not computing target and trajectory budgets (because it was not calling get_data).
+
+There remains a problem that is preventing the temp score calculation.  I will debug that tomorrow....
+
+6380ca563f1c9a50c87ca6d5d60f00266aa5115f Update template.py
+
+Convert <NA> to NaN when using Quantities.
+
+857c789c6b5921d8ace8882f21ae536f45dcaaad Spiff up trajectory calculation to compute S1S2 = S1+S2
+
+Somehow this sum had gotten lost and none of the trajectories were matching the scope of the reference file.  They still don't match for several reasons, but mostly now having to do with methodology questions.
+
+Also enhanced test_projections.py to read and interpret test projections more intelligently.
+
+4997425948eb0f16d630a6ef066086bc459ca3c5 test_projection WIP
+
+These changes cut out a lot of noise about comparisons not that meaningful: previously we required the input data to supply things like ghg_s1s2 emissions at the base year, but now we collect historic data, and the tool organizes that data to fill in the singular ghg_s1s2 datapoint which is helpful to have.
+
+There is one obvious problem, which is that input data of separate S1 and S2 emissions is not getting combined into S1S2 trajectories.  The next checkin should deal with that.  This checkin clears the clutter to make that problem easier to work on.
+
+8dab7adbdeb846fef79130b5a2511a4699d3b419 Also update sample data in main test area
+
+Ugh...we have two copies of the same data.  More tests should run with this updated data.
+
+04d172de0112d624f2985c7d690ffc33e7c38702 Update template sample data file for Notebook
+
+Some additional data updates were needed to get the template notebook working again.  It is working again now.
+
+cd082888b437cd4526c4fe07d40ba46ec2698da1 test_template_provider mostly working again
+
+There are a few failures, which could indicate problems with reference data.
+
+There is a wide disparity in test_get_company_data
+
+There are many disparities in test_get_projected_value
+
+2/5 tests file in test_temp_score_from_excel_data
+
+2143b2687cc2266ffeebd9b89c7f9072593d0cd9 Get test_interfaces.py working again
+
+6958e0206fd0fe626a14c764e9b697cae9a566aa Get test_excel_provider.py working again
+
+2e68d1f1a1e07b976a5e385c960c8dbd3a5c5090 Major rework of ICompanyData to handle historic data better (WIP)
+
+The more I look at the test cases and use cases of this code, the more I realize that the code needs to deal with a much greater diversity of data and assumptions than the first few test cases we got working.
+
+The biggest problem has been the ICompanyData structure, which has a fairly wide range of uses cases (beyond just the NZAOA template we've been working on).  Each of those test cases not only stresses different parts of the data structure, but also makes very different assumptions about what data can or should be derived from what other data.  Early in the tool's development we could count on a base year's ghg_s1s2 being present to do various calculations.  Now that we have historic data, the use cases assume we can collect that unspecified data ourselves.  And not all test and input data has all the units we expect, either.  Fixing one set of problems often reveals other dependencies.
+
+TL;DR: these changes have the following major components:
+
+In base_providers.py, we true up some column/variable naming so that the NZAOA template doesn't require as much renaming of columns, which will make it easier to follow error messages when something like target_base_year_qty is not correctly specified.  Other changes include better maintenance of units through the winsorization process.  And also the replacement of some simplistic unit inferencing with what's actually in the data.
+
+template.py tracks the naming changes described above.
+
+test_base_providers.py and test_different_benchmarks.py add the now necessary emissions_metric and production_metric fields after reading in the JSON input file.  A better fix would be to recreate the JSON file with the necessary fields in the file.
+
+test_e2e.py has necessary units attached to its projections.
+
+interfaces.py: lots of changes of many kinds.  The most boring of which is to make the name changes referenced above (so we can provide better error reporting).  But also...
+
+* Moved Units and Metrics up to the top of the file
+* Moved Enums to the top of the file
+* tweaks to pint_ify and UProjections_to_Projections
+* Deleted unused classes
+* ICompanyEIProjection: added ei_metric field
+* Simplify a number of IHistoric and Realization classes
+* New _fixup functions serve to convey unit information from the body of the ICompanyData object to the many lists that hang off of it (and are as likely to need unit information from the main object as they are to provide such information for inferencing purposes).
+
+Several test cases now pass, and several more do not.  Hopefully the remainder will pass soon!
+
+bd6eb7d29c7a0eaf7ea3c01cc7886062f90cf13b Update test_temperature_score.py
+
+Fix units for ghg_s1s2.
+
+a1df1f3548118c8b4554d31e7f427a2693c13800 Fix another emission_intensity -> emissions_intensity issue
+
+The JSON input files for the test_projector test case need to use emissions_intensity.
+
+TODO: we still need a way of sorting the base_year value (it is currently inferred from report_date and/or a default value in TempScoreConfig).
+
+eaa440f14285ad654249f74d6787412e9ade0d8f Update test_e2e.py
+
+Added initialization of base_year_production.
+
+Fixed wrong units being passed to ghg_s1s2 and ghg_s3.  Also fixed wrong type of data being passed by just passing 'value' part of an IProduction.
+
+Obviously it's more efficient to initialize all three from a Quantity, rather than constructing an IProjection and then drilling down to the value field of that.  The question is: do we want to revert changes to interfaces.py that preserve the base_year in the initialization of those values (and change other code to move our way through that extra data)?
+
+59e1b4a8f0e561ee4e6da33c8096e2feb635d2c6 Remove non-idiomatic use of .keys()
+
+It is non-idiomatic to use the .keys() function in certain looping contexts because python will automatically infer that from the context.  So clean up code from this:
+
+for x in dict.keys():
+
+to this:
+
+for x in dict:
+
+5656167d77dce370c1accca16d14449b2e71de5d Update ITR_dash_app_develop.py
+
+Replace obsolete link to portfolio template and replace with doc page from dash.
+
+Also, the template_portfolio to be uploaded uses a ';' separator (unless we decide to change that).
+
+TODO: need to properly use document root concept (recently introduced in ITR.utils).
+
+ea2ad319165a13a49483d80db0b5bc8754446dcd Update setup.py
+
+Update GitHub source location and python version minimum requirements.
+
+a385f6fc454c70b6cf218ad3c1cfb3181aa03a5d Enable reading local data files and read mapping file from countries to regions
+
+Added functionality to utils.py to support reading datafiles from within the package itself (using pathlib).
+
+81d51c863ed867ae494aefd9a5f0c0f46e3c9cae Create country_region_info.csv
+
+Provide data to compute missing region info from country names when ITR tool is not connected to Data Commons.
+
+d06062e9fd8fd72b7e0c2f8c7adc50099b2bc394 Update test_template_provider.py
+
+Fix test case so it actually prints intensity projections for each company.  That's not a test case per se, but it informs how we can now write a test case for projections.
+
+8da03275db7951223283bafd98fe6dc30d9b180d Add PPL data and targets
+
+One more row of data!
+
+188c115855e627c908c75ec28a8330c2684c882a Fix damage to ExcelProviders code resulting from TemplateProviders enhancements
+
+Refactor _calculate_target_projections into BaseCompanyDataProvider and reorganize class definition order to accommodate.
+
+Also fix some latent unit errors in excel.py and test_excel_provider.py resulting from GHG_SCOPE12 fixes.
+
+Update quick example notebooks.
+
+145f7f3a3d22278e54aaf3bb4f4ba254d4f788ee Update ITR_dash_app_develop.py
+
+Updated to work with with unit-aware code.
+
+2e0519f0fc7004c98f8a09c07808f90d180f879f Clean up GHG_SCOPE12 confusion
+
+There was long-standing confusion about the meaning of GHG_SCOPE12 (which, when looked at through one functional path, seemed to depend first and only on production values, and when looked at other ways, seemed to represent emissions values).  It was finally determined that this was, indeed, an emissions-based quantity, and the the production value pathway fed a ratio calculation that resolved to a dimensionless quantity (so it could be calculated just as well from emissions).  In any case, these changes principally fix these and some other problems in the way various column names and variable names work and work together.
+
+eba1f66d8bf6e9aebaf5df9a1e2abc6dfd994a63 Create unitized version of GUI app
+
+Modify the original GUI app to work with new unitized ITR backend:
+
+* Added unitized JSON files
+* Use new initialization procedures for data Template
+* Unitize quantities within the GUI, such as specific temperature score values.
+
+Not fully working: a graph of production output wrongly tries to mix Steel production numbers (Fe_ton) with Electricity production numbers (TWh).  It's good that the unit code caught it!
+
+43254b36ff8601857041cd8b5ccc849aeabed789 Update template.py
+
+Connected to previous checkin: construct company_sector_region_info DataFrame using dictionary of [] not singleton elements to make Quantity work as ArrayExtension instead of dict.
+
+0c3c47847db2334452389b2788443250d5f273bc Move _calculate_target_projections into DataWarehouse (and other cleanups)
+
+Other cleanups include:
+
+Let DataWarehouse call _calculate_target_projections so user doesn't have to worry about it.
+
+Fix more spellings of emission_ to emissions_
+
+When creating the one-row company_sector_region_info DataFrame, don't just initialize with singleton elements; put those elements into lists (so we can pass a Quantity as an ExtensionArray instead of being seen as a dict
+
+Comment highly suspect declaration of projected_targets, which are available in the base class of ICompanyAggregates
+
+09183e0aa29d5915a9f8648a0eb7a99700e9b98f Enable netzero_year functionality
+
+There was a bug in how EITargetProjector::project_ei_targets was projecting target data to 2050 absent specific targets with that as an explicit target year.  These changes fix that bug, as well as enabling the functionality of using the netzero_year field of the input template.
+
+Also update template to use netzero_year instead of netzero_date.
+
+7f7e609542bec8b520f2b1e154093177f2bb793e Correcet CAGR calculation
+
+Convert to base units before calculating magnitude (need to check elsewhere for this error!) and clamp CAGR to non-positive result.
+
+174ef8ff51437fd214b18898d6e1084099740d9c Accept Asia as a region value
+
+The current benchmark data treats Asia as "Global" but that doesn't mean we cannot properly list Asia as a distinct region for display and aggregation purposes.  Accordingly, change POSCO's region to Asia.
+
+411f6f30e1f30f6eb234fc47e025af9c4f2dcbad Update environment.yml
+
+Update openpyxl version number.
+
+59fc4ecfff862937d90e85aac17fa919aab8fb23 First draft of runnable notebook demo
+
+Fix more data errors...now somewhat demoable (but strange results when target values are well above existing attainment, such as Duke Energy).
+
+7257cddf9656171004a046bcb55af2b205ea33f5 Test cases can now run with Sample data.
+
+f99024b75ad31e7e52228b9f47c741d9c18de468 Generate target projections for S1 and S2 scopes individually
+
+Provide target projections based on S1 and S2 scopes, not only S1S2.  Also fix base year data exclusion bug (we don't have to abandon projection if base year == last_year).
+
+Also, simplify input data as we have not yet implemented  everything described in https://github.com/os-climate/ITR/issues/32
+
+b8c6923c4943bc204131b486129196346c9978a6 Update environment.yml
+
+Added openscm-units
+
+f380c25a5cc82e18f35cfcb65d113df30a428dac Update environment.yml
+
+Added mentions for pint and pint-pandas, as well as latest pandas.
+
+0c3245f8aff747d30424dcab6adadad636e43208 Added handlers for S1 and S2 targets
+
+Many companies report S1-only targets.  We should handle that, and translate to S1S2 according to methodology.
+
+0e3114f2cf10c0916d06f2920a6e7c83f70d00c8 Update base_providers.py
+
+Use EMISSIONS_UNITS; do not default to 't CO2'.
+
+52628b40c086ad357d5f93d8980b4c08dab84647 Update 20220215 ITR Tool Sample Data.xlsx
+
+Set missing S2 data to zero so we can calculate S1S2 from S1-only inputs (such as Hawaiian Electric).
+
+935ca06f7d51804c935bdf032424e9cfd6bc051f Update 20220215 ITR Tool Sample Data.xlsx
+
+Added 2020 production data for Excelon.
+
+0f2b8cfdf13630dcfc1299d08cb595cb137adb9c Infer ghg_s1s2 initialization from historic data
+
+Initialize what will become GHG_SCOPE12 production data from historic data based on the year of REPORT_DATE in the input template (if not otherwise given in the data as ghg_s1s2).
+
+Note this is a WIP: we still have problems in get_company_fundamentals, later.
+
+fb9db1102b9232e981d91dd769c37e01547e8641 Update 20220215 ITR Tool Sample Data.xlsx
+
+Update more units, as well as report_date.
+
+c497a64db9dc85a01ec50cfd0d0f37a9eccd7586 Regularize emissions_intensity/EI naming and target/trajectory naming
+
+Confusing around target and trajectory naming has been identified as a problem, and now seems like as good a time as any to address.
+
+Changed all emission_XYZ to emissions_XYZ, kept all variables/constants named emissions_intensities, but changed all ABC_emissions_intensities_UVW to ABC_EI_UVW.
+
+Enhanced _add_projections_to_companies to work for multiple scopes.
+
+Enhanced _extrapolate to work with data that doesn't quite reach the end of historic data timeframe in all rows.  Some of our data includes 2021, some does not.  _extrapolate cleans up the ragged edge and then projects from a clean edge.
+
+Fixed some typos in Sample data spreadsheet.
+
+Next thing to fix is GHG_S1S2 variables, which are no longer filled in by the template.
+
+cadff7375ac2256ac0914895dee054b50073f2cf Update 20220215 ITR Tool Sample Data.xlsx
+
+Add more companies and targets, through POSCO.  We now have 30 companies and ~ 40 targets (not including more than 20 netzero by 2050 targets).
+
+38960f815ea4167c8000c65fcd78d6fe4e742aa5 Handle columns that start with 1990s, not only 2000s data
+
+Also, update spreadsheet with new targets up through National Grid (which contains a 1990 baseline target).  And update list of company ids to match.
+
+Please look carefully at _add_projections_to_companies, which was wrong and likely is wrong still.  That needs to be fixed!
+
+2195cbf2ea78ca8403a01973b1d66e977c928623 Sort production_metric and emissions_metric so they work in template test case and do not break JSON-based test cases.
+
+Make production_metric Optional and add emission_metric (which is used in the new ITR data template).  This un-breaks older test cases based on JSON data that does not have production_metric specified.  It also relies on code to use sector (and ultimately region) to set production metric and emission_metric if not otherwise specified.
+
+There is still much work to do to make the test case work, but the infrastructure should now be there to do so.
+
+c5ea4f86b8d495e09a75ec6cc242d55594a7e08e Resolve merge conflicts (looping over scopes vs. Pint pd.Series changes)
+
+Also, don't crash if data says the company hit a zero target early.
+
+ae2623d3987d14b8049b87252149ff62ed0a94c7 This WIP checkin fixes a number of observed problems and target projections now seem to be coming back correctly.
+
+WIP check-in fixes initialization code that was using default, rather than user-provided emissions_units.  Also changed interface of project_targets to work with pd>Series rather than 1-dimensional pd.DataFrames.  Pint is so much happier working with either unitized pd.Series or unitized pd.DataFrame columns.  It can work across columns, but to make element-by-element computations work, one must do un-Pandas-ish things.
+
+Also fixed a data entry error revealed when chasing unit initialization error.
+
+44a37ef039bb70dbbe3abcdf1f6543c15b8d845e Update target_utils.py
+
+The exponential decay of CAGR is going to operate proportional to the orders of magnitude it has to close.  If we set last to be too small, we force CAGR to spend a lot of its time chasing the asymptote.  Choosing a value of first/201 means we stop when we get within less than 1/2 of a percent, which rounds down.  That also works whether first is 1000000000 t CO2 or 1.0 Gt COt.
+
+dbb2adad0e80a2181b8cc76f17abd760afbd59a5 Update test_template_provider.py
+
+And update company_id information for the test_target_projections, too...
+
+71ecaedd47931214e1fc695ee976fb733d85c387 Update test_template_provider.py
+
+Update to see new targets added (Eversource through Gerdau).
+
+9e6a784695b67579c856bc6f81494f47dade4220 Update 20220215 ITR Tool Sample Data.xlsx
+
+Added data for Fortis and Gerdau.  Now halfway done with sample dataset.
+
+9183d2324d40cb6ff14041f651022df6a0a3fca9 Expand test set data and address some conditions with NULL data
+
+The added sample data has some NULLs in the input that the tool should handle.  Some fixes address these, but not all yet.
+
+Major fixups include preserving dtypes for columns as we winsorize data, and setting numeric_only to False in the quantile function so that we can deal with Pint quantities without triggering an error message for NA values.  (Both in base_providers.py)
+
+Added some try wrappers in template.py to make it easier to debug when errors are thrown.
+
+Correct some uncaught errors in how null values are processed in interfaces.py
+
+8bd2b1c48d4b303058ea119c6b62e3b2c60cdf7f WIP to add target projections to existing trajectory projections
+
+This WIP largely connects the unitized code (previously working) with historic trajectories (previously working) and target projections (not yet working).
+
+19e7de9eb5b9aeb81c6d1702e4c24f7648b24f50 Quiet warnings due to pint_pandas/pandas disagreements
+
+There are a few basic cases that create a lot of excess noise:
+
+1.  Use of apply on dataframes
+2.  Constructing DataFrame from list of pd.Series
+3:  https://github.com/hgrecco/pint-pandas/issues/114
+
+There are a few noisy warnings left, which can be fixed by following the pattern of these changes.
+
+b0e3f718ce5a67f8483d1c1eea898b96379bf10f Integrate recently merged projections code into unit-aware code
+
+This merge was not supposed to be that hard (one feature per branch they say), but there were many changes that overlapped and a few underlying bugs that needed to be squashed.
+
+At this point, things that failed before (due to bad interactions with unittest) still give problems, but all the unittests  plus the new projection tests basically work as well as they did before.
+
+c9060bd27118ff27ddd59f2dfb445c83a7dc7fc5 Create region_classification.csv
+

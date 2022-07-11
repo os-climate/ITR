@@ -1,0 +1,8 @@
+I, Oleksandr Anufriyev hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: oanufriyev@gmail.com
+
+2c825729acf351d288484589cc6729b25f8c40f7 Adding latest version of UI
+
+It is just a single file, so I thought I could put it to develop branch, as we are using it for testing
+2c825729acf351d288484589cc6729b25f8c40f7 Adding latest version of UI
+
+It is just a single file, so I thought I could put it to develop branch, as we are using it for testing
