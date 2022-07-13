@@ -1,0 +1,204 @@
+I, Joris Cramwinckel hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: 8858036+joriscram@users.noreply.github.com
+
+d88f7f2154bb8fcef9609209401ebd61f6a2d46e hotfix - custom sphinx-autoapi dependency decrecated -> updated to community version
+
+0464cb1bc074bb270f5d6a6d651a7c65f74fcf81 updated docs
+
+6c7f60c6c449d38f6561e84e62c16df725d654ee changed notebook kernel
+
+705b59e9f8a8403c2f0f5e093993e8718dac0835 notebook fix
+
+753270ab3dd3bd0a1573504fccdad33473c1351b forced validation on excel production and intensity benchmarks.
++ added TPI benchmarks (incl tests)
+
+f69df2821576a1d7c29808c41efb3aaae99bdb2e added intermediate calculation results in scores
+
+424a4b3e8123297d8fa007a10dc4162a53dc1286 included global budget, temperature as required field in EI benchmarks
+
+155994f14517df1a34048ea1c28675924bfa427a connected the benchmark providers to the refactoring
+
+3835ae182b18033ee903f6142f36d577ca3dcc9b Refactored Dataproviders to force validation via pydantic and prepare for FastAPI usage
+
+a0d7910c5413fc85685882668158c2e1bfe9b6ae improved pydantic validation
+
+e1b3cb06c9cdd1c6cc2615511b56ac46c5353f44 fix notebook test
+
+33b779d35d055b0950a5f93f4b4ff2a5bc8c676f implemented code review comments
+
+65646454e007a1486f05618763454a5133871260 reconnected with new methodology and results
+
+13ab443d780a97a0b1e3e0c96ed24c641fc231ae extended unit tests and fixed bugs
+
+6b5980b6741e9e9eac437dc438d878b70aed410f polished config handling
+
+b77aba214ade22a873872577ee8fd6c4865f4f6d downgraded numpy to reduce warnings
+
+9ed1a771aff0a0f8e9acc371e694ac054a709d71 updated methodology
+
+8d1efbd3fd51824badb9a8951d043e817ea3a3b7 cleaning configs
+
+0b6d92b1b60cbf2f3c1941cdaca375847346643e connected tests and refactored
+
+5d6cb0bb84226a75df0128056c20cf1e20b0d651 tinkering -> making benchmark settings benchmark provider attributes
+
+d48030fbb5cab5e72feb68e79d6f1c2a583c1a19 connected jupyter notebooks to new data interfaces
+
+0d642397d5b13e29d318973cb65fa953c5008741 refactored data providers to be compatible with stateless use.
+
+71e2af715e21c135389f4b27365e34c8fb67f999 refactored projected production to use ghg_s1s2 values and benchmarks
+
+34e0c8a8fd6b424e46be756e1ae59e485fcb8e45 removed all target related inheritance from sbti
+
+7871d31c5020f95bb532757eaa80e03fe250d909 removed all target related inheritance from sbti
+
+cab2d2cf584dc5973c6eea962ef4518c61fc63a9 Allow temperature score control to be overwritten.
+Set new default TCRE value to 2.2
+reconnected all unit tests
+
+844ec1d3d94982c1e998fff129e96c10a262146c Fixing unittests
+
+433a1a4dd74ae780f127b7c06401e67dac19e35a hotfix notebook for pipeline to succeed
+
+3c2ba8d299f166f3c4f9bdc1201c56590d496f5a fixed mypy complaints 3
+
+1edb83ed42ea85c24c5ab0beb334e828c6d7d58b fixed mypy complaints 2
+
+076a9168559b24b0d03a7698dab3b3c9b12fd99f fixed mypy complaints
+
+22cb433ea8e65d524b3f153ea412e940da6c1bdd Got tests to work
+skipped scoring testsuite, needs revision still.
+
+a7d48047e3c4a4c33174a9200853d3ec1ca21fb3 alligned the methodology with Excel version.
+included default scoring
+cleared unneeded files
+
+5aa3ec5edc75043eb790b4369a0b28141e95b0e3 made the notebook agnostic where it runs; local of in the cloud.
+
+1574e2bb5c9c795197da4792d0dc556a1d1b6383 publish docs to gh-pages
+
+0ea9bdc7af24f358bec7451d0a4926a3995b3682 upgraded python version to 3.7
+
+d0192869dd7d3f05dc058dc088a2d464d1a3151b upgraded python version to 3.7
+
+baf6caeadc9fbc437925a223c1ea1ce3f664d821 adjusted workflows to work on main
+
+09c6b2a97ee38251beab2c257257c2b4413f4a94 added workflows
+
+d9f164cfd5fa0311ad196677d11dde7494227b26 Connected Notebook to scoring method
+
+7d662568477bff08f15ee811da0ca6d844014255 started refactoring scoring II
+
+f86ed8ce0a78139c1212f48eded85f415ad40130 started refactoring scoring
+
+1d8f638102f4b4e053f940daa4b0dd34d4b359b3 cleaned example portfolio.csv
+
+53e13681556703dfdb2cf4d8b311556dcc2e1c66 setup the skeleton of the Python module (based on SBTi)
+
+479612653e5fccfa832a86a12877f59242876acd drafted github project
+
+e097c3c808fcda6fa477d05c765f5ae3d80af9b2 added conda env and empty python module
+
+db94825430ef47ff672fc04b6750d823c1a2adc0 drafted github project
+
+074f262881ad83f1eeb6cafb91caeb707e6b10cb Initial commit
+d88f7f2154bb8fcef9609209401ebd61f6a2d46e hotfix - custom sphinx-autoapi dependency decrecated -> updated to community version
+
+0464cb1bc074bb270f5d6a6d651a7c65f74fcf81 updated docs
+
+6c7f60c6c449d38f6561e84e62c16df725d654ee changed notebook kernel
+
+705b59e9f8a8403c2f0f5e093993e8718dac0835 notebook fix
+
+753270ab3dd3bd0a1573504fccdad33473c1351b forced validation on excel production and intensity benchmarks.
++ added TPI benchmarks (incl tests)
+
+f69df2821576a1d7c29808c41efb3aaae99bdb2e added intermediate calculation results in scores
+
+424a4b3e8123297d8fa007a10dc4162a53dc1286 included global budget, temperature as required field in EI benchmarks
+
+155994f14517df1a34048ea1c28675924bfa427a connected the benchmark providers to the refactoring
+
+3835ae182b18033ee903f6142f36d577ca3dcc9b Refactored Dataproviders to force validation via pydantic and prepare for FastAPI usage
+
+a0d7910c5413fc85685882668158c2e1bfe9b6ae improved pydantic validation
+
+e1b3cb06c9cdd1c6cc2615511b56ac46c5353f44 fix notebook test
+
+33b779d35d055b0950a5f93f4b4ff2a5bc8c676f implemented code review comments
+
+65646454e007a1486f05618763454a5133871260 reconnected with new methodology and results
+
+13ab443d780a97a0b1e3e0c96ed24c641fc231ae extended unit tests and fixed bugs
+
+6b5980b6741e9e9eac437dc438d878b70aed410f polished config handling
+
+b77aba214ade22a873872577ee8fd6c4865f4f6d downgraded numpy to reduce warnings
+
+9ed1a771aff0a0f8e9acc371e694ac054a709d71 updated methodology
+
+8d1efbd3fd51824badb9a8951d043e817ea3a3b7 cleaning configs
+
+0b6d92b1b60cbf2f3c1941cdaca375847346643e connected tests and refactored
+
+5d6cb0bb84226a75df0128056c20cf1e20b0d651 tinkering -> making benchmark settings benchmark provider attributes
+
+d48030fbb5cab5e72feb68e79d6f1c2a583c1a19 connected jupyter notebooks to new data interfaces
+
+0d642397d5b13e29d318973cb65fa953c5008741 refactored data providers to be compatible with stateless use.
+
+71e2af715e21c135389f4b27365e34c8fb67f999 refactored projected production to use ghg_s1s2 values and benchmarks
+
+34e0c8a8fd6b424e46be756e1ae59e485fcb8e45 removed all target related inheritance from sbti
+
+7871d31c5020f95bb532757eaa80e03fe250d909 removed all target related inheritance from sbti
+
+cab2d2cf584dc5973c6eea962ef4518c61fc63a9 Allow temperature score control to be overwritten.
+Set new default TCRE value to 2.2
+reconnected all unit tests
+
+844ec1d3d94982c1e998fff129e96c10a262146c Fixing unittests
+
+433a1a4dd74ae780f127b7c06401e67dac19e35a hotfix notebook for pipeline to succeed
+
+3c2ba8d299f166f3c4f9bdc1201c56590d496f5a fixed mypy complaints 3
+
+1edb83ed42ea85c24c5ab0beb334e828c6d7d58b fixed mypy complaints 2
+
+076a9168559b24b0d03a7698dab3b3c9b12fd99f fixed mypy complaints
+
+22cb433ea8e65d524b3f153ea412e940da6c1bdd Got tests to work
+skipped scoring testsuite, needs revision still.
+
+a7d48047e3c4a4c33174a9200853d3ec1ca21fb3 alligned the methodology with Excel version.
+included default scoring
+cleared unneeded files
+
+5aa3ec5edc75043eb790b4369a0b28141e95b0e3 made the notebook agnostic where it runs; local of in the cloud.
+
+1574e2bb5c9c795197da4792d0dc556a1d1b6383 publish docs to gh-pages
+
+0ea9bdc7af24f358bec7451d0a4926a3995b3682 upgraded python version to 3.7
+
+d0192869dd7d3f05dc058dc088a2d464d1a3151b upgraded python version to 3.7
+
+baf6caeadc9fbc437925a223c1ea1ce3f664d821 adjusted workflows to work on main
+
+09c6b2a97ee38251beab2c257257c2b4413f4a94 added workflows
+
+d9f164cfd5fa0311ad196677d11dde7494227b26 Connected Notebook to scoring method
+
+7d662568477bff08f15ee811da0ca6d844014255 started refactoring scoring II
+
+f86ed8ce0a78139c1212f48eded85f415ad40130 started refactoring scoring
+
+1d8f638102f4b4e053f940daa4b0dd34d4b359b3 cleaned example portfolio.csv
+
+53e13681556703dfdb2cf4d8b311556dcc2e1c66 setup the skeleton of the Python module (based on SBTi)
+
+479612653e5fccfa832a86a12877f59242876acd drafted github project
+
+e097c3c808fcda6fa477d05c765f5ae3d80af9b2 added conda env and empty python module
+
+db94825430ef47ff672fc04b6750d823c1a2adc0 drafted github project
+
+074f262881ad83f1eeb6cafb91caeb707e6b10cb Initial commit
