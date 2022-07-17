@@ -1,8 +1,20 @@
 from abc import ABC
 from enum import Enum
+import warnings # needed until apply behaves better with Pint quantities in arrays
+
 from typing import Type
 
+from pint import Quantity
+from pint_pandas import PintArray
+
 import pandas as pd
+import pint
+import pint_pandas
+
+ureg = pint.get_application_registry()
+Q_ = ureg.Quantity
+PA_ = pint_pandas.PintArray
+
 from .configs import PortfolioAggregationConfig, ColumnsConfig
 from .interfaces import EScope
 
@@ -28,21 +40,21 @@ class PortfolioAggregationMethod(Enum):
         :param method: The method to check
         :return:
         """
-        return method == PortfolioAggregationMethod.MOTS or method == PortfolioAggregationMethod.EOTS or \
-            method == PortfolioAggregationMethod.ECOTS or method == PortfolioAggregationMethod.AOTS or \
-            method == PortfolioAggregationMethod.ROTS
+        return method in [PortfolioAggregationMethod.MOTS, PortfolioAggregationMethod.EOTS,
+                          PortfolioAggregationMethod.ECOTS, PortfolioAggregationMethod.AOTS,
+                          PortfolioAggregationMethod.ROTS]
 
     @staticmethod
     def get_value_column(method: 'PortfolioAggregationMethod', column_config: Type[ColumnsConfig]) -> str:
         map_value_column = {
-            PortfolioAggregationMethod.MOTS: column_config.MARKET_CAP,
+            PortfolioAggregationMethod.MOTS: column_config.COMPANY_MARKET_CAP,
             PortfolioAggregationMethod.EOTS: column_config.COMPANY_ENTERPRISE_VALUE,
             PortfolioAggregationMethod.ECOTS: column_config.COMPANY_EV_PLUS_CASH,
             PortfolioAggregationMethod.AOTS: column_config.COMPANY_TOTAL_ASSETS,
             PortfolioAggregationMethod.ROTS: column_config.COMPANY_REVENUE,
         }
 
-        return map_value_column.get(method, column_config.MARKET_CAP)
+        return map_value_column.get(method, column_config.COMPANY_MARKET_CAP)
 
 
 class PortfolioAggregation(ABC):
@@ -79,64 +91,67 @@ class PortfolioAggregation(ABC):
         :param data: The data to run the calculations on
         :param input_column: The input column (containing the scores)
         :param portfolio_aggregation_method: The method to use
-        :return: The aggregates score
+        :return: The aggregates score as a pd.Series
         """
         if portfolio_aggregation_method == PortfolioAggregationMethod.WATS:
             total_investment_weight = data[self.c.COLS.INVESTMENT_VALUE].sum()
             try:
-                return data.apply(
-                    lambda row: (row[self.c.COLS.INVESTMENT_VALUE] * row[input_column]) / total_investment_weight,
-                    axis=1)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    # See https://github.com/hgrecco/pint-pandas/issues/114
+                    weights_series = pd.Series(data.apply(
+                        lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column] / total_investment_weight,
+                        axis=1))
+                    return weights_series
             except ZeroDivisionError:
                 raise ValueError("The portfolio weight is not allowed to be zero")
 
         # Total emissions weighted temperature score (TETS)
         elif portfolio_aggregation_method == PortfolioAggregationMethod.TETS:
-            use_S1S2 = (data[self.c.COLS.SCOPE] == EScope.S1S2) | (data[self.c.COLS.SCOPE] == EScope.S1S2S3)
-            use_S3 = (data[self.c.COLS.SCOPE] == EScope.S3) | (data[self.c.COLS.SCOPE] == EScope.S1S2S3)
+            use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1S2, EScope.S1S2S3])
+            use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
             if use_S3.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE3)
             if use_S1S2.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE12)
             # Calculate the total emissions of all companies
-            emissions = (use_S1S2*data[self.c.COLS.GHG_SCOPE12]).sum() + (use_S3*data[self.c.COLS.GHG_SCOPE3]).sum()
+            emissions = data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12].sum() + data.loc[use_S3, self.c.COLS.GHG_SCOPE3].sum()
             try:
-                return (use_S1S2*data[self.c.COLS.GHG_SCOPE12] + use_S3*data[self.c.COLS.GHG_SCOPE3]) / emissions * data[input_column]
+                weights_series = pd.Series((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0)) \
+                            / emissions * data[input_column])
+                return weights_series
+
             except ZeroDivisionError:
                 raise ValueError("The total emissions should be higher than zero")
 
         elif PortfolioAggregationMethod.is_emissions_based(portfolio_aggregation_method):
             # These four methods only differ in the way the company is valued.
-            if portfolio_aggregation_method == PortfolioAggregationMethod.ECOTS:
-                self._check_column(data, self.c.COLS.COMPANY_ENTERPRISE_VALUE)
-                self._check_column(data, self.c.COLS.CASH_EQUIVALENTS)
-                data[self.c.COLS.COMPANY_EV_PLUS_CASH] = data[self.c.COLS.COMPANY_ENTERPRISE_VALUE] + \
-                                                         data[self.c.COLS.CASH_EQUIVALENTS]
-
             value_column = PortfolioAggregationMethod.get_value_column(portfolio_aggregation_method, self.c.COLS)
 
             # Calculate the total owned emissions of all companies
             try:
                 self._check_column(data, self.c.COLS.INVESTMENT_VALUE)
                 self._check_column(data, value_column)
-                use_S1S2 = (data[self.c.COLS.SCOPE] == EScope.S1S2) | (data[self.c.COLS.SCOPE] == EScope.S1S2S3)
-                use_S3 = (data[self.c.COLS.SCOPE] == EScope.S3) | (data[self.c.COLS.SCOPE] == EScope.S1S2S3)
+                use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1S2, EScope.S1S2S3])
+                use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
                 if use_S1S2.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE12)
                 if use_S3.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE3)
                 data[self.c.COLS.OWNED_EMISSIONS] = (data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]) * (
-                        use_S1S2*data[self.c.COLS.GHG_SCOPE12] + use_S3*data[self.c.COLS.GHG_SCOPE3])
+                        data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, 0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0))
             except ZeroDivisionError:
                 raise ValueError("To calculate the aggregation, the {} column may not be zero".format(value_column))
             owned_emissions = data[self.c.COLS.OWNED_EMISSIONS].sum()
 
             try:
                 # Calculate the MOTS value per company
-                return data.apply(
-                    lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
-                    axis=1
-                )
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    result = data.apply(
+                        lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
+                        axis=1)
+                return result
             except ZeroDivisionError:
                 raise ValueError("The total owned emissions can not be zero")
         else:

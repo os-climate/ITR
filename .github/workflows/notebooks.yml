@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - develop
   pull_request:
     branches:
       - main
+      - develop
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,11 +17,11 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: 3.9
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - uses: treebeardtech/treebeard@master
-        with:
-          use-docker: false
+          pip install .
+          pip install pytest nbmake
+      - run: pytest --nbmake examples/quick_temp_score_calculation.ipynb

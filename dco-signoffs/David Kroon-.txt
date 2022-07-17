@@ -1,0 +1,120 @@
+I, David Kroon hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: 35101727+dp90@users.noreply.github.com
+
+0f0c10224371e29a030a3b0329dcb4239eee8e6f Revert "Merge branch 'develop-logging' into develop"
+
+This reverts commit 487e7265e65dc619ce35aa4db9bbbac161909755, reversing
+changes made to 49e828699aa5153e82baee0eafbc6c664cc54da0.
+
+0b442ddc0e557e4bf21933fbb0df16e5235e7914 Update requirements.txt and conda env yaml
+
+acc693179f99f9d5c458b345b243d0d444f2c18d Fix some tests
+
+94c3a9820802e44dc1c2554ce60e6196f3f7c157 Attempt at cleanup, renaming, fixing tests
+
+580a27f4c735f09ccb9538353501fc3aa7993c5a Cleanup and fixing of some tests
+
+15af2645d8d38c89faa5329083811a7d45b277ce Add handling of absolute type target
+
+52cf25837ee9f5142d3f3265d588f686f5e37cd3 Add target projection based on emission intensity targets
+
+d02765099ff5ff86883d81cb204d70f81f3538a1 WIP Edit project_targets to handle Pydantic data
+
+8c9008bb0adbbfe445724b1724f584ebccd0d770 Add directory unit test workflow
+
+9ae24eb74c6df3f7fe64d567f5c3dc453618cfc5 Increase Python and Pandas versions
+
+1411a1d1c39ce8df5a60c62d2bb8473e31310c53 Fix GitHub unit test workflow
+
+d9967210591eababe42e13d63c2c79fb0bb5f80a Add GitHub workflow for running unit tests on pushes and PRs to main and develop
+
+7e55ce504fea94df83bd76f73cd7a00eefadb27c Add GitHub workflow for running unit tests on pushes and PRs to main and develop
+
+b3fcaa39e5a47b48aee1567f4843c8a97351f0b4 Add JSON company provider and test
+
+88cf0b263b0fde08d7d4a7dbc3ffe5d68c99553d Fix requirements
+
+66efb3ea4940cf5ee13f1049696fbf0c79faa4c1 Add run tests and notebook tests for pushes on develop
+
+6f9a866036d9cc1f4b2918c18f0cd97f90e3611a Remove unused imports
+
+6ceb0e57fd8b9cefedba5de955b9bb3d4551b33e Update notebook test
+
+612cadb918b63bd6ca009de8d4d7311c720e43d1 Update dependences for notebook test
+
+77cba42911964288c91bf591f319d6253292cd99 Update check notebook github action
+
+e1ddeaa20b55badb705608559c9980ed632a5f2a Update notebook check workflow to run on PR
+
+ab3ef272e749accf24f6284ddbb1283f1f870776 Update dependencies
+
+3d6ba467f5e397da99c326077d7aa47fce20a1c1 Compute temperature scores based on ITR method
+
+8bd01f0a22488848c0682c68f9f7619f54759089 Add current temp and budget to configs
+
+86255d04c12c9acb0bff26eb7c74e519da475c89 Move budgets to data provider data
+
+0965f624c7a047d156d8198d77ffaefb474f553a Update example budgets
+
+7c386b0580e30b75342f140096e62815d679564a Create example budgets
+
+2f7e19fdeeb08b9ffad210480784583bfd75e5d2 Add budget interface and remove unused code
+
+0f0c10224371e29a030a3b0329dcb4239eee8e6f Revert "Merge branch 'develop-logging' into develop"
+
+This reverts commit 487e7265e65dc619ce35aa4db9bbbac161909755, reversing
+changes made to 49e828699aa5153e82baee0eafbc6c664cc54da0.
+
+0b442ddc0e557e4bf21933fbb0df16e5235e7914 Update requirements.txt and conda env yaml
+
+acc693179f99f9d5c458b345b243d0d444f2c18d Fix some tests
+
+94c3a9820802e44dc1c2554ce60e6196f3f7c157 Attempt at cleanup, renaming, fixing tests
+
+580a27f4c735f09ccb9538353501fc3aa7993c5a Cleanup and fixing of some tests
+
+15af2645d8d38c89faa5329083811a7d45b277ce Add handling of absolute type target
+
+52cf25837ee9f5142d3f3265d588f686f5e37cd3 Add target projection based on emission intensity targets
+
+d02765099ff5ff86883d81cb204d70f81f3538a1 WIP Edit project_targets to handle Pydantic data
+
+8c9008bb0adbbfe445724b1724f584ebccd0d770 Add directory unit test workflow
+
+9ae24eb74c6df3f7fe64d567f5c3dc453618cfc5 Increase Python and Pandas versions
+
+1411a1d1c39ce8df5a60c62d2bb8473e31310c53 Fix GitHub unit test workflow
+
+d9967210591eababe42e13d63c2c79fb0bb5f80a Add GitHub workflow for running unit tests on pushes and PRs to main and develop
+
+7e55ce504fea94df83bd76f73cd7a00eefadb27c Add GitHub workflow for running unit tests on pushes and PRs to main and develop
+
+b3fcaa39e5a47b48aee1567f4843c8a97351f0b4 Add JSON company provider and test
+
+88cf0b263b0fde08d7d4a7dbc3ffe5d68c99553d Fix requirements
+
+66efb3ea4940cf5ee13f1049696fbf0c79faa4c1 Add run tests and notebook tests for pushes on develop
+
+6f9a866036d9cc1f4b2918c18f0cd97f90e3611a Remove unused imports
+
+6ceb0e57fd8b9cefedba5de955b9bb3d4551b33e Update notebook test
+
+612cadb918b63bd6ca009de8d4d7311c720e43d1 Update dependences for notebook test
+
+77cba42911964288c91bf591f319d6253292cd99 Update check notebook github action
+
+e1ddeaa20b55badb705608559c9980ed632a5f2a Update notebook check workflow to run on PR
+
+ab3ef272e749accf24f6284ddbb1283f1f870776 Update dependencies
+
+3d6ba467f5e397da99c326077d7aa47fce20a1c1 Compute temperature scores based on ITR method
+
+8bd01f0a22488848c0682c68f9f7619f54759089 Add current temp and budget to configs
+
+86255d04c12c9acb0bff26eb7c74e519da475c89 Move budgets to data provider data
+
+0965f624c7a047d156d8198d77ffaefb474f553a Update example budgets
+
+7c386b0580e30b75342f140096e62815d679564a Create example budgets
+
+2f7e19fdeeb08b9ffad210480784583bfd75e5d2 Add budget interface and remove unused code
+

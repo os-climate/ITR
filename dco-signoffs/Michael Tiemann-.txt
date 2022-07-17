@@ -1,0 +1,160 @@
+I, Michael Tiemann hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: 72577720+MichaelTiemannOSC@users.noreply.github.com
+
+f43a7822119867406a618bd7237ce4f37b4ce87b Update DataTemplateRequirements.rst
+
+Highlight math and code blocks with :math: and :code: for RST (makes backticks work as in markdown).
+76b677cebd7993c0a2f983fc5c0dfdc396fd1ca8 Update DataTemplateRequirements.rst
+
+Clarify that because repo is private, the GitHub token must include repo permissions.  Also clarify the pip install -e . syntax.
+869c56b90c82804c0b73424be26a699988680bf3 Update DataTemplateRequirements.rst
+
+Added info about filing issues and updating using git.
+4ebd878a9e696e8f2a63fe19b531784938813145 Update DataTemplateRequirements.rst
+
+More documentation updates with details about OSX installation and more details about git installation.
+1b4942f7059783c1a3765d59adbb15cd96089ee4 Update DataTemplateRequirements.rst
+
+Change directory before switching branch.
+ff440b36f620a98ba47200866e22303c59681433 Update DataTemplateRequirements.rst
+
+Clarified where user should be and where they should go to as they clone and configure the ITR environment.
+c36eb3fad8832624bb494ffc51e901b579fd7165 Update DataTemplateRequirements.rst
+
+Update documentation concerning multiple targets with the same target_start_year and target_end_year.  Also update documentation concerning multiple netzero_year targets.
+f90e5c88c043f5abdc46b1fe6e7d3b176e2f3fc9 Update DataTemplateRequirements.rst
+
+Finishing touches on installation validated by @MichaelTiemannOSC and @HeatherAck
+86f7d155478f78468147d0301c781832cff1705f Update DataTemplateRequirements.rst
+
+Add --no-cache-dir tidbit.
+734bf05374c4d539fceb6802241c71c2288910b3 Update DataTemplateRequirements.rst
+
+Add pip install -e . instruction.
+a1b0f7233cb492c0da5585b1ef8f2cd7c3feac33 Update DataTemplateRequirements.rst
+
+Changed bullets to numbers in installation instruction so we can communicate with users the step number they are attempting.
+3b62f90a01d5391228cfbb61414bc19e92ab72a0 Update DataTemplateRequirements.rst
+
+Add comment about Anaconda PowerShell.
+53766c9a76f4f54d1461c545f706cec280e4d5f5 Update DataTemplateRequirements.rst
+
+Added link to conda download.
+f83cc37386a1d704d9570bbda255b3a8b836d986 Update DataTemplateRequirements.rst
+
+Add missing colon for git clone instructions.
+fe0d4b79a24dddef69e65b487032dfd0a05f6737 Update DataTemplateRequirements.rst
+
+Give explicit git clone instructions.
+bad8f7eca9d0975f530667d6813c5be9d4ead0dc Update DataTemplateRequirements.rst
+
+Added line about switching to correct branch.
+5f4126bbe9d5690daf05908325652b4ec7e5f1ea Update DataTemplateRequirements.rst
+
+Changed URL syntax from markdown (which this file is not) to rst syntax (which this file is).
+4c6ebf0feef2e0a8563888bdc0fc79b4da410131 Update DataTemplateRequirements.rst
+
+Added some installation notes (TODO: fix fontawesome icon reference).
+afa470d1517800aaf7401ee6ee2e200e90001a0e Create Calculation.md
+
+Copied forward from file checked into main.  We'll deconflict when the PR is resolved.
+c97629eb896cd7a61367f1fd47645bdbc3f65273 Update DataTemplateRequirements.rst
+
+Fixed list markdowns so they render correctly.
+961a97ba42d1c1ae3b1ebdfa0c0a665d31bbe904 Update .gitignore
+
+4baf6cd1f504a64585e53c10320f5ea3fecf95b7 Update 20220215 ITR Tool Sample Data.xlsx
+
+Added targets and companies up to "First Energy Corp."
+
+b7dacc4604a34ff1a0a53d76725bbf9379ea44b4 Update 20220215 ITR Tool Sample Data.xlsx
+
+RMI data more consistent due to ALLETE corp hierarchy.  Difficult to see comparable Y-on-Y data from EEI.
+
+e2a5f8672feac5fbdd09586a95faa3c87bba8d75 Update requirements.txt
+
+We need iam-units, not necessarily openscm-units.  Should check import statements more carefully.
+127c26078fb17a9846cdb1f8f86b7a88b7c65317 Update requirements.txt
+
+Fix typo.
+cf926ea8498436418f202a27727625e00ac056ca Update requirements.txt
+
+Add Pint, Pint-Pandas, and openscm-units.
+f43a7822119867406a618bd7237ce4f37b4ce87b Update DataTemplateRequirements.rst
+
+Highlight math and code blocks with :math: and :code: for RST (makes backticks work as in markdown).
+76b677cebd7993c0a2f983fc5c0dfdc396fd1ca8 Update DataTemplateRequirements.rst
+
+Clarify that because repo is private, the GitHub token must include repo permissions.  Also clarify the pip install -e . syntax.
+869c56b90c82804c0b73424be26a699988680bf3 Update DataTemplateRequirements.rst
+
+Added info about filing issues and updating using git.
+4ebd878a9e696e8f2a63fe19b531784938813145 Update DataTemplateRequirements.rst
+
+More documentation updates with details about OSX installation and more details about git installation.
+1b4942f7059783c1a3765d59adbb15cd96089ee4 Update DataTemplateRequirements.rst
+
+Change directory before switching branch.
+ff440b36f620a98ba47200866e22303c59681433 Update DataTemplateRequirements.rst
+
+Clarified where user should be and where they should go to as they clone and configure the ITR environment.
+c36eb3fad8832624bb494ffc51e901b579fd7165 Update DataTemplateRequirements.rst
+
+Update documentation concerning multiple targets with the same target_start_year and target_end_year.  Also update documentation concerning multiple netzero_year targets.
+f90e5c88c043f5abdc46b1fe6e7d3b176e2f3fc9 Update DataTemplateRequirements.rst
+
+Finishing touches on installation validated by @MichaelTiemannOSC and @HeatherAck
+86f7d155478f78468147d0301c781832cff1705f Update DataTemplateRequirements.rst
+
+Add --no-cache-dir tidbit.
+734bf05374c4d539fceb6802241c71c2288910b3 Update DataTemplateRequirements.rst
+
+Add pip install -e . instruction.
+a1b0f7233cb492c0da5585b1ef8f2cd7c3feac33 Update DataTemplateRequirements.rst
+
+Changed bullets to numbers in installation instruction so we can communicate with users the step number they are attempting.
+3b62f90a01d5391228cfbb61414bc19e92ab72a0 Update DataTemplateRequirements.rst
+
+Add comment about Anaconda PowerShell.
+53766c9a76f4f54d1461c545f706cec280e4d5f5 Update DataTemplateRequirements.rst
+
+Added link to conda download.
+f83cc37386a1d704d9570bbda255b3a8b836d986 Update DataTemplateRequirements.rst
+
+Add missing colon for git clone instructions.
+fe0d4b79a24dddef69e65b487032dfd0a05f6737 Update DataTemplateRequirements.rst
+
+Give explicit git clone instructions.
+bad8f7eca9d0975f530667d6813c5be9d4ead0dc Update DataTemplateRequirements.rst
+
+Added line about switching to correct branch.
+5f4126bbe9d5690daf05908325652b4ec7e5f1ea Update DataTemplateRequirements.rst
+
+Changed URL syntax from markdown (which this file is not) to rst syntax (which this file is).
+4c6ebf0feef2e0a8563888bdc0fc79b4da410131 Update DataTemplateRequirements.rst
+
+Added some installation notes (TODO: fix fontawesome icon reference).
+afa470d1517800aaf7401ee6ee2e200e90001a0e Create Calculation.md
+
+Copied forward from file checked into main.  We'll deconflict when the PR is resolved.
+c97629eb896cd7a61367f1fd47645bdbc3f65273 Update DataTemplateRequirements.rst
+
+Fixed list markdowns so they render correctly.
+961a97ba42d1c1ae3b1ebdfa0c0a665d31bbe904 Update .gitignore
+
+4baf6cd1f504a64585e53c10320f5ea3fecf95b7 Update 20220215 ITR Tool Sample Data.xlsx
+
+Added targets and companies up to "First Energy Corp."
+
+b7dacc4604a34ff1a0a53d76725bbf9379ea44b4 Update 20220215 ITR Tool Sample Data.xlsx
+
+RMI data more consistent due to ALLETE corp hierarchy.  Difficult to see comparable Y-on-Y data from EEI.
+
+e2a5f8672feac5fbdd09586a95faa3c87bba8d75 Update requirements.txt
+
+We need iam-units, not necessarily openscm-units.  Should check import statements more carefully.
+127c26078fb17a9846cdb1f8f86b7a88b7c65317 Update requirements.txt
+
+Fix typo.
+cf926ea8498436418f202a27727625e00ac056ca Update requirements.txt
+
+Add Pint, Pint-Pandas, and openscm-units.

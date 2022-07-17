@@ -17,22 +17,19 @@ requires several types of data.
    -  Target data: information about GHG emissions reduction targets set
       by individual companies.
 
--  SBTi status of the companies invested in (i.e. whether these
-   companies have targets approved by the SBTi or not).
+
 
 Portfolio data
 --------------
 
-When using the SBTi-Finance Tool for Temperature Scoring and Portfolio
+When using the ITR-Finance Tool for Temperature Scoring and Portfolio
 Coverage, the user needs to supply information about the portfolio. This
 must be a list of all investee companies on a security level, including
 name, identifiers, ISIN codes, and the value invested in each individual
 company. The company identifier is used to link the data from the
 portfolio, the fundamental data and the reported targets to each other.
 This can be any identifier the user wants to deploy, if the same
-identifier is used in all files. The ISIN codes are required to
-determine the SBTi status of the companies to calculate the Portfolio
-Coverage.
+identifier is used in all files. 
 See :download:`portfolio data template <PortfolioTemplate.xlsx>` for an example portfolio file.
 
 For additional analyses, you can supplement this data with additional
@@ -118,18 +115,5 @@ currently lacks consensus in reporting method. For the tool, all
 intensity metrics have to be mapped to one of eight categories. Please
 refer to the **[link to guidance]** for more detail on how to do this.
 
-SBTi status
------------
-
-The SBTi status of a company indicates whether or not the company has
-set a science based target has been approved by the SBTi. This tool uses
-the Excel file that is generated when pressing the download button
-`here <http://ttps://sciencebasedtargets.org/companies-taking-action/>`__.
-This list is updated weekly, to ensure your list is up to date, the user
-can download the latest list from the SBTi site here:
-https://sciencebasedtargets.org/companies-taking-action/ and replace the
-Excel file in the tool with the downloaded file. To do this go to
-..\\SBTi\\inputs directory and replace the
-*current-Companies-Taking-Action-xxx.xslx* file with the newer file.
 
 

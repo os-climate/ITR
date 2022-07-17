@@ -1,0 +1,226 @@
+I, MichaelTiemannOSC hereby sign-off-by all of my past commits to this repo subject to the Developer Certificate of Origin (DCO), Version 1.1. In the past I have used emails: mtiemann@os-climate.org
+
+ced3bc6c4ce2e9a9ee8cdd5e44f98fa50aa0414b Update to latest input spreadsheet
+
+97e12f300f5023f5fc434f8471ec667bd479ba13 Update sample input with more/better S1, S2, and S3 data
+
+Prepare for handling actual scope data rather than just presuming everything is S1+S2.  These changes don't implement that yet, but the sample data is now updated with better RMI and Steel data to do just that.
+
+19654171881bae65982dcd4f582dbac8ccf55cad Initial commit
+
+03061597baaf786ef152226357b8d10b2de3ac22 Properly update json input file
+
+0f046c22298c14bfacc0a9cc1b06231a6664c4fa Broad reconciliation of changes to present a fresh basis for review
+
+Having explored many ways to NOT do things with Pydantic, things are now closer to the starting point, while passing tests (as much as possible given the testing framework problems with pint).  Should be a good starting point for review/discussions.
+
+2c2dbd6a486eb2e376604d248f12f71193537784 WIP checkin of Excel functionality
+
+This doesn't entirely work yet, in part because of problems reported in https://github.com/os-c/ITR/issues/19
+
+7f21716a401678747e7e63d5dcb0ba50be942a93 Complete refactorization/simplification for polymorphic production types
+
+Have not fixed refactorization for Excel test case.  But otherwise should be ready for full review.
+
+a2b88da64a657f08b3140bc1ee87ca1ad5baea53 Remove commented print statements
+
+Create a clean check-in for reference.
+
+e7f3abb719cd1f57d0455ce7fbaa6ca03be74ed0 Update with fresh run that starts from [1] (for real)
+
+5d43781e2e713e2a9ba420ea4aa7e3b20002d793 Update with fresh run that starts from [1]
+
+6b062e7652343ca108550d831d97a8813fc259c0 Fix up ghg_s1s2 handling for excel reader
+
+This is really only for testing purposes anyway.  Remaining task is dealing with OECM benchmark spreadsheets (json already works).
+
+c0a4d7abe15e2c43c0a06c866ce81c1b619802f8 WIP reconciliation
+
+Simple reconciliation of some json input files and test harness files.  One more big fix needed.
+
+4831d74c3d00d944ee97037a22272d8418d28c3f Remove errant print statement
+
+98728b23759d21278dc042276aadbe1e8e240278 WIP check-in.  Only test_base_providers works so far
+
+WIP is sufficient for first round of discussions.  More work to be done to get other test cases working, but what that works should be will determine how much of what work should be done.
+
+cf22ab2a479d91efef9e065668eac8bd140594fe Temperature scores working...PR is ready for review
+
+I sorted the problems with temperature scores and modified both input data and unit tests to work as well as can be (given outstanding issue of the test suite and pint_pandas not being too happy about the current idioms we are using).
+
+There's much to think about in this PR.  Happy to answer questions / write up docs if/when we're ready to move forward.
+
+b40a2916733b3c6067f28ebda964903492a2b87e Add units to csv ingest and test cases
+
+905da18cc1bb2208bdb978efc43a297d9899a416 Sorted units problem in excel test (MWh vs GJ)
+
+The test_data_company.xlsx file has intensities given in t CO2/GJ, whereas in the JSON files they are given in t CO2/MWh.
+
+Also, disabled some print statements so that things look clean when run.
+
+Still confused about temperature score calculation.  But everything else behaving OK.
+
+4a2d79718cc86b1a69aaa8dc0af5ac1f5896b8e2 Reconcile test_excel unit test + unittest meta test
+
+There remains an outstanding temperature score problem, but other problems seem to be resolved down to the level of what the test suite can see
+
+Added unittest_vs_pint notebook to illustrate the aforementioned limitation.
+
+78f666dd02ffe715f73ec9f2509e8c7b21a1f91b WIP: 5/6 test cases working
+
+I have commented an issue concerning unittest vs. pint_pandas here: https://github.com/hgrecco/pint-pandas/issues/26.  When that has resolved we should see that 5/6 assertion failures are actually good.
+
+There remains a problem with the temperature score calculation.  That's next...
+
+8249d82137068f75bef9d11d0c0f5a4ea77eca7c Reconcile latest changes with notebook
+
+Fix notebook failures identified by CI.  Still work to do...
+
+5a70c4ae7e7287e401668889d5e0011bb1431b45 Initial commit
+
+Provide interfaces necessary to initialize Pydantic pint things.
+
+412ddd8ba1c2525e05eb69c43d5ce181481219ac WIP Checkin
+
+This check-in now passes 2/6 tests and gets a third test correct (but testing framework is not pint-friendly).  3 more failures to go, but lots of progress since initial PR.  More to come...
+
+3d3dfa41d5337f7e270d1884c22353d62eb27f0f Fix lingering degC vs. delta_degC units
+
+Upon reflection, we are dealing *only* with delta_degC units.  We are still seeing strange results, so more investigations are needed.
+
+d97036aabafd2f0d7eab3efe6df13ce6b9cc04a1 First end-to-end runthrough of "quick_temp_score" notebook
+
+This changeset provides the unit-tracking ability of `Pint` for temperature scores.  Technically, we are tracking delta_degC not degC.  And with that realization, there's probably some parts of the changes that can be made simpler (because there are many math operations one cannot do with degC that one can do with delta_degC).  We leave that as an exercise for the reader.
+
+It's also quite likely that some legit math errors have crept in that need to be chased out--nowhere does the documentation tell us what the units are in the data.  But sorting that should be the easy part.
+
+This branch is completely orthogonal to the rmi data branch.  I did need to borrow one bugfix from there, but that's a separate world (especially considering the data units there are almost certainly different than the data units in this branch).
+
+f4568db1ac0c8ca8949e48bbc3ef30325675e195 WIP -- almost complete, except for aggregation
+
+Temperature aggregation is non-trivial, because pint is very particular about the concept of adding temperatures, generally.  We will address that next.
+
+This changeset includes some obvious fixes to units (e.g. data was reported in tons CO2, not Mt CO2).
+
+Also adjusted code to accep the fact that as far as  the test dataset goes, data labeled protected_target, which by all rights should be t CO2, is in this case some kind of reverse-engineered emissions intensity.  We'll discuss and decide what to do about that.
+
+Also removed many print statements no longer needed.
+
+41ae59366cd64c0d3f34ced738e475db176024c1 Latest WIP checkpoint
+
+We are now to the point where pint is raising questions about way our equations are using their units.  We know that the two ratios (target_overshoot_ratio and trajectory_overshoot_ratio) should be dimensionless, but there seems to be some confusion between emissions production and emissions intensity along the way...
+
+fa61110e0e3dce3c6a3fe034785222a044a5bb46 WIP Checkpoint
+
+ced3bc6c4ce2e9a9ee8cdd5e44f98fa50aa0414b Update to latest input spreadsheet
+
+97e12f300f5023f5fc434f8471ec667bd479ba13 Update sample input with more/better S1, S2, and S3 data
+
+Prepare for handling actual scope data rather than just presuming everything is S1+S2.  These changes don't implement that yet, but the sample data is now updated with better RMI and Steel data to do just that.
+
+19654171881bae65982dcd4f582dbac8ccf55cad Initial commit
+
+03061597baaf786ef152226357b8d10b2de3ac22 Properly update json input file
+
+0f046c22298c14bfacc0a9cc1b06231a6664c4fa Broad reconciliation of changes to present a fresh basis for review
+
+Having explored many ways to NOT do things with Pydantic, things are now closer to the starting point, while passing tests (as much as possible given the testing framework problems with pint).  Should be a good starting point for review/discussions.
+
+2c2dbd6a486eb2e376604d248f12f71193537784 WIP checkin of Excel functionality
+
+This doesn't entirely work yet, in part because of problems reported in https://github.com/os-c/ITR/issues/19
+
+7f21716a401678747e7e63d5dcb0ba50be942a93 Complete refactorization/simplification for polymorphic production types
+
+Have not fixed refactorization for Excel test case.  But otherwise should be ready for full review.
+
+a2b88da64a657f08b3140bc1ee87ca1ad5baea53 Remove commented print statements
+
+Create a clean check-in for reference.
+
+e7f3abb719cd1f57d0455ce7fbaa6ca03be74ed0 Update with fresh run that starts from [1] (for real)
+
+5d43781e2e713e2a9ba420ea4aa7e3b20002d793 Update with fresh run that starts from [1]
+
+6b062e7652343ca108550d831d97a8813fc259c0 Fix up ghg_s1s2 handling for excel reader
+
+This is really only for testing purposes anyway.  Remaining task is dealing with OECM benchmark spreadsheets (json already works).
+
+c0a4d7abe15e2c43c0a06c866ce81c1b619802f8 WIP reconciliation
+
+Simple reconciliation of some json input files and test harness files.  One more big fix needed.
+
+4831d74c3d00d944ee97037a22272d8418d28c3f Remove errant print statement
+
+98728b23759d21278dc042276aadbe1e8e240278 WIP check-in.  Only test_base_providers works so far
+
+WIP is sufficient for first round of discussions.  More work to be done to get other test cases working, but what that works should be will determine how much of what work should be done.
+
+cf22ab2a479d91efef9e065668eac8bd140594fe Temperature scores working...PR is ready for review
+
+I sorted the problems with temperature scores and modified both input data and unit tests to work as well as can be (given outstanding issue of the test suite and pint_pandas not being too happy about the current idioms we are using).
+
+There's much to think about in this PR.  Happy to answer questions / write up docs if/when we're ready to move forward.
+
+b40a2916733b3c6067f28ebda964903492a2b87e Add units to csv ingest and test cases
+
+905da18cc1bb2208bdb978efc43a297d9899a416 Sorted units problem in excel test (MWh vs GJ)
+
+The test_data_company.xlsx file has intensities given in t CO2/GJ, whereas in the JSON files they are given in t CO2/MWh.
+
+Also, disabled some print statements so that things look clean when run.
+
+Still confused about temperature score calculation.  But everything else behaving OK.
+
+4a2d79718cc86b1a69aaa8dc0af5ac1f5896b8e2 Reconcile test_excel unit test + unittest meta test
+
+There remains an outstanding temperature score problem, but other problems seem to be resolved down to the level of what the test suite can see
+
+Added unittest_vs_pint notebook to illustrate the aforementioned limitation.
+
+78f666dd02ffe715f73ec9f2509e8c7b21a1f91b WIP: 5/6 test cases working
+
+I have commented an issue concerning unittest vs. pint_pandas here: https://github.com/hgrecco/pint-pandas/issues/26.  When that has resolved we should see that 5/6 assertion failures are actually good.
+
+There remains a problem with the temperature score calculation.  That's next...
+
+8249d82137068f75bef9d11d0c0f5a4ea77eca7c Reconcile latest changes with notebook
+
+Fix notebook failures identified by CI.  Still work to do...
+
+5a70c4ae7e7287e401668889d5e0011bb1431b45 Initial commit
+
+Provide interfaces necessary to initialize Pydantic pint things.
+
+412ddd8ba1c2525e05eb69c43d5ce181481219ac WIP Checkin
+
+This check-in now passes 2/6 tests and gets a third test correct (but testing framework is not pint-friendly).  3 more failures to go, but lots of progress since initial PR.  More to come...
+
+3d3dfa41d5337f7e270d1884c22353d62eb27f0f Fix lingering degC vs. delta_degC units
+
+Upon reflection, we are dealing *only* with delta_degC units.  We are still seeing strange results, so more investigations are needed.
+
+d97036aabafd2f0d7eab3efe6df13ce6b9cc04a1 First end-to-end runthrough of "quick_temp_score" notebook
+
+This changeset provides the unit-tracking ability of `Pint` for temperature scores.  Technically, we are tracking delta_degC not degC.  And with that realization, there's probably some parts of the changes that can be made simpler (because there are many math operations one cannot do with degC that one can do with delta_degC).  We leave that as an exercise for the reader.
+
+It's also quite likely that some legit math errors have crept in that need to be chased out--nowhere does the documentation tell us what the units are in the data.  But sorting that should be the easy part.
+
+This branch is completely orthogonal to the rmi data branch.  I did need to borrow one bugfix from there, but that's a separate world (especially considering the data units there are almost certainly different than the data units in this branch).
+
+f4568db1ac0c8ca8949e48bbc3ef30325675e195 WIP -- almost complete, except for aggregation
+
+Temperature aggregation is non-trivial, because pint is very particular about the concept of adding temperatures, generally.  We will address that next.
+
+This changeset includes some obvious fixes to units (e.g. data was reported in tons CO2, not Mt CO2).
+
+Also adjusted code to accep the fact that as far as  the test dataset goes, data labeled protected_target, which by all rights should be t CO2, is in this case some kind of reverse-engineered emissions intensity.  We'll discuss and decide what to do about that.
+
+Also removed many print statements no longer needed.
+
+41ae59366cd64c0d3f34ced738e475db176024c1 Latest WIP checkpoint
+
+We are now to the point where pint is raising questions about way our equations are using their units.  We know that the two ratios (target_overshoot_ratio and trajectory_overshoot_ratio) should be dimensionless, but there seems to be some confusion between emissions production and emissions intensity along the way...
+
+fa61110e0e3dce3c6a3fe034785222a044a5bb46 WIP Checkpoint
+
