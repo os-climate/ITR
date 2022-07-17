@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setup(
     name='ITR',
-    version='0.1',
-    description='This package helps companies and financial institutions to assess the temperature alignment of current'
-                'targets, commitments, and investment and lending portfolios.',
+    version='1.0.0',
+    description='Assess the temperature alignment of current targets, commitments, and investment '
+                'and lending portfolios.',
     long_description=long_description,
     long_description_content_type="text/markdown",
     author='Ortec Finance',

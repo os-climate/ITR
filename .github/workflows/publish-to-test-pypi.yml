@@ -2,9 +2,9 @@ name: Publish Python distributions to PyPI and TestPyPI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   build-n-publish:
