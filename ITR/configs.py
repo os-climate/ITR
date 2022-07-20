@@ -91,6 +91,7 @@ class SectorsConfig:
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
     AUTOMOBILE = "Autos"
+    OIL_AND_GAS = "Oil & Gas"
 
     @classmethod
     def get_configured_sectors(cls) -> List[str]:
@@ -98,7 +99,7 @@ class SectorsConfig:
         Get a list of sectors configured in the tool.
         :return: A list of sectors string values
         """
-        return [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY, SectorsConfig.AUTOMOBILE]
+        return [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY, SectorsConfig.AUTOMOBILE, SectorsConfig.OIL_AND_GAS]
 
 
 class VariablesConfig:

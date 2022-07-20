@@ -5,6 +5,13 @@ This module handles initialization of pint functionality
 from pint import set_application_registry, Quantity
 from pint_pandas import PintArray, PintType
 from openscm_units import unit_registry
+
+# openscm_units doesn't make it easy to set preprocessors.  This is one way to do it.
+unit_registry.preprocessors=[
+     lambda s1: s1.replace('passenger km', 'passenger_km'),
+     lambda s2: s2.replace('BoE', 'boe'),
+]
+
 PintType.ureg = unit_registry
 ureg = unit_registry
 set_application_registry(ureg)
@@ -13,6 +20,7 @@ PA_ = PintArray
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 ureg.define("Fe_ton = [produced_ton]")
+ureg.define("passenger_km = nan km")
 
 # These are for later
 ureg.define('fraction = [] = frac')
