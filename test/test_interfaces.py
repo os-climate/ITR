@@ -5,7 +5,7 @@ import pandas as pd
 
 from ITR.data.osc_units import ureg, Q_, PA_
 
-from ITR.interfaces import EScope, PowerGeneration, IntensityMetric, IProjection, IBenchmark, ICompanyData, \
+from ITR.interfaces import EScope, ProductionMetric, IntensityMetric, IProjection, IBenchmark, ICompanyData, \
     ICompanyEIProjectionsScopes, ICompanyEIProjections, ITargetData
 
 
@@ -22,9 +22,9 @@ class TestInterfaces(unittest.TestCase):
     def test_Escope(self):
         self.assertEqual(EScope.get_result_scopes(), [EScope.S1S2, EScope.S3, EScope.S1S2S3])
 
-    def test_PowerGeneration(self):
-        x = PowerGeneration(units='MWh')
-        print(f"\n PowerGeneration: x.units = {x.units}\n\n")
+    def test_ProductionMetric(self):
+        x = ProductionMetric(units='MWh')
+        print(f"\n ProductionMetric(units='MWh'): x.units = {x.units}\n\n")
 
     def test_IProjection(self):
         row = pd.Series([0.9, 0.8, 0.7],
