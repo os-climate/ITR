@@ -15,32 +15,18 @@ class PintModel(BaseModel):
         arbitrary_types_allowed = True
 
 
-class PowerGeneration(BaseModel):
-    units: str 
-    @validator('units')
-    def unit_must_be_energy(cls, v):
-        qty = Q_(1, v)
-        if qty.is_compatible_with("Wh"):
-            return v
-        raise ValueError(f"cannot convert {v} to Wh")
-
-class ManufactureSteel(BaseModel):
-    units: str 
-    @validator('units')
-    def units_must_be_Fe_ton(cls, v):
-        qty = Q_(1, v)
-        if qty.is_compatible_with("Fe_Ton"):
-            return v
-        raise ValueError(f"cannot convert {v} to Fe_ton")
-
 class ProductionMetric(BaseModel):
     units: str
     @validator('units')
     def unit_must_be_production(cls, v):
-        qty = Q_(1, v)
+        qty = ureg(v)
         if qty.is_compatible_with("Wh"):
             return v
         if qty.is_compatible_with("Fe_ton"):
+            return v
+        if qty.is_compatible_with("passenger_km"):
+            return qty.u
+        if qty.is_compatible_with("boe"):
             return v
         raise ValueError(f"cannot convert {v} to units of production")
 
@@ -50,51 +36,26 @@ class EmissionsMetric(BaseModel):
     units: str
     @validator('units')
     def units_must_be_tCO2(cls, v):
-        qty = Q_(1, v)
+        qty = ureg(v)
         if qty.is_compatible_with("t CO2"):
             return v
         raise ValueError(f"cannot convert {v} to t CO2")
 
 
-class EmissionsIntensity_PowerGeneration(BaseModel):
-    units: str 
-    @validator('units')
-    def units_must_be_EI(cls, v):
-        qty = Q_(1, v)
-        if qty.is_compatible_with("t CO2/MWh"):
-            return v
-        raise ValueError(f"cannot convert {v} to t CO2/energy")
-
-class EmissionsIntensity_ManufactureAuto(BaseModel):
-    units: str 
-    @validator('units')
-    def units_must_be_EI(cls, v):
-        qty = Q_(1, v)
-        if qty.is_compatible_with("g CO2/km"):
-            return v
-        raise ValueError(f"cannot convert {v} to g CO2/km")
-
-class EmissionsIntensity_ManufactureSteel(BaseModel):
-    units: str 
-    @validator('units')
-    def units_must_be_EI(cls, v):
-        qty = Q_(1, v)
-        if qty.is_compatible_with("t CO2/Fe_ton"):
-            return v
-        raise ValueError(f"cannot convert {v} to t CO2/Fe_ton")
-
 class IntensityMetric(BaseModel):
     units: str 
     @validator('units')
     def units_must_be_EI(cls, v):
-        qty = Q_(1, v)
+        qty = ureg(v)
         if qty.is_compatible_with("t CO2/MWh"):
             return v
         if qty.is_compatible_with("t CO2/Fe_ton"):
             return v
-        if qty.is_compatible_with("g CO2/km"):
+        if qty.is_compatible_with("g CO2/passenger_km"):
+            return qty.u
+        if qty.is_compatible_with("kg CO2/boe"):
             return v
-        raise ValueError(f"cannot convert {v} to t CO2/Fe_ton")
+        raise ValueError(f"cannot convert {v} to known t CO2/production unit")
 
 
 class DimensionlessNumber(BaseModel):
