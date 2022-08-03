@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='ITR',
-    version='1.0.0',
+    version='1.0.1',
     description='Assess the temperature alignment of current targets, commitments, and investment '
                 'and lending portfolios.',
     long_description=long_description,
@@ -38,7 +38,7 @@ setup(
                       'wheel>=0.36.2',
                       'xlrd>=2.0.1',
                       ],
-    python_requires='>=3.9',
+    python_requires='>=3.8',
     extras_require={
         'dev': [
             'nose2',
@@ -54,6 +54,7 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3 :: Only",
