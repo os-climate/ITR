@@ -343,15 +343,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             logger.error(error_message)
             raise ValueError(error_message)
 
-        # There has got to be a better way to do this...
-        historic_data = (
-            historic_data.loc[company_ids, :]
-                .apply(lambda x: pd.Series({col: x[col] for col in x.index if type(col) != int}
-                                           | {y: f"{x[y]} {x['units']}" for y in self.historic_years},
-                                           index=x.index),
-                       axis=1)
-        )
-        return historic_data
+        for year in self.historic_years:
+            historic_data[year] = historic_data[year].map(str) + " " + historic_data['units']
+        return historic_data.loc[company_ids]
 
     def _convert_historic_data(self, historic: pd.DataFrame) -> IHistoricData:
         """
