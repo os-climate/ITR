@@ -134,6 +134,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_historic = df_fundamentals[['company_id'] + historic_columns].dropna(axis=1, how='all')
         df_fundamentals = df_fundamentals[df_fundamentals.columns.difference(historic_columns, sort=False)]
 
+        # Checking missing company ids
+        missing_company_ids = df_fundamentals[ColumnsConfig.COMPANY_ID].isnull().any()
+        if missing_company_ids:
+            error_message = "Missing company ids"
+            logger.error(error_message)
+            raise ValueError(error_message)
+
         # Checking if there are not many missing market cap
         missing_cap_ids = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].isnull()].to_list()
         # For the missing Market Cap we should use the ratio below to get dummy market cap:
