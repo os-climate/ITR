@@ -288,7 +288,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError:
-                logger.error(f"(One of) the input(s) of company {company_data['company_name']} is invalid")
+                logger.error(f"(One of) the input(s) of company with ID {company_id} is invalid")
                 raise
         return model_companies
 
