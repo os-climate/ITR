@@ -2,6 +2,7 @@ import os
 import unittest
 
 import pandas as pd
+from pint import Quantity
 
 from ITR.data.osc_units import ureg, Q_, PA_
 
@@ -59,6 +60,165 @@ class TestInterfaces(unittest.TestCase):
             base_year_production=71500001.3960884,
             company_revenue=7370536918
         )
+
+    def test_ICompanyData_S1S2(self):
+        exp_s1 = 1234
+        exp_s2 = 5678
+        exp_s1s2 = exp_s1 + exp_s2
+
+        # Test saving S1S2 from args
+        cd = ICompanyData(
+            company_name = "cd1",
+            company_id = 1,
+            region = "Somewhere",
+            sector = "Steel",
+            ghg_s1s2=exp_s1s2,
+        )
+        self.assertEqual(cd.ghg_s1, None)
+        self.assertEqual(cd.ghg_s2, None)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+
+        # Test saving S1, S2 from args
+        cd = ICompanyData(
+            company_name = "cd2",
+            company_id = 2,
+            region = "Somewhere",
+            sector = "Steel",
+            ghg_s1=exp_s1,
+            ghg_s2=exp_s2,
+        )
+        self.assertEqual(cd.ghg_s1.magnitude, exp_s1)
+        self.assertEqual(cd.ghg_s2.magnitude, exp_s2)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+
+        # Test saving S1S2 from history
+        hd = {'emissions' : {
+            'S1' : [ ],
+            'S2' : [ ],
+            'S1S2' : [{'year' : 2022, 'value' : Quantity(value = exp_s1s2)}],
+            'S3' : [ ],
+            'S1S2S3': [ ],
+            }}
+        cd = ICompanyData(
+            company_name = "cd3",
+            company_id = 3,
+            region = "Somewhere",
+            sector = "Steel",
+            historic_data = hd,
+        )
+        self.assertEqual(cd.ghg_s1, None)
+        self.assertEqual(cd.ghg_s2, None)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+
+        # Test saving S1, S2 from history
+        hd = {'emissions' : {
+            'S1' : [{'year' : 2022, 'value' : Quantity(value = exp_s1)}],
+            'S2' : [{'year' : 2022, 'value' : Quantity(value = exp_s2)}],
+            'S1S2' : [ ],
+            'S3' : [ ],
+            'S1S2S3': [ ],
+            }}
+        cd = ICompanyData(
+            company_name = "cd4",
+            company_id = 4,
+            region = "Somewhere",
+            sector = "Steel",
+            historic_data = hd,
+        )
+        self.assertEqual(cd.ghg_s1.magnitude, exp_s1)
+        self.assertEqual(cd.ghg_s2.magnitude, exp_s2)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+
+        # Test priority of S1, S2 over S1S2, in args
+        cd = ICompanyData(
+            company_name = "cd5",
+            company_id = 5,
+            region = "Somewhere",
+            sector = "Steel",
+            ghg_s1=exp_s1,
+            ghg_s2=exp_s2,
+            ghg_s1s2=8888,
+        )
+        self.assertEqual(cd.ghg_s1.magnitude, exp_s1)
+        self.assertEqual(cd.ghg_s2.magnitude, exp_s2)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+
+        # Test priority of S1, S2 over S1S2, in history
+        hd = {'emissions' : {
+            'S1' : [{'year' : 2022, 'value' : Quantity(value = exp_s1)}],
+            'S2' : [{'year' : 2022, 'value' : Quantity(value = exp_s2)}],
+            'S1S2' : [{'year' : 2022, 'value' : Quantity(value = 8888)}],
+            'S3' : [ ],
+            'S1S2S3': [ ],
+            }}
+        cd = ICompanyData(
+            company_name = "cd6",
+            company_id = 6,
+            region = "Somewhere",
+            sector = "Steel",
+            historic_data = hd,
+        )
+        self.assertEqual(cd.ghg_s1.magnitude, exp_s1)
+        self.assertEqual(cd.ghg_s2.magnitude, exp_s2)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+
+        # Test priority of args over history
+        hd = {'emissions' : {
+            'S1' : [ ],
+            'S2' : [ ],
+            'S1S2' : [{'year' : 2022, 'value' : Quantity(value = 8888)}],
+            'S3' : [ ],
+            'S1S2S3': [ ],
+            }}
+        cd = ICompanyData(
+            company_name = "cd7",
+            company_id = 7,
+            region = "Somewhere",
+            sector = "Steel",
+            historic_data = hd,
+            ghg_s1s2=exp_s1s2,
+        )
+        self.assertEqual(cd.ghg_s1, None)
+        self.assertEqual(cd.ghg_s2, None)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+
+    def test_ICompanyData_S3(self):
+        exp_s1s2 = 1234
+        exp_s3 = 5678
+
+        # Test saving S3 from args
+        cd = ICompanyData(
+            company_name = "cd1",
+            company_id = 1,
+            region = "Somewhere",
+            sector = "Steel",
+            ghg_s1s2=exp_s1s2,
+            ghg_s3=exp_s3,
+        )
+        self.assertEqual(cd.ghg_s1, None)
+        self.assertEqual(cd.ghg_s2, None)
+        self.assertEqual(cd.ghg_s1s2.magnitude, exp_s1s2)
+        self.assertEqual(cd.ghg_s3.magnitude, exp_s3)
+
+        # Test saving S3 from history
+        hd = {'emissions' : {
+            'S1' : [ ],
+            'S2' : [ ],
+            'S1S2' : [ ],
+            'S3' : [ {'year' : 2022, 'value' : Quantity(value = exp_s3)} ],
+            'S1S2S3': [ ],
+            }}
+        cd = ICompanyData(
+            company_name = "cd3",
+            company_id = 3,
+            region = "Somewhere",
+            sector = "Steel",
+            ghg_s1s2=exp_s1s2,
+            historic_data = hd,
+        )
+        self.assertEqual(cd.ghg_s1, None)
+        self.assertEqual(cd.ghg_s2, None)
+        self.assertEqual(cd.ghg_s3.magnitude, exp_s3)
 
     def test_ITargetData(self):
         target_data = ITargetData(

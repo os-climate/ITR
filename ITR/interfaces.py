@@ -445,8 +445,10 @@ class ICompanyData(PintModel):
     emissions_metric: Optional[EmissionsMetric]    # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
     production_metric: Optional[ProductionMetric]  # Optional because it can be inferred from sector and region
     
-    # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
+    # These instance variables match against financial data below, but are incomplete as historic_data and target_data
     base_year_production: Optional[Quantity[ProductionMetric]]
+    ghg_s1: Optional[Quantity[EmissionsMetric]]
+    ghg_s2: Optional[Quantity[EmissionsMetric]]
     ghg_s1s2: Optional[Quantity[EmissionsMetric]]
     ghg_s3: Optional[Quantity[EmissionsMetric]]
 
@@ -569,7 +571,7 @@ class ICompanyData(PintModel):
         return valid_realizations[0]
 
     def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None, emissions_metric=None,
-                 production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
+                 production_metric=None, base_year_production=None, ghg_s1=None, ghg_s2=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
         super().__init__(historic_data=self._fixup_historic_data(historic_data, production_metric, emissions_metric, kwargs.get('sector')),
                          # Not necessarily initialized here; may be fixed up if initially None after benchmark info is set
                          projected_targets=self._fixup_ei_projections(projected_targets, production_metric, emissions_metric, kwargs.get('sector')),
@@ -605,37 +607,61 @@ class ICompanyData(PintModel):
         else:
             # raise ValueError(f"missing historic data for base_year_production for {self.company_name}")
             self.base_year_production = Q_(np.nan, self.production_metric.units)
+
+        # load scopes from arguments
+        if ghg_s1:
+            self.ghg_s1 = pint_ify(ghg_s1, self.emissions_metric.units)
+        if ghg_s2:
+            self.ghg_s2 = pint_ify(ghg_s2, self.emissions_metric.units)
         if ghg_s1s2:
             self.ghg_s1s2=pint_ify(ghg_s1s2, self.emissions_metric.units)
-        elif self.historic_data and self.historic_data.emissions:
-            if self.historic_data.emissions.S1S2:
+        if ghg_s3:
+            self.ghg_s3 = pint_ify(ghg_s3, self.emissions_metric.units)
+
+        # if scopes not provided - try to load from historic data
+        if self.historic_data and self.historic_data.emissions:
+            if not self.ghg_s1 and self.historic_data.emissions.S1:
+                base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S1, self.emissions_metric.units, base_year)
+                base_year = base_year or base_realization.year
+                self.ghg_s1 = base_realization.value
+
+            if not self.ghg_s2 and self.historic_data.emissions.S2:
+                base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S2, self.emissions_metric.units, base_year)
+                base_year = base_year or base_realization.year
+                self.ghg_s2 = base_realization.value
+
+            if not self.ghg_s1s2 and self.historic_data.emissions.S1S2:
                 base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S1S2, self.emissions_metric.units, base_year)
                 base_year = base_year or base_realization.year
                 self.ghg_s1s2 = base_realization.value
-            elif self.historic_data.emissions.S1 and self.historic_data.emissions.S2:
-                base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions.S1, self.emissions_metric.units, base_year)
-                base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions.S2, self.emissions_metric.units, base_year)
-                base_year = base_year or base_realization_s1.year
-                self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
+
+            if not self.ghg_s3 and self.historic_data.emissions.S3:
+                base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S3, self.emissions_metric.units, base_year)
+                base_year = base_year or base_realization.year
+                self.ghg_s3 = base_realization.value
+
+        # if S1 and S2 provided separately - calculate S1S2 from them
+        if self.ghg_s1 and self.ghg_s2:
+            self.ghg_s1s2 = self.ghg_s1 + self.ghg_s2
+
         if self.ghg_s1s2 is None:
-            if self.historic_data.emissions_intensities:
+            if self.historic_data and self.historic_data.emissions_intensities:
                 intensity_units = (Q_(1.0, self.emissions_metric.units) / Q_(1.0, self.production_metric.units)).units
-                if self.historic_data.emissions_intensities.S1S2:
-                    base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
-                    base_year = base_year or base_realization.year
-                    self.ghg_s1s2 = base_realization.value * self.base_year_production
-                elif self.historic_data.emissions_intensities.S1 and self.historic_data.emissions_intensities.S2:
+                if self.historic_data.emissions_intensities.S1 and self.historic_data.emissions_intensities.S2:
                     base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1, intensity_units, base_year)
                     base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S2, intensity_units, base_year)
                     base_year = base_year or base_realization_s1.year
-                    self.ghg_s1s2 = (base_realization_s1.value + base_realization_s2.value) * self.base_year_production
+                    self.ghg_s1 = base_realization_s1.value
+                    self.ghg_s2 = base_realization_s2.value
+                    self.ghg_s1s2 = (self.ghg_s1 + self.ghg_s2) * self.base_year_production
+                elif self.historic_data.emissions_intensities.S1S2:
+                    base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
+                    base_year = base_year or base_realization.year
+                    self.ghg_s1s2 = base_realization.value * self.base_year_production
                 else:
                     raise ValueError(f"missing S1S2 historic intensity data for {self.company_name}")
         if self.ghg_s1s2 is None:
             raise ValueError(f"missing historic emissions or intensity data to calculate ghg_s1s2 for {self.company_name}")
-        if ghg_s3:
-            self.ghg_s3 = pint_ify(ghg_s3, self.emissions_metric.units)
-        # TODO: We don't need to worry about missing S3 scope data yet
 
 
 class ICompanyAggregates(ICompanyData):
