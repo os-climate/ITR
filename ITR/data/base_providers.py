@@ -290,10 +290,12 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                         self.column_config.SECTOR: [c.sector],
                         self.column_config.REGION: [c.region],
                     }, index=[0])
-                bm_production_data = (production_bm.get_company_projected_production(company_sector_region_info)
-                                      # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
-                                      .iloc[0].T
-                                      .astype(f'pint[{str(base_year_production.units)}]'))
+                    bm_production_data = (
+                            production_bm.get_company_projected_production(company_sector_region_info)
+                            # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
+                            .iloc[0].T
+                            .astype(f'pint[{str(base_year_production.units)}]')
+                            )
                 c.projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
     
     # ??? Why prefer TRAJECTORY over TARGET?
