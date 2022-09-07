@@ -1242,6 +1242,420 @@
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022.0",
         "unit": "dimensionless"
+      },
+      {
+        "sector": "Autos",
+        "region": "Global",
+        "benchmark_metric": { "units": "dimensionless" },
+        "projections": [
+          {
+            "year": 2019,
+            "value": 0.000000
+          },
+          {
+            "year": 2020,
+            "value": -0.035053
+          },
+          {
+            "year": 2021,
+            "value": -0.035053
+          },
+          {
+            "year": 2022,
+            "value": -0.035053
+          },
+          {
+            "year": 2023,
+            "value": -0.035053
+          },
+          {
+            "year": 2024,
+            "value": -0.035053
+          },
+          {
+            "year": 2025,
+            "value": -0.035053
+          },
+          {
+            "year": 2026,
+            "value": -0.014833
+          },
+          {
+            "year": 2027,
+            "value": -0.014833
+          },
+          {
+            "year": 2028,
+            "value": -0.014833
+          },
+          {
+            "year": 2029,
+            "value": -0.014833
+          },
+          {
+            "year": 2030,
+            "value": -0.014833
+          },
+          {
+            "year": 2031,
+            "value": 0.001301
+          },
+          {
+            "year": 2032,
+            "value": 0.001301
+          },
+          {
+            "year": 2033,
+            "value": 0.001301
+          },
+          {
+            "year": 2034,
+            "value": 0.001301
+          },
+          {
+            "year": 2035,
+            "value": 0.001301
+          },
+          {
+            "year": 2036,
+            "value": 0.002645
+          },
+          {
+            "year": 2037,
+            "value": 0.002645
+          },
+          {
+            "year": 2038,
+            "value": 0.002645
+          },
+          {
+            "year": 2039,
+            "value": 0.002645
+          },
+          {
+            "year": 2040,
+            "value": 0.002645
+          },
+          {
+            "year": 2041,
+            "value": 0.002295
+          },
+          {
+            "year": 2042,
+            "value": 0.002295
+          },
+          {
+            "year": 2043,
+            "value": 0.002295
+          },
+          {
+            "year": 2044,
+            "value": 0.002295
+          },
+          {
+            "year": 2045,
+            "value": 0.002295
+          },
+          {
+            "year": 2046,
+            "value": 0.002477
+          },
+          {
+            "year": 2047,
+            "value": 0.002477
+          },
+          {
+            "year": 2048,
+            "value": 0.002477
+          },
+          {
+            "year": 2049,
+            "value": 0.002477
+          },
+          {
+            "year": 2050,
+            "value": 0.002477
+          }
+        ],
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022.0",
+        "unit": "dimensionless"
+      },
+      {
+        "sector": "Autos",
+        "region": "Europe",
+        "benchmark_metric": { "units": "dimensionless" },
+        "projections": [
+          {
+            "year": 2019,
+            "value": 0.000000
+          },
+          {
+            "year": 2020,
+            "value": -0.035053
+          },
+          {
+            "year": 2021,
+            "value": -0.035053
+          },
+          {
+            "year": 2022,
+            "value": -0.035053
+          },
+          {
+            "year": 2023,
+            "value": -0.035053
+          },
+          {
+            "year": 2024,
+            "value": -0.035053
+          },
+          {
+            "year": 2025,
+            "value": -0.035053
+          },
+          {
+            "year": 2026,
+            "value": -0.014833
+          },
+          {
+            "year": 2027,
+            "value": -0.014833
+          },
+          {
+            "year": 2028,
+            "value": -0.014833
+          },
+          {
+            "year": 2029,
+            "value": -0.014833
+          },
+          {
+            "year": 2030,
+            "value": -0.014833
+          },
+          {
+            "year": 2031,
+            "value": 0.001301
+          },
+          {
+            "year": 2032,
+            "value": 0.001301
+          },
+          {
+            "year": 2033,
+            "value": 0.001301
+          },
+          {
+            "year": 2034,
+            "value": 0.001301
+          },
+          {
+            "year": 2035,
+            "value": 0.001301
+          },
+          {
+            "year": 2036,
+            "value": 0.002645
+          },
+          {
+            "year": 2037,
+            "value": 0.002645
+          },
+          {
+            "year": 2038,
+            "value": 0.002645
+          },
+          {
+            "year": 2039,
+            "value": 0.002645
+          },
+          {
+            "year": 2040,
+            "value": 0.002645
+          },
+          {
+            "year": 2041,
+            "value": 0.002295
+          },
+          {
+            "year": 2042,
+            "value": 0.002295
+          },
+          {
+            "year": 2043,
+            "value": 0.002295
+          },
+          {
+            "year": 2044,
+            "value": 0.002295
+          },
+          {
+            "year": 2045,
+            "value": 0.002295
+          },
+          {
+            "year": 2046,
+            "value": 0.002477
+          },
+          {
+            "year": 2047,
+            "value": 0.002477
+          },
+          {
+            "year": 2048,
+            "value": 0.002477
+          },
+          {
+            "year": 2049,
+            "value": 0.002477
+          },
+          {
+            "year": 2050,
+            "value": 0.002477
+          }
+        ],
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022.0",
+        "unit": "dimensionless"
+      },
+      {
+        "sector": "Autos",
+        "region": "North America",
+        "benchmark_metric": { "units": "dimensionless" },
+        "projections": [
+          {
+            "year": 2019,
+            "value": 0.000000
+          },
+          {
+            "year": 2020,
+            "value": -0.035053
+          },
+          {
+            "year": 2021,
+            "value": -0.035053
+          },
+          {
+            "year": 2022,
+            "value": -0.035053
+          },
+          {
+            "year": 2023,
+            "value": -0.035053
+          },
+          {
+            "year": 2024,
+            "value": -0.035053
+          },
+          {
+            "year": 2025,
+            "value": -0.035053
+          },
+          {
+            "year": 2026,
+            "value": -0.014833
+          },
+          {
+            "year": 2027,
+            "value": -0.014833
+          },
+          {
+            "year": 2028,
+            "value": -0.014833
+          },
+          {
+            "year": 2029,
+            "value": -0.014833
+          },
+          {
+            "year": 2030,
+            "value": -0.014833
+          },
+          {
+            "year": 2031,
+            "value": 0.001301
+          },
+          {
+            "year": 2032,
+            "value": 0.001301
+          },
+          {
+            "year": 2033,
+            "value": 0.001301
+          },
+          {
+            "year": 2034,
+            "value": 0.001301
+          },
+          {
+            "year": 2035,
+            "value": 0.001301
+          },
+          {
+            "year": 2036,
+            "value": 0.002645
+          },
+          {
+            "year": 2037,
+            "value": 0.002645
+          },
+          {
+            "year": 2038,
+            "value": 0.002645
+          },
+          {
+            "year": 2039,
+            "value": 0.002645
+          },
+          {
+            "year": 2040,
+            "value": 0.002645
+          },
+          {
+            "year": 2041,
+            "value": 0.002295
+          },
+          {
+            "year": 2042,
+            "value": 0.002295
+          },
+          {
+            "year": 2043,
+            "value": 0.002295
+          },
+          {
+            "year": 2044,
+            "value": 0.002295
+          },
+          {
+            "year": 2045,
+            "value": 0.002295
+          },
+          {
+            "year": 2046,
+            "value": 0.002477
+          },
+          {
+            "year": 2047,
+            "value": 0.002477
+          },
+          {
+            "year": 2048,
+            "value": 0.002477
+          },
+          {
+            "year": 2049,
+            "value": 0.002477
+          },
+          {
+            "year": 2050,
+            "value": 0.002477
+          }
+        ],
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022.0",
+        "unit": "dimensionless"
       }
     ]
   },
