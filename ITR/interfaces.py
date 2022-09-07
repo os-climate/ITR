@@ -25,7 +25,7 @@ class ProductionMetric(BaseModel):
         if qty.is_compatible_with("Fe_ton"):
             return v
         if qty.is_compatible_with("passenger_km"):
-            return qty.u
+            return v
         if qty.is_compatible_with("boe"):
             return v
         raise ValueError(f"cannot convert {v} to units of production")
@@ -52,7 +52,7 @@ class IntensityMetric(BaseModel):
         if qty.is_compatible_with("t CO2/Fe_ton"):
             return v
         if qty.is_compatible_with("g CO2/passenger_km"):
-            return qty.u
+            return v
         if qty.is_compatible_with("kg CO2/boe"):
             return v
         raise ValueError(f"cannot convert {v} to known t CO2/production unit")
