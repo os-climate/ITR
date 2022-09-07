@@ -337,15 +337,19 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         overrides subclass method
         :param: company_ids: list of company ids
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.BASE_EI,
-        ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.BASE_EI,
+        ColumnsConfig.SECTOR and ColumnsConfig.REGION, ColumnsConfig.GHG_SCOPE1, ColumnsConfig.GHG_SCOPE2,
+        ColumnsConfig.GHG_SCOPE12, ColumnsConfig.GHG_SCOPE3
         """
         df_fundamentals = self.get_company_fundamentals(company_ids)
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
                           self.column_config.BASE_YEAR_PRODUCTION,
-                          self.column_config.GHG_SCOPE12]]
+                          self.column_config.GHG_SCOPE1,
+                          self.column_config.GHG_SCOPE2,
+                          self.column_config.GHG_SCOPE12,
+                          self.column_config.GHG_SCOPE3]]
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 

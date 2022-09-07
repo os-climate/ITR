@@ -39,6 +39,8 @@ class ColumnsConfig:
     EMISSIONS_METRIC = 'emissions_metric'
     PRODUCTION_METRIC = 'production_metric'    # The unit of production (i.e., power generated, tons of steel produced, vehicles manufactured, etc.)
     BASE_YEAR_PRODUCTION = 'base_year_production'
+    GHG_SCOPE1 = 'ghg_s1'
+    GHG_SCOPE2 = 'ghg_s2'
     GHG_SCOPE12 = 'ghg_s1s2'
     GHG_SCOPE3 = 'ghg_s3'
     TEMPLATE_SCOPE1 = 'em_s1'

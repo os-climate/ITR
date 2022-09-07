@@ -278,8 +278,9 @@
       "S1S2S3": null
     },
     "country": "United States of America",
-    "ghg_s1s2": 104827858.636039,
-    "ghg_s3": 104827858.636039,
+    "ghg_s1": 104827858.636039,
+    "ghg_s2": 204827858.636039,
+    "ghg_s3": 304827858.636039,
     "base_year_production": 377380291.0897404,
     "industry_level_1": null,
     "industry_level_2": null,
