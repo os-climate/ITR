@@ -50,8 +50,11 @@ class DataWarehouse(ABC):
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
-        projected_production = self.benchmark_projected_production.get_company_projected_production(
-            company_info_at_base_year).sort_index()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # See https://github.com/hgrecco/pint-pandas/issues/128
+            projected_production = self.benchmark_projected_production.get_company_projected_production(
+                company_info_at_base_year).sort_index()
 
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
         projected_trajectories = self.company_data.get_company_projected_trajectories(company_ids)
