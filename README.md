@@ -19,7 +19,7 @@ source itr_ui/bin/activate
 ```
 On Windows, activate the environment with
 ```
-itr_ui\Scripts\activate.bat
+itr_ui\Scripts\activate
 ```
 Next, run:
 ```
@@ -27,6 +27,8 @@ python3 -m pip install --upgrade pip
 pip install -r requirements.txt
 python3 ITR_UI.py
 ```
+
+Note the python commands are ```python``` for windows and ``python3`` for linux/mac.
 
 Finally, open a browser window and navigate to `http://127.0.0.1:8050/` to access the user interface.
 
