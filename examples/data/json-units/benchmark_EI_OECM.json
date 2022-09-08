@@ -1382,7 +1382,7 @@
         ],
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "unit": "t CO2/GJ"
+        "unit": "g CO2/passenger_km"
       },
       {
         "sector": "Autos",
@@ -1520,7 +1520,7 @@
         ],
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "unit": "t CO2/GJ"
+        "unit": "g CO2/passenger_km"
       },
       {
         "sector": "Autos",
@@ -1658,7 +1658,7 @@
         ],
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "unit": "t CO2/GJ"
+        "unit": "g CO2/passenger_km"
       }
     ]
   },
