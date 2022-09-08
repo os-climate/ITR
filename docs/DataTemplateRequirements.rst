@@ -196,12 +196,12 @@ With your conda shell and environment running,  with git installed, and starting
 1. Set GITHUB_TOKEN to your GitHub access token (windows :code`$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: :code:`export GITHUB_TOKEN=your_github_token`)
 2. Clone the ITR repository: :code:`git clone https://github.com/os-climate/ITR.git`
 3. Change your directory to the top-level ITR directory: :code:`cd ITR`
-4. Switch to the correct branch: :code:`git checkout develop-pint-steel-projections`
+4. Optionally switch to the development branch: :code:`git checkout develop` (if you don't, you'll be using the branch :code:`origin/main`)
 5. create the conda itr_env: :code:`conda env create -f environment.yml`
 6. Activate that environment: :code:`conda activate itr_env`
-7. Install the ITR libraries to your local environment: :code:`pip install -e .` (you may need :code:--no-cache-dir` on windows to avoid permissions errors; please also note that the `.` character is part of the :code:`pip install -e .` command)
+7. Install the ITR libraries to your local environment: :code:`pip install -e .` (you may need :code:`--no-cache-dir` on windows to avoid permissions errors; please also note that the `.` character is part of the :code:`pip install -e .` command)
 8. Change to the *examples* directory: :code:`cd ITR/examples`
-9. Start your notebook: code:`jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
+9. Start your notebook: :code:`jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
 10. Make the file browser to the left of the notebook wide enough to expose the full names of the files in the *examples* directory.  You should see a file named :code:`quick_template_score_calc.ipynb`.  Double click on that file to open it.
 11. Run the notebook with a fresh kernel by pressing the :code:`>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
