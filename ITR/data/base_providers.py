@@ -226,7 +226,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         else:
             return companies
 
-    # Because this presently defaults to S1S2 always, targets spec'd for S1 only ro S1+S2+S3 are not well-handled.
+    # Because this presently defaults to S1S2 always, targets spec'd for S1 only, S2 only, or S1+S2+S3 are not well-handled.
     def _convert_projections_to_series(self, company: ICompanyData, feature: str,
                                        scope: EScope = EScope.S1S2) -> pd.Series:
         """
@@ -248,22 +248,20 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 for s in scopes:
                     projection_series[s] = pd.Series(
                         {p['year']: p['value'] for p in company_dict[feature][s]['projections']},
-                        name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+                        name=company.company_id, dtype=f'pint[{emissions_units}/({production_units})]')
                 series_adder = partial(pd.Series.add, fill_value=0)
                 res = reduce(series_adder, projection_series.values())
                 return res
             elif len(projection_scopes) == 0:
                 return pd.Series(
                     {year: np.nan for year in range(self.historic_years[-1] + 1, self.projection_controls.TARGET_YEAR + 1)},
-                    name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]'
+                    name=company.company_id, dtype=f'pint[{emissions_units}/({production_units})]'
                 )
             else:
-                # This clause is only accessed if the scope is S1S2 or S1S2S3 of which only one scope is provided.
-                projections = company_dict[feature][scopes[0]]['projections']
-                # projections = []
+                projections = company_dict[feature][list(projection_scopes.keys())[0]]['projections']
         return pd.Series(
             {p['year']: p['value'] for p in projections},
-            name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+            name=company.company_id, dtype=f'pint[{emissions_units}/({production_units})]')
 
     def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark):
         """
@@ -723,7 +721,6 @@ class EITargetProjector(object):
                         warnings.warn(f"Emission intensity at base year for scope {scope} target for company "
                                       f"{company.company_name} is estimated with trajectory projection.")
 
-                    # Removed condition base year > first_year. Do we care as long as base_year_qty is known?
                     last_year, value_last_year = last_year_data.year, last_year_data.value
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
