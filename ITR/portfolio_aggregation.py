@@ -117,9 +117,11 @@ class PortfolioAggregation(ABC):
             # Calculate the total emissions of all companies
             emissions = data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12].sum() + data.loc[use_S3, self.c.COLS.GHG_SCOPE3].sum()
             try:
-                weights_series = pd.Series((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0)) \
-                            / emissions * data[input_column])
-                return weights_series
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    weights_series = pd.Series((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0)) \
+                                / emissions * data[input_column])
+                    return weights_series
 
             except ZeroDivisionError:
                 raise ValueError("The total emissions should be higher than zero")
