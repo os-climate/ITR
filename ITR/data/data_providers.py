@@ -182,11 +182,12 @@ class IntensityBenchmarkDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_SDA_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :param scope: scope for calculating benchmarks
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         raise NotImplementedError

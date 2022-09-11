@@ -108,17 +108,18 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self.temp_config = tempscore_config
         self.column_config = column_config
 
-    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_info_at_base_year: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :param scope: scope for calculating benchmarks
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
         intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
-        last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
+        last_ei = intensity_benchmarks[str(self.temp_config.CONTROLS_CONFIG.target_end_year) + '_' + scope.name]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
         df = df.add(last_ei, axis=0).astype(ei_base.dtype)
@@ -133,15 +134,16 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         return intensity_benchmarks.apply(lambda row: self._get_decarbonization(row), axis=1)
 
-    def _get_decarbonization(self, intensity_benchmark_row: pd.Series) -> pd.Series:
+    def _get_decarbonization(self, intensity_benchmark_row: pd.Series, scope: EScope = EScope.S1S2) -> pd.Series:
         """
         Overrides subclass method
         returns a Series with the decarbonization path for a benchmark.
-        :param: A Series with a company's intensity benchmarks per calendar year per row
+        :param intensity_benchmark_row: A Series with a company's intensity benchmarks per calendar year per row
+        :param scope: scope for calculating benchmarks
         :return: A pd.Series with a company's decarbonisation paths per calendar year per row
         """
-        first_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.base_year]
-        last_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.target_end_year]
+        first_ei = intensity_benchmark_row[str(self.temp_config.CONTROLS_CONFIG.base_year) + '_' + scope.name]
+        last_ei = intensity_benchmark_row[str(self.temp_config.CONTROLS_CONFIG.target_end_year) + '_' + scope.name]
         # TODO: does this still throw a warning when processing a NaN?  convert to base units before accessing .magnitude
         return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
 
@@ -188,7 +190,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         regions = reg_sec.region
         benchmark_projection = benchmark_projection.loc[list(zip(regions, sectors))]
         benchmark_projection.index = sectors.index
-        return benchmark_projection
+        return benchmark_projection.add_suffix('_' + scope.name)
 
 
 class BaseCompanyDataProvider(CompanyDataProvider):
