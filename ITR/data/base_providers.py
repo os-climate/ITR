@@ -93,7 +93,9 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
         benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors))]
         benchmark_projection.index = sectors.index
-        return benchmark_projection
+
+        # DataFrame columns = year_scope
+        return benchmark_projection.add_suffix('_' + scope.name)
 
 
 class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
@@ -235,6 +237,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
+        res = None
         company_dict = company.dict()
         production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
         emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
@@ -251,9 +254,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                         name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
                 series_adder = partial(pd.Series.add, fill_value=0)
                 res = reduce(series_adder, projection_series.values())
-                return res
             elif len(projection_scopes) == 0:
-                return pd.Series(
+                res = pd.Series(
                     {year: np.nan for year in range(self.historic_years[-1] + 1, self.projection_controls.TARGET_YEAR + 1)},
                     name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]'
                 )
@@ -261,9 +263,15 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 # This clause is only accessed if the scope is S1S2 or S1S2S3 of which only one scope is provided.
                 projections = company_dict[feature][scopes[0]]['projections']
                 # projections = []
-        return pd.Series(
-            {p['year']: p['value'] for p in projections},
-            name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+
+        # Create resulting series from projections
+        if res is None:
+            res = pd.Series(
+                {p['year']: p['value'] for p in projections},
+                name=company.company_id, dtype=f'pint[{emissions_units}/{production_units}]')
+
+        # Series indexes = year_scope
+        return res.add_suffix('_' + scope.name)
 
     def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark):
         """
@@ -297,14 +305,15 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 c.projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
     
     # ??? Why prefer TRAJECTORY over TARGET?
-    def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
+    def _get_company_intensity_at_year(self, year: int, company_ids: List[str], scope : EScope = EScope.S1S2) -> pd.Series:
         """
         Returns projected intensities for a given set of companies and year
         :param year: calendar year
         :param company_ids: List of company ids
+        :param scope: scope for values at year
         :return: pd.Series with intensities for given company ids
         """
-        return self.get_company_projected_trajectories(company_ids)[year]
+        return self.get_company_projected_trajectories(company_ids)[str(year) + '_' + scope.name]
 
     def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
         """
@@ -749,7 +758,7 @@ class EITargetProjector(object):
                     if ei_projection_scopes[scope] is not None:
                         last_year_ei = ei_projection_scopes[scope].projections[-1]
                         last_year = last_year_ei.year
-                        last_year_prod = production_bm.loc[last_year]
+                        last_year_prod = production_bm.loc[str(last_year) + '_' + scope]
                         last_year_data = IEmissionRealization(year=last_year, value=last_year_ei.value*last_year_prod)
                     else:
                         last_year_data = next((e for e in reversed(emissions_data) if np.isfinite(e.value.magnitude)),
@@ -771,6 +780,7 @@ class EITargetProjector(object):
 
                     last_year, value_last_year = last_year_data.year, last_year_data.value
                     target_year = target.target_end_year
+                    range_years = range(last_year + 1, target_year + 1)
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                     target_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
                                       target.target_base_year_unit)
@@ -779,12 +789,21 @@ class EITargetProjector(object):
                     emissions_projections = [value_last_year * (1 + CAGR) ** (y + 1)
                                              for y, year in enumerate(range(last_year + 1, target_year + 1))]
                     emissions_projections = pd.Series(emissions_projections,
-                                                      index=range(last_year + 1, target_year + 1),
+                                                      index=range_years,
                                                       dtype=f'pint[{target.target_base_year_unit}]')
-                    production_projections = production_bm.loc[last_year + 1: target_year]
+                    emissions_projections = emissions_projections.add_suffix('_' + scope)
+
+                    slice_range = []
+                    for year in range_years:
+                        slice_range.append(str(year) + '_' + scope)
+                    # Exclude scope from calculation, if we don't have data for it
+                    if (str(last_year) + '_' + scope) not in production_bm.index:
+                        continue
+
+                    production_projections = production_bm.loc[slice_range]
                     ei_projections = emissions_projections / production_projections
 
-                    ei_projections = [ICompanyEIProjection(year=year, value=ei_projections[year])
+                    ei_projections = [ICompanyEIProjection(year=year, value=ei_projections[str(year) + '_' + scope])
                                       for year in range(last_year + 1, target_year + 1)]
                     # TODO: this condition should not arise if prioritization logic above is correct
                     # From here out most useful to have target_value as EI
