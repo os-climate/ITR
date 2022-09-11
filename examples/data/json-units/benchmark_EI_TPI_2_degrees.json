@@ -421,7 +421,7 @@
       {
         "sector": "Autos",
         "region": "Global",
-        "benchmark_metric": { "units": "g CO2/passenger km" },
+        "benchmark_metric": { "units": "g CO2/(passenger km)" },
         "projections": [
           {
             "year": 2019,
