@@ -32,6 +32,8 @@ ureg.define("JPY = nan USD")
 
 ureg.define("btu = Btu")
 ureg.define("boe = 5.712 GJ")
+ureg.define("mboe = 1e3 boe")
+ureg.define("mmboe = 1e6 boe")
 
 # These are for later still
 # ureg.define("HFC = [ HFC_emissions ]")
