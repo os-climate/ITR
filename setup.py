@@ -22,7 +22,7 @@ setup(
     },
     keywords=['Climate', 'ITR', 'Finance'],
     package_data={
-        'ITR': [],
+        'ITR': ['data/input/*.csv'],
     },
     include_package_data=True,
     install_requires=[
