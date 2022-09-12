@@ -116,4 +116,7 @@ class DataWarehouse(ABC):
         :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
         projected_emissions = projected_ei.multiply(projected_production)
-        return projected_emissions.sum(axis=1).astype('pint[Mt CO2]')
+        projected_emissions = projected_emissions.applymap(lambda x: x if isinstance(x,float) else x if np.isfinite(x.m) else np.nan)
+        null_idx = projected_emissions.index[projected_emissions.isnull().all(axis=1)]
+        return pd.concat([projected_emissions.loc[null_idx, projected_emissions.columns[0]],
+                          projected_emissions.loc[projected_emissions.index.difference(null_idx)].sum(axis=1)]).astype('pint[Mt CO2]')

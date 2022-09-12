@@ -24,7 +24,7 @@ class ProductionMetric(BaseModel):
             return v
         if qty.is_compatible_with("Fe_ton"):
             return v
-        if qty.is_compatible_with("passenger_km"):
+        if qty.is_compatible_with("passenger km"):
             return v
         if qty.is_compatible_with("boe"):
             return v
@@ -51,7 +51,7 @@ class IntensityMetric(BaseModel):
             return v
         if qty.is_compatible_with("t CO2/Fe_ton"):
             return v
-        if qty.is_compatible_with("g CO2/passenger_km"):
+        if qty.is_compatible_with("g CO2/(passenger km)"):
             return v
         if qty.is_compatible_with("kg CO2/boe"):
             return v
@@ -464,11 +464,11 @@ class ICompanyData(PintModel):
                 inferred_production_metric = 'MWh'
             else:
                 inferred_production_metric = 'Fe_ton'
-            inferred_ei_metric = f"{inferred_emissions_metric}/{inferred_production_metric}"
+            inferred_ei_metric = f"{inferred_emissions_metric}/({inferred_production_metric})"
         else:
             inferred_emissions_metric = emissions_metric['units']
             inferred_production_metric = production_metric['units']
-            inferred_ei_metric = f"{inferred_emissions_metric}/{inferred_production_metric}"
+            inferred_ei_metric = f"{inferred_emissions_metric}/({inferred_production_metric})"
         for scope in projections:
             if projections[scope] is None:
                 continue
@@ -509,7 +509,7 @@ class ICompanyData(PintModel):
             emissions_intensities = None
         else: 
             emissions_intensities = {}
-            inferred_ei_metric = f"{inferred_emissions_metric}/{inferred_production_metric}"
+            inferred_ei_metric = f"{inferred_emissions_metric}/({inferred_production_metric})"
             for scope in historic_data['emissions_intensities']:
                 emissions_intensities[scope] = self._fixup_year_value_list(IEIRealization, historic_data['emissions_intensities'][scope], None, inferred_ei_metric)
         model_historic_data = IHistoricData(productions=productions, emissions=emissions, emissions_intensities=emissions_intensities)

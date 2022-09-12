@@ -8,8 +8,7 @@ from openscm_units import unit_registry
 
 # openscm_units doesn't make it easy to set preprocessors.  This is one way to do it.
 unit_registry.preprocessors=[
-     lambda s1: s1.replace('passenger km', 'passenger_km'),
-     lambda s2: s2.replace('BoE', 'boe'),
+     lambda s1: s1.replace('BoE', 'boe'),
 ]
 
 PintType.ureg = unit_registry
@@ -20,7 +19,7 @@ PA_ = PintArray
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 ureg.define("Fe_ton = [produced_ton]")
-ureg.define("passenger_km = nan km")
+ureg.define("passenger = [passenger_unit]")
 
 # These are for later
 ureg.define('fraction = [] = frac')
@@ -33,6 +32,8 @@ ureg.define("JPY = nan USD")
 
 ureg.define("btu = Btu")
 ureg.define("boe = 5.712 GJ")
+ureg.define("mboe = 1e3 boe")
+ureg.define("mmboe = 1e6 boe")
 
 # These are for later still
 # ureg.define("HFC = [ HFC_emissions ]")

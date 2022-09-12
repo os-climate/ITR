@@ -2,6 +2,9 @@
 # visit http://127.0.0.1:8050/ in your web browser
 
 
+import argparse
+import sys
+
 import pandas as pd
 import numpy as np
 import json
@@ -54,7 +57,16 @@ data_json_units_dir="json-units"
 root = os.path.abspath('')
 
 # load company data
-company_data="20220415 ITR Tool Sample Data.xlsx" # this file is provided initially
+parser = argparse.ArgumentParser()
+parser.add_argument('template', nargs='+', help='enter filename of XLSX data template')
+parser.set_defaults(template="20220415 ITR Tool Sample Data.xlsx")
+if len(sys.argv)>1:
+    print(sys.argv)
+    company_data=parser.parse_args(sys.argv).template[-1]
+    print(company_data)
+else:
+    company_data="20220720 ITR Tool Sample Data.xlsx" # this file is provided initially
+
 template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, examples_dir, data_dir, company_data))
 
 # load production benchmarks

@@ -1249,7 +1249,7 @@
       {
         "sector": "Autos",
         "region": "Global",
-        "benchmark_metric": { "units": "g CO2/passenger_km" },
+          "benchmark_metric": { "units": "g CO2/(passenger km)" },
         "projections": [
           {
             "year": 2019,
@@ -1382,12 +1382,12 @@
         ],
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "unit": "t CO2/GJ"
+        "unit": "g CO2/(passenger km)"
       },
       {
         "sector": "Autos",
         "region": "Europe",
-        "benchmark_metric": { "units": "g CO2/passenger_km" },
+        "benchmark_metric": { "units": "g CO2/(passenger km)" },
         "projections": [
           {
             "year": 2019,
@@ -1520,12 +1520,12 @@
         ],
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "unit": "t CO2/GJ"
+        "unit": "g CO2/(passenger km)"
       },
       {
         "sector": "Autos",
         "region": "North America",
-        "benchmark_metric": { "units": "g CO2/passenger_km" },
+        "benchmark_metric": { "units": "g CO2/(passenger km)" },
         "projections": [
           {
             "year": 2019,
@@ -1658,7 +1658,7 @@
         ],
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "unit": "t CO2/GJ"
+        "unit": "g CO2/(passenger km)"
       }
     ]
   },

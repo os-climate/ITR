@@ -119,6 +119,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             logger.error(error_message)
             raise ValueError(error_message)
 
+        # ignore company data that does not come with emissions and/or production metrics
+        missing_esg_metrics_df = df_fundamentals[ColumnsConfig.COMPANY_ID][
+            df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
+        if len(missing_esg_metrics_df)>0:
+            logger.warning(f"Missing ESG metrics for companies with ID (will be ignored): "
+                           f"{missing_esg_metrics_df.to_list()}.")
+            df_fundamentals = df_fundamentals[~df_fundamentals.index.isin(missing_esg_metrics_df.index)]
+
+
         # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
         historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
         historic_scopes = ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3', 'production']

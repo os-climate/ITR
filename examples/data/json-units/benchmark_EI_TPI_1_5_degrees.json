@@ -969,6 +969,146 @@
         "scenario name": "1.5 Degrees",
         "release date": "1-4-2022",
         "unit": "Carbon intensity (tonnes of CO2 per tonne of steel)"
+      },
+      {
+        "sector": "Autos",
+        "region": "Global",
+        "benchmark_metric": { "units": "g CO2/(passenger km)" },
+        "projections": [
+
+
+          {
+            "year": 2019,
+            "value": 123.0
+          },
+          {
+            "year": 2020,
+            "value": 117.0
+          },
+          {
+            "year": 2021,
+            "value": 116.0
+          },
+          {
+            "year": 2022,
+            "value": 114.0
+          },
+          {
+            "year": 2023,
+            "value": 112.0
+          },
+          {
+            "year": 2024,
+            "value": 111.0
+          },
+          {
+            "year": 2025,
+            "value": 109.0
+          },
+          {
+            "year": 2026,
+            "value": 108.0
+          },
+          {
+            "year": 2027,
+            "value": 107.0
+          },
+          {
+            "year": 2028,
+            "value": 106.0
+          },
+          {
+            "year": 2029,
+            "value": 105.0
+          },
+          {
+            "year": 2030,
+            "value": 104.0
+          },
+          {
+            "year": 2031,
+            "value": 103.0
+          },
+          {
+            "year": 2032,
+            "value": 102.0
+          },
+          {
+            "year": 2033,
+            "value": 101.0
+          },
+          {
+            "year": 2034,
+            "value": 100.0
+          },
+          {
+            "year": 2035,
+            "value": 100.0
+          },
+          {
+            "year": 2036,
+            "value": 99.0
+          },
+          {
+            "year": 2037,
+            "value": 98.0
+          },
+          {
+            "year": 2038,
+            "value": 97.0
+          },
+          {
+            "year": 2039,
+            "value": 96.0
+          },
+          {
+            "year": 2040,
+            "value": 95.0
+          },
+          {
+            "year": 2041,
+            "value": 94.0
+          },
+          {
+            "year": 2042,
+            "value": 93.0
+          },
+          {
+            "year": 2043,
+            "value": 92.0
+          },
+          {
+            "year": 2044,
+            "value": 91.0
+          },
+          {
+            "year": 2045,
+            "value": 91.0
+          },
+          {
+            "year": 2046,
+            "value": 90.0
+          },
+          {
+            "year": 2047,
+            "value": 89.0
+          },
+          {
+            "year": 2048,
+            "value": 88.0
+          },
+          {
+            "year": 2049,
+            "value": 87.0
+          },
+          {
+            "year": 2050,
+            "value": 86.0
+          }
+        ],
+        "scenario name": "1.5 Degrees",
+        "release date": "1-4-2022",
+        "unit": "g CO2/passenger kilometer"
       }
     ]
   },
