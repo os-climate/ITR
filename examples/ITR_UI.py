@@ -2,9 +2,6 @@
 # visit http://127.0.0.1:8050/ in your web browser
 
 
-import argparse
-import sys
-
 import pandas as pd
 import numpy as np
 import json
@@ -39,6 +36,15 @@ from pint import Quantity
 from pint_pandas import PintType
 
 import logging
+
+import argparse
+
+# Set input filename (from commandline or default)
+parser = argparse.ArgumentParser()
+parser.add_argument('file')
+args = parser.parse_args()
+company_data_path = args.file or os.path.join(root, examples_dir, data_dir, "20220720 ITR Tool Sample Data.xlsx")
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -57,17 +63,7 @@ data_json_units_dir="json-units"
 root = os.path.abspath('')
 
 # load company data
-parser = argparse.ArgumentParser()
-parser.add_argument('template', nargs='+', help='enter filename of XLSX data template')
-parser.set_defaults(template="20220415 ITR Tool Sample Data.xlsx")
-if len(sys.argv)>1:
-    print(sys.argv)
-    company_data=parser.parse_args(sys.argv).template[-1]
-    print(company_data)
-else:
-    company_data="20220720 ITR Tool Sample Data.xlsx" # this file is provided initially
-
-template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, examples_dir, data_dir, company_data))
+template_company_data = TemplateProviderCompany(company_data_path)
 
 # load production benchmarks
 benchmark_prod_json_file = "benchmark_production_OECM.json"
@@ -86,9 +82,9 @@ benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
 
 # loading dummy portfolio
-df_portfolio = pd.read_excel(os.path.join(root, examples_dir, data_dir, company_data), sheet_name="Portfolio")
+df_portfolio = pd.read_excel(company_data_path, sheet_name="Portfolio")
 companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
-logger.info('Load dummy portfolio from {}. You could upload your own portfolio using the template.'.format(company_data))
+logger.info('Load dummy portfolio from {}. You could upload your own portfolio using the template.'.format(company_data_path))
 
 temperature_score = TemperatureScore(
     time_frames = [ETimeFrames.LONG],
@@ -528,7 +524,7 @@ def update_graph(
                 winz,
                 ):
 
-    global amended_portfolio_global, initial_portfolio, filt_df, temperature_score, companies, company_data, template_company_data, base_production_bm
+    global amended_portfolio_global, initial_portfolio, filt_df, temperature_score, companies, company_data_path, template_company_data, base_production_bm
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0] # to catch which widgets were pressed
     
@@ -539,7 +535,7 @@ def update_graph(
             template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.mean)
         template_company_data.projection_controls.LOWER_PERCENTILE = winz[0]/100
         template_company_data.projection_controls.UPPER_PERCENTILE = winz[1]/100
-        template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, examples_dir, data_dir, company_data))
+        template_company_data = TemplateProviderCompany(excel_path=company_data_path)
 
     amended_portfolio_global = recalculate_individual_itr(scenario) # we need to recalculate temperature score as we changed th
         
@@ -706,7 +702,7 @@ def reset_filters(n_clicks_reset, scenario):
     ProjectionControls.TREND_CALC_METHOD=staticmethod(pd.DataFrame.median)
     ProjectionControls.LOWER_PERCENTILE = 0.1
     ProjectionControls.UPPER_PERCENTILE = 0.9
-    template_company_data = TemplateProviderCompany(excel_path=os.path.join(root, examples_dir, data_dir, company_data))
+    template_company_data = TemplateProviderCompany(excel_path=company_data_path)
     amended_portfolio_global = recalculate_individual_itr(scenario)
     initial_portfolio = amended_portfolio_global
 
