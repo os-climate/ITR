@@ -37,13 +37,8 @@ from pint_pandas import PintType
 
 import logging
 
+import sys
 import argparse
-
-# Set input filename (from commandline or default)
-parser = argparse.ArgumentParser()
-parser.add_argument('file')
-args = parser.parse_args()
-company_data_path = args.file or os.path.join(root, examples_dir, data_dir, "20220720 ITR Tool Sample Data.xlsx")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -53,14 +48,22 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
-
-# Initial calculations
 logger.info("Start!")
 
 examples_dir ='' #'examples'
 data_dir="data"
 data_json_units_dir="json-units"
 root = os.path.abspath('')
+
+# Set input filename (from commandline or default)
+parser = argparse.ArgumentParser()
+parser.add_argument('file')
+if len(sys.argv)>1:
+    args = parser.parse_args()
+    company_data_path = args.file
+else:
+    company_data_path = os.path.join(root, examples_dir, data_dir, "20220720 ITR Tool Sample Data.xlsx")
+
 
 # load company data
 template_company_data = TemplateProviderCompany(company_data_path)
