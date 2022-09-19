@@ -162,3 +162,6 @@ class LoggingConfig:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
+
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)

@@ -2,15 +2,11 @@ import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Tuple
 from pint import Quantity
-import logging
 
-from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
+from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
 
 
 # If this file is moved, the computation of get_project_root may also need to change

@@ -110,9 +110,8 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
         self._convert_excel_to_model = convert_intensity_benchmark_excel_to_model
         EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
                                                      column_config.REGION, column_config.SECTOR)
-        # TODO: Fix units for Steel
         super().__init__(
-            IEIBenchmarkScopes(benchmark_metric={'units':'t CO2/MWh'}, S1S2=EI_benchmarks,
+            IEIBenchmarkScopes(S1S2=EI_benchmarks,
                                benchmark_temperature=benchmark_temperature,
                                benchmark_global_budget=benchmark_global_budget,
                                is_AFOLU_included=is_AFOLU_included),
