@@ -614,7 +614,16 @@ def update_graph(
                                              scopes=[EScope.S1S2],
                                              aggregation_method=agg_method) # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
-        return [agg_method.value,aggregated_scores.long.S1S2.all.score]
+        if aggregated_scores.long.S1S2:
+            agg_s1s2 = [agg_method.value,aggregated_scores.long.S1S2.all.score]
+        else:
+            agg_s1s2 = []
+        if aggregated_scores.long.S3:
+            agg_s3 = [agg_method.value,aggregated_scores.long.S3.all.score]
+        else:
+            agg_s3 = []
+    
+        return agg_s1s2 + agg_s3
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
@@ -653,13 +662,20 @@ def update_graph(
     df_for_output_table['investment_value'] = df_for_output_table['investment_value'].apply(lambda x: "${:,.1f} Mn".format((x/1000000))) # formating column
     df_for_output_table.rename(columns={'company_name':'Name', 'company_id':'ISIN','region':'Region','sector':'Industry','cumulative_budget':'Emissions budget','investment_value':'Notional','trajectory_score':'Historical emissions score', 'target_score':'Target score','temperature_score':'Weighted temperature score'}, inplace=True)
 
+    if aggregated_scores.long.S1S2:
+        scores = aggregated_scores.long.S1S2.all.score.m
+    elif aggregated_scores.long.S3:
+        scores = aggregated_scores.long.S3.all.score.m
+    else:
+        raise ValueError("No aggregated scores")
+
     return (
         fig1, fig5, 
         heatmap_fig, high_score_fig, 
         port_score_diff_methods_fig,
-        "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m), # fake for spinner
-        "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m), # portfolio score
-        {'color': 'ForestGreen'} if aggregated_scores.long.S1S2.all.score.m < 2 else {'color': 'Red'}, # conditional color
+        "{:.2f}".format(scores), # fake for spinner
+        "{:.2f}".format(scores), # portfolio score
+        {'color': 'ForestGreen'} if scores < 2 else {'color': 'Red'}, # conditional color
         str(round((filt_df.company_ev_plus_cash.sum())/10**9,0)), # sum of total EVIC for companies in portfolio
         str(round((filt_df.investment_value.sum())/10**6,1)), # portfolio notional
         str(len(filt_df)), # num of companies
