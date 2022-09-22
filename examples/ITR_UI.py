@@ -64,6 +64,10 @@ logger.addHandler(stream_handler)
 
 logger.info("Start!")
 
+examples_dir ='' #'examples'
+data_dir="data"
+data_json_units_dir="json-units"
+root = os.path.abspath('')
 
 
 # Set input filename (from commandline or default)
