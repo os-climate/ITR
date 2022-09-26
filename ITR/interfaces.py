@@ -27,6 +27,8 @@ class ProductionMetric(BaseModel):
             return v
         if qty.is_compatible_with("passenger km"):
             return v
+        if qty.is_compatible_with("tkm"):
+            return v
         if qty.is_compatible_with("boe"):
             return v
         if qty.is_compatible_with("t Aluminum"):
@@ -61,6 +63,8 @@ class IntensityMetric(BaseModel):
         if qty.is_compatible_with("t CO2/Fe_ton"):
             return v
         if qty.is_compatible_with("g CO2/(passenger km)"):
+            return v
+        if qty.is_compatible_with("g CO2/tkm"):
             return v
         if qty.is_compatible_with("kg CO2/boe"):
             return v
