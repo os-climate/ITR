@@ -95,6 +95,8 @@ logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file)
 
 # Emission intensities
 benchmark_EI_OECM_file = "benchmark_EI_OECM.json"
+benchmark_EI_OECM_PC_file = "benchmark_EI_OECM_PC.json"
+benchmark_EI_OECM_S3_file = "benchmark_EI_OECM_S3.json"
 benchmark_EI_TPI_15_file = "benchmark_EI_TPI_1_5_degrees.json"
 benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
@@ -114,6 +116,10 @@ temperature_score = TemperatureScore(
 def recalculate_individual_itr(scenario):
     if scenario == 'OECM':
         benchmark_file = benchmark_EI_OECM_file
+    elif scenario == 'OECM_PC':
+        benchmark_file = benchmark_EI_OECM_PC_file
+    elif scenario == 'OECM_S3':
+        benchmark_file = benchmark_EI_OECM_S3_file
     elif scenario == 'TPI_2_degrees':
         benchmark_file = benchmark_EI_TPI_file
     elif scenario == 'TPI_15_degrees':
@@ -274,6 +280,8 @@ macro = dbc.Row(
                 dcc.Dropdown(id="scenario-dropdown",
                              options=[  # 16.05.2022: make this dynamic
                                  {'label': 'OECM 1.5 degrees', 'value': 'OECM'},
+                                 {'label': 'OECM (Prod-Centric) 1.5 degC', 'value': 'OECM_PC'},
+                                 {'label': 'OECM (Scope 3) 1.5 degC', 'value': 'OECM_S3'},
                                  {'label': 'TPI 1.5 degrees', 'value': 'TPI_15_degrees'},
                                  {'label': 'TPI 2 degrees', 'value': 'TPI_2_degrees'},
                                  {'label': 'TPI below 2 degrees', 'value': 'TPI_below_2_degrees'}
