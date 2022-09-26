@@ -29,6 +29,14 @@ class ProductionMetric(BaseModel):
             return v
         if qty.is_compatible_with("boe"):
             return v
+        if qty.is_compatible_with("t Aluminum"):
+            return v
+        if qty.is_compatible_with("t Cement"):
+            return v
+        if qty.is_compatible_with("USD"):
+            return v
+        if qty.is_compatible_with("m**2"):
+            return v
         raise ValueError(f"cannot convert {v} to units of production")
 
 
@@ -55,6 +63,14 @@ class IntensityMetric(BaseModel):
         if qty.is_compatible_with("g CO2/(passenger km)"):
             return v
         if qty.is_compatible_with("kg CO2/boe"):
+            return v
+        if qty.is_compatible_with("t CO2/(t Aluminum)"):
+            return v
+        if qty.is_compatible_with("t CO2/(t Cement)"):
+            return v
+        if qty.is_compatible_with("kg CO2/USD"):
+            return v
+        if qty.is_compatible_with("g CO2/m**2"):
             return v
         raise ValueError(f"cannot convert {v} to known t CO2/production unit")
 

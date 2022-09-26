@@ -5,10 +5,12 @@ This module handles initialization of pint functionality
 from pint import set_application_registry
 from pint_pandas import PintArray, PintType
 from openscm_units import unit_registry
+import re
 
 # openscm_units doesn't make it easy to set preprocessors.  This is one way to do it.
 unit_registry.preprocessors=[
-     lambda s1: s1.replace('BoE', 'boe'),
+     lambda s1: re.sub(r'passenger.km', 'pkm', s1),
+     lambda s2: s2.replace('BoE', 'boe'),
 ]
 
 PintType.ureg = unit_registry
@@ -23,8 +25,12 @@ ureg.define("LNG = 3.44 / 2.75 CH4")
 #     print(ureg("t LNG").to("t CO2"))
 # will print 3.44 t CO2
 
-ureg.define("Fe_ton = [produced_ton]")
-ureg.define("passenger = [passenger_unit]")
+ureg.define("Fe = [iron] = Steel")
+ureg.define("iron = Fe")
+ureg.define("Al = [aluminum] = Aluminum")
+ureg.define("aluminum = Al")
+ureg.define("Cement = [cement]")
+ureg.define("cement = Cement")
 
 # For reports that use 10,000 t instead of 1e3 or 1e6
 ureg.define('myria- = 10000')
@@ -44,6 +50,26 @@ ureg.define("mmbtu = 1e6 btu")
 ureg.define("boe = 6.1178632 GJ")
 ureg.define("mboe = 1e3 boe")
 ureg.define("mmboe = 1e6 boe")
+
+# Transportation activity
+
+ureg.define("vehicle = [vehicle] = v")
+ureg.define("passenger = [passenger] = p = pass")
+ureg.define("vkm = vehicle * kilometer")
+ureg.define("pkm = passenger * kilometer")
+ureg.define("tkm = tonne * kilometer")
+
+ureg.define('hundred = 1e2')
+ureg.define('thousand = 1e3')
+ureg.define('million = 1e6')
+ureg.define('billion = 1e9')
+ureg.define('trillion = 1e12')
+ureg.define('quadrillion = 1e15')
+
+# Backward compatibility
+ureg.define("Fe_ton = t Steel")
+
+
 
 # These are for later still
 # ureg.define("HFC = [ HFC_emissions ]")
