@@ -84,14 +84,22 @@ class ColumnsConfig:
 
 
 class SectorsConfig:
+    POWER_UTILITY = "Electricity Utilities"
+    GAS_UTILITY = "Gas Utilities"
+    UTILITY = "Utilities"
     STEEL = "Steel"
-    ELECTRICITY = "Electricity Utilities"
+    ALUMINUM = "Aluminum"
+    OIL_AND_GAS = "Oil & Gas"
+    AUTOMOBILE = "Autos"
+    TRUCKING = "Trucking"
+    CEMENT = "Cement"
+    BUILDINGS = "Buildings"
+    TEXTILES = "Textiles"
+    CHEMICALS = "Chemicals"
     INFORMATION_TECHNOLOGY = "Information Technology"
     INDUSTRIALS = "Industrials"
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
-    AUTOMOBILE = "Autos"
-    OIL_AND_GAS = "Oil & Gas"
 
     @classmethod
     def get_configured_sectors(cls) -> List[str]:
@@ -99,7 +107,13 @@ class SectorsConfig:
         Get a list of sectors configured in the tool.
         :return: A list of sectors string values
         """
-        return [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY, SectorsConfig.AUTOMOBILE, SectorsConfig.OIL_AND_GAS]
+        return [SectorsConfig.POWER_UTILITY, SectorsConfig.GAS_UTILITY, SectorsConfig.UTILITY,
+                SectorsConfig.STEEL, SectorsConfig.ALUMINUM,
+                SectorsConfig.OIL_AND_GAS,
+                SectorsConfig.AUTOMOBILE, SectorsConfig.TRUCKING,
+                SectorsConfig.CEMENT, SectorsConfig.BUILDINGS,
+                SectorsConfig.TEXTILES, SectorsConfig.CHEMICALS,
+                ]
 
 
 class VariablesConfig:

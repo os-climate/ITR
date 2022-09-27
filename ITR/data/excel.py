@@ -22,8 +22,8 @@ Q_ = ureg.Quantity
 
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
-sector_to_production_metric = {'Electricity Utilities': 'GJ', 'Steel': 'Fe_ton', 'Oil & Gas': 'boe', 'Autos': 'passenger km'}
-sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't CO2/Fe_ton', 'Oil & Gas': 'kg CO2/boe', 'Autos': 'g CO2/(passenger km)'}
+sector_to_production_metric = {'Electricity Utilities': 'GJ', 'Steel': 'Fe_ton', 'Oil & Gas': 'boe', 'Autos': 'pkm'}
+sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't CO2/Fe_ton', 'Oil & Gas': 'kg CO2/boe', 'Autos': 'g CO2/pkm'}
 
 # TODO: Force validation for excel benchmarks
 

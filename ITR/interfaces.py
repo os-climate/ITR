@@ -489,15 +489,27 @@ class ICompanyData(PintModel):
         return r_list
     
     def _sector_to_production_units(self, sector, region="Global"):
+        sector_unit_dict = {
+            'Electricity Utilities': { 'North America':'MWh', 'Global': 'GJ' },
+            'Gas Utilities': { 'Global': 'PJ' },
+            'Utilities': { 'Global': 'PJ' },
+            'Steel': { 'Global': 't Steel' },
+            'Aluminum': { 'Global': 't Aluminum' },
+            'Oil & Gas': { 'Global': 'mmboe' },
+            'Autos': { 'Global': 'pkm' },
+            'Trucking': { 'Global': 'tkm' },
+            'Cement': { 'Global': 't Cement' },
+            'Buildings': { 'Global': 'billion m**2' }, # Should it be 'built m**2' ?
+            'Textiles': { 'Global': 'billion USD' },
+            'Chemicals': { 'Global': 'billion USD' },
+        }
         units = None
-        if sector == 'Electricity Utilities':
-            units = 'MWh' if region == 'North America' else 'GJ'
-        elif sector == 'Steel':
-            units = 'Fe_ton'
-        elif sector == 'Oil & Gas':
-            units = 'mmboe'
-        elif sector == 'Autos':
-            units = '(passenger km)'
+        if sector_unit_dict.get(sector):
+            region_unit_dict = sector_unit_dict[sector]
+            if region_unit_dict.get(region):
+                units = region_unit_dict[region]
+            else:
+                units = region_unit_dict['Global']
         else:
             raise ValueError(f"No source of production metrics for {self.company_name}")
         return units        
