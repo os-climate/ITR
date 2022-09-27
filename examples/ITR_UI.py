@@ -94,9 +94,9 @@ logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file)
 
 
 # Emission intensities
-benchmark_EI_OECM_file = "benchmark_EI_OECM.json"
 benchmark_EI_OECM_PC_file = "benchmark_EI_OECM_PC.json"
 benchmark_EI_OECM_S3_file = "benchmark_EI_OECM_S3.json"
+benchmark_EI_OECM_file = "benchmark_EI_OECM.json" # Deprecated!
 benchmark_EI_TPI_15_file = "benchmark_EI_TPI_1_5_degrees.json"
 benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
@@ -114,9 +114,7 @@ temperature_score = TemperatureScore(
 
 # load default intensity benchmarks
 def recalculate_individual_itr(scenario):
-    if scenario == 'OECM':
-        benchmark_file = benchmark_EI_OECM_file
-    elif scenario == 'OECM_PC':
+    if scenario == 'OECM_PC':
         benchmark_file = benchmark_EI_OECM_PC_file
     elif scenario == 'OECM_S3':
         benchmark_file = benchmark_EI_OECM_S3_file
@@ -124,6 +122,9 @@ def recalculate_individual_itr(scenario):
         benchmark_file = benchmark_EI_TPI_file
     elif scenario == 'TPI_15_degrees':
         benchmark_file = benchmark_EI_TPI_15_file
+    elif scenario == 'OECM':
+        benchmark_file = benchmark_EI_OECM_file
+        logger.info('OECM scenario is for backward compatibility only.  Use OECM_PC instead.')
     else:
         benchmark_file = benchmark_EI_TPI_below_2_file
     # load intensity benchmarks
@@ -136,7 +137,7 @@ def recalculate_individual_itr(scenario):
     return df
 
 
-initial_portfolio = recalculate_individual_itr('OECM')
+initial_portfolio = recalculate_individual_itr('OECM_PC')
 amended_portfolio_global = initial_portfolio.copy()
 filt_df = initial_portfolio.copy()
 
@@ -279,14 +280,14 @@ macro = dbc.Row(
                 ),
                 dcc.Dropdown(id="scenario-dropdown",
                              options=[  # 16.05.2022: make this dynamic
-                                 {'label': 'OECM 1.5 degrees', 'value': 'OECM'},
                                  {'label': 'OECM (Prod-Centric) 1.5 degC', 'value': 'OECM_PC'},
                                  {'label': 'OECM (Scope 3) 1.5 degC', 'value': 'OECM_S3'},
+                                 {'label': 'OECM (Deprecated) 1.5 degrees', 'value': 'OECM'},
                                  {'label': 'TPI 1.5 degrees', 'value': 'TPI_15_degrees'},
                                  {'label': 'TPI 2 degrees', 'value': 'TPI_2_degrees'},
                                  {'label': 'TPI below 2 degrees', 'value': 'TPI_below_2_degrees'}
                              ],
-                             value='OECM',
+                             value='OECM_PC',
                              clearable=False,
                              placeholder="Select emission scenario"),
                 html.Div(id='hidden-div', style={'display': 'none'}),
