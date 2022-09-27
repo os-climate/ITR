@@ -107,6 +107,12 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._EI_benchmarks = EI_benchmarks
         self.temp_config = tempscore_config
         self.column_config = column_config
+        # Benchmark's scope, for which we calculate
+        self.scope_to_calc = None
+        if self._EI_benchmarks.S1S2 != None:
+            self.scope_to_calc = EScope.S1S2
+        elif self._EI_benchmarks.S3 != None:
+            self.scope_to_calc = EScope.S3
 
     def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
         """
@@ -162,7 +168,10 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: pd.DataFrame
         """
         results = []
-        for bm in self._EI_benchmarks.__getattribute__(str(scope)).benchmarks:
+        scope_attr = self._EI_benchmarks.__getattribute__(str(scope))
+        if not scope_attr:
+            raise ValueError(f"Scope {str(scope)} not found in loaded benchmark")
+        for bm in scope_attr.benchmarks:
             results.append(self._convert_benchmark_to_series(bm, scope))
         with warnings.catch_warnings():
             # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
