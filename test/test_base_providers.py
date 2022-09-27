@@ -22,10 +22,13 @@ class TestBaseProvider(unittest.TestCase):
     """
 
     def setUp(self) -> None:
+        self.setUpWithEIBM("benchmark_EI_OECM_PC.json")
+
+    def setUpWithEIBM(self, eibm_filename) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
-        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_PC.json")
+        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", eibm_filename)
 
         # load company data
         with open(self.company_json) as json_file:
@@ -181,6 +184,22 @@ class TestBaseProvider(unittest.TestCase):
         pd.testing.assert_series_equal(self.base_company_data.get_value(company_ids=self.company_ids,
                                                                         variable_name=ColumnsConfig.COMPANY_REVENUE),
                                        expected_data)
+
+    def test_scope_to_calc(self):
+        # For default EI benchmark, expect scope to calculate is S1S2
+        self.assertEqual(self.base_EI_bm.scope_to_calc, EScope.S1S2)
+        company_with_s3 = self.base_warehouse.company_data._companies[3]
+        # Verify S3 is folded into S1S2
+        self.assertEqual(company_with_s3.ghg_s3, 0)
+
+        # Reload EI benchmark with primary scope S3
+        self.setUpWithEIBM("benchmark_EI_S3.json")
+
+        # Verify expected scope to calculate S3
+        self.assertEqual(self.base_EI_bm.scope_to_calc, EScope.S3)
+        company_with_s3 = self.base_warehouse.company_data._companies[3]
+        # Verify S3 is NOT folded into S1S2
+        self.assertNotEqual(company_with_s3.ghg_s3, 0)
 
 
 if __name__ == "__main__":

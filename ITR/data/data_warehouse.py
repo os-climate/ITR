@@ -6,7 +6,7 @@ from abc import ABC
 from typing import List, Type
 from pydantic import ValidationError
 
-from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
+from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection, EScope
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
@@ -37,7 +37,11 @@ class DataWarehouse(ABC):
         self.column_config = column_config
         self.company_data = company_data
         self.company_data._calculate_target_projections(benchmark_projected_production)
-        
+
+        # If benchmark's scope to calculate is S3 - skip shifting data into S1S2
+        if benchmarks_projected_ei.scope_to_calc == EScope.S3:
+            return
+
         # After projections have been made, shift S3 data into S1S2.  If we shift before we project,
         # then S3 targets will not be projected correctly.
         for c in self.company_data._companies:
