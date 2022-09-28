@@ -62,14 +62,15 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
         return df_bm
 
-    def get_company_projected_production(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
+    def get_company_projected_production(self, company_sector_region_info: pd.DataFrame, scope: EScope) -> pd.DataFrame:
         """
         get the projected productions for list of companies in ghg_scope12
         :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :param scope: benchmark scope for projections
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
-        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope=EScope.S1S2)
+        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope)
         company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
             company_production, axis=0)
@@ -87,7 +88,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
         sectors = company_sector_region_info[self.column_config.SECTOR]
         regions = company_sector_region_info[self.column_config.REGION]
-        scopes = [EScope.S1S2] * len(sectors)
+        scopes = [scope] * len(sectors)
         benchmark_regions = regions.copy()
         mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         benchmark_regions.loc[~mask] = "Global"
@@ -121,7 +122,8 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
-        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
+        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year,
+                                                              self.scope_to_calc)
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.base_year]
@@ -277,12 +279,13 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             {p['year']: p['value'] for p in projections},
             name=company.company_id, dtype=f'pint[{emissions_units}/({production_units})]')
 
-    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark):
+    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark, scope: EScope):
         """
         We cannot calculate target projections until after we have loaded benchmark data.
         We do so when companies are associated with benchmarks, in the DataWarehouse construction
         
         :param production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
+        :param scope: scope to calculate
         """
         for c in self._companies:
             if c.projected_targets is not None:
@@ -304,7 +307,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                         self.column_config.REGION: [c.region],
                     }, index=[0])
                     bm_production_data = (
-                            production_bm.get_company_projected_production(company_sector_region_info)
+                            production_bm.get_company_projected_production(company_sector_region_info, scope)
                             # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                             .iloc[0].T
                             .astype(f'pint[{str(base_year_production.units)}]')

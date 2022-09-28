@@ -68,7 +68,8 @@ class TestTemplateProvider(unittest.TestCase):
                 ColumnsConfig.SECTOR: [ c.sector ],
                 ColumnsConfig.REGION: [ c.region ],
             }, index=[0])
-            bm_production_data = (self.excel_production_bm.get_company_projected_production(company_sector_region_info)
+            bm_production_data = (self.excel_production_bm.get_company_projected_production(company_sector_region_info,
+                                                                                            EScope.S1S2)
                                   # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                   .iloc[0].T
                                   .astype(f'pint[{str(c.base_year_production.units)}]'))
@@ -197,7 +198,8 @@ class TestTemplateProvider(unittest.TestCase):
                                        index=self.company_ids,
                                        name=2025,
                                        dtype='pint[MWh]').astype('object')
-        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year,
+                                                                               EScope.S1S2)[2025]
         assert_pint_series_equal(self, production, expected_data_2025)
 
     def test_get_cumulative_value(self):
