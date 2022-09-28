@@ -39,16 +39,35 @@ class TestTemperatureScore(unittest.TestCase):
 
         :return:
         """
+        exp_trce_mul = 0.0006004366812227075
+
         scores = self.temperature_score.calculate(self.data)
+
+        exp_weight = 1.0
+        exp_target_overshoot = 562.6345726 / 229.7868989
+        exp_trajectory_overshoot = 528.250411 / 229.7868989
+        exp_target_score = 1.5 + (exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul)
+        exp_trajectory_score = 1.5 + (exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul)
+        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (1 - 0.428571429)
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company T") &
                                    (scores["scope"] == EScope.S1S2)
-                                   ]["temperature_score"].iloc[0], Q_(1.82, ureg.delta_degC), places=2, msg="The temp score was incorrect")
+                                   ]["temperature_score"].iloc[0], Q_(exp_score, ureg.delta_degC), places=2, msg="The temp score was incorrect")
+
+        exp_weight = 1.0
+        exp_target_overshoot = 699.9763453 / 223.2543241
+        exp_trajectory_overshoot = 417.115686 / 223.2543241
+        exp_target_score = 1.5 + (exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul)
+        exp_trajectory_score = 1.5 + (exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul)
+        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (1 - 0.428571429)
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company E") &
-                                   (scores["scope"] == EScope.S1S2)
-                                   ]["temperature_score"].iloc[0], Q_(1.84, ureg.delta_degC), places=2,
+                                   (scores["scope"] == EScope.S3)
+                                   ]["temperature_score"].iloc[0], Q_(exp_score, ureg.delta_degC), places=2,
                                msg="The fallback temp score was incorrect")
+
+        # aggregate S1S2S3 calculation has an extra post-processing step,
+        # which overwrites call of call of TemperatureScore.get_score()
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company AA") &
                                    (scores["time_frame"] == ETimeFrames.LONG) &
@@ -62,18 +81,31 @@ class TestTemperatureScore(unittest.TestCase):
 
         :return:
         """
+        exp_trce_mul = 0.0002729257641921397
+
         overwritten_temp_score = self.temperature_score
         overwritten_temp_score.c.CONTROLS_CONFIG.tcre = Q_(1.0, ureg.delta_degC)
         scores = overwritten_temp_score.calculate(self.data)
+
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company T") &
                                    (scores["scope"] == EScope.S1S2)
                                    ]["temperature_score"].iloc[0], Q_(1.65, ureg.delta_degC), places=2, msg="The temp score was incorrect")
+
+        exp_weight = 1.0
+        exp_target_overshoot = 699.9763453 / 223.2543241
+        exp_trajectory_overshoot = 417.115686 / 223.2543241
+        exp_target_score = 1.5 + (exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul)
+        exp_trajectory_score = 1.5 + (exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul)
+        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (1 - 0.428571429)
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company E") &
-                                   (scores["scope"] == EScope.S1S2)
-                                   ]["temperature_score"].iloc[0], Q_(1.65, ureg.delta_degC), places=2,
+                                   (scores["scope"] == EScope.S3)
+                                   ]["temperature_score"].iloc[0], Q_(exp_score, ureg.delta_degC), places=2,
                                msg="The fallback temp score was incorrect")
+
+        # aggregate S1S2S3 calculation has an extra post-processing step,
+        # which overwrites call of call of TemperatureScore.get_score()
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company AA") &
                                    (scores["time_frame"] == ETimeFrames.LONG) &

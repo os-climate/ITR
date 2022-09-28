@@ -166,7 +166,8 @@ class TestExcelProvider(unittest.TestCase):
                                        index=self.company_ids,
                                        name=2025,
                                        dtype='pint[MWh]').astype('object')
-        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year,
+                                                                               EScope.S1S2)[2025]
         assert_pint_series_equal(self, production, expected_data_2025)
 
     def test_get_cumulative_value(self):
