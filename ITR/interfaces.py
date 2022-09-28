@@ -502,7 +502,9 @@ class ICompanyData(PintModel):
             'Autos': { 'Global': 'pkm' },
             'Trucking': { 'Global': 'tkm' },
             'Cement': { 'Global': 't Cement' },
-            'Buildings': { 'Global': 'billion m**2' }, # Should it be 'built m**2' ?
+            'Construction Buildings': { 'Global': 'billion USD' },
+            'Residential Buildings': { 'Global': 'billion m**2' }, # Should it be 'built m**2' ?
+            'Commercial Buildings': { 'Global': 'billion m**2' }, # Should it be 'built m**2' ?
             'Textiles': { 'Global': 'billion USD' },
             'Chemicals': { 'Global': 'billion USD' },
         }

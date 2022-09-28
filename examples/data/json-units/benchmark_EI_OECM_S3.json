@@ -3785,10 +3785,10 @@
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Construction Buildings",
         "region": "Global",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million USD)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -3796,127 +3796,127 @@
         "projections": [
           {
             "year": 2019,
-            "value": 4.221
+            "value": 88.256
           },
           {
             "year": 2020,
-            "value": 3.905
+            "value": 78.412
           },
           {
             "year": 2021,
-            "value": 3.612
+            "value": 69.666
           },
           {
             "year": 2022,
-            "value": 3.341
+            "value": 61.896
           },
           {
             "year": 2023,
-            "value": 3.09
+            "value": 54.993
           },
           {
             "year": 2024,
-            "value": 2.858
+            "value": 48.859
           },
           {
             "year": 2025,
-            "value": 2.644
+            "value": 43.41
           },
           {
             "year": 2026,
-            "value": 2.295
+            "value": 38.305
           },
           {
             "year": 2027,
-            "value": 1.993
+            "value": 33.801
           },
           {
             "year": 2028,
-            "value": 1.73
+            "value": 29.826
           },
           {
             "year": 2029,
-            "value": 1.503
+            "value": 26.319
           },
           {
             "year": 2030,
-            "value": 1.305
+            "value": 23.224
           },
           {
             "year": 2031,
-            "value": 1.163
+            "value": 20.502
           },
           {
             "year": 2032,
-            "value": 1.022
+            "value": 18.099
           },
           {
             "year": 2033,
-            "value": 0.881
+            "value": 15.978
           },
           {
             "year": 2034,
-            "value": 0.742
+            "value": 14.105
           },
           {
             "year": 2035,
-            "value": 0.604
+            "value": 12.452
           },
           {
             "year": 2036,
-            "value": 0.53
+            "value": 10.898
           },
           {
             "year": 2037,
-            "value": 0.465
+            "value": 9.538
           },
           {
             "year": 2038,
-            "value": 0.408
+            "value": 8.348
           },
           {
             "year": 2039,
-            "value": 0.358
+            "value": 7.306
           },
           {
             "year": 2040,
-            "value": 0.314
+            "value": 6.394
           },
           {
             "year": 2041,
-            "value": 0.266
+            "value": 5.416
           },
           {
             "year": 2042,
-            "value": 0.218
+            "value": 4.588
           },
           {
             "year": 2043,
-            "value": 0.17
+            "value": 3.886
           },
           {
             "year": 2044,
-            "value": 0.122
+            "value": 3.292
           },
           {
             "year": 2045,
-            "value": 0.0747
+            "value": 2.788
           },
           {
             "year": 2046,
-            "value": 0.0596
+            "value": 2.177
           },
           {
             "year": 2047,
-            "value": 0.0446
+            "value": 1.593
           },
           {
             "year": 2048,
-            "value": 0.0296
+            "value": 1.037
           },
           {
             "year": 2049,
-            "value": 0.0148
+            "value": 0.506
           },
           {
             "year": 2050,
@@ -3925,10 +3925,10 @@
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Construction Buildings",
         "region": "Europe",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million USD)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -3936,127 +3936,127 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.449
+            "value": 57.06
           },
           {
             "year": 2020,
-            "value": 0.415
+            "value": 53.798
           },
           {
             "year": 2021,
-            "value": 0.383
+            "value": 50.722
           },
           {
             "year": 2022,
-            "value": 0.353
+            "value": 47.821
           },
           {
             "year": 2023,
-            "value": 0.326
+            "value": 45.087
           },
           {
             "year": 2024,
-            "value": 0.301
+            "value": 42.509
           },
           {
             "year": 2025,
-            "value": 0.278
+            "value": 40.078
           },
           {
             "year": 2026,
-            "value": 0.244
+            "value": 35.728
           },
           {
             "year": 2027,
-            "value": 0.214
+            "value": 31.85
           },
           {
             "year": 2028,
-            "value": 0.188
+            "value": 28.392
           },
           {
             "year": 2029,
-            "value": 0.165
+            "value": 25.311
           },
           {
             "year": 2030,
-            "value": 0.145
+            "value": 22.563
           },
           {
             "year": 2031,
-            "value": 0.13
+            "value": 19.954
           },
           {
             "year": 2032,
-            "value": 0.118
+            "value": 17.646
           },
           {
             "year": 2033,
-            "value": 0.106
+            "value": 15.606
           },
           {
             "year": 2034,
-            "value": 0.0956
+            "value": 13.801
           },
           {
             "year": 2035,
-            "value": 0.0862
+            "value": 12.205
           },
           {
             "year": 2036,
-            "value": 0.0763
+            "value": 10.936
           },
           {
             "year": 2037,
-            "value": 0.0664
+            "value": 9.8
           },
           {
             "year": 2038,
-            "value": 0.0565
+            "value": 8.781
           },
           {
             "year": 2039,
-            "value": 0.0466
+            "value": 7.868
           },
           {
             "year": 2040,
-            "value": 0.0367
+            "value": 7.05
           },
           {
             "year": 2041,
-            "value": 0.0313
+            "value": 6.185
           },
           {
             "year": 2042,
-            "value": 0.0258
+            "value": 5.34
           },
           {
             "year": 2043,
-            "value": 0.0203
+            "value": 4.514
           },
           {
             "year": 2044,
-            "value": 0.0148
+            "value": 3.708
           },
           {
             "year": 2045,
-            "value": 0.00939
+            "value": 2.921
           },
           {
             "year": 2046,
-            "value": 0.00751
+            "value": 2.31
           },
           {
             "year": 2047,
-            "value": 0.00563
+            "value": 1.712
           },
           {
             "year": 2048,
-            "value": 0.00375
+            "value": 1.128
           },
           {
             "year": 2049,
-            "value": 0.00187
+            "value": 0.558
           },
           {
             "year": 2050,
@@ -4065,10 +4065,10 @@
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Construction Buildings",
         "region": "North America",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million USD)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -4076,131 +4076,971 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.627
+            "value": 66.74
           },
           {
             "year": 2020,
-            "value": 0.57
+            "value": 60.643
           },
           {
             "year": 2021,
-            "value": 0.518
+            "value": 55.103
           },
           {
             "year": 2022,
-            "value": 0.471
+            "value": 50.069
           },
           {
             "year": 2023,
-            "value": 0.429
+            "value": 45.495
           },
           {
             "year": 2024,
-            "value": 0.39
+            "value": 41.339
           },
           {
             "year": 2025,
-            "value": 0.354
+            "value": 37.562
           },
           {
             "year": 2026,
-            "value": 0.307
+            "value": 32.343
           },
           {
             "year": 2027,
-            "value": 0.259
+            "value": 27.313
           },
           {
             "year": 2028,
-            "value": 0.212
+            "value": 22.467
           },
           {
             "year": 2029,
-            "value": 0.164
+            "value": 17.8
           },
           {
             "year": 2030,
-            "value": 0.117
+            "value": 13.307
           },
           {
             "year": 2031,
-            "value": 0.109
+            "value": 12.674
           },
           {
             "year": 2032,
-            "value": 0.102
+            "value": 12.072
           },
           {
             "year": 2033,
-            "value": 0.0953
+            "value": 11.499
           },
           {
             "year": 2034,
-            "value": 0.089
+            "value": 10.952
           },
           {
             "year": 2035,
-            "value": 0.0831
+            "value": 10.432
           },
           {
             "year": 2036,
-            "value": 0.0741
+            "value": 9.002
           },
           {
             "year": 2037,
-            "value": 0.065
+            "value": 7.624
           },
           {
             "year": 2038,
-            "value": 0.0559
+            "value": 6.296
           },
           {
             "year": 2039,
-            "value": 0.0469
+            "value": 5.017
           },
           {
             "year": 2040,
-            "value": 0.0379
+            "value": 3.785
           },
           {
             "year": 2041,
-            "value": 0.033
+            "value": 3.288
           },
           {
             "year": 2042,
-            "value": 0.0281
+            "value": 2.856
           },
           {
             "year": 2043,
-            "value": 0.0233
+            "value": 2.48
           },
           {
             "year": 2044,
-            "value": 0.0184
+            "value": 2.154
           },
           {
             "year": 2045,
-            "value": 0.0136
+            "value": 1.871
           },
           {
             "year": 2046,
-            "value": 0.012
+            "value": 1.564
           },
           {
             "year": 2047,
-            "value": 0.0105
+            "value": 1.269
           },
           {
             "year": 2048,
-            "value": 0.00897
+            "value": 0.983
           },
           {
             "year": 2049,
-            "value": 0.00745
+            "value": 0.708
           },
           {
             "year": 2050,
-            "value": 0.00593
+            "value": 0.443
+          }
+        ]
+      },
+      {
+        "sector": "Residential Buildings",
+        "region": "Global",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 25043.0
+          },
+          {
+            "year": 2020,
+            "value": 22923.0
+          },
+          {
+            "year": 2021,
+            "value": 20983.0
+          },
+          {
+            "year": 2022,
+            "value": 19207.0
+          },
+          {
+            "year": 2023,
+            "value": 17582.0
+          },
+          {
+            "year": 2024,
+            "value": 16094.0
+          },
+          {
+            "year": 2025,
+            "value": 14732.0
+          },
+          {
+            "year": 2026,
+            "value": 12993.0
+          },
+          {
+            "year": 2027,
+            "value": 11303.0
+          },
+          {
+            "year": 2028,
+            "value": 9661.7
+          },
+          {
+            "year": 2029,
+            "value": 8067.3
+          },
+          {
+            "year": 2030,
+            "value": 6519.0
+          },
+          {
+            "year": 2031,
+            "value": 5730.8
+          },
+          {
+            "year": 2032,
+            "value": 4962.9
+          },
+          {
+            "year": 2033,
+            "value": 4214.9
+          },
+          {
+            "year": 2034,
+            "value": 3486.4
+          },
+          {
+            "year": 2035,
+            "value": 2777.0
+          },
+          {
+            "year": 2036,
+            "value": 2415.5
+          },
+          {
+            "year": 2037,
+            "value": 2101.0
+          },
+          {
+            "year": 2038,
+            "value": 1827.5
+          },
+          {
+            "year": 2039,
+            "value": 1589.5
+          },
+          {
+            "year": 2040,
+            "value": 1382.6
+          },
+          {
+            "year": 2041,
+            "value": 1160.8
+          },
+          {
+            "year": 2042,
+            "value": 943.76
+          },
+          {
+            "year": 2043,
+            "value": 731.35
+          },
+          {
+            "year": 2044,
+            "value": 523.51
+          },
+          {
+            "year": 2045,
+            "value": 320.15
+          },
+          {
+            "year": 2046,
+            "value": 253.45
+          },
+          {
+            "year": 2047,
+            "value": 188.1
+          },
+          {
+            "year": 2048,
+            "value": 124.09
+          },
+          {
+            "year": 2049,
+            "value": 61.399
+          },
+          {
+            "year": 2050,
+            "value": 0
+          }
+        ]
+      },
+      {
+        "sector": "Residential Buildings",
+        "region": "Europe",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 11439.0
+          },
+          {
+            "year": 2020,
+            "value": 10765.0
+          },
+          {
+            "year": 2021,
+            "value": 10131.0
+          },
+          {
+            "year": 2022,
+            "value": 9534.8
+          },
+          {
+            "year": 2023,
+            "value": 8973.4
+          },
+          {
+            "year": 2024,
+            "value": 8444.9
+          },
+          {
+            "year": 2025,
+            "value": 7947.6
+          },
+          {
+            "year": 2026,
+            "value": 6922.7
+          },
+          {
+            "year": 2027,
+            "value": 6030.0
+          },
+          {
+            "year": 2028,
+            "value": 5252.4
+          },
+          {
+            "year": 2029,
+            "value": 4575.0
+          },
+          {
+            "year": 2030,
+            "value": 3985.0
+          },
+          {
+            "year": 2031,
+            "value": 3644.0
+          },
+          {
+            "year": 2032,
+            "value": 3332.1
+          },
+          {
+            "year": 2033,
+            "value": 3046.9
+          },
+          {
+            "year": 2034,
+            "value": 2786.2
+          },
+          {
+            "year": 2035,
+            "value": 2547.7
+          },
+          {
+            "year": 2036,
+            "value": 2245.6
+          },
+          {
+            "year": 2037,
+            "value": 1944.7
+          },
+          {
+            "year": 2038,
+            "value": 1645.0
+          },
+          {
+            "year": 2039,
+            "value": 1346.5
+          },
+          {
+            "year": 2040,
+            "value": 1049.3
+          },
+          {
+            "year": 2041,
+            "value": 898.27
+          },
+          {
+            "year": 2042,
+            "value": 747.51
+          },
+          {
+            "year": 2043,
+            "value": 597.01
+          },
+          {
+            "year": 2044,
+            "value": 446.75
+          },
+          {
+            "year": 2045,
+            "value": 296.75
+          },
+          {
+            "year": 2046,
+            "value": 237.2
+          },
+          {
+            "year": 2047,
+            "value": 177.75
+          },
+          {
+            "year": 2048,
+            "value": 118.4
+          },
+          {
+            "year": 2049,
+            "value": 59.153
+          },
+          {
+            "year": 2050,
+            "value": 0
+          }
+        ]
+      },
+      {
+        "sector": "Residential Buildings",
+        "region": "North America",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 25190.0
+          },
+          {
+            "year": 2020,
+            "value": 22751.0
+          },
+          {
+            "year": 2021,
+            "value": 20548.0
+          },
+          {
+            "year": 2022,
+            "value": 18559.0
+          },
+          {
+            "year": 2023,
+            "value": 16762.0
+          },
+          {
+            "year": 2024,
+            "value": 15140.0
+          },
+          {
+            "year": 2025,
+            "value": 13674.0
+          },
+          {
+            "year": 2026,
+            "value": 11454.0
+          },
+          {
+            "year": 2027,
+            "value": 9257.1
+          },
+          {
+            "year": 2028,
+            "value": 7081.8
+          },
+          {
+            "year": 2029,
+            "value": 4928.3
+          },
+          {
+            "year": 2030,
+            "value": 2796.5
+          },
+          {
+            "year": 2031,
+            "value": 2717.8
+          },
+          {
+            "year": 2032,
+            "value": 2641.2
+          },
+          {
+            "year": 2033,
+            "value": 2566.9
+          },
+          {
+            "year": 2034,
+            "value": 2494.6
+          },
+          {
+            "year": 2035,
+            "value": 2424.4
+          },
+          {
+            "year": 2036,
+            "value": 2104.0
+          },
+          {
+            "year": 2037,
+            "value": 1786.2
+          },
+          {
+            "year": 2038,
+            "value": 1471.1
+          },
+          {
+            "year": 2039,
+            "value": 1158.7
+          },
+          {
+            "year": 2040,
+            "value": 848.82
+          },
+          {
+            "year": 2041,
+            "value": 758.68
+          },
+          {
+            "year": 2042,
+            "value": 678.12
+          },
+          {
+            "year": 2043,
+            "value": 606.11
+          },
+          {
+            "year": 2044,
+            "value": 541.75
+          },
+          {
+            "year": 2045,
+            "value": 484.22
+          },
+          {
+            "year": 2046,
+            "value": 459.85
+          },
+          {
+            "year": 2047,
+            "value": 436.7
+          },
+          {
+            "year": 2048,
+            "value": 414.72
+          },
+          {
+            "year": 2049,
+            "value": 393.84
+          },
+          {
+            "year": 2050,
+            "value": 374.02
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "Global",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 50821.0
+          },
+          {
+            "year": 2020,
+            "value": 46361.0
+          },
+          {
+            "year": 2021,
+            "value": 42292.0
+          },
+          {
+            "year": 2022,
+            "value": 38581.0
+          },
+          {
+            "year": 2023,
+            "value": 35195.0
+          },
+          {
+            "year": 2024,
+            "value": 32107.0
+          },
+          {
+            "year": 2025,
+            "value": 29289.0
+          },
+          {
+            "year": 2026,
+            "value": 24983.0
+          },
+          {
+            "year": 2027,
+            "value": 21310.0
+          },
+          {
+            "year": 2028,
+            "value": 18176.0
+          },
+          {
+            "year": 2029,
+            "value": 15504.0
+          },
+          {
+            "year": 2030,
+            "value": 13224.0
+          },
+          {
+            "year": 2031,
+            "value": 11569.0
+          },
+          {
+            "year": 2032,
+            "value": 9985.1
+          },
+          {
+            "year": 2033,
+            "value": 8469.7
+          },
+          {
+            "year": 2034,
+            "value": 7020.6
+          },
+          {
+            "year": 2035,
+            "value": 5635.5
+          },
+          {
+            "year": 2036,
+            "value": 4851.6
+          },
+          {
+            "year": 2037,
+            "value": 4176.8
+          },
+          {
+            "year": 2038,
+            "value": 3595.8
+          },
+          {
+            "year": 2039,
+            "value": 3095.6
+          },
+          {
+            "year": 2040,
+            "value": 2665.0
+          },
+          {
+            "year": 2041,
+            "value": 2221.2
+          },
+          {
+            "year": 2042,
+            "value": 1791.4
+          },
+          {
+            "year": 2043,
+            "value": 1375.3
+          },
+          {
+            "year": 2044,
+            "value": 972.64
+          },
+          {
+            "year": 2045,
+            "value": 582.97
+          },
+          {
+            "year": 2046,
+            "value": 459.2
+          },
+          {
+            "year": 2047,
+            "value": 339.11
+          },
+          {
+            "year": 2048,
+            "value": 222.59
+          },
+          {
+            "year": 2049,
+            "value": 109.58
+          },
+          {
+            "year": 2050,
+            "value": 0
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "Europe",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 106330.0
+          },
+          {
+            "year": 2020,
+            "value": 96012.0
+          },
+          {
+            "year": 2021,
+            "value": 86693.0
+          },
+          {
+            "year": 2022,
+            "value": 78278.0
+          },
+          {
+            "year": 2023,
+            "value": 70680.0
+          },
+          {
+            "year": 2024,
+            "value": 63820.0
+          },
+          {
+            "year": 2025,
+            "value": 57626.0
+          },
+          {
+            "year": 2026,
+            "value": 49749.0
+          },
+          {
+            "year": 2027,
+            "value": 42949.0
+          },
+          {
+            "year": 2028,
+            "value": 37078.0
+          },
+          {
+            "year": 2029,
+            "value": 32010.0
+          },
+          {
+            "year": 2030,
+            "value": 27635.0
+          },
+          {
+            "year": 2031,
+            "value": 24259.0
+          },
+          {
+            "year": 2032,
+            "value": 21295.0
+          },
+          {
+            "year": 2033,
+            "value": 18693.0
+          },
+          {
+            "year": 2034,
+            "value": 16409.0
+          },
+          {
+            "year": 2035,
+            "value": 14404.0
+          },
+          {
+            "year": 2036,
+            "value": 12538.0
+          },
+          {
+            "year": 2037,
+            "value": 10735.0
+          },
+          {
+            "year": 2038,
+            "value": 8993.1
+          },
+          {
+            "year": 2039,
+            "value": 7311.7
+          },
+          {
+            "year": 2040,
+            "value": 5688.7
+          },
+          {
+            "year": 2041,
+            "value": 4722.6
+          },
+          {
+            "year": 2042,
+            "value": 3795.7
+          },
+          {
+            "year": 2043,
+            "value": 2906.8
+          },
+          {
+            "year": 2044,
+            "value": 2054.6
+          },
+          {
+            "year": 2045,
+            "value": 1238.1
+          },
+          {
+            "year": 2046,
+            "value": 971.09
+          },
+          {
+            "year": 2047,
+            "value": 714.07
+          },
+          {
+            "year": 2048,
+            "value": 466.73
+          },
+          {
+            "year": 2049,
+            "value": 228.8
+          },
+          {
+            "year": 2050,
+            "value": 0
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "North America",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 58010.0
+          },
+          {
+            "year": 2020,
+            "value": 52256.0
+          },
+          {
+            "year": 2021,
+            "value": 47072.0
+          },
+          {
+            "year": 2022,
+            "value": 42403.0
+          },
+          {
+            "year": 2023,
+            "value": 38197.0
+          },
+          {
+            "year": 2024,
+            "value": 34408.0
+          },
+          {
+            "year": 2025,
+            "value": 30995.0
+          },
+          {
+            "year": 2026,
+            "value": 27138.0
+          },
+          {
+            "year": 2027,
+            "value": 23406.0
+          },
+          {
+            "year": 2028,
+            "value": 19797.0
+          },
+          {
+            "year": 2029,
+            "value": 16306.0
+          },
+          {
+            "year": 2030,
+            "value": 12932.0
+          },
+          {
+            "year": 2031,
+            "value": 11573.0
+          },
+          {
+            "year": 2032,
+            "value": 10356.0
+          },
+          {
+            "year": 2033,
+            "value": 9267.7
+          },
+          {
+            "year": 2034,
+            "value": 8293.7
+          },
+          {
+            "year": 2035,
+            "value": 7421.9
+          },
+          {
+            "year": 2036,
+            "value": 6407.8
+          },
+          {
+            "year": 2037,
+            "value": 5532.3
+          },
+          {
+            "year": 2038,
+            "value": 4776.3
+          },
+          {
+            "year": 2039,
+            "value": 4123.7
+          },
+          {
+            "year": 2040,
+            "value": 3560.2
+          },
+          {
+            "year": 2041,
+            "value": 2970.4
+          },
+          {
+            "year": 2042,
+            "value": 2403.2
+          },
+          {
+            "year": 2043,
+            "value": 1857.9
+          },
+          {
+            "year": 2044,
+            "value": 1333.9
+          },
+          {
+            "year": 2045,
+            "value": 830.51
+          },
+          {
+            "year": 2046,
+            "value": 666.22
+          },
+          {
+            "year": 2047,
+            "value": 507.72
+          },
+          {
+            "year": 2048,
+            "value": 354.88
+          },
+          {
+            "year": 2049,
+            "value": 207.52
+          },
+          {
+            "year": 2050,
+            "value": 65.511
           }
         ]
       },
@@ -8829,10 +9669,10 @@
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Construction Buildings",
         "region": "Global",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million USD)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -8840,139 +9680,139 @@
         "projections": [
           {
             "year": 2019,
-            "value": 5.296
+            "value": 88.256
           },
           {
             "year": 2020,
-            "value": 4.944
+            "value": 78.412
           },
           {
             "year": 2021,
-            "value": 4.616
+            "value": 69.666
           },
           {
             "year": 2022,
-            "value": 4.309
+            "value": 61.896
           },
           {
             "year": 2023,
-            "value": 4.022
+            "value": 54.993
           },
           {
             "year": 2024,
-            "value": 3.755
+            "value": 48.859
           },
           {
             "year": 2025,
-            "value": 3.506
+            "value": 43.41
           },
           {
             "year": 2026,
-            "value": 3.142
+            "value": 38.305
           },
           {
             "year": 2027,
-            "value": 2.817
+            "value": 33.801
           },
           {
             "year": 2028,
-            "value": 2.525
+            "value": 29.826
           },
           {
             "year": 2029,
-            "value": 2.263
+            "value": 26.319
           },
           {
             "year": 2030,
-            "value": 2.029
+            "value": 23.224
           },
           {
             "year": 2031,
-            "value": 1.831
+            "value": 20.502
           },
           {
             "year": 2032,
-            "value": 1.652
+            "value": 18.099
           },
           {
             "year": 2033,
-            "value": 1.491
+            "value": 15.978
           },
           {
             "year": 2034,
-            "value": 1.345
+            "value": 14.105
           },
           {
             "year": 2035,
-            "value": 1.214
+            "value": 12.452
           },
           {
             "year": 2036,
-            "value": 1.12
+            "value": 10.898
           },
           {
             "year": 2037,
-            "value": 1.033
+            "value": 9.538
           },
           {
             "year": 2038,
-            "value": 0.953
+            "value": 8.348
           },
           {
             "year": 2039,
-            "value": 0.88
+            "value": 7.306
           },
           {
             "year": 2040,
-            "value": 0.812
+            "value": 6.394
           },
           {
             "year": 2041,
-            "value": 0.727
+            "value": 5.416
           },
           {
             "year": 2042,
-            "value": 0.65
+            "value": 4.588
           },
           {
             "year": 2043,
-            "value": 0.582
+            "value": 3.886
           },
           {
             "year": 2044,
-            "value": 0.521
+            "value": 3.292
           },
           {
             "year": 2045,
-            "value": 0.466
+            "value": 2.788
           },
           {
             "year": 2046,
-            "value": 0.425
+            "value": 2.177
           },
           {
             "year": 2047,
-            "value": 0.387
+            "value": 1.593
           },
           {
             "year": 2048,
-            "value": 0.352
+            "value": 1.037
           },
           {
             "year": 2049,
-            "value": 0.321
+            "value": 0.506
           },
           {
             "year": 2050,
-            "value": 0.292
+            "value": 0
           }
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Construction Buildings",
         "region": "Europe",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million USD)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -8980,139 +9820,139 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.518
+            "value": 57.06
           },
           {
             "year": 2020,
-            "value": 0.484
+            "value": 53.798
           },
           {
             "year": 2021,
-            "value": 0.452
+            "value": 50.722
           },
           {
             "year": 2022,
-            "value": 0.422
+            "value": 47.821
           },
           {
             "year": 2023,
-            "value": 0.394
+            "value": 45.087
           },
           {
             "year": 2024,
-            "value": 0.368
+            "value": 42.509
           },
           {
             "year": 2025,
-            "value": 0.344
+            "value": 40.078
           },
           {
             "year": 2026,
-            "value": 0.309
+            "value": 35.728
           },
           {
             "year": 2027,
-            "value": 0.277
+            "value": 31.85
           },
           {
             "year": 2028,
-            "value": 0.249
+            "value": 28.392
           },
           {
             "year": 2029,
-            "value": 0.223
+            "value": 25.311
           },
           {
             "year": 2030,
-            "value": 0.2
+            "value": 22.563
           },
           {
             "year": 2031,
-            "value": 0.184
+            "value": 19.954
           },
           {
             "year": 2032,
-            "value": 0.17
+            "value": 17.646
           },
           {
             "year": 2033,
-            "value": 0.157
+            "value": 15.606
           },
           {
             "year": 2034,
-            "value": 0.144
+            "value": 13.801
           },
           {
             "year": 2035,
-            "value": 0.133
+            "value": 12.205
           },
           {
             "year": 2036,
-            "value": 0.12
+            "value": 10.936
           },
           {
             "year": 2037,
-            "value": 0.108
+            "value": 9.8
           },
           {
             "year": 2038,
-            "value": 0.0972
+            "value": 8.781
           },
           {
             "year": 2039,
-            "value": 0.0876
+            "value": 7.868
           },
           {
             "year": 2040,
-            "value": 0.0789
+            "value": 7.05
           },
           {
             "year": 2041,
-            "value": 0.0706
+            "value": 6.185
           },
           {
             "year": 2042,
-            "value": 0.0632
+            "value": 5.34
           },
           {
             "year": 2043,
-            "value": 0.0565
+            "value": 4.514
           },
           {
             "year": 2044,
-            "value": 0.0505
+            "value": 3.708
           },
           {
             "year": 2045,
-            "value": 0.0452
+            "value": 2.921
           },
           {
             "year": 2046,
-            "value": 0.0415
+            "value": 2.31
           },
           {
             "year": 2047,
-            "value": 0.0382
+            "value": 1.712
           },
           {
             "year": 2048,
-            "value": 0.0351
+            "value": 1.128
           },
           {
             "year": 2049,
-            "value": 0.0322
+            "value": 0.558
           },
           {
             "year": 2050,
-            "value": 0.0296
+            "value": 0
           }
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Construction Buildings",
         "region": "North America",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million USD)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -9120,131 +9960,971 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.666
+            "value": 66.74
           },
           {
             "year": 2020,
-            "value": 0.609
+            "value": 60.643
           },
           {
             "year": 2021,
-            "value": 0.557
+            "value": 55.103
           },
           {
             "year": 2022,
-            "value": 0.509
+            "value": 50.069
           },
           {
             "year": 2023,
-            "value": 0.466
+            "value": 45.495
           },
           {
             "year": 2024,
-            "value": 0.426
+            "value": 41.339
           },
           {
             "year": 2025,
-            "value": 0.39
+            "value": 37.562
           },
           {
             "year": 2026,
-            "value": 0.34
+            "value": 32.343
           },
           {
             "year": 2027,
-            "value": 0.291
+            "value": 27.313
           },
           {
             "year": 2028,
-            "value": 0.242
+            "value": 22.467
           },
           {
             "year": 2029,
-            "value": 0.193
+            "value": 17.8
           },
           {
             "year": 2030,
-            "value": 0.144
+            "value": 13.307
           },
           {
             "year": 2031,
-            "value": 0.135
+            "value": 12.674
           },
           {
             "year": 2032,
-            "value": 0.127
+            "value": 12.072
           },
           {
             "year": 2033,
-            "value": 0.12
+            "value": 11.499
           },
           {
             "year": 2034,
-            "value": 0.113
+            "value": 10.952
           },
           {
             "year": 2035,
-            "value": 0.106
+            "value": 10.432
           },
           {
             "year": 2036,
-            "value": 0.0934
+            "value": 9.002
           },
           {
             "year": 2037,
-            "value": 0.0821
+            "value": 7.624
           },
           {
             "year": 2038,
-            "value": 0.0722
+            "value": 6.296
           },
           {
             "year": 2039,
-            "value": 0.0635
+            "value": 5.017
           },
           {
             "year": 2040,
-            "value": 0.0558
+            "value": 3.785
           },
           {
             "year": 2041,
-            "value": 0.0489
+            "value": 3.288
           },
           {
             "year": 2042,
-            "value": 0.0427
+            "value": 2.856
           },
           {
             "year": 2043,
-            "value": 0.0374
+            "value": 2.48
           },
           {
             "year": 2044,
-            "value": 0.0327
+            "value": 2.154
           },
           {
             "year": 2045,
-            "value": 0.0286
+            "value": 1.871
           },
           {
             "year": 2046,
-            "value": 0.0262
+            "value": 1.564
           },
           {
             "year": 2047,
-            "value": 0.0239
+            "value": 1.269
           },
           {
             "year": 2048,
-            "value": 0.0219
+            "value": 0.983
           },
           {
             "year": 2049,
-            "value": 0.02
+            "value": 0.708
           },
           {
             "year": 2050,
-            "value": 0.0183
+            "value": 0.443
+          }
+        ]
+      },
+      {
+        "sector": "Residential Buildings",
+        "region": "Global",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 33735.0
+          },
+          {
+            "year": 2020,
+            "value": 31237.0
+          },
+          {
+            "year": 2021,
+            "value": 28925.0
+          },
+          {
+            "year": 2022,
+            "value": 26783.0
+          },
+          {
+            "year": 2023,
+            "value": 24800.0
+          },
+          {
+            "year": 2024,
+            "value": 22964.0
+          },
+          {
+            "year": 2025,
+            "value": 21264.0
+          },
+          {
+            "year": 2026,
+            "value": 18823.0
+          },
+          {
+            "year": 2027,
+            "value": 16661.0
+          },
+          {
+            "year": 2028,
+            "value": 14748.0
+          },
+          {
+            "year": 2029,
+            "value": 13055.0
+          },
+          {
+            "year": 2030,
+            "value": 11556.0
+          },
+          {
+            "year": 2031,
+            "value": 10369.0
+          },
+          {
+            "year": 2032,
+            "value": 9303.4
+          },
+          {
+            "year": 2033,
+            "value": 8347.6
+          },
+          {
+            "year": 2034,
+            "value": 7489.9
+          },
+          {
+            "year": 2035,
+            "value": 6720.4
+          },
+          {
+            "year": 2036,
+            "value": 6172.4
+          },
+          {
+            "year": 2037,
+            "value": 5669.1
+          },
+          {
+            "year": 2038,
+            "value": 5206.9
+          },
+          {
+            "year": 2039,
+            "value": 4782.3
+          },
+          {
+            "year": 2040,
+            "value": 4392.3
+          },
+          {
+            "year": 2041,
+            "value": 3944.4
+          },
+          {
+            "year": 2042,
+            "value": 3542.1
+          },
+          {
+            "year": 2043,
+            "value": 3180.8
+          },
+          {
+            "year": 2044,
+            "value": 2856.4
+          },
+          {
+            "year": 2045,
+            "value": 2565.1
+          },
+          {
+            "year": 2046,
+            "value": 2332.3
+          },
+          {
+            "year": 2047,
+            "value": 2120.6
+          },
+          {
+            "year": 2048,
+            "value": 1928.2
+          },
+          {
+            "year": 2049,
+            "value": 1753.2
+          },
+          {
+            "year": 2050,
+            "value": 1594.1
+          }
+        ]
+      },
+      {
+        "sector": "Residential Buildings",
+        "region": "Europe",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 16432.0
+          },
+          {
+            "year": 2020,
+            "value": 15706.0
+          },
+          {
+            "year": 2021,
+            "value": 15013.0
+          },
+          {
+            "year": 2022,
+            "value": 14350.0
+          },
+          {
+            "year": 2023,
+            "value": 13716.0
+          },
+          {
+            "year": 2024,
+            "value": 13110.0
+          },
+          {
+            "year": 2025,
+            "value": 12531.0
+          },
+          {
+            "year": 2026,
+            "value": 11381.0
+          },
+          {
+            "year": 2027,
+            "value": 10335.0
+          },
+          {
+            "year": 2028,
+            "value": 9386.3
+          },
+          {
+            "year": 2029,
+            "value": 8524.4
+          },
+          {
+            "year": 2030,
+            "value": 7741.6
+          },
+          {
+            "year": 2031,
+            "value": 7257.4
+          },
+          {
+            "year": 2032,
+            "value": 6803.5
+          },
+          {
+            "year": 2033,
+            "value": 6378.0
+          },
+          {
+            "year": 2034,
+            "value": 5979.1
+          },
+          {
+            "year": 2035,
+            "value": 5605.2
+          },
+          {
+            "year": 2036,
+            "value": 5167.4
+          },
+          {
+            "year": 2037,
+            "value": 4763.7
+          },
+          {
+            "year": 2038,
+            "value": 4391.6
+          },
+          {
+            "year": 2039,
+            "value": 4048.5
+          },
+          {
+            "year": 2040,
+            "value": 3732.3
+          },
+          {
+            "year": 2041,
+            "value": 3445.4
+          },
+          {
+            "year": 2042,
+            "value": 3180.5
+          },
+          {
+            "year": 2043,
+            "value": 2935.9
+          },
+          {
+            "year": 2044,
+            "value": 2710.2
+          },
+          {
+            "year": 2045,
+            "value": 2501.9
+          },
+          {
+            "year": 2046,
+            "value": 2334.4
+          },
+          {
+            "year": 2047,
+            "value": 2178.2
+          },
+          {
+            "year": 2048,
+            "value": 2032.4
+          },
+          {
+            "year": 2049,
+            "value": 1896.4
+          },
+          {
+            "year": 2050,
+            "value": 1769.5
+          }
+        ]
+      },
+      {
+        "sector": "Residential Buildings",
+        "region": "North America",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 27351.0
+          },
+          {
+            "year": 2020,
+            "value": 24892.0
+          },
+          {
+            "year": 2021,
+            "value": 22654.0
+          },
+          {
+            "year": 2022,
+            "value": 20618.0
+          },
+          {
+            "year": 2023,
+            "value": 18764.0
+          },
+          {
+            "year": 2024,
+            "value": 17077.0
+          },
+          {
+            "year": 2025,
+            "value": 15542.0
+          },
+          {
+            "year": 2026,
+            "value": 13223.0
+          },
+          {
+            "year": 2027,
+            "value": 10927.0
+          },
+          {
+            "year": 2028,
+            "value": 8653.5
+          },
+          {
+            "year": 2029,
+            "value": 6403.3
+          },
+          {
+            "year": 2030,
+            "value": 4175.6
+          },
+          {
+            "year": 2031,
+            "value": 4042.6
+          },
+          {
+            "year": 2032,
+            "value": 3913.8
+          },
+          {
+            "year": 2033,
+            "value": 3789.1
+          },
+          {
+            "year": 2034,
+            "value": 3668.4
+          },
+          {
+            "year": 2035,
+            "value": 3551.5
+          },
+          {
+            "year": 2036,
+            "value": 3173.5
+          },
+          {
+            "year": 2037,
+            "value": 2798.7
+          },
+          {
+            "year": 2038,
+            "value": 2427.0
+          },
+          {
+            "year": 2039,
+            "value": 2058.4
+          },
+          {
+            "year": 2040,
+            "value": 1692.9
+          },
+          {
+            "year": 2041,
+            "value": 1570.1
+          },
+          {
+            "year": 2042,
+            "value": 1456.3
+          },
+          {
+            "year": 2043,
+            "value": 1350.7
+          },
+          {
+            "year": 2044,
+            "value": 1252.8
+          },
+          {
+            "year": 2045,
+            "value": 1161.9
+          },
+          {
+            "year": 2046,
+            "value": 1106.3
+          },
+          {
+            "year": 2047,
+            "value": 1053.4
+          },
+          {
+            "year": 2048,
+            "value": 1003.0
+          },
+          {
+            "year": 2049,
+            "value": 954.99
+          },
+          {
+            "year": 2050,
+            "value": 909.29
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "Global",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 59513.0
+          },
+          {
+            "year": 2020,
+            "value": 54685.0
+          },
+          {
+            "year": 2021,
+            "value": 50248.0
+          },
+          {
+            "year": 2022,
+            "value": 46172.0
+          },
+          {
+            "year": 2023,
+            "value": 42426.0
+          },
+          {
+            "year": 2024,
+            "value": 38984.0
+          },
+          {
+            "year": 2025,
+            "value": 35822.0
+          },
+          {
+            "year": 2026,
+            "value": 31306.0
+          },
+          {
+            "year": 2027,
+            "value": 27359.0
+          },
+          {
+            "year": 2028,
+            "value": 23910.0
+          },
+          {
+            "year": 2029,
+            "value": 20896.0
+          },
+          {
+            "year": 2030,
+            "value": 18261.0
+          },
+          {
+            "year": 2031,
+            "value": 16051.0
+          },
+          {
+            "year": 2032,
+            "value": 14107.0
+          },
+          {
+            "year": 2033,
+            "value": 12399.0
+          },
+          {
+            "year": 2034,
+            "value": 10898.0
+          },
+          {
+            "year": 2035,
+            "value": 9578.9
+          },
+          {
+            "year": 2036,
+            "value": 8626.6
+          },
+          {
+            "year": 2037,
+            "value": 7769.1
+          },
+          {
+            "year": 2038,
+            "value": 6996.7
+          },
+          {
+            "year": 2039,
+            "value": 6301.2
+          },
+          {
+            "year": 2040,
+            "value": 5674.8
+          },
+          {
+            "year": 2041,
+            "value": 4936.9
+          },
+          {
+            "year": 2042,
+            "value": 4294.9
+          },
+          {
+            "year": 2043,
+            "value": 3736.4
+          },
+          {
+            "year": 2044,
+            "value": 3250.6
+          },
+          {
+            "year": 2045,
+            "value": 2827.9
+          },
+          {
+            "year": 2046,
+            "value": 2521.6
+          },
+          {
+            "year": 2047,
+            "value": 2248.4
+          },
+          {
+            "year": 2048,
+            "value": 2004.9
+          },
+          {
+            "year": 2049,
+            "value": 1787.7
+          },
+          {
+            "year": 2050,
+            "value": 1594.1
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "Europe",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 111320.0
+          },
+          {
+            "year": 2020,
+            "value": 101030.0
+          },
+          {
+            "year": 2021,
+            "value": 91695.0
+          },
+          {
+            "year": 2022,
+            "value": 83219.0
+          },
+          {
+            "year": 2023,
+            "value": 75527.0
+          },
+          {
+            "year": 2024,
+            "value": 68545.0
+          },
+          {
+            "year": 2025,
+            "value": 62209.0
+          },
+          {
+            "year": 2026,
+            "value": 54256.0
+          },
+          {
+            "year": 2027,
+            "value": 47319.0
+          },
+          {
+            "year": 2028,
+            "value": 41269.0
+          },
+          {
+            "year": 2029,
+            "value": 35993.0
+          },
+          {
+            "year": 2030,
+            "value": 31391.0
+          },
+          {
+            "year": 2031,
+            "value": 27917.0
+          },
+          {
+            "year": 2032,
+            "value": 24827.0
+          },
+          {
+            "year": 2033,
+            "value": 22079.0
+          },
+          {
+            "year": 2034,
+            "value": 19635.0
+          },
+          {
+            "year": 2035,
+            "value": 17462.0
+          },
+          {
+            "year": 2036,
+            "value": 15074.0
+          },
+          {
+            "year": 2037,
+            "value": 13013.0
+          },
+          {
+            "year": 2038,
+            "value": 11234.0
+          },
+          {
+            "year": 2039,
+            "value": 9697.7
+          },
+          {
+            "year": 2040,
+            "value": 8371.7
+          },
+          {
+            "year": 2041,
+            "value": 7303.9
+          },
+          {
+            "year": 2042,
+            "value": 6278.4
+          },
+          {
+            "year": 2043,
+            "value": 5294.0
+          },
+          {
+            "year": 2044,
+            "value": 4349.4
+          },
+          {
+            "year": 2045,
+            "value": 3443.2
+          },
+          {
+            "year": 2046,
+            "value": 3014.0
+          },
+          {
+            "year": 2047,
+            "value": 2638.3
+          },
+          {
+            "year": 2048,
+            "value": 2309.4
+          },
+          {
+            "year": 2049,
+            "value": 2021.5
+          },
+          {
+            "year": 2050,
+            "value": 1769.5
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "North America",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 60172.0
+          },
+          {
+            "year": 2020,
+            "value": 54402.0
+          },
+          {
+            "year": 2021,
+            "value": 49185.0
+          },
+          {
+            "year": 2022,
+            "value": 44468.0
+          },
+          {
+            "year": 2023,
+            "value": 40204.0
+          },
+          {
+            "year": 2024,
+            "value": 36348.0
+          },
+          {
+            "year": 2025,
+            "value": 32863.0
+          },
+          {
+            "year": 2026,
+            "value": 28902.0
+          },
+          {
+            "year": 2027,
+            "value": 25070.0
+          },
+          {
+            "year": 2028,
+            "value": 21363.0
+          },
+          {
+            "year": 2029,
+            "value": 17777.0
+          },
+          {
+            "year": 2030,
+            "value": 14311.0
+          },
+          {
+            "year": 2031,
+            "value": 12910.0
+          },
+          {
+            "year": 2032,
+            "value": 11646.0
+          },
+          {
+            "year": 2033,
+            "value": 10506.0
+          },
+          {
+            "year": 2034,
+            "value": 9476.9
+          },
+          {
+            "year": 2035,
+            "value": 8549.0
+          },
+          {
+            "year": 2036,
+            "value": 7487.0
+          },
+          {
+            "year": 2037,
+            "value": 6556.9
+          },
+          {
+            "year": 2038,
+            "value": 5742.4
+          },
+          {
+            "year": 2039,
+            "value": 5029.0
+          },
+          {
+            "year": 2040,
+            "value": 4404.3
+          },
+          {
+            "year": 2041,
+            "value": 3779.1
+          },
+          {
+            "year": 2042,
+            "value": 3177.5
+          },
+          {
+            "year": 2043,
+            "value": 2599.0
+          },
+          {
+            "year": 2044,
+            "value": 2042.8
+          },
+          {
+            "year": 2045,
+            "value": 1508.2
+          },
+          {
+            "year": 2046,
+            "value": 1313.7
+          },
+          {
+            "year": 2047,
+            "value": 1125.9
+          },
+          {
+            "year": 2048,
+            "value": 944.57
+          },
+          {
+            "year": 2049,
+            "value": 769.6
+          },
+          {
+            "year": 2050,
+            "value": 600.78
           }
         ]
       },
@@ -13873,10 +15553,10 @@
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Residential Buildings",
         "region": "Global",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million m**2)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -13884,139 +15564,139 @@
         "projections": [
           {
             "year": 2019,
-            "value": 1.075
+            "value": 8692.3
           },
           {
             "year": 2020,
-            "value": 1.036
+            "value": 8288.1
           },
           {
             "year": 2021,
-            "value": 0.999
+            "value": 7902.8
           },
           {
             "year": 2022,
-            "value": 0.963
+            "value": 7535.4
           },
           {
             "year": 2023,
-            "value": 0.928
+            "value": 7185.0
           },
           {
             "year": 2024,
-            "value": 0.894
+            "value": 6851.0
           },
           {
             "year": 2025,
-            "value": 0.862
+            "value": 6532.5
           },
           {
             "year": 2026,
-            "value": 0.832
+            "value": 6201.5
           },
           {
             "year": 2027,
-            "value": 0.804
+            "value": 5887.3
           },
           {
             "year": 2028,
-            "value": 0.777
+            "value": 5589.0
           },
           {
             "year": 2029,
-            "value": 0.75
+            "value": 5305.9
           },
           {
             "year": 2030,
-            "value": 0.724
+            "value": 5037.0
           },
           {
             "year": 2031,
-            "value": 0.7
+            "value": 4796.4
           },
           {
             "year": 2032,
-            "value": 0.676
+            "value": 4567.2
           },
           {
             "year": 2033,
-            "value": 0.654
+            "value": 4349.0
           },
           {
             "year": 2034,
-            "value": 0.631
+            "value": 4141.2
           },
           {
             "year": 2035,
-            "value": 0.61
+            "value": 3943.3
           },
           {
             "year": 2036,
-            "value": 0.586
+            "value": 3735.9
           },
           {
             "year": 2037,
-            "value": 0.562
+            "value": 3539.4
           },
           {
             "year": 2038,
-            "value": 0.54
+            "value": 3353.2
           },
           {
             "year": 2039,
-            "value": 0.518
+            "value": 3176.9
           },
           {
             "year": 2040,
-            "value": 0.498
+            "value": 3009.8
           },
           {
             "year": 2041,
-            "value": 0.474
+            "value": 2838.4
           },
           {
             "year": 2042,
-            "value": 0.452
+            "value": 2676.7
           },
           {
             "year": 2043,
-            "value": 0.431
+            "value": 2524.3
           },
           {
             "year": 2044,
-            "value": 0.411
+            "value": 2380.5
           },
           {
             "year": 2045,
-            "value": 0.392
+            "value": 2244.9
           },
           {
             "year": 2046,
-            "value": 0.369
+            "value": 2096.4
           },
           {
             "year": 2047,
-            "value": 0.348
+            "value": 1957.6
           },
           {
             "year": 2048,
-            "value": 0.329
+            "value": 1828.0
           },
           {
             "year": 2049,
-            "value": 0.31
+            "value": 1707.1
           },
           {
             "year": 2050,
-            "value": 0.292
+            "value": 1594.1
           }
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Residential Buildings",
         "region": "Europe",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million m**2)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -14024,139 +15704,139 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.0692
+            "value": 4992.6
           },
           {
             "year": 2020,
-            "value": 0.0686
+            "value": 4922.0
           },
           {
             "year": 2021,
-            "value": 0.0681
+            "value": 4852.4
           },
           {
             "year": 2022,
-            "value": 0.0675
+            "value": 4783.8
           },
           {
             "year": 2023,
-            "value": 0.067
+            "value": 4716.2
           },
           {
             "year": 2024,
-            "value": 0.0664
+            "value": 4649.5
           },
           {
             "year": 2025,
-            "value": 0.0659
+            "value": 4583.7
           },
           {
             "year": 2026,
-            "value": 0.0637
+            "value": 4404.9
           },
           {
             "year": 2027,
-            "value": 0.0616
+            "value": 4233.0
           },
           {
             "year": 2028,
-            "value": 0.0595
+            "value": 4067.8
           },
           {
             "year": 2029,
-            "value": 0.0576
+            "value": 3909.1
           },
           {
             "year": 2030,
-            "value": 0.0556
+            "value": 3756.5
           },
           {
             "year": 2031,
-            "value": 0.0537
+            "value": 3605.0
           },
           {
             "year": 2032,
-            "value": 0.0519
+            "value": 3459.5
           },
           {
             "year": 2033,
-            "value": 0.0501
+            "value": 3320.0
           },
           {
             "year": 2034,
-            "value": 0.0484
+            "value": 3186.0
           },
           {
             "year": 2035,
-            "value": 0.0467
+            "value": 3057.5
           },
           {
             "year": 2036,
-            "value": 0.0458
+            "value": 2978.6
           },
           {
             "year": 2037,
-            "value": 0.0448
+            "value": 2901.8
           },
           {
             "year": 2038,
-            "value": 0.0439
+            "value": 2827.0
           },
           {
             "year": 2039,
-            "value": 0.0431
+            "value": 2754.1
           },
           {
             "year": 2040,
-            "value": 0.0422
+            "value": 2683.0
           },
           {
             "year": 2041,
-            "value": 0.0408
+            "value": 2579.8
           },
           {
             "year": 2042,
-            "value": 0.0395
+            "value": 2480.5
           },
           {
             "year": 2043,
-            "value": 0.0382
+            "value": 2385.1
           },
           {
             "year": 2044,
-            "value": 0.037
+            "value": 2293.3
           },
           {
             "year": 2045,
-            "value": 0.0358
+            "value": 2205.1
           },
           {
             "year": 2046,
-            "value": 0.0345
+            "value": 2110.2
           },
           {
             "year": 2047,
-            "value": 0.0332
+            "value": 2019.3
           },
           {
             "year": 2048,
-            "value": 0.0319
+            "value": 1932.4
           },
           {
             "year": 2049,
-            "value": 0.0308
+            "value": 1849.2
           },
           {
             "year": 2050,
-            "value": 0.0296
+            "value": 1769.5
           }
         ]
       },
       {
-        "sector": "Buildings",
+        "sector": "Residential Buildings",
         "region": "North America",
         "benchmark_metric": {
-          "units": "t CO2e/(thousand m**2)"
+          "units": "t CO2e/(million m**2)"
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
@@ -14164,131 +15844,551 @@
         "projections": [
           {
             "year": 2019,
-            "value": 0.039
+            "value": 2161.7
           },
           {
             "year": 2020,
-            "value": 0.0383
+            "value": 2109.7
           },
           {
             "year": 2021,
-            "value": 0.0376
+            "value": 2059.0
           },
           {
             "year": 2022,
-            "value": 0.037
+            "value": 2009.4
           },
           {
             "year": 2023,
-            "value": 0.0363
+            "value": 1961.1
           },
           {
             "year": 2024,
-            "value": 0.0357
+            "value": 1913.9
           },
           {
             "year": 2025,
-            "value": 0.0351
+            "value": 1867.8
           },
           {
             "year": 2026,
-            "value": 0.0333
+            "value": 1757.9
           },
           {
             "year": 2027,
-            "value": 0.0316
+            "value": 1654.4
           },
           {
             "year": 2028,
-            "value": 0.03
+            "value": 1557.0
           },
           {
             "year": 2029,
-            "value": 0.0285
+            "value": 1465.4
           },
           {
             "year": 2030,
-            "value": 0.027
+            "value": 1379.1
           },
           {
             "year": 2031,
-            "value": 0.0262
+            "value": 1324.6
           },
           {
             "year": 2032,
-            "value": 0.0253
+            "value": 1272.2
           },
           {
             "year": 2033,
-            "value": 0.0245
+            "value": 1221.9
           },
           {
             "year": 2034,
-            "value": 0.0238
+            "value": 1173.5
           },
           {
             "year": 2035,
-            "value": 0.023
+            "value": 1127.1
           },
           {
             "year": 2036,
-            "value": 0.0219
+            "value": 1063.8
           },
           {
             "year": 2037,
-            "value": 0.0208
+            "value": 1004.0
           },
           {
             "year": 2038,
-            "value": 0.0198
+            "value": 947.58
           },
           {
             "year": 2039,
-            "value": 0.0189
+            "value": 894.33
           },
           {
             "year": 2040,
-            "value": 0.018
+            "value": 844.07
           },
           {
             "year": 2041,
-            "value": 0.0173
+            "value": 807.81
           },
           {
             "year": 2042,
-            "value": 0.0167
+            "value": 773.12
           },
           {
             "year": 2043,
-            "value": 0.0162
+            "value": 739.91
           },
           {
             "year": 2044,
-            "value": 0.0156
+            "value": 708.13
           },
           {
             "year": 2045,
-            "value": 0.0151
+            "value": 677.71
           },
           {
             "year": 2046,
-            "value": 0.0145
+            "value": 646.47
           },
           {
             "year": 2047,
-            "value": 0.0139
+            "value": 616.67
           },
           {
             "year": 2048,
-            "value": 0.0134
+            "value": 588.25
           },
           {
             "year": 2049,
-            "value": 0.0129
+            "value": 561.14
           },
           {
             "year": 2050,
-            "value": 0.0124
+            "value": 535.27
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "Global",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 8692.3
+          },
+          {
+            "year": 2020,
+            "value": 8288.1
+          },
+          {
+            "year": 2021,
+            "value": 7902.8
+          },
+          {
+            "year": 2022,
+            "value": 7535.4
+          },
+          {
+            "year": 2023,
+            "value": 7185.0
+          },
+          {
+            "year": 2024,
+            "value": 6851.0
+          },
+          {
+            "year": 2025,
+            "value": 6532.5
+          },
+          {
+            "year": 2026,
+            "value": 6201.5
+          },
+          {
+            "year": 2027,
+            "value": 5887.3
+          },
+          {
+            "year": 2028,
+            "value": 5589.0
+          },
+          {
+            "year": 2029,
+            "value": 5305.9
+          },
+          {
+            "year": 2030,
+            "value": 5037.0
+          },
+          {
+            "year": 2031,
+            "value": 4796.4
+          },
+          {
+            "year": 2032,
+            "value": 4567.2
+          },
+          {
+            "year": 2033,
+            "value": 4349.0
+          },
+          {
+            "year": 2034,
+            "value": 4141.2
+          },
+          {
+            "year": 2035,
+            "value": 3943.3
+          },
+          {
+            "year": 2036,
+            "value": 3735.9
+          },
+          {
+            "year": 2037,
+            "value": 3539.4
+          },
+          {
+            "year": 2038,
+            "value": 3353.2
+          },
+          {
+            "year": 2039,
+            "value": 3176.9
+          },
+          {
+            "year": 2040,
+            "value": 3009.8
+          },
+          {
+            "year": 2041,
+            "value": 2838.4
+          },
+          {
+            "year": 2042,
+            "value": 2676.7
+          },
+          {
+            "year": 2043,
+            "value": 2524.3
+          },
+          {
+            "year": 2044,
+            "value": 2380.5
+          },
+          {
+            "year": 2045,
+            "value": 2244.9
+          },
+          {
+            "year": 2046,
+            "value": 2096.4
+          },
+          {
+            "year": 2047,
+            "value": 1957.6
+          },
+          {
+            "year": 2048,
+            "value": 1828.0
+          },
+          {
+            "year": 2049,
+            "value": 1707.1
+          },
+          {
+            "year": 2050,
+            "value": 1594.1
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "Europe",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 4992.6
+          },
+          {
+            "year": 2020,
+            "value": 4922.0
+          },
+          {
+            "year": 2021,
+            "value": 4852.4
+          },
+          {
+            "year": 2022,
+            "value": 4783.8
+          },
+          {
+            "year": 2023,
+            "value": 4716.2
+          },
+          {
+            "year": 2024,
+            "value": 4649.5
+          },
+          {
+            "year": 2025,
+            "value": 4583.7
+          },
+          {
+            "year": 2026,
+            "value": 4404.9
+          },
+          {
+            "year": 2027,
+            "value": 4233.0
+          },
+          {
+            "year": 2028,
+            "value": 4067.8
+          },
+          {
+            "year": 2029,
+            "value": 3909.1
+          },
+          {
+            "year": 2030,
+            "value": 3756.5
+          },
+          {
+            "year": 2031,
+            "value": 3605.0
+          },
+          {
+            "year": 2032,
+            "value": 3459.5
+          },
+          {
+            "year": 2033,
+            "value": 3320.0
+          },
+          {
+            "year": 2034,
+            "value": 3186.0
+          },
+          {
+            "year": 2035,
+            "value": 3057.5
+          },
+          {
+            "year": 2036,
+            "value": 2978.6
+          },
+          {
+            "year": 2037,
+            "value": 2901.8
+          },
+          {
+            "year": 2038,
+            "value": 2827.0
+          },
+          {
+            "year": 2039,
+            "value": 2754.1
+          },
+          {
+            "year": 2040,
+            "value": 2683.0
+          },
+          {
+            "year": 2041,
+            "value": 2579.8
+          },
+          {
+            "year": 2042,
+            "value": 2480.5
+          },
+          {
+            "year": 2043,
+            "value": 2385.1
+          },
+          {
+            "year": 2044,
+            "value": 2293.3
+          },
+          {
+            "year": 2045,
+            "value": 2205.1
+          },
+          {
+            "year": 2046,
+            "value": 2110.2
+          },
+          {
+            "year": 2047,
+            "value": 2019.3
+          },
+          {
+            "year": 2048,
+            "value": 1932.4
+          },
+          {
+            "year": 2049,
+            "value": 1849.2
+          },
+          {
+            "year": 2050,
+            "value": 1769.5
+          }
+        ]
+      },
+      {
+        "sector": "Commercial Buildings",
+        "region": "North America",
+        "benchmark_metric": {
+          "units": "t CO2e/(million m**2)"
+        },
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "production_centric": false,
+        "projections": [
+          {
+            "year": 2019,
+            "value": 2161.7
+          },
+          {
+            "year": 2020,
+            "value": 2109.7
+          },
+          {
+            "year": 2021,
+            "value": 2059.0
+          },
+          {
+            "year": 2022,
+            "value": 2009.4
+          },
+          {
+            "year": 2023,
+            "value": 1961.1
+          },
+          {
+            "year": 2024,
+            "value": 1913.9
+          },
+          {
+            "year": 2025,
+            "value": 1867.8
+          },
+          {
+            "year": 2026,
+            "value": 1757.9
+          },
+          {
+            "year": 2027,
+            "value": 1654.4
+          },
+          {
+            "year": 2028,
+            "value": 1557.0
+          },
+          {
+            "year": 2029,
+            "value": 1465.4
+          },
+          {
+            "year": 2030,
+            "value": 1379.1
+          },
+          {
+            "year": 2031,
+            "value": 1324.6
+          },
+          {
+            "year": 2032,
+            "value": 1272.2
+          },
+          {
+            "year": 2033,
+            "value": 1221.9
+          },
+          {
+            "year": 2034,
+            "value": 1173.5
+          },
+          {
+            "year": 2035,
+            "value": 1127.1
+          },
+          {
+            "year": 2036,
+            "value": 1063.8
+          },
+          {
+            "year": 2037,
+            "value": 1004.0
+          },
+          {
+            "year": 2038,
+            "value": 947.58
+          },
+          {
+            "year": 2039,
+            "value": 894.33
+          },
+          {
+            "year": 2040,
+            "value": 844.07
+          },
+          {
+            "year": 2041,
+            "value": 807.81
+          },
+          {
+            "year": 2042,
+            "value": 773.12
+          },
+          {
+            "year": 2043,
+            "value": 739.91
+          },
+          {
+            "year": 2044,
+            "value": 708.13
+          },
+          {
+            "year": 2045,
+            "value": 677.71
+          },
+          {
+            "year": 2046,
+            "value": 646.47
+          },
+          {
+            "year": 2047,
+            "value": 616.67
+          },
+          {
+            "year": 2048,
+            "value": 588.25
+          },
+          {
+            "year": 2049,
+            "value": 561.14
+          },
+          {
+            "year": 2050,
+            "value": 535.27
           }
         ]
       },

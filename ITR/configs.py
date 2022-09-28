@@ -93,7 +93,9 @@ class SectorsConfig:
     AUTOMOBILE = "Autos"
     TRUCKING = "Trucking"
     CEMENT = "Cement"
-    BUILDINGS = "Buildings"
+    BUILDINGS_CONSTRUCTION = "Construction Buildings"
+    BUILDINGS_RESIDENTIAL = "Residential Buildings"
+    BUILDINGS_COMMERCIAL = "Commercial Buildings"
     TEXTILES = "Textiles"
     CHEMICALS = "Chemicals"
     INFORMATION_TECHNOLOGY = "Information Technology"
@@ -111,7 +113,8 @@ class SectorsConfig:
                 SectorsConfig.STEEL, SectorsConfig.ALUMINUM,
                 SectorsConfig.OIL_AND_GAS,
                 SectorsConfig.AUTOMOBILE, SectorsConfig.TRUCKING,
-                SectorsConfig.CEMENT, SectorsConfig.BUILDINGS,
+                SectorsConfig.CEMENT,
+                SectorsConfig.BUILDINGS_CONSTRUCTION, SectorsConfig.BUILDINGS_RESIDENTIAL, SectorsConfig.BUILDINGS_COMMERCIAL,
                 SectorsConfig.TEXTILES, SectorsConfig.CHEMICALS,
                 ]
 
