@@ -206,13 +206,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             target_data.loc[target_data.target_start_year.isna(), 'target_start_year'] = 2021
             logger.warning(f"Missing target start year set to 2021 for companies with ID: {c_ids_without_start_year}")
 
-        c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > 2050].index)
+        c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > ProjectionControls.TARGET_YEAR].index)
         if c_ids_invalid_netzero_year:
-            error_message = f"Invalid net-zero target years (>2050) are entered for companies with ID: " \
+            error_message = f"Invalid net-zero target years (>{ProjectionControls.TARGET_YEAR}) are entered for companies with ID: " \
                             f"{c_ids_without_netzero_year}"
             logger.error(error_message)
             raise ValueError(error_message)
-        target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = 2050
+        target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = ProjectionControls.TARGET_YEAR
 
         c_ids_with_increase_target = list(target_data[target_data['target_reduction_ambition'] < 0].index)
         if c_ids_with_increase_target:
@@ -288,36 +288,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
     # Workaround for bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero 
     def _np_sum(g):
         return np.sum(g.values)
-
-    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame,
-                        production_metric: pd.DataFrame) -> pd.DataFrame:
-        """
-        get the projected emission intensities for list of companies
-        :param company_ids: list of company ids
-        :param projections: Dataframe with listed projections per company
-        :param production_metric: Dataframe with production_metric per company
-        :return: series of projected emission intensities
-        """
-        projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)
-
-        missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
-        if missing_companies:
-            error_message = f"Missing target or trajectory projections for companies with ID: {missing_companies}"
-            logger.error(error_message)
-            raise ValueError(error_message)
-
-        projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                         TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
-        # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
-        projected_ei_s1s2 = projections.groupby(level=0, sort=False).agg(
-            TemplateProviderCompany._np_sum)  # add scope 1 and 2
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # See https://github.com/hgrecco/pint-pandas/issues/114
-            projected_ei_s1s2 = projected_ei_s1s2.apply(
-                lambda x: x.astype(f'pint[??t CO2/({production_metric[x.name]})]'), axis=1)
-
-        return projected_ei_s1s2
 
     def _convert_target_data(self, target_data: pd.DataFrame) -> List[ITargetData]:
         """

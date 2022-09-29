@@ -37,21 +37,9 @@ from pint_pandas import PintType
 
 import logging
 
+import sys
 import argparse
 
-# Initial calculations
-
-
-examples_dir = ''  # 'examples'
-data_dir = "data"
-data_json_units_dir = "json-units"
-root = os.path.abspath('')
-
-# Set input filename (from commandline or default)
-parser = argparse.ArgumentParser()
-parser.add_argument('-file')
-args = parser.parse_args()
-company_data_path = args.file or os.path.join(root, examples_dir, data_dir, "20220720 ITR Tool Sample Data.xlsx")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -63,6 +51,19 @@ logger.addHandler(stream_handler)
 
 logger.info("Start!")
 
+examples_dir ='' #'examples'
+data_dir="data"
+data_json_units_dir="json-units"
+root = os.path.abspath('')
+
+# Set input filename (from commandline or default)
+parser = argparse.ArgumentParser()
+parser.add_argument('file')
+if len(sys.argv)>1:
+    args = parser.parse_args()
+    company_data_path = args.file
+else:
+    company_data_path = os.path.join(root, examples_dir, data_dir, "20220720 ITR Tool Sample Data.xlsx")
 
 
 # load company data
@@ -79,7 +80,9 @@ logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file)
 
 
 # Emission intensities
-benchmark_EI_OECM_file = "benchmark_EI_OECM.json"
+benchmark_EI_OECM_PC_file = "benchmark_EI_OECM_PC.json"
+benchmark_EI_OECM_S3_file = "benchmark_EI_OECM_S3.json"
+benchmark_EI_OECM_file = "benchmark_EI_OECM.json" # Deprecated!
 benchmark_EI_TPI_15_file = "benchmark_EI_TPI_1_5_degrees.json"
 benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
@@ -97,12 +100,17 @@ temperature_score = TemperatureScore(
 
 # load default intensity benchmarks
 def recalculate_individual_itr(scenario):
-    if scenario == 'OECM':
-        benchmark_file = benchmark_EI_OECM_file
+    if scenario == 'OECM_PC':
+        benchmark_file = benchmark_EI_OECM_PC_file
+    elif scenario == 'OECM_S3':
+        benchmark_file = benchmark_EI_OECM_S3_file
     elif scenario == 'TPI_2_degrees':
         benchmark_file = benchmark_EI_TPI_file
     elif scenario == 'TPI_15_degrees':
         benchmark_file = benchmark_EI_TPI_15_file
+    elif scenario == 'OECM':
+        benchmark_file = benchmark_EI_OECM_file
+        logger.info('OECM scenario is for backward compatibility only.  Use OECM_PC instead.')
     else:
         benchmark_file = benchmark_EI_TPI_below_2_file
     # load intensity benchmarks
@@ -115,7 +123,7 @@ def recalculate_individual_itr(scenario):
     return df
 
 
-initial_portfolio = recalculate_individual_itr('OECM')
+initial_portfolio = recalculate_individual_itr('OECM_PC')
 amended_portfolio_global = initial_portfolio.copy()
 filt_df = initial_portfolio.copy()
 
@@ -258,12 +266,14 @@ macro = dbc.Row(
                 ),
                 dcc.Dropdown(id="scenario-dropdown",
                              options=[  # 16.05.2022: make this dynamic
-                                 {'label': 'OECM 1.5 degrees', 'value': 'OECM'},
+                                 {'label': 'OECM (Prod-Centric) 1.5 degC', 'value': 'OECM_PC'},
+                                 {'label': 'OECM (Scope 3) 1.5 degC', 'value': 'OECM_S3'},
+                                 {'label': 'OECM (Deprecated) 1.5 degrees', 'value': 'OECM'},
                                  {'label': 'TPI 1.5 degrees', 'value': 'TPI_15_degrees'},
                                  {'label': 'TPI 2 degrees', 'value': 'TPI_2_degrees'},
                                  {'label': 'TPI below 2 degrees', 'value': 'TPI_below_2_degrees'}
                              ],
-                             value='OECM',
+                             value='OECM_PC',
                              clearable=False,
                              placeholder="Select emission scenario"),
                 html.Div(id='hidden-div', style={'display': 'none'}),
@@ -622,6 +632,7 @@ def update_graph(
         z=filt_df.temperature_score.map(lambda x: x.m),
         type='heatmap',
         colorscale='Temps',
+        zmin = 1.49, zmax = 2.9,
     )
     data = [trace]
     heatmap_fig = go.Figure(data=data)
@@ -648,7 +659,16 @@ def update_graph(
                                              scopes=[EScope.S1S2],
                                              aggregation_method=agg_method)  # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
-        return [agg_method.value, aggregated_scores.long.S1S2.all.score]
+        if aggregated_scores.long.S1S2:
+            agg_s1s2 = [agg_method.value,aggregated_scores.long.S1S2.all.score]
+        else:
+            agg_s1s2 = []
+        if aggregated_scores.long.S3:
+            agg_s3 = [agg_method.value,aggregated_scores.long.S3.all.score]
+        else:
+            agg_s3 = []
+    
+        return agg_s1s2 + agg_s3
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
@@ -702,17 +722,23 @@ def update_graph(
                  'trajectory_score': 'Historical emissions score', 'target_score': 'Target score',
                  'temperature_score': 'Weighted temperature score'}, inplace=True)
 
+    if aggregated_scores.long.S1S2:
+        scores = aggregated_scores.long.S1S2.all.score.m
+    elif aggregated_scores.long.S3:
+        scores = aggregated_scores.long.S3.all.score.m
+    else:
+        raise ValueError("No aggregated scores")
+
     return (
         fig1, fig5,
         heatmap_fig, high_score_fig,
         port_score_diff_methods_fig,
-        "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m),  # fake for spinner
-        "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m),  # portfolio score
-        {'color': 'ForestGreen'} if aggregated_scores.long.S1S2.all.score.m < 2 else {'color': 'Red'},
-        # conditional color
-        str(round((filt_df.company_ev_plus_cash.sum()) / 10 ** 9, 0)),  # sum of total EVIC for companies in portfolio
-        str(round((filt_df.investment_value.sum()) / 10 ** 6, 1)),  # portfolio notional
-        str(len(filt_df)),  # num of companies
+        "{:.2f}".format(scores), # fake for spinner
+        "{:.2f}".format(scores), # portfolio score
+        {'color': 'ForestGreen'} if scores < 2 else {'color': 'Red'}, # conditional color
+        str(round((filt_df.company_ev_plus_cash.sum())/10**9,0)), # sum of total EVIC for companies in portfolio
+        str(round((filt_df.investment_value.sum())/10**6,1)), # portfolio notional
+        str(len(filt_df)), # num of companies
         dbc.Table.from_dataframe(df_for_output_table,
                                  striped=True,
                                  bordered=True,

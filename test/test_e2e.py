@@ -41,11 +41,11 @@ class EndToEndTest(unittest.TestCase):
         self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,
-            base_year_production=IProjection.parse_obj({"year": 2019, "value":Q_(1000000.0, ureg('Fe_ton'))}).value,
+            base_year_production=IProjection.parse_obj({"year": 2019, "value":Q_(1000000.0, ureg('t Steel'))}).value,
             ghg_s1s2=IProjection.parse_obj({"year": 2019, "value":Q_(1698247.4347547039, ureg('t CO2'))}).value,
             ghg_s3=IProjection.parse_obj({"year": 2019, "value":Q_(0.0, ureg('t CO2'))}).value,
             emissions_metric={'units':'t CO2'},
-            production_metric={'units':'Fe_ton'},
+            production_metric={'units':'t Steel'},
             company_revenue=100,
             company_market_cap=100,
             company_enterprise_value=100,
@@ -62,38 +62,38 @@ class EndToEndTest(unittest.TestCase):
             benchmark_temperature="1.5 delta_degC",
             projected_intensities=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
-                    "ei_metric": {'units': "t CO2/Fe_ton"},
+                    "ei_metric": {'units': "t CO2/(t Steel)"},
                     "projections": [
                         {
                             "year": "2019",
-                            "value": "1.6982474347547039 t CO2/Fe_ton"
+                            "value": "1.6982474347547039 t CO2/(t Steel)"
                         },
                         {
                             "year": "2020",
-                            "value": "1.6982474347547039 t CO2/Fe_ton"
+                            "value": "1.6982474347547039 t CO2/(t Steel)"
                         },
                         {
                             "year": "2021",
-                            "value": "1.5908285727976157 t CO2/Fe_ton"
+                            "value": "1.5908285727976157 t CO2/(t Steel)"
                         }
                     ]
                 }
             }),
             projected_targets=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
-                    "ei_metric": {'units': "t CO2/Fe_ton"},
+                    "ei_metric": {'units': "t CO2/(t Steel)"},
                     "projections": [
                         {
                             "year": "2019",
-                            "value": "1.6982474347547039 t CO2/Fe_ton"
+                            "value": "1.6982474347547039 t CO2/(t Steel)"
                         },
                         {
                             "year": "2020",
-                            "value": "1.6982474347547039 t CO2/Fe_ton"
+                            "value": "1.6982474347547039 t CO2/(t Steel)"
                         },
                         {
                             "year": "2021",
-                            "value": "1.5577542305393455 t CO2/Fe_ton"
+                            "value": "1.5577542305393455 t CO2/(t Steel)"
                         }
                     ]
                 }

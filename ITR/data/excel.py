@@ -22,8 +22,8 @@ Q_ = ureg.Quantity
 
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
-sector_to_production_metric = {'Electricity Utilities': 'GJ', 'Steel': 'Fe_ton', 'Oil & Gas': 'boe', 'Autos': 'passenger km'}
-sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't CO2/Fe_ton', 'Oil & Gas': 'kg CO2/boe', 'Autos': 'g CO2/(passenger km)'}
+sector_to_production_metric = {'Electricity Utilities': 'GJ', 'Steel': 'Fe_ton', 'Oil & Gas': 'boe', 'Autos': 'pkm'}
+sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't CO2/Fe_ton', 'Oil & Gas': 'kg CO2/boe', 'Autos': 'g CO2/pkm'}
 
 # TODO: Force validation for excel benchmarks
 
@@ -110,9 +110,8 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
         self._convert_excel_to_model = convert_intensity_benchmark_excel_to_model
         EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
                                                      column_config.REGION, column_config.SECTOR)
-        # TODO: Fix units for Steel
         super().__init__(
-            IEIBenchmarkScopes(benchmark_metric={'units':'t CO2/MWh'}, S1S2=EI_benchmarks,
+            IEIBenchmarkScopes(S1S2=EI_benchmarks,
                                benchmark_temperature=benchmark_temperature,
                                benchmark_global_budget=benchmark_global_budget,
                                is_AFOLU_included=is_AFOLU_included),
@@ -213,11 +212,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 # pint automatically handles any unit conversions required
 
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE12].squeeze()
-                company_data[ColumnsConfig.GHG_SCOPE12] = Q_(v or np.nan, 't CO2')
+                company_data[ColumnsConfig.GHG_SCOPE12] = Q_(np.nan if v is None else v, 't CO2')
                 company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = \
                     company_data[ColumnsConfig.GHG_SCOPE12] / df_ei.loc[company_id, :][TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE3].squeeze()
-                company_data[ColumnsConfig.GHG_SCOPE3] = Q_(v or np.nan, 't CO2')
+                company_data[ColumnsConfig.GHG_SCOPE3] = Q_(np.nan if v is None else v, 't CO2')
                 company_data[ColumnsConfig.PROJECTED_TARGETS] = {'S1S2': {
                     'projections': self._convert_series_to_projections (df_targets.loc[company_id, :], ICompanyEIProjection),
                     'ei_metric': {'units': intensity_metric}}}

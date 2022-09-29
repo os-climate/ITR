@@ -2,6 +2,7 @@ import warnings  # needed until quantile behaves better with Pint quantities in 
 import numpy as np
 import pandas as pd
 from functools import reduce, partial
+from operator import add
 from typing import List, Type, Dict
 import logging
 
@@ -36,14 +37,14 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         self.column_config = column_config
         self._productions_benchmarks = production_benchmarks
 
-    # Note that bencharmk production series are dimensionless.
-    def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
+    # Note that benchmark production series are dimensionless.
+    def _convert_benchmark_to_series(self, benchmark: IBenchmark, scope: EScope) -> pd.Series:
         """
         extracts the company projected intensity or production targets for a given scope
         :param scope: a scope
         :return: pd.Series
         """
-        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector),
+        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector, scope),
                          dtype=f'pint[{benchmark.benchmark_metric.units}]')
 
     # Production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
@@ -56,9 +57,9 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         result = []
         for bm in self._productions_benchmarks.dict()[str(scope)]['benchmarks']:
-            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm)))
+            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm), scope))
         df_bm = pd.DataFrame(result)
-        df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
+        df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR, self.column_config.SCOPE]
 
         return df_bm
 
@@ -69,7 +70,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
-        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info)
+        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope=EScope.S1S2)
         company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
             company_production, axis=0)
@@ -87,11 +88,12 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
         sectors = company_sector_region_info[self.column_config.SECTOR]
         regions = company_sector_region_info[self.column_config.REGION]
+        scopes = [EScope.S1S2] * len(sectors)
         benchmark_regions = regions.copy()
         mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         benchmark_regions.loc[~mask] = "Global"
 
-        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors))]
+        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors, scopes))]
         benchmark_projection.index = sectors.index
         return benchmark_projection
 
@@ -117,7 +119,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
-        ei_base = company_info_at_base_year[self.column_config.BASE_EI]
+        ei_base = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.base_year]
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
         df = df.add(last_ei, axis=0).astype(ei_base.dtype)
         return df
@@ -143,14 +145,15 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         # TODO: does this still throw a warning when processing a NaN?  convert to base units before accessing .magnitude
         return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
 
-    def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
+    def _convert_benchmark_to_series(self, benchmark: IBenchmark, scope: EScope) -> pd.Series:
         """
         extracts the company projected intensities or targets for a given scope
         :param scope: a scope
         :return: pd.Series
         """
-        return pd.Series({p.year: p.value for p in benchmark.projections}, name=(benchmark.region, benchmark.sector),
-                         dtype=f'pint[{benchmark.benchmark_metric.units}]')
+        s = pd.Series({p.year: p.value for p in benchmark.projections}, name=(benchmark.region, benchmark.sector, scope),
+                      dtype=f'pint[{benchmark.benchmark_metric.units}]')
+        return s
 
     def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
@@ -160,12 +163,12 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         results = []
         for bm in self._EI_benchmarks.__getattribute__(str(scope)).benchmarks:
-            results.append(self._convert_benchmark_to_series(bm))
+            results.append(self._convert_benchmark_to_series(bm, scope))
         with warnings.catch_warnings():
             # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
             warnings.simplefilter("ignore")
             df_bm = pd.DataFrame(results)
-        df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
+        df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR, self.column_config.SCOPE]
         return df_bm
 
     def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame,
@@ -178,13 +181,14 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :param scope: a scope
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
+        sectors = company_sector_region_info[self.column_config.SECTOR]
+        regions = company_sector_region_info[self.column_config.REGION].copy()
         benchmark_projection = self._get_projected_intensities(scope)  # TODO optimize performance
-        reg_sec = company_sector_region_info[[self.column_config.REGION,self.column_config.SECTOR]].copy()
-        merged_df=reg_sec.reset_index().merge(benchmark_projection.reset_index()[[self.column_config.REGION,self.column_config.SECTOR]], how='left', indicator=True).set_index('index') # checking which combinations of reg-sec are missing in the benchmark
-        reg_sec.loc[merged_df._merge == 'left_only', self.column_config.REGION] = "Global" # change region in missing combination to "Global"
-        sectors = reg_sec.sector
-        regions = reg_sec.region
-        benchmark_projection = benchmark_projection.loc[list(zip(regions, sectors))]
+        mask = regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
+        regions.loc[~mask] = "Global"
+
+        # benchmark_projection has a scope by construction
+        benchmark_projection = benchmark_projection.loc[list(zip(regions, sectors, [scope] * len(sectors)))]
         benchmark_projection.index = sectors.index
         return benchmark_projection
 
@@ -197,8 +201,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     :param companies: A list of ICompanyData objects that each contain fundamental company data
     :param column_config: An optional ColumnsConfig object containing relevant variable names
     :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
+    :param projection_controls: An optional ProjectionControls object containing projection settings
     """
 
+    # FIXME: TemperatureScoreConfig and ProjectionControls both have their own BASE_YEAR/TARGET_END_YEAR concepts
     def __init__(self,
                  companies: List[ICompanyData],
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
@@ -285,6 +291,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                         self.column_config.COMPANY_ID: [c.company_id],
                         self.column_config.BASE_YEAR_PRODUCTION: [base_year_production.to(c.production_metric.units)],
                         self.column_config.GHG_SCOPE12: [c.ghg_s1s2],
+                        self.column_config.GHG_SCOPE3: [c.ghg_s3],
                         self.column_config.SECTOR: [c.sector],
                         self.column_config.REGION: [c.region],
                     }, index=[0])
@@ -337,15 +344,19 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         overrides subclass method
         :param: company_ids: list of company ids
         :return: DataFrame the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.BASE_EI,
-        ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        ColumnsConfig.COMPANY_ID, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.BASE_EI,
+        ColumnsConfig.SECTOR and ColumnsConfig.REGION, ColumnsConfig.GHG_SCOPE1, ColumnsConfig.GHG_SCOPE2,
+        ColumnsConfig.GHG_SCOPE12, ColumnsConfig.GHG_SCOPE3
+        
+        Note that BASE_EI is a combined S1S2 and S3 intensity metric (if S3 EI is available)
         """
         df_fundamentals = self.get_company_fundamentals(company_ids)
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
             company_ids, [self.column_config.SECTOR, self.column_config.REGION,
                           self.column_config.BASE_YEAR_PRODUCTION,
-                          self.column_config.GHG_SCOPE12]]
+                          self.column_config.GHG_SCOPE12,
+                          self.column_config.GHG_SCOPE3]]
         ei_at_base = self._get_company_intensity_at_year(base_year, company_ids).rename(self.column_config.BASE_EI)
         return company_info.merge(ei_at_base, left_index=True, right_index=True)
 
@@ -357,15 +368,15 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         return pd.DataFrame.from_records(
             [ICompanyData.parse_obj(c.dict()).dict() for c in self.get_company_data(company_ids)],
             exclude=['projected_targets', 'projected_intensities', 'historic_data']).set_index(
-            self.column_config.COMPANY_ID)
+                self.column_config.COMPANY_ID)
 
     def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id
         """
-        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI) for c in
-                           self.get_company_data(company_ids)]
+        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI, EScope.S1S2)
+                           for c in self.get_company_data(company_ids)]
         if trajectory_list:
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
@@ -378,7 +389,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
         """
-        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS)
+        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS, EScope.S1S2)
                        for c in self.get_company_data(company_ids)]
         if target_list:
             with warnings.catch_warnings():
@@ -516,14 +527,21 @@ class EITrajectoryProjector(object):
                 units = f"{results.values[0].u:~P}"
                 scope_dfs[scope] = results.astype(f"pint[{units}]")
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
-                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                               if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections[scope] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
-            if scope_projections.get('S1') and scope_projections.get('S2') and not scope_projections.get('S1S2'):
+            if scope_projections['S1'] and scope_projections['S2'] and not scope_projections['S1S2']:
                 results = scope_dfs['S1'] + scope_dfs['S2']
                 units = f"{results.values[0].u:~P}"
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
-                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                               if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections['S1S2'] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
+            # FIXME: do we really need to do this?  We're going to migrate S3 to S1S2 and ignore S1S2S3...
+            if scope_projections['S1S2'] and scope_projections['S3'] and not scope_projections['S1S2S3']:
+                results = scope_dfs['S1S2'] + scope_dfs['S3']
+                units = f"{results.values[0].u:~P}"
+                projections = [IProjection(year=year, value=value) for year, value in results.items()
+                               if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
+                scope_projections['S1S2S3'] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
@@ -810,11 +828,11 @@ class EITargetProjector(object):
                     ei_projection_scopes[scope].projections.extend(ei_projections)
                     target_year = netzero_year
                     target_value = netzero_qty
-                if target_year < 2050:
+                if target_year < ProjectionControls.TARGET_YEAR:
                     # Assume everything stays flat until 2050
                     ei_projection_scopes[scope].projections.extend(
                         [ICompanyEIProjection(year=year, value=target_value)
-                         for y, year in enumerate(range(1 + target_year, 1 + 2050))]
+                         for y, year in enumerate(range(1 + target_year, 1 + ProjectionControls.TARGET_YEAR))]
                     )
 
         return ICompanyEIProjectionsScopes(**ei_projection_scopes)

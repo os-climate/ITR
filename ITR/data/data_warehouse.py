@@ -6,7 +6,7 @@ from abc import ABC
 from typing import List, Type
 from pydantic import ValidationError
 
-from ITR.interfaces import ICompanyAggregates
+from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
@@ -37,6 +37,28 @@ class DataWarehouse(ABC):
         self.column_config = column_config
         self.company_data = company_data
         self.company_data._calculate_target_projections(benchmark_projected_production)
+        
+        # After projections have been made, shift S3 data into S1S2.  If we shift before we project,
+        # then S3 targets will not be projected correctly.
+        for c in self.company_data._companies:
+            if c.ghg_s3:
+                # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
+                c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
+                c.ghg_s3 = 0
+            if c.historic_data:
+                if c.historic_data.emissions and c.historic_data.emissions.S3:
+                    c.historic_data.emissions.S1S2 = list( map(IEmissionRealization.add, c.historic_data.emissions.S1S2, c.historic_data.emissions.S3) )
+                    c.historic_data.emissions.S3 = []
+                if c.historic_data.emissions_intensities and c.historic_data.emissions_intensities.S3:
+                    c.historic_data.emissions_intensities.S1S2 = \
+                        list( map(IEIRealization.add, c.historic_data.emissions_intensities.S1S2, c.historic_data.emissions_intensities.S3) )
+                    c.historic_data.emissions_intensities.S3 = []
+            if c.projected_intensities.S3:
+                c.projected_intensities.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_intensities.S1S2.projections, c.projected_intensities.S3.projections) )
+                c.projected_intensities.S3 = None
+            if c.projected_targets.S3:
+                c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
+                c.projected_targets.S3 = None
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """

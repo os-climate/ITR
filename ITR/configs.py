@@ -84,14 +84,24 @@ class ColumnsConfig:
 
 
 class SectorsConfig:
+    POWER_UTILITY = "Electricity Utilities"
+    GAS_UTILITY = "Gas Utilities"
+    UTILITY = "Utilities"
     STEEL = "Steel"
-    ELECTRICITY = "Electricity Utilities"
+    ALUMINUM = "Aluminum"
+    OIL_AND_GAS = "Oil & Gas"
+    AUTOMOBILE = "Autos"
+    TRUCKING = "Trucking"
+    CEMENT = "Cement"
+    BUILDINGS_CONSTRUCTION = "Construction Buildings"
+    BUILDINGS_RESIDENTIAL = "Residential Buildings"
+    BUILDINGS_COMMERCIAL = "Commercial Buildings"
+    TEXTILES = "Textiles"
+    CHEMICALS = "Chemicals"
     INFORMATION_TECHNOLOGY = "Information Technology"
     INDUSTRIALS = "Industrials"
     FINANCIALS = "Financials"
     HEALTH_CARE = "Health Care"
-    AUTOMOBILE = "Autos"
-    OIL_AND_GAS = "Oil & Gas"
 
     @classmethod
     def get_configured_sectors(cls) -> List[str]:
@@ -99,7 +109,14 @@ class SectorsConfig:
         Get a list of sectors configured in the tool.
         :return: A list of sectors string values
         """
-        return [SectorsConfig.STEEL, SectorsConfig.ELECTRICITY, SectorsConfig.AUTOMOBILE, SectorsConfig.OIL_AND_GAS]
+        return [SectorsConfig.POWER_UTILITY, SectorsConfig.GAS_UTILITY, SectorsConfig.UTILITY,
+                SectorsConfig.STEEL, SectorsConfig.ALUMINUM,
+                SectorsConfig.OIL_AND_GAS,
+                SectorsConfig.AUTOMOBILE, SectorsConfig.TRUCKING,
+                SectorsConfig.CEMENT,
+                SectorsConfig.BUILDINGS_CONSTRUCTION, SectorsConfig.BUILDINGS_RESIDENTIAL, SectorsConfig.BUILDINGS_COMMERCIAL,
+                SectorsConfig.TEXTILES, SectorsConfig.CHEMICALS,
+                ]
 
 
 class VariablesConfig:
@@ -141,6 +158,7 @@ class PortfolioAggregationConfig:
 class TemperatureScoreConfig(PortfolioAggregationConfig):
     SCORE_RESULT_TYPE = 'score_result_type'
     # Unfortunately we need to cross over to interfaces.py
+    # FIXME: BASE_YEAR and TARGET_END_YEAR should agree with ProjectionControls
     CONTROLS_CONFIG = TemperatureScoreControls(
         base_year=2019,
         target_end_year=2050,
@@ -162,3 +180,6 @@ class LoggingConfig:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
+
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)

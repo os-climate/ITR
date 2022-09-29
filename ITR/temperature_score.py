@@ -224,8 +224,7 @@ class TemperatureScore(PortfolioAggregation):
         data = data.copy()
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
                                                           self.aggregation_method).astype('pint[delta_degC]')
-        data[self.c.COLS.CONTRIBUTION_RELATIVE] = pd.Series(weighted_scores / weighted_scores.sum(),
-                                                            dtype='pint[percent]')
+        data[self.c.COLS.CONTRIBUTION_RELATIVE] = (weighted_scores / weighted_scores.sum()).astype('pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -235,7 +234,8 @@ class TemperatureScore(PortfolioAggregation):
                 .to_dict(orient="records")
         aggregations = Aggregation(
             score=weighted_scores.sum(),
-            proportion=len(weighted_scores) / (total_companies / 100.0),
+            # proportion is not declared by anything to be a percent, so we make it a number from 0..1
+            proportion=len(weighted_scores) / total_companies,
             contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]
         ), \
                        data[self.c.COLS.CONTRIBUTION_RELATIVE], \
@@ -262,12 +262,13 @@ class TemperatureScore(PortfolioAggregation):
             score_aggregation_all, \
             filtered_data[self.c.COLS.CONTRIBUTION_RELATIVE], \
             filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
-            filtered_data['DEFAULT'] = 1.0 * (filtered_data[self.c.SCORE_RESULT_TYPE] == EScoreResultType.DEFAULT)
+            filtered_data[self.c.COLS.TEMPERATURE_SCORE] = filtered_data.apply(
+                lambda x: self.fallback_score if x[self.c.SCORE_RESULT_TYPE] == EScoreResultType.DEFAULT else x[self.c.COLS.TEMPERATURE_SCORE], axis=1).astype('pint[delta_degC]')
             score_aggregation = ScoreAggregation(
                 grouped={},
                 all=score_aggregation_all,
                 influence_percentage=self._calculate_aggregate_score(
-                    filtered_data, 'DEFAULT', self.aggregation_method).sum() * 100)
+                    filtered_data, self.c.COLS.CONTRIBUTION_RELATIVE, self.aggregation_method).sum())
 
             # If there are grouping column(s) we'll group in pandas and pass the results to the aggregation
             if len(self.grouping) > 0:
