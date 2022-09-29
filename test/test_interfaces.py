@@ -6,7 +6,7 @@ import pandas as pd
 from ITR.data.osc_units import ureg, Q_, PA_
 
 from ITR.interfaces import EScope, ProductionMetric, IntensityMetric, IProjection, IBenchmark, ICompanyData, \
-    ICompanyEIProjectionsScopes, ICompanyEIProjections, ITargetData
+    ICompanyEIProjectionsScopes, ICompanyEIProjections, ITargetData, OSC_Metric
 
 
 class TestInterfaces(unittest.TestCase):
@@ -31,15 +31,15 @@ class TestInterfaces(unittest.TestCase):
                        index=[2019, 2020, 2021],
                        name='ei_bm')
 
-        bm = IBenchmark(region='North America', sector='Steel', benchmark_metric={'units':'dimensionless'},
+        bm = IBenchmark(region='North America', sector='Steel', benchmark_metric=OSC_Metric(units='dimensionless'),
                         projections=[IProjection(year=int(k), value=Q_(v, ureg('dimensionless'))) for k, v in row.items()])
 
     def test_ICompanyProjectionScopes(self):
         row = pd.Series([0.9, 0.8, 0.7],
                        index=[2019, 2020, 2021],
                        name='nl_steel')
-        p = [IProjection(year=int(k), value=Q_(v, ureg('Fe_ton'))) for k, v in row.items()]
-        S1S2=ICompanyEIProjections(projections=p, ei_metric=IntensityMetric.parse_obj({'units':'t CO2/Fe_ton'}))
+        p = [IProjection(year=int(k), value=Q_(v, ureg('t Steel'))) for k, v in row.items()]
+        S1S2=ICompanyEIProjections(projections=p, ei_metric=IntensityMetric.parse_obj({'units':'t CO2/(t Steel)'}))
         x = ICompanyEIProjectionsScopes(S1S2=S1S2)
 
     def test_ICompanyData(self):
@@ -49,7 +49,7 @@ class TestInterfaces(unittest.TestCase):
             region="Europe",
             sector="Steel",
             emissions_metric={"units": "t CO2"},
-            production_metric={"units": "Fe_ton"},
+            production_metric={"units": "t Steel"},
             target_probability=0.123,
             projected_targets = None,
             projected_intensities = None,

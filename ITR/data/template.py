@@ -206,13 +206,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             target_data.loc[target_data.target_start_year.isna(), 'target_start_year'] = 2021
             logger.warning(f"Missing target start year set to 2021 for companies with ID: {c_ids_without_start_year}")
 
-        c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > 2050].index)
+        c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > ProjectionControls.TARGET_YEAR].index)
         if c_ids_invalid_netzero_year:
-            error_message = f"Invalid net-zero target years (>2050) are entered for companies with ID: " \
+            error_message = f"Invalid net-zero target years (>{ProjectionControls.TARGET_YEAR}) are entered for companies with ID: " \
                             f"{c_ids_without_netzero_year}"
             logger.error(error_message)
             raise ValueError(error_message)
-        target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = 2050
+        target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = ProjectionControls.TARGET_YEAR
 
         c_ids_with_increase_target = list(target_data[target_data['target_reduction_ambition'] < 0].index)
         if c_ids_with_increase_target:
