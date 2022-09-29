@@ -632,6 +632,7 @@ def update_graph(
         z=filt_df.temperature_score.map(lambda x: x.m),
         type='heatmap',
         colorscale='Temps',
+        zmin = 1.49, zmax = 2.9,
     )
     data = [trace]
     heatmap_fig = go.Figure(data=data)
