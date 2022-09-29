@@ -47,8 +47,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector, scope),
                          dtype=f'pint[{benchmark.benchmark_metric.units}]')
 
-    # Production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
-    # It's a label in the top-level of benchmark data.  Currently S1S2 is the only label with any data.
+    # Production benchmarks are dimensionless, relevant for AnyScope
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
         Converts IProductionBenchmarkScopes into dataframe for a scope
@@ -56,7 +55,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: pd.DataFrame
         """
         result = []
-        for bm in self._productions_benchmarks.dict()[str(scope)]['benchmarks']:
+        for bm in self._productions_benchmarks.dict()['AnyScope']['benchmarks']:
             result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm), scope))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR, self.column_config.SCOPE]
