@@ -11,6 +11,20 @@ from typing import Callable
 from ITR.data.osc_units import ureg, Q_
 
 
+@dataclass
+class ProjectionControls:
+    LOWER_PERCENTILE: float = 0.1
+    UPPER_PERCENTILE: float = 0.9
+
+    LOWER_DELTA: float = -0.10
+    UPPER_DELTA: float = +0.03
+
+    # FIXME: Should agree with TemperatureScoreConfig.CONTROLS_CONFIG
+    BASE_YEAR: int = 2019
+    TARGET_YEAR: int = 2050
+    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)
+
+
 class PintModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
@@ -289,9 +303,16 @@ class IBenchmark(BaseModel):
     projections: List[IProjection]
 
     def __init__(self, benchmark_metric, projections, *args, **kwargs):
+        # FIXME: Probably want to define `target_end_year` to be 2051, not 2050...
         super().__init__(benchmark_metric=benchmark_metric,
                          projections=UProjections_to_IProjections(IProjection, projections, benchmark_metric),
                          *args, **kwargs)
+        # Sadly we need to build the full projection range before cutting it down to size...
+        # ...until Tiemann learns the bi-valence of dict and Model parameters
+        self.projections = [p for p in self.projections
+                            if p.year in range(ProjectionControls.BASE_YEAR,
+                                               ProjectionControls.TARGET_YEAR+1)]
+
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -608,7 +629,7 @@ class ICompanyData(PintModel):
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
             # TODO: Should raise a warning here
         base_year = None
-        if base_year_production:
+        if base_year_production is not None:
             self.base_year_production = pint_ify(base_year_production, self.production_metric.units)
         elif self.historic_data and self.historic_data.productions:
             # TODO: This is a hack to get things going.
@@ -618,7 +639,7 @@ class ICompanyData(PintModel):
         else:
             # raise ValueError(f"missing historic data for base_year_production for {self.company_name}")
             self.base_year_production = Q_(np.nan, self.production_metric.units)
-        if ghg_s1s2:
+        if ghg_s1s2 is not None:
             self.ghg_s1s2=pint_ify(ghg_s1s2, self.emissions_metric.units)
         elif self.historic_data and self.historic_data.emissions:
             if self.historic_data.emissions.S1S2:
@@ -630,27 +651,26 @@ class ICompanyData(PintModel):
                 base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions.S2, self.emissions_metric.units, base_year)
                 base_year = base_year or base_realization_s1.year
                 self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
-            if self.historic_data.emissions.S3:
-                base_realization_s3 = self._get_base_realization_from_historic(self.historic_data.emissions.S3, self.emissions_metric.units, base_year)
-                self.ghg_s3 = base_realization_s3.value
-        if self.ghg_s1s2 is None:
-            if self.historic_data.emissions_intensities:
-                intensity_units = (Q_(1.0, self.emissions_metric.units) / Q_(1.0, self.production_metric.units)).units
-                if self.historic_data.emissions_intensities.S1S2:
-                    base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
-                    base_year = base_year or base_realization.year
-                    self.ghg_s1s2 = base_realization.value * self.base_year_production
-                elif self.historic_data.emissions_intensities.S1 and self.historic_data.emissions_intensities.S2:
-                    base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1, intensity_units, base_year)
-                    base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S2, intensity_units, base_year)
-                    base_year = base_year or base_realization_s1.year
-                    self.ghg_s1s2 = (base_realization_s1.value + base_realization_s2.value) * self.base_year_production
-                else:
-                    raise ValueError(f"missing S1S2 historic intensity data for {self.company_name}")
+        if self.ghg_s1s2 is None and self.historic_data and self.historic_data.emissions_intensities:
+            intensity_units = (Q_(1.0, self.emissions_metric.units) / Q_(1.0, self.production_metric.units)).units
+            if self.historic_data.emissions_intensities.S1S2:
+                base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
+                base_year = base_year or base_realization.year
+                self.ghg_s1s2 = base_realization.value * self.base_year_production
+            elif self.historic_data.emissions_intensities.S1 and self.historic_data.emissions_intensities.S2:
+                base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1, intensity_units, base_year)
+                base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S2, intensity_units, base_year)
+                base_year = base_year or base_realization_s1.year
+                self.ghg_s1s2 = (base_realization_s1.value + base_realization_s2.value) * self.base_year_production
+            else:
+                raise ValueError(f"missing S1S2 historic intensity data for {self.company_name}")
         if self.ghg_s1s2 is None:
             raise ValueError(f"missing historic emissions or intensity data to calculate ghg_s1s2 for {self.company_name}")
-        if ghg_s3:
+        if ghg_s3 is not None:
             self.ghg_s3 = pint_ify(ghg_s3, self.emissions_metric.units)
+        elif self.historic_data and self.historic_data.emissions and self.historic_data.emissions.S3:
+            base_realization_s3 = self._get_base_realization_from_historic(self.historic_data.emissions.S3, self.emissions_metric.units, base_year)
+            self.ghg_s3 = base_realization_s3.value
         if self.ghg_s3 is None and self.historic_data and self.historic_data.emissions_intensities:
             if self.historic_data.emissions_intensities.S3:
                 intensity_units = (Q_(1.0, self.emissions_metric.units) / Q_(1.0, self.production_metric.units)).units
@@ -696,13 +716,3 @@ class TemperatureScoreControls(PintModel):
         return self.tcre / self.carbon_conversion
 
 
-@dataclass
-class ProjectionControls:
-    LOWER_PERCENTILE: float = 0.1
-    UPPER_PERCENTILE: float = 0.9
-
-    LOWER_DELTA: float = -0.10
-    UPPER_DELTA: float = +0.03
-
-    TARGET_YEAR: int = 2050
-    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)

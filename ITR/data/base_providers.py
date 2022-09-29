@@ -201,8 +201,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     :param companies: A list of ICompanyData objects that each contain fundamental company data
     :param column_config: An optional ColumnsConfig object containing relevant variable names
     :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
+    :param projection_controls: An optional ProjectionControls object containing projection settings
     """
 
+    # FIXME: TemperatureScoreConfig and ProjectionControls both have their own BASE_YEAR/TARGET_END_YEAR concepts
     def __init__(self,
                  companies: List[ICompanyData],
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
@@ -525,20 +527,20 @@ class EITrajectoryProjector(object):
                 units = f"{results.values[0].u:~P}"
                 scope_dfs[scope] = results.astype(f"pint[{units}]")
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
-                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                               if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections[scope] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
             if scope_projections['S1'] and scope_projections['S2'] and not scope_projections['S1S2']:
                 results = scope_dfs['S1'] + scope_dfs['S2']
                 units = f"{results.values[0].u:~P}"
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
-                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                               if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections['S1S2'] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
             # FIXME: do we really need to do this?  We're going to migrate S3 to S1S2 and ignore S1S2S3...
             if scope_projections['S1S2'] and scope_projections['S3'] and not scope_projections['S1S2S3']:
                 results = scope_dfs['S1S2'] + scope_dfs['S3']
                 units = f"{results.values[0].u:~P}"
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
-                               if year >= TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                               if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections['S1S2S3'] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
@@ -826,11 +828,11 @@ class EITargetProjector(object):
                     ei_projection_scopes[scope].projections.extend(ei_projections)
                     target_year = netzero_year
                     target_value = netzero_qty
-                if target_year < 2050:
+                if target_year < ProjectionControls.TARGET_YEAR:
                     # Assume everything stays flat until 2050
                     ei_projection_scopes[scope].projections.extend(
                         [ICompanyEIProjection(year=year, value=target_value)
-                         for y, year in enumerate(range(1 + target_year, 1 + 2050))]
+                         for y, year in enumerate(range(1 + target_year, 1 + ProjectionControls.TARGET_YEAR))]
                     )
 
         return ICompanyEIProjectionsScopes(**ei_projection_scopes)

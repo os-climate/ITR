@@ -158,6 +158,7 @@ class PortfolioAggregationConfig:
 class TemperatureScoreConfig(PortfolioAggregationConfig):
     SCORE_RESULT_TYPE = 'score_result_type'
     # Unfortunately we need to cross over to interfaces.py
+    # FIXME: BASE_YEAR and TARGET_END_YEAR should agree with ProjectionControls
     CONTROLS_CONFIG = TemperatureScoreControls(
         base_year=2019,
         target_end_year=2050,

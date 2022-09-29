@@ -212,11 +212,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 # pint automatically handles any unit conversions required
 
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE12].squeeze()
-                company_data[ColumnsConfig.GHG_SCOPE12] = Q_(v or np.nan, 't CO2')
+                company_data[ColumnsConfig.GHG_SCOPE12] = Q_(np.nan if v is None else v, 't CO2')
                 company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = \
                     company_data[ColumnsConfig.GHG_SCOPE12] / df_ei.loc[company_id, :][TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE3].squeeze()
-                company_data[ColumnsConfig.GHG_SCOPE3] = Q_(v or np.nan, 't CO2')
+                company_data[ColumnsConfig.GHG_SCOPE3] = Q_(np.nan if v is None else v, 't CO2')
                 company_data[ColumnsConfig.PROJECTED_TARGETS] = {'S1S2': {
                     'projections': self._convert_series_to_projections (df_targets.loc[company_id, :], ICompanyEIProjection),
                     'ei_metric': {'units': intensity_metric}}}
