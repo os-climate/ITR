@@ -106,14 +106,13 @@ df_portfolio = pd.read_excel(company_data_path, sheet_name="Portfolio")
 companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
 logger.info('Load dummy portfolio from {}. You could upload your own portfolio using the template.'.format(company_data_path))
 
-temperature_score = TemperatureScore(
-    time_frames = [ETimeFrames.LONG],
-    scopes=[EScope.S1S2],
-    aggregation_method=PortfolioAggregationMethod.WATS # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
-)
+temperature_score: TemperatureScore = None # created during `recalculate_individual_itr`
+EI_bm: BaseProviderIntensityBenchmark = None # Emissions Intensity benchmarks, created during `recalculate_individual_itr`
 
 # load default intensity benchmarks
 def recalculate_individual_itr(scenario):
+    global temperature_score, EI_bm
+
     if scenario == 'OECM_PC':
         benchmark_file = benchmark_EI_OECM_PC_file
     elif scenario == 'OECM_S3':
@@ -133,6 +132,12 @@ def recalculate_individual_itr(scenario):
         parsed_json = json.load(json_file)
     EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
     Warehouse = DataWarehouse(template_company_data, base_production_bm, EI_bm)
+    temperature_score = TemperatureScore(
+                            time_frames = [ETimeFrames.LONG],
+                            scopes=[EI_bm.scope_to_calc],
+                            # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
+                            aggregation_method=PortfolioAggregationMethod.WATS
+                            )
     df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
     return df
 
@@ -580,7 +585,9 @@ def update_graph(
         proj_meth,
         winz,
 ):
-    global amended_portfolio_global, initial_portfolio, filt_df, temperature_score, companies, company_data_path, template_company_data, base_production_bm
+    global amended_portfolio_global, initial_portfolio, filt_df, temperature_score
+    global companies, company_data_path, template_company_data
+    global base_production_bm, EI_bm
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
 
@@ -622,12 +629,13 @@ def update_graph(
     fig1.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5))
 
     # Covered companies analysis
-    coverage = filt_df[['company_id', 'ghg_s1s2', 'cumulative_target']].copy()
+    scope_column = 'ghg_' + EI_bm.scope_to_calc.name.lower()
+    coverage = filt_df[['company_id', scope_column, 'cumulative_target']].copy()
     zeroE = Q_(0, 't CO2')
-    coverage['coverage_category'] = np.where(coverage['ghg_s1s2'].isnull(),
+    coverage['coverage_category'] = np.where(coverage[scope_column].isnull(),
                                              np.where(coverage['cumulative_target'] == zeroE, "Not Covered",
                                                       "Covered only<Br>by target"),
-                                             np.where((coverage['ghg_s1s2'] > zeroE) & (
+                                             np.where((coverage[scope_column] > zeroE) & (
                                                          coverage['cumulative_target'] == zeroE),
                                                       "Covered only<Br>by emissions",
                                                       "Covered by<Br>emissions and targets"))
@@ -669,8 +677,10 @@ def update_graph(
 
     # Calculate different weighting methods
     def agg_score(agg_method):
+        global EI_bm
+
         temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG],
-                                             scopes=[EScope.S1S2],
+                                             scopes=[EI_bm.scope_to_calc],
                                              aggregation_method=agg_method)  # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
 <<<<<<< HEAD
