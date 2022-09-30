@@ -2,11 +2,13 @@ import warnings
 import os
 import unittest
 import pandas as pd
+import numpy as np
 
 from ITR.interfaces import ETimeFrames, EScope
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.data.osc_units import ureg, Q_
+from utils import assert_pint_frame_equal
 
 
 class TestTemperatureScore(unittest.TestCase):
@@ -138,6 +140,20 @@ class TestTemperatureScore(unittest.TestCase):
         aggregations = self.temperature_score.aggregate_scores(scores)
         self.assertAlmostEqual(aggregations.long.S1S2.all.score, Q_(1.869, ureg.delta_degC), places=2,
                                msg="Long AOTS aggregation failed")
+
+    def test_filter_data(self):
+        data = pd.DataFrame(np.array([['id0', ETimeFrames.LONG, EScope.S3, 1],
+                                      ['id1', ETimeFrames.MID, EScope.S1S2, 2],
+                                      ['id2', ETimeFrames.MID, EScope.S3, 3], # this should stay
+                                      ['id3', ETimeFrames.MID, EScope.S3, None]]),
+                            index=['id0', 'id1', 'id2', 'id3'], columns=['company_id', 'time_frame', 'scope', 'ghg_s3'])
+        expected = pd.DataFrame(np.array([['id2', ETimeFrames.MID, EScope.S3, 3]]),
+                                index=['id2'], columns=['company_id', 'time_frame', 'scope', 'ghg_s3'])
+        timeframe = ETimeFrames.MID
+        scope = EScope.S3
+
+        filtered = self.temperature_score._filter_data(data, timeframe, scope)
+        assert_pint_frame_equal(self, filtered, expected)
 
 
 if __name__ == "__main__":
