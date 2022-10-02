@@ -110,20 +110,24 @@ temperature_score: TemperatureScore = None # created during `recalculate_individ
 EI_bm: BaseProviderIntensityBenchmark = None # Emissions Intensity benchmarks, created during `recalculate_individual_itr`
 
 # load default intensity benchmarks
-def recalculate_individual_itr(scenario):
+def recalculate_individual_itr(eibm):
+    '''
+    Reload Emissions Intensity benchmark from a selected file
+    :param eibm: Emissions Intensity benchmark identifier
+    '''
     global temperature_score, EI_bm
 
-    if scenario == 'OECM_PC':
+    if eibm == 'OECM_PC':
         benchmark_file = benchmark_EI_OECM_PC_file
-    elif scenario == 'OECM_S3':
+    elif eibm == 'OECM_S3':
         benchmark_file = benchmark_EI_OECM_S3_file
-    elif scenario == 'TPI_2_degrees':
+    elif eibm == 'TPI_2_degrees':
         benchmark_file = benchmark_EI_TPI_file
-    elif scenario == 'TPI_15_degrees':
+    elif eibm == 'TPI_15_degrees':
         benchmark_file = benchmark_EI_TPI_15_file
-    elif scenario == 'OECM':
+    elif eibm == 'OECM':
         benchmark_file = benchmark_EI_OECM_file
-        logger.info('OECM scenario is for backward compatibility only.  Use OECM_PC instead.')
+        logger.info('OECM benchmark is for backward compatibility only.  Use OECM_PC instead.')
     else:
         benchmark_file = benchmark_EI_TPI_below_2_file
     # load intensity benchmarks
@@ -219,7 +223,7 @@ controls = dbc.Row( # always do in rows ...
                             [
                                 dbc.Button("\N{books}", id="hover-target3", color="link", n_clicks=0),
                                 dbc.Popover(dbc.PopoverBody(
-                                    "Scope of sectors could be different for different emission scenario.\nScope of sectors covered by the tool is constantly growing."),
+                                    "Scope of sectors could be different for different emission benchmark.\nScope of sectors covered by the tool is constantly growing."),
                                     id="hover3", target="hover-target3", trigger="hover"),
                             ], width=2,
                         ),
@@ -242,7 +246,7 @@ controls = dbc.Row( # always do in rows ...
                             [
                                 dbc.Button("\N{books}", id="hover-target4", color="link", n_clicks=0),
                                 dbc.Popover(dbc.PopoverBody(
-                                    "Scope of countries could be different for different emission scenario"),
+                                    "Scope of countries could be different for different emission benchmark"),
                                     id="hover4", target="hover-target4", trigger="hover"),
                             ], width=2,
                         ),
@@ -269,21 +273,21 @@ macro = dbc.Row(
                 dbc.Row(  # Select Benchmark
                     [
                         dbc.Col(
-                            dbc.Label("\N{bar chart} Select climate scenario "),
+                            dbc.Label("\N{bar chart} Select Emissions Intensity benchmark "),
                             width=9,
                         ),
                         dbc.Col(
                             [
                                 dbc.Button("\N{books}", id="hover-target5", color="link", n_clicks=0),
                                 dbc.Popover(dbc.PopoverBody(
-                                    "Climate scenario describes emission intensities projection for different regions and sectors"),
+                                    "This benchmark describes emission intensities projection for different regions and sectors"),
                                     id="hover5", target="hover-target5", trigger="hover"),
                             ], width=2,
                         ),
                     ],
                     align="center",
                 ),
-                dcc.Dropdown(id="scenario-dropdown",
+                dcc.Dropdown(id="eibm-dropdown",
                              options=[  # 16.05.2022: make this dynamic
                                  {'label': 'OECM (Prod-Centric) 1.5 degC', 'value': 'OECM_PC'},
                                  {'label': 'OECM (Scope 3) 1.5 degC', 'value': 'OECM_S3'},
@@ -294,7 +298,7 @@ macro = dbc.Row(
                              ],
                              value='OECM_PC',
                              clearable=False,
-                             placeholder="Select emission scenario"),
+                             placeholder="Select Emissions Intensity benchmark"),
                 html.Div(id='hidden-div', style={'display': 'none'}),
                 html.Hr(),  # small space from the top
                 dbc.Row(  # Mean / Median projection
@@ -423,8 +427,8 @@ app.layout = dbc.Container(  # always start with container
                         dbc.Card(
                             dbc.CardBody(
                                 [
-                                    html.H5("Scenario assumptions", className="macro-filters"),
-                                    html.P("Here you could adjust basic assumptions of calculations",
+                                    html.H5("Benchmarks", className="macro-filters"),
+                                    html.P("Here you could adjust benchmarks of calculations",
                                            className="text-black-50"),
                                     macro,
                                 ]
@@ -573,7 +577,7 @@ app.layout = dbc.Container(  # always start with container
         Input("temp-score", "value"),
         Input("sector-dropdown", "value"),
         Input("region-dropdown", "value"),
-        Input("scenario-dropdown", "value"),
+        Input("eibm-dropdown", "value"),
         Input('projection-method', 'value'),
         Input("scenarios-cutting", "value"),  # winzorization slide
     ],
@@ -581,7 +585,7 @@ app.layout = dbc.Container(  # always start with container
 def update_graph(
         te_sc,
         sec, reg,
-        scenario,
+        eibm,
         proj_meth,
         winz,
 ):
@@ -600,8 +604,8 @@ def update_graph(
         template_company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
         template_company_data = TemplateProviderCompany(excel_path=company_data_path)
 
-    amended_portfolio_global = recalculate_individual_itr(
-        scenario)  # we need to recalculate temperature score as we changed th
+    # we need to recalculate temperature score as we changed benchmark
+    amended_portfolio_global = recalculate_individual_itr(eibm)
 
     temp_score_mask = (amended_portfolio_global.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
                 amended_portfolio_global.temperature_score <= Q_(te_sc[1], 'delta_degC'))
@@ -807,20 +811,20 @@ def download_xlsx(n_clicks):
     ],
     [
         Input('reset-filters-but', 'n_clicks'),
-        Input("scenario-dropdown", "value")
+        Input("eibm-dropdown", "value")
     ]
 )
 
-def reset_filters(n_clicks_reset, scenario):
+def reset_filters(n_clicks_reset, eibm):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0] # to catch which widgets were pressed
-    if n_clicks_reset is None and 'scenario-dropdown' not in changed_id:
+    if n_clicks_reset is None and 'eibm-dropdown' not in changed_id:
         raise PreventUpdate
 
     ProjectionControls.TREND_CALC_METHOD=staticmethod(pd.DataFrame.median)
     ProjectionControls.LOWER_PERCENTILE = 0.1
     ProjectionControls.UPPER_PERCENTILE = 0.9
     template_company_data = TemplateProviderCompany(excel_path=company_data_path)
-    amended_portfolio_global = recalculate_individual_itr(scenario)
+    amended_portfolio_global = recalculate_individual_itr(eibm)
     initial_portfolio = amended_portfolio_global
 
     return ( # if button is clicked, reset filters
