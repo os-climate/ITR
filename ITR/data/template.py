@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from ITR.data.osc_units import ureg, Q_, M_
 import pint
+from pint import Quantity
 
 from ITR.data.base_providers import BaseCompanyDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, LoggingConfig
@@ -49,7 +50,7 @@ def ITR_country_to_region(country:str) -> str:
 
 # FIXME: circa line 480 of pint_array is code for master_scalar that shows how to decide if a thing has units
 
-def _estimated_value(y: pd.Series) -> pint.Quantity: 
+def _estimated_value(y: pd.Series) -> Quantity: 
     """
     Parameters
     ----------
@@ -81,7 +82,7 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
     if len(x) == 1:
         # If there's only one non-NaN input, return that one
         return x.iloc[0]
-    if isinstance(x.values[0], pint.Quantity):
+    if isinstance(x.values[0], Quantity):
         units = x.values[0].u
         assert(x.map(lambda z: z.u==units).all())
         pa = x.astype(f"pint[{units}]")
@@ -92,7 +93,7 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         est = x.mean()
     return est
 
-def prioritize_submetric(x: pd.Series) -> pint.Quantity:
+def prioritize_submetric(x: pd.Series) -> Quantity:
     """
     Parameters
     ----------
@@ -228,7 +229,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
         else:
             missing_production_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.eq('production')].company_id.unique())
-            missing_esg_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.isin(['s1', 's1s2', 's1s2s3'])].company_id.unique())
+            missing_esg_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.str.upper().isin(['S1', 'S1S2', 'S1S2S3'])].company_id.unique())
             missing_esg_metrics_df = df_fundamentals.loc[missing_production_idx.union(missing_esg_idx)]
             
         if len(missing_esg_metrics_df)>0:
@@ -337,8 +338,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                          dropna=False)[esg_year_columns]
                 # then estimate values for each sub_metric (many/most of which will be NaN)
                 .agg(lambda x: _estimated_value(x))
+                .reset_index(level='sub_metric')
                 )
-            grouped_prod = grouped_prod.reset_index(level='sub_metric')
 
             # Now prioritize the sub_metrics we want: the best non-NaN values for each company in each column
             grouped_prod.sub_metric = pd.Categorical(grouped_prod['sub_metric'], ordered=True, categories=['equity', '', 'gross', 'net', 'full'])
@@ -352,16 +353,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             best_prod[ColumnsConfig.VARIABLE] = VariablesConfig.PRODUCTIONS
             
             grouped_em = (
-                df_esg[df_esg.metric.isin(['s1', 's2', 's1s2', 's3', 's1s2s3'])].drop(columns=['unit', 'report_date'])
+                df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S1S2', 'S3', 'S1S2S3'])].drop(columns=['unit', 'report_date'])
+                .assign(metric=df_esg.metric.str.upper())
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
                 .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'sub_metric'],
                          dropna=False)[esg_year_columns]
                 # then estimate values for each sub_metric (many/most of which will be NaN)
                 .agg(lambda x: _estimated_value(x))
+                .reset_index(level='sub_metric')
                 )
-            breakpoint()
-            grouped_em = grouped_em.reset_index(level='sub_metric')
+
             # Now prioritize the sub_metrics we want: the best non-NaN values for each company in each column
             grouped_em.sub_metric = pd.Categorical(grouped_em['sub_metric'], ordered=True, categories=['', 'all', 'combined', 'total', 'location', 'market'])
             best_em = (
