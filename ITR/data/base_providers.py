@@ -1,6 +1,11 @@
 import warnings  # needed until quantile behaves better with Pint quantities in arrays
 import numpy as np
 import pandas as pd
+# from uncertainties import ufloat
+# from uncertainties.core import Variable as utype
+import uncertainties
+from uncertainties import unumpy as unp
+
 from functools import reduce, partial
 from operator import add
 from typing import List, Type, Dict
@@ -573,8 +578,10 @@ class EITrajectoryProjector(object):
             if s.notnull().any():
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    intensities[col] = s.map(lambda x: Q_(np.nan, ei_units)
-                    if x.m is np.nan or x.m is pd.NA else x).astype(f"pint[{ei_units}]")
+                    breakpoint()
+                    intensities[col] = s.map(
+                        lambda x: Q_(np.nan, ei_units)
+                            if (x.m is pd.NA) or unp.isnan(x) else x).astype(f"pint[{ei_units}]")
 
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         for col in winsorized_intensities.columns:
@@ -634,7 +641,7 @@ class EITrajectoryProjector(object):
         projected_intensities = historic_data.loc[historic_data.index.intersection(trends.index)].copy()
         # We need to do a mini-extrapolation if we don't have complete historic data
         for year in historic_data.columns.tolist()[:-1]:
-            m = projected_intensities[year + 1].apply(lambda x: np.isnan(x.m))
+            m = unp.isnan(projected_intensities[year + 1])
             projected_intensities.loc[m, year + 1] = projected_intensities.loc[m, year] * (1 + trends.loc[m])
 
         # Now the big extrapolation

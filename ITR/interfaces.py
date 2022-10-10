@@ -14,6 +14,7 @@ from pydantic import BaseModel, parse_obj_as, validator, root_validator
 from dataclasses import dataclass
 
 import pint
+from pint import Quantity
 from ITR.data.osc_units import ureg, Q_, M_
 from pint.errors import DimensionalityError
 
@@ -38,6 +39,7 @@ class PintModel(BaseModel):
 
 # List of all the production units we know
 _production_units = [ "Wh", "t Steel", "pkm", "tkm", "boe", "t Aluminum", "t Cement", "USD", "m**2" ]
+_ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
 
 # Borrowed from https://github.com/hgrecco/pint/issues/1166
 registry = ureg
@@ -45,7 +47,9 @@ registry = ureg
 schema_extra = dict(definitions=[
     dict(
         Quantity=dict(type="string"),
+        # We don't need EmissionsQuantity separately because Quantity does all we nmeed
         ProductionQuantity=dict(type="List[str]"),
+        EI_Quantity=dict(type="List[str]"),
     )
 ])
 
@@ -77,8 +81,8 @@ def quantity(dimensionality: str) -> type:
         )
     
     return type(
-        "pint.Quantity",
-        (pint.Quantity,),
+        "Quantity",
+        (Quantity,),
         dict(
             __get_validators__=__get_validators__,
             __modify_schema__=__modify_schema__,
@@ -97,10 +101,50 @@ class MyModel(BaseModel):
         validate_assignment = True
         schema_extra = schema_extra
         json_encoders = {
-            pint.Quantity: str,
+            Quantity: str,
         }
 # end of borrowing
 
+
+def emissions_quantity(dimensionality: str) -> type:
+    """A method for making a pydantic compliant Pint quantity field type."""
+
+    try:
+        registry.get_dimensionality(dimensionality)
+    except KeyError:
+        raise ValueError(f"{dimensionality} is not a valid dimensionality in pint!")
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value):
+        if isinstance(value, dict):
+            quantity = Q_(value['units'])
+        else:
+            quantity = Q_(value)
+        if quantity.is_compatible_with(cls.dimensionality):
+            return quantity
+        assert quantity.check(cls.dimensionality), f"Dimensionality must be {cls.dimensionality}"
+        return quantity
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(
+            {"$ref": "#/definitions/EmissionsQuantity"}
+        )
+    
+    return type(
+        "Quantity",
+        (Quantity,),
+        dict(
+            __get_validators__=__get_validators__,
+            __modify_schema__=__modify_schema__,
+            dimensionality=dimensionality,
+            validate=validate,
+        ),
+    )
 
 class ProductionQuantity(BaseModel):
 
@@ -119,10 +163,8 @@ class ProductionQuantity(BaseModel):
         validate_assignment = True
         schema_extra = schema_extra
         json_encoders = {
-            pint.Quantity: str,
+            Quantity: str,
         }
-
-OSC_ProductionQuantity = ProductionQuantity(dims_list=_production_units)
 
 def production_quantity(dims_list: List[str]) -> type:
     """A method for making a pydantic compliant Pint production quantity."""
@@ -165,30 +207,77 @@ def production_quantity(dims_list: List[str]) -> type:
         ),
     )
 
+
+class EI_Quantity(BaseModel):
+
+    dims_list: List[str]
+
+    @validator('dims_list')
+    def units_must_be_registered(cls, v):
+        for d in v:
+            try:
+                registry.get_dimensionality(d)
+            except KeyError:
+                raise ValueError(f"{d} is not a valid dimensionality in pint!")
+        return v
+
+    class Config:
+        validate_assignment = True
+        schema_extra = schema_extra
+        json_encoders = {
+            Quantity: str,
+        }
+
+def ei_quantity(dims_list: List[str]) -> type:
+    """A method for making a pydantic compliant Pint Emissions Intensity (EI) quantity."""
+
+    try:
+        for dimensionality in dims_list:
+            registry.get_dimensionality(dimensionality)
+    except KeyError:
+        raise ValueError(f"{dimensionality} is not a valid dimensionality in pint!")
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value):
+        if isinstance(value, dict):
+            quantity = Q_(value['units'])
+        else:
+            quantity = Q_(value)
+        for dimensionality in EI_Quantity(dims_list=dims_list).dims_list:
+            if quantity.check(dimensionality):
+                return quantity
+        raise DimensionalityError(value.units, f"in [{EI_Quantity(dims_list).dims_list}]")
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(
+            {"$ref": "#/definitions/EI_Quantity"}
+        )
+    
+    return type(
+        "EI_Quantity",
+        (EI_Quantity,),
+        dict(
+            __get_validators__=__get_validators__,
+            __modify_schema__=__modify_schema__,
+            dims_list=f"List[str] = {dims_list}",
+            validate=validate,
+        ),
+    )
+
 # FIXME: delete this when we are done converting to new Pint
 class ProductionMetric(BaseModel):
     units: str
     @validator('units')
     def unit_must_be_production(cls, v):
         qty = ureg(v)
-        if qty.is_compatible_with("Wh"):
-            return v
-        if qty.is_compatible_with("Fe_ton"):
-            return v
-        if qty.is_compatible_with("passenger km"):
-            return v
-        if qty.is_compatible_with("tkm"):
-            return v
-        if qty.is_compatible_with("boe"):
-            return v
-        if qty.is_compatible_with("t Aluminum"):
-            return v
-        if qty.is_compatible_with("t Cement"):
-            return v
-        if qty.is_compatible_with("USD"):
-            return v
-        if qty.is_compatible_with("m**2"):
-            return v
+        for pu in _production_units:
+            if qty.is_compatible_with(pu):
+                return v
         raise ValueError(f"cannot convert {v} to units of production")
 
     def __str__(self):
@@ -211,24 +300,9 @@ class IntensityMetric(BaseModel):
     @validator('units')
     def units_must_be_EI(cls, v):
         qty = ureg(v)
-        if qty.is_compatible_with("t CO2/MWh"):
-            return v
-        if qty.is_compatible_with("t CO2/Fe_ton"):
-            return v
-        if qty.is_compatible_with("g CO2/(passenger km)"):
-            return v
-        if qty.is_compatible_with("g CO2/tkm"):
-            return v
-        if qty.is_compatible_with("kg CO2/boe"):
-            return v
-        if qty.is_compatible_with("t CO2/(t Aluminum)"):
-            return v
-        if qty.is_compatible_with("t CO2/(t Cement)"):
-            return v
-        if qty.is_compatible_with("kg CO2/USD"):
-            return v
-        if qty.is_compatible_with("g CO2/m**2"):
-            return v
+        for ei_u in _ei_units:
+            if qty.is_compatible_with(ei_u):
+                return v
         raise ValueError(f"cannot convert {v} to known t CO2/production unit")
 
 
@@ -393,7 +467,7 @@ def pint_ify(x, units='dimensionless'):
         if x.startswith('nan '):
             return Q_(np.nan, units)
         return ureg(x)
-    if isinstance(x, pint.Quantity):
+    if isinstance(x, Quantity):
         # Emissions intensities can arrive as dimensionless if emissions_metric and production_metric are both None
         if unp.isnan(x.m) and x.u == 'dimensionless':
             return Q_(np.nan, units)
@@ -542,7 +616,7 @@ class IHistoricEmissionsScopes(PintModel):
 
 class IEIRealization(PintModel):
     year: int
-    value: Optional[IntensityMetric]
+    value: Optional[ei_quantity(_ei_units)]
 
     def add(self, o):
         assert self.year==o.year
@@ -595,13 +669,13 @@ class ICompanyData(PintModel):
 
     country: Optional[str]
 
-    emissions_metric: Optional[EmissionsMetric]    # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
+    emissions_metric: Optional[emissions_quantity('t CO2')]    # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
     production_metric: Optional[production_quantity(_production_units)]  # Optional because it can be inferred from sector and region
     
     # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
     base_year_production: Optional[production_quantity(_production_units)]
-    ghg_s1s2: Optional[EmissionsMetric]
-    ghg_s3: Optional[EmissionsMetric]
+    ghg_s1s2: Optional[quantity('t CO2')]
+    ghg_s3: Optional[quantity('t CO2')]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -855,4 +929,5 @@ class TemperatureScoreControls(PintModel):
         return self.tcre / self.carbon_conversion
 
 # FIXME: Can somebody help sort out the circularities we have?
+IEIRealization.update_forward_refs()
 TemperatureScoreControls.update_forward_refs()
