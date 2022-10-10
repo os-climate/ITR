@@ -1,18 +1,21 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import List, Dict, Union
 import pandas as pd
 
 import numpy as np
 
-from ITR.configs import TabsConfig, ColumnsConfig, VariablesConfig, TemperatureScoreConfig
-from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
-    IHistoricEIScopes, ICompanyEIProjection, ICompanyEIProjectionsScopes, ICompanyEIProjections
-
 import pint
 from pint import Quantity
 from ITR.data.osc_units import ureg
+
+from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
+    IHistoricEIScopes, ICompanyEIProjection, ICompanyEIProjectionsScopes, ICompanyEIProjections, TemperatureScoreControls
+
 from ITR.interfaces import ICompanyData
 
+from ITR.configs import TabsConfig, ColumnsConfig, VariablesConfig, TemperatureScoreConfig 
 
 class CompanyDataProvider(ABC):
     """
