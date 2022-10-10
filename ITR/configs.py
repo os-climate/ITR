@@ -2,15 +2,15 @@
 This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
 the module, extend the respective config class and pass it to the class as the "constants" parameter.
 """
+from __future__ import annotations
+
 import logging
 
-from .interfaces import TemperatureScoreControls
-
 import pint
-import pint_pandas
 from ITR.data.osc_units import ureg, Q_
 from typing import List
 
+from .interfaces import TemperatureScoreControls
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -148,6 +148,8 @@ class TabsConfig:
     PROJECTED_TARGET = "projected_target"
     HISTORIC_DATA = "historic_data"
     TEMPLATE_INPUT_DATA = 'ITR input data'
+    TEMPLATE_INPUT_DATA_V2 = 'ITR V2 input data'
+    TEMPLATE_ESG_DATA_V2 = 'ITR V2 esg data'
     TEMPLATE_TARGET_DATA = 'ITR target input data'
 
 
@@ -164,9 +166,9 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         target_end_year=2050,
         projection_start_year=2010,
         projection_end_year=2019,
-        tcre=Q_(2.2, ureg.delta_degC),
-        carbon_conversion=Q_(3664.0, ureg('Gt CO2')),
-        scenario_target_temperature=Q_(1.5, ureg.delta_degC)
+        tcre=Q_(2.2, 'delta_degC'),
+        carbon_conversion=Q_(3664.0, 'Gt CO2'),
+        scenario_target_temperature=Q_(1.5, 'delta_degC')
     )
 
 

@@ -6,8 +6,9 @@ import pandas as pd
 import numpy as np
 import itertools
 
-from pint import Quantity
 from .data.osc_units import ureg, Q_, PA_
+from ITR.interfaces import quantity
+
 from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, AggregationContribution, \
     ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
@@ -44,7 +45,7 @@ class TemperatureScore(PortfolioAggregation):
             self.grouping = grouping
 
     def get_score(self, scorable_row: pd.Series) -> Tuple[
-        Quantity['delta_degC'], Quantity['delta_degC'], float, Quantity['delta_degC'], float, EScoreResultType]:
+        quantity('delta_degC'), quantity('delta_degC'), float, quantity('delta_degC'), float, EScoreResultType]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
@@ -90,7 +91,7 @@ class TemperatureScore(PortfolioAggregation):
             return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, \
                 target_overshoot_ratio, EScoreResultType.COMPLETE
 
-    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Quantity['delta_degC']:
+    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> quantity('delta_degC'):
         """
         Get the aggregated temperature score. S1+S2+S3 is an emissions weighted sum of S1+S2 and S3.
 
@@ -117,7 +118,7 @@ class TemperatureScore(PortfolioAggregation):
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
 
-    def get_default_score(self, target: pd.Series) -> Quantity['delta_degC']:
+    def get_default_score(self, target: pd.Series) -> quantity('delta_degC'):
         """
         :param target: The target as a row of a dataframe
         :return: The temperature score

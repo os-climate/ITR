@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Tuple
 from pint import Quantity
+from ITR.data.osc_units import ureg
 
-from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
+from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
 
