@@ -10,7 +10,8 @@ Q_ = ureg.Quantity
 M_ = ureg.Measurement
 
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
-from pint_pandas import PintArray
+from pint_pandas import PintType, PintArray
+PintType.ureg = ureg
 PA_ = PintArray
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")

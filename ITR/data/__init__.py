@@ -21,4 +21,4 @@ pint.Measurement = ureg.Measurement
 
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
 from pint_pandas import PintType
-PintType.ureg = unit_registry
+PintType.ureg = ureg
