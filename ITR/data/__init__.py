@@ -16,8 +16,18 @@ unit_registry.preprocessors=[
 ureg = unit_registry
 set_application_registry(ureg)
 
+# Overwrite what pint/pint/__init__.py initalizes
+# # Default Quantity, Unit and Measurement are the ones
+# # build in the default registry.
+# Quantity = UnitRegistry.Quantity
+# Unit = UnitRegistry.Unit
+# Measurement = UnitRegistry.Measurement
+# Context = UnitRegistry.Context
+
 pint.Quantity = ureg.Quantity
+pint.Unit = ureg.Unit
 pint.Measurement = ureg.Measurement
+pint.Context = ureg.Context
 
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
 from pint_pandas import PintType

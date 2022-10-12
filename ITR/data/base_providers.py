@@ -5,6 +5,7 @@ import pandas as pd
 # from uncertainties.core import Variable as utype
 import uncertainties
 from uncertainties import unumpy as unp
+import pint
 
 from functools import reduce, partial
 from operator import add
@@ -247,7 +248,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :return: pd.Series
         """
         company_dict = company.dict()
-        production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
+        try:
+            production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
+        except TypeError:
+            breakpoint()
         emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
         if company_dict[feature][scope.name]:
             projections = company_dict[feature][scope.name]['projections']
@@ -559,7 +563,6 @@ class EITrajectoryProjector(object):
             if s.notnull().any():
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    breakpoint()
                     intensities[col] = s.map(
                         lambda x: Q_(np.nan, ei_units)
                             if (x.m is pd.NA) or unp.isnan(x) else x).astype(f"pint[{ei_units}]")
@@ -593,7 +596,8 @@ class EITrajectoryProjector(object):
         # Interpolate NaNs surrounded by values, and extrapolate NaNs with last known value
         interpolated = historic_intensities.copy()
         for col in interpolated.columns:
-            if interpolated[col].isnull().all():
+            # FIXME: need a unp.isnan that can see into Quantities
+            if unp.isnan(interpolated[col].values.quantity).all():
                 continue
             qty = interpolated[col].values.quantity
             s = pd.Series(data=qty.m, index=interpolated.index)
@@ -607,7 +611,9 @@ class EITrajectoryProjector(object):
         intensities = intensities.T
         for col in intensities.columns:
             # ratios are dimensionless, so get rid of units, which confuse rolling/apply.  Some columns are NaN-only
-            intensities[col] = intensities[col].map(lambda x: x if isinstance(x, float) else x.m)
+            intensities[col] = intensities[col].map(lambda x: x.m if isinstance(x, pint.Quantity) else x)
+            # FIXME: rolling windows require conversion to float64.  Don't want to be a nuisance...
+            intensities[col] = unp.nominal_values(intensities[col])
         # TODO: do we want to fillna(0) or dropna()?
         ratios: pd.DataFrame = intensities.rolling(window=2, axis='index', closed='right') \
             .apply(func=self._year_on_year_ratio, raw=True)  # .dropna(how='all',axis=0) # .fillna(0)
@@ -622,7 +628,8 @@ class EITrajectoryProjector(object):
         projected_intensities = historic_data.loc[historic_data.index.intersection(trends.index)].copy()
         # We need to do a mini-extrapolation if we don't have complete historic data
         for year in historic_data.columns.tolist()[:-1]:
-            m = unp.isnan(projected_intensities[year + 1])
+            # FIXME: need a version of unp.isnan that can see into Quantities
+            m = unp.isnan(projected_intensities[year + 1].map(lambda x: x.m))
             projected_intensities.loc[m, year + 1] = projected_intensities.loc[m, year] * (1 + trends.loc[m])
 
         # Now the big extrapolation
@@ -630,7 +637,8 @@ class EITrajectoryProjector(object):
             projected_intensities[year + 1] = projected_intensities[year] * (1 + trends)
         return projected_intensities
 
-    def _year_on_year_ratio(self, arr: np.ndarray) -> float:
+    # Might return a float, might return a ufloat
+    def _year_on_year_ratio(self, arr: np.ndarray):
         return (arr[1] / arr[0]) - 1.0
 
 
@@ -733,7 +741,7 @@ class EITargetProjector(object):
                     else:
                         # Get the intensity data
                         intensity_data = historic_data.emissions_intensities.__getattribute__(scope)
-                        last_year_data = next((i for i in reversed(intensity_data) if np.isfinite(i.value.magnitude)),
+                        last_year_data = next((i for i in reversed(intensity_data) if not unp.isnan(i.value.magnitude)),
                                               None)
 
                     if last_year_data is None:  # No historic data, so no trajectory projections to use either
@@ -772,7 +780,7 @@ class EITargetProjector(object):
                         last_year_prod = production_bm.loc[last_year]
                         last_year_data = IEmissionRealization(year=last_year, value=last_year_ei.value*last_year_prod)
                     else:
-                        last_year_data = next((e for e in reversed(emissions_data) if np.isfinite(e.value.magnitude)),
+                        last_year_data = next((e for e in reversed(emissions_data) if not unp.isnan(e.value.magnitude)),
                                               None)
 
                     if last_year_data is None:  # No trajectory available either

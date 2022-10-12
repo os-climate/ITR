@@ -10,7 +10,6 @@ from pydantic import ValidationError
 
 from ITR.data.osc_units import ureg, Q_, M_
 import pint
-from pint import Quantity
 
 from ITR.data.base_providers import BaseCompanyDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, LoggingConfig
@@ -50,7 +49,7 @@ def ITR_country_to_region(country:str) -> str:
 
 # FIXME: circa line 480 of pint_array is code for master_scalar that shows how to decide if a thing has units
 
-def _estimated_value(y: pd.Series) -> Quantity: 
+def _estimated_value(y: pd.Series) -> pint.Quantity: 
     """
     Parameters
     ----------
@@ -82,7 +81,7 @@ def _estimated_value(y: pd.Series) -> Quantity:
     if len(x) == 1:
         # If there's only one non-NaN input, return that one
         return x.iloc[0]
-    if isinstance(x.values[0], Quantity):
+    if isinstance(x.values[0], pint.Quantity):
         units = x.values[0].u
         assert(x.map(lambda z: z.u==units).all())
         pa = x.astype(f"pint[{units}]")
@@ -93,7 +92,7 @@ def _estimated_value(y: pd.Series) -> Quantity:
         est = x.mean()
     return est
 
-def prioritize_submetric(x: pd.Series) -> Quantity:
+def prioritize_submetric(x: pd.Series) -> pint.Quantity:
     """
     Parameters
     ----------
@@ -173,7 +172,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         if template_version==2:
             esg_data_sheet = TabsConfig.TEMPLATE_ESG_DATA_V2
             try:
-                df_esg = df_company_data[esg_data_sheet].drop(columns='company_lei').copy().iloc[0:45]
+                df_esg = df_company_data[esg_data_sheet].drop(columns='company_lei').copy() # .iloc[0:45]
                 df_esg.loc[df_esg.sub_metric.map(lambda x: type(x)!=str), 'sub_metric'] = ''
             except KeyError as e:
                 logger.error(f"Tab {esg_data_sheet} is required in input Excel file.")
@@ -290,8 +289,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df5 = pd.concat([df3, df4])
             df_historic_data = df5
         else:
-            # We are already much tidier...
-            df_esg = df_esg.iloc[0:45]
+            # df_esg = df_esg.iloc[0:45]
+            # We are already much tidier, so don't need the wide_to_long conversion.
             esg_has_units = df_esg.unit.notna()
             esg_year_columns = df_esg.columns[df_esg.columns.get_loc(2016):]
             with warnings.catch_warnings():
