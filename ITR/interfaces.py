@@ -14,7 +14,6 @@ from pydantic import BaseModel, parse_obj_as, validator, root_validator
 from dataclasses import dataclass
 
 import pint
-from pint import Quantity
 from ITR.data.osc_units import ureg, Q_, M_
 from pint.errors import DimensionalityError
 
@@ -71,7 +70,7 @@ def quantity(dimensionality: str) -> type:
         quantity = Q_(value)
         if quantity.is_compatible_with(cls.dimensionality):
             return quantity
-        assert quantity.check(cls.dimensionality), f"Dimensionality must be {cls.dimensionality}"
+        assert quantity.check(cls.dimensionality), f"Dimensionality must be {cls.dimensionality} {breakpoint()}"
         return quantity
 
     @classmethod
@@ -82,7 +81,7 @@ def quantity(dimensionality: str) -> type:
     
     return type(
         "Quantity",
-        (Quantity,),
+        (pint.Quantity,),
         dict(
             __get_validators__=__get_validators__,
             __modify_schema__=__modify_schema__,
@@ -101,7 +100,7 @@ class MyModel(BaseModel):
         validate_assignment = True
         schema_extra = schema_extra
         json_encoders = {
-            Quantity: str,
+            pint.Quantity: str,
         }
 # end of borrowing
 
@@ -126,7 +125,7 @@ def emissions_quantity(dimensionality: str) -> type:
             quantity = Q_(value)
         if quantity.is_compatible_with(cls.dimensionality):
             return quantity
-        assert quantity.check(cls.dimensionality), f"Dimensionality must be {cls.dimensionality}"
+        assert quantity.check(cls.dimensionality), f"Dimensionality must be {cls.dimensionality} {breakpoint()}"
         return quantity
 
     @classmethod
@@ -137,7 +136,7 @@ def emissions_quantity(dimensionality: str) -> type:
     
     return type(
         "Quantity",
-        (Quantity,),
+        (pint.Quantity,),
         dict(
             __get_validators__=__get_validators__,
             __modify_schema__=__modify_schema__,
@@ -163,7 +162,7 @@ class ProductionQuantity(BaseModel):
         validate_assignment = True
         schema_extra = schema_extra
         json_encoders = {
-            Quantity: str,
+            pint.Quantity: str,
         }
 
 def production_quantity(dims_list: List[str]) -> type:
@@ -225,7 +224,7 @@ class EI_Quantity(BaseModel):
         validate_assignment = True
         schema_extra = schema_extra
         json_encoders = {
-            Quantity: str,
+            pint.Quantity: str,
         }
 
 def ei_quantity(dims_list: List[str]) -> type:
@@ -457,17 +456,24 @@ class PortfolioCompany(BaseModel):
     investment_value: float
     user_fields: Optional[dict]
 
-
 def pint_ify(x, units='dimensionless'):
-    if 'units' in units:
-        units = units['units']
-    if x is None or unp.isnan(x):
+    global stop_pint_ify
+
+    try:
+        if 'units' in units:
+            breakoint()
+            units = units['units']
+    except TypeError:
+        pass
+    if x is None:
         return Q_(np.nan, units)
     if type(x) == str:
         if x.startswith('nan '):
             return Q_(np.nan, units)
         return ureg(x)
-    if isinstance(x, Quantity):
+    if unp.isnan(x):
+        return Q_(np.nan, units)
+    if isinstance(x, pint.Quantity):
         # Emissions intensities can arrive as dimensionless if emissions_metric and production_metric are both None
         if unp.isnan(x.m) and x.u == 'dimensionless':
             return Q_(np.nan, units)
@@ -485,8 +491,12 @@ def UProjections_to_IProjections(classtype, ul, metric):
         if isinstance(x, classtype):
             return ul
     units = metric['units']
-    if 'units' in units:
-        units = units['units']
+    try:
+        if 'units' in units:
+            breakpoint()
+            units = units['units']
+    except TypeError:
+        pass
     pl = [dict(x) for x in ul]
     for x in pl:
         if x['value'] is None or unp.isnan(x['value']):
@@ -505,7 +515,7 @@ class UProjection(BaseModel):
 # When IProjection is NULL, we don't actually know its type, so we instantiate that later
 class IProjection(PintModel):
     year: int
-    value: Optional[Quantity]
+    value: Optional[pint.Quantity]
 
 
 class IBenchmark(BaseModel):
@@ -560,11 +570,11 @@ class IEIBenchmarkScopes(PintModel):
 
 class ICompanyEIProjection(PintModel):
     year: int
-    value: Optional[Quantity]
+    value: Optional[ei_quantity(_ei_units)]
 
     def add(self, o):
-        assert self.year==o.year
-        return IEmissionRealization(year=self.year, value = self.value + o.value)
+        assert self.year==o.year, f"{breakpoint()}"
+        return IEIRealization(year=self.year, value = self.value + o.value)
 
 
 class ICompanyEIProjections(BaseModel):
@@ -599,7 +609,7 @@ class IProductionRealization(BaseModel):
 
 class IEmissionRealization(PintModel):
     year: int
-    value: Optional[quantity('t CO2')]
+    value: Optional[emissions_quantity('t CO2')]
 
     def add(self, o):
         assert self.year==o.year
@@ -674,8 +684,8 @@ class ICompanyData(PintModel):
     
     # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
     base_year_production: Optional[production_quantity(_production_units)]
-    ghg_s1s2: Optional[quantity('t CO2')]
-    ghg_s3: Optional[quantity('t CO2')]
+    ghg_s1s2: Optional[emissions_quantity('t CO2')]
+    ghg_s3: Optional[emissions_quantity('t CO2')]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -713,8 +723,10 @@ class ICompanyData(PintModel):
             except StopIteration as e:
                 # TODO: If everything in the list is empty, why not NULL it out and return []?
                 metric = inferred_metric
-        else:
+        elif isinstance(metric, dict):
             metric = metric['units']
+        else:
+            metric = metric.u
         for il in i_list:
             if str(il['value'].u) == 'dimensionless':
                 il['value'] = Q_(il['value'].m, metric)
@@ -757,8 +769,14 @@ class ICompanyData(PintModel):
             inferred_emissions_metric = 't CO2'
             inferred_production_metric = self._sector_to_production_units(sector, region)
         else:
-            inferred_emissions_metric = emissions_metric['units']
-            inferred_production_metric = production_metric['units']
+            if isinstance(emissions_metric, dict):
+                inferred_emissions_metric = emissions_metric['units']
+            else:
+                inferred_emissions_metric = emissions_metric
+            if isinstance(production_metric, dict):
+                inferred_production_metric = production_metric['units']
+            else:
+                inferred_production_metric = production_metric
         inferred_ei_metric = f"{inferred_emissions_metric}/({inferred_production_metric})"
         for scope in projections:
             if projections[scope] is None:
@@ -774,8 +792,10 @@ class ICompanyData(PintModel):
             return None
         if production_metric is None:
             inferred_production_metric = self._sector_to_production_units(sector, region)
-        else:
+        elif isinstance(production_metric, dict):
             inferred_production_metric = production_metric['units']
+        else:
+            inferred_production_metric = production_metric
         if not historic_data.get('productions'):
             productions = None
         else:
@@ -785,8 +805,10 @@ class ICompanyData(PintModel):
                 inferred_emissions_metric = 'Mt CO2'
             else:
                 inferred_emissions_metric = 't CO2'
-        else:
+        elif isinstance(emissions_metric, dict):
             inferred_emissions_metric = emissions_metric['units']
+        else:
+            inferred_emissions_metric = emissions_metric
         if not historic_data.get('emissions'):
             emissions = None
         else:
@@ -845,7 +867,6 @@ class ICompanyData(PintModel):
             self.base_year_production = pint_ify(base_year_production, self.production_metric.units)
         elif self.historic_data and self.historic_data.productions:
             # TODO: This is a hack to get things going.
-            breakpoint()
             base_realization = self._get_base_realization_from_historic(self.historic_data.productions, self.production_metric.units, base_year)
             base_year = base_realization.year
             self.base_year_production = base_realization.value
@@ -892,11 +913,11 @@ class ICompanyData(PintModel):
 
 
 class ICompanyAggregates(ICompanyData):
-    cumulative_budget: quantity('t CO2')
-    cumulative_trajectory: quantity('t CO2')
-    cumulative_target: quantity('t CO2')
+    cumulative_budget: emissions_quantity('t CO2')
+    cumulative_trajectory: emissions_quantity('t CO2')
+    cumulative_target: emissions_quantity('t CO2')
     benchmark_temperature: quantity('delta_degC')
-    benchmark_global_budget: quantity('t CO2')
+    benchmark_global_budget: emissions_quantity('t CO2')
 
     # projected_targets: Optional[ICompanyEIProjectionsScopes]
     # projected_intensities: Optional[ICompanyEIProjectionsScopes]
@@ -918,7 +939,7 @@ class TemperatureScoreControls(PintModel):
     projection_start_year: int
     projection_end_year: int
     tcre: quantity('delta_degC')
-    carbon_conversion: quantity('t CO2')
+    carbon_conversion: emissions_quantity('t CO2')
     scenario_target_temperature: quantity('delta_degC')
 
     def __getitem__(self, item):

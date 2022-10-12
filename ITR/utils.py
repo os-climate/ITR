@@ -3,8 +3,8 @@ from __future__ import annotations
 import pandas as pd
 from pathlib import Path
 from typing import List, Optional, Tuple
-from pint import Quantity
 from ITR.data.osc_units import ureg
+import pint
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
@@ -93,7 +93,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     return portfolio_data
 
 
-def calculate(portfolio_data: pd.DataFrame, fallback_score: Quantity['delta_degC'], aggregation_method: PortfolioAggregationMethod,
+def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta_degC'], aggregation_method: PortfolioAggregationMethod,
               grouping: Optional[List[str]], time_frames: List[ETimeFrames],
               scopes: List[EScope], anonymize: bool, aggregate: bool = True,
               controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,
