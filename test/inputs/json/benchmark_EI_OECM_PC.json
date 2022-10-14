@@ -7,13 +7,11 @@
       {
         "sector": "Steel",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Steel)"
-        },
+        "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.653
@@ -147,13 +145,11 @@
       {
         "sector": "Steel",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Steel)"
-        },
+        "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.753
@@ -287,13 +283,11 @@
       {
         "sector": "Steel",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Steel)"
-        },
+        "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.163
@@ -427,13 +421,11 @@
       {
         "sector": "Electricity Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/MWh"
-        },
+        "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.549
@@ -567,13 +559,11 @@
       {
         "sector": "Electricity Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/MWh"
-        },
+        "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.279
@@ -707,13 +697,11 @@
       {
         "sector": "Electricity Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/MWh"
-        },
+        "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.392
@@ -847,13 +835,11 @@
       {
         "sector": "Gas Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0662
@@ -987,13 +973,11 @@
       {
         "sector": "Gas Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.066
@@ -1127,13 +1111,11 @@
       {
         "sector": "Gas Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0636
@@ -1267,13 +1249,11 @@
       {
         "sector": "Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.102
@@ -1407,13 +1387,11 @@
       {
         "sector": "Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0707
@@ -1547,13 +1525,11 @@
       {
         "sector": "Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0799
@@ -1687,13 +1663,11 @@
       {
         "sector": "Oil & Gas",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0675
@@ -1827,13 +1801,11 @@
       {
         "sector": "Oil & Gas",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0583
@@ -1967,13 +1939,11 @@
       {
         "sector": "Oil & Gas",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0635
@@ -2107,13 +2077,11 @@
       {
         "sector": "Autos",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "g CO2e/pkm"
-        },
+        "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 643.76
@@ -2247,13 +2215,11 @@
       {
         "sector": "Autos",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "g CO2e/pkm"
-        },
+        "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 96.054
@@ -2387,13 +2353,11 @@
       {
         "sector": "Autos",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "g CO2e/pkm"
-        },
+        "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 187.89
@@ -2527,13 +2491,11 @@
       {
         "sector": "Trucking",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "g CO2e/tkm"
-        },
+        "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 916.83
@@ -2667,13 +2629,11 @@
       {
         "sector": "Trucking",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "g CO2e/tkm"
-        },
+        "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 136.8
@@ -2807,13 +2767,11 @@
       {
         "sector": "Trucking",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "g CO2e/tkm"
-        },
+        "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 267.58
@@ -2947,13 +2905,11 @@
       {
         "sector": "Aluminum",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Aluminum)"
-        },
+        "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 11.762
@@ -3087,13 +3043,11 @@
       {
         "sector": "Aluminum",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Aluminum)"
-        },
+        "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16.879
@@ -3227,13 +3181,11 @@
       {
         "sector": "Aluminum",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Aluminum)"
-        },
+        "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 29.33
@@ -3367,13 +3319,11 @@
       {
         "sector": "Cement",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.648
@@ -3507,13 +3457,11 @@
       {
         "sector": "Cement",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.544
@@ -3647,13 +3595,11 @@
       {
         "sector": "Cement",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.701
@@ -3787,13 +3733,11 @@
       {
         "sector": "Construction Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(million USD)"
-        },
+        "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 88.256
@@ -3927,13 +3871,11 @@
       {
         "sector": "Construction Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(million USD)"
-        },
+        "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 57.06
@@ -4067,13 +4009,11 @@
       {
         "sector": "Construction Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(million USD)"
-        },
+        "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 66.74
@@ -4207,13 +4147,11 @@
       {
         "sector": "Residential Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 33735.0
@@ -4347,13 +4285,11 @@
       {
         "sector": "Residential Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16432.0
@@ -4487,13 +4423,11 @@
       {
         "sector": "Residential Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 27351.0
@@ -4627,13 +4561,11 @@
       {
         "sector": "Commercial Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 59513.0
@@ -4767,13 +4699,11 @@
       {
         "sector": "Commercial Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 111320.0
@@ -4907,13 +4837,11 @@
       {
         "sector": "Commercial Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 60172.0
@@ -5047,13 +4975,11 @@
       {
         "sector": "Chemicals",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.16
@@ -5187,13 +5113,11 @@
       {
         "sector": "Chemicals",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.874
@@ -5327,13 +5251,11 @@
       {
         "sector": "Chemicals",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.832
@@ -5467,13 +5389,11 @@
       {
         "sector": "Textiles",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.259
@@ -5607,13 +5527,11 @@
       {
         "sector": "Textiles",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.205
@@ -5747,13 +5665,11 @@
       {
         "sector": "Textiles",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.285
@@ -5891,13 +5807,11 @@
       {
         "sector": "Steel",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Steel)"
-        },
+        "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.653
@@ -6031,13 +5945,11 @@
       {
         "sector": "Steel",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Steel)"
-        },
+        "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.753
@@ -6171,13 +6083,11 @@
       {
         "sector": "Steel",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Steel)"
-        },
+        "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.163
@@ -6311,13 +6221,11 @@
       {
         "sector": "Electricity Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/MWh"
-        },
+        "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.549
@@ -6451,13 +6359,11 @@
       {
         "sector": "Electricity Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/MWh"
-        },
+        "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.279
@@ -6591,13 +6497,11 @@
       {
         "sector": "Electricity Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/MWh"
-        },
+        "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.392
@@ -6731,13 +6635,11 @@
       {
         "sector": "Gas Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0662
@@ -6871,13 +6773,11 @@
       {
         "sector": "Gas Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.066
@@ -7011,13 +6911,11 @@
       {
         "sector": "Gas Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0636
@@ -7151,13 +7049,11 @@
       {
         "sector": "Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.102
@@ -7291,13 +7187,11 @@
       {
         "sector": "Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0707
@@ -7431,13 +7325,11 @@
       {
         "sector": "Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0799
@@ -7571,13 +7463,11 @@
       {
         "sector": "Oil & Gas",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0675
@@ -7711,13 +7601,11 @@
       {
         "sector": "Oil & Gas",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0583
@@ -7851,13 +7739,11 @@
       {
         "sector": "Oil & Gas",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/GJ"
-        },
+        "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0635
@@ -7991,13 +7877,11 @@
       {
         "sector": "Autos",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "g CO2e/pkm"
-        },
+        "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 643.76
@@ -8131,13 +8015,11 @@
       {
         "sector": "Autos",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "g CO2e/pkm"
-        },
+        "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 96.054
@@ -8271,13 +8153,11 @@
       {
         "sector": "Autos",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "g CO2e/pkm"
-        },
+        "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 187.89
@@ -8411,13 +8291,11 @@
       {
         "sector": "Trucking",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "g CO2e/tkm"
-        },
+        "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 916.83
@@ -8551,13 +8429,11 @@
       {
         "sector": "Trucking",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "g CO2e/tkm"
-        },
+        "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 136.8
@@ -8691,13 +8567,11 @@
       {
         "sector": "Trucking",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "g CO2e/tkm"
-        },
+        "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 267.58
@@ -8831,13 +8705,11 @@
       {
         "sector": "Aluminum",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Aluminum)"
-        },
+        "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 11.762
@@ -8971,13 +8843,11 @@
       {
         "sector": "Aluminum",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Aluminum)"
-        },
+        "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16.879
@@ -9111,13 +8981,11 @@
       {
         "sector": "Aluminum",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Aluminum)"
-        },
+        "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 29.33
@@ -9251,13 +9119,11 @@
       {
         "sector": "Cement",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.933
@@ -9391,13 +9257,11 @@
       {
         "sector": "Cement",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 29.109
@@ -9531,13 +9395,11 @@
       {
         "sector": "Cement",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 9.649
@@ -9671,13 +9533,11 @@
       {
         "sector": "Construction Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(million USD)"
-        },
+        "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 88.256
@@ -9811,13 +9671,11 @@
       {
         "sector": "Construction Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(million USD)"
-        },
+        "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 57.06
@@ -9951,13 +9809,11 @@
       {
         "sector": "Construction Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(million USD)"
-        },
+        "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 66.74
@@ -10091,13 +9947,11 @@
       {
         "sector": "Residential Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 33735.0
@@ -10231,13 +10085,11 @@
       {
         "sector": "Residential Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16432.0
@@ -10371,13 +10223,11 @@
       {
         "sector": "Residential Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 27351.0
@@ -10511,13 +10361,11 @@
       {
         "sector": "Commercial Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 59513.0
@@ -10651,13 +10499,11 @@
       {
         "sector": "Commercial Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 111320.0
@@ -10791,13 +10637,11 @@
       {
         "sector": "Commercial Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(million m**2)"
-        },
+        "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 60172.0
@@ -10931,13 +10775,11 @@
       {
         "sector": "Chemicals",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.806
@@ -11071,13 +10913,11 @@
       {
         "sector": "Chemicals",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.418
@@ -11211,13 +11051,11 @@
       {
         "sector": "Chemicals",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.382
@@ -11351,13 +11189,11 @@
       {
         "sector": "Textiles",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.259
@@ -11491,13 +11327,11 @@
       {
         "sector": "Textiles",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.205
@@ -11631,13 +11465,11 @@
       {
         "sector": "Textiles",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.285
@@ -11775,13 +11607,11 @@
       {
         "sector": "Cement",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.285
@@ -11915,13 +11745,11 @@
       {
         "sector": "Cement",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 28.565
@@ -12055,13 +11883,11 @@
       {
         "sector": "Cement",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "t CO2e/(t Cement)"
-        },
+        "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 8.948
@@ -12195,13 +12021,11 @@
       {
         "sector": "Chemicals",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.646
@@ -12335,13 +12159,11 @@
       {
         "sector": "Chemicals",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.543
@@ -12475,13 +12297,11 @@
       {
         "sector": "Chemicals",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "kg CO2e/USD"
-        },
+        "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
         "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.55

@@ -5,6 +5,7 @@ from typing import Optional, Tuple, Type, List
 import pandas as pd
 import numpy as np
 import itertools
+from uncertainties import unumpy as unp
 
 from .data.osc_units import ureg, Q_, PA_
 from ITR.interfaces import quantity
@@ -55,13 +56,13 @@ class TemperatureScore(PortfolioAggregation):
         """
 
         # If both trajectory and target data missing assign default value
-        if (np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
-            np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
+        if (unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
+            unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
                 scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m <= 0:
             return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
 
         # If only target data missing assign only trajectory_score to final score
-        elif np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
+        elif unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
             target_overshoot_ratio = np.nan
             target_temperature_score = np.nan
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
@@ -208,11 +209,11 @@ class TemperatureScore(PortfolioAggregation):
 
         # We need to filter the scopes again, because we might have had to add a scope in the preparation step
         data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # See https://github.com/hgrecco/pint-pandas/issues/114
-            data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(
-                lambda x: Q_(round(x.m, 2), x.u)).astype('pint[delta_degC]')
+        # with warnings.catch_warnings():
+        #     warnings.simplefilter("ignore")
+        #     # See https://github.com/hgrecco/pint-pandas/issues/114
+        #     data[self.c.COLS.TEMPERATURE_SCORE] = data[self.c.COLS.TEMPERATURE_SCORE].map(
+        #         lambda x: Q_(round(x.m, 2), x.u)).astype('pint[delta_degC]')
         return data
 
     def _get_aggregations(self, data: pd.DataFrame, total_companies: int) -> Tuple[Aggregation, pd.Series, pd.Series]:

@@ -1,9 +1,9 @@
 import warnings  # needed until quantile behaves better with Pint quantities in arrays
 import numpy as np
 import pandas as pd
+# import uncertainties
 # from uncertainties import ufloat
 # from uncertainties.core import Variable as utype
-import uncertainties
 from uncertainties import unumpy as unp
 import pint
 
@@ -19,7 +19,8 @@ from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkData
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, \
-    IEmissionRealization, IntensityMetric, ProjectionControls
+    IEmissionRealization, ProjectionControls
+from ITR.interfaces import EI_Quantity
 
 # TODO handling of scopes in benchmarks
 
@@ -51,7 +52,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: pd.Series
         """
         return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector, scope),
-                         dtype=f'pint[{benchmark.benchmark_metric.units}]')
+                         dtype=f'pint[{str(benchmark.benchmark_metric)}]')
 
     # Production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
     # It's a label in the top-level of benchmark data.  Currently S1S2 is the only label with any data.
@@ -158,7 +159,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: pd.Series
         """
         s = pd.Series({p.year: p.value for p in benchmark.projections}, name=(benchmark.region, benchmark.sector, scope),
-                      dtype=f'pint[{benchmark.benchmark_metric.units}]')
+                      dtype=f'pint[{str(benchmark.benchmark_metric)}]')
         return s
 
     def _get_projected_intensities(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
@@ -248,11 +249,15 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :return: pd.Series
         """
         company_dict = company.dict()
+        # FIXME--this should be fixed with latest ProductionMetric stuff!
         try:
             production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
         except TypeError:
-            breakpoint()
-        emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
+            production_units = str(company_dict[self.column_config.PRODUCTION_METRIC])
+        try:
+            emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
+        except TypeError:
+            emissions_units = str(company_dict[self.column_config.EMISSIONS_METRIC])
         if company_dict[feature][scope.name]:
             projections = company_dict[feature][scope.name]['projections']
         else:
@@ -298,7 +303,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     warnings.simplefilter("ignore")
                     company_sector_region_info = pd.DataFrame({
                         self.column_config.COMPANY_ID: [c.company_id],
-                        self.column_config.BASE_YEAR_PRODUCTION: [base_year_production.to(c.production_metric.units)],
+                        self.column_config.BASE_YEAR_PRODUCTION: [base_year_production.to(str(c.production_metric))],
                         self.column_config.GHG_SCOPE12: [c.ghg_s1s2],
                         self.column_config.GHG_SCOPE3: [c.ghg_s3],
                         self.column_config.SECTOR: [c.sector],
@@ -308,7 +313,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                             production_bm.get_company_projected_production(company_sector_region_info)
                             # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                             .iloc[0].T
-                            .astype(f'pint[{str(base_year_production.units)}]')
+                            .astype(f'pint[{str(base_year_production.u)}]')
                             )
                 c.projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
     
@@ -537,20 +542,20 @@ class EITrajectoryProjector(object):
                 scope_dfs[scope] = results.astype(f"pint[{units}]")
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
-                scope_projections[scope] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
+                scope_projections[scope] = ICompanyEIProjections(ei_metric=units, projections=projections)
             if scope_projections['S1'] and scope_projections['S2'] and not scope_projections['S1S2']:
                 results = scope_dfs['S1'] + scope_dfs['S2']
                 units = f"{results.values[0].u:~P}"
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
-                scope_projections['S1S2'] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
+                scope_projections['S1S2'] = ICompanyEIProjections(ei_metric=units, projections=projections)
             # FIXME: do we really need to do this?  We're going to migrate S3 to S1S2 and ignore S1S2S3...
             if scope_projections['S1S2'] and scope_projections['S3'] and not scope_projections['S1S2S3']:
                 results = scope_dfs['S1S2'] + scope_dfs['S3']
                 units = f"{results.values[0].u:~P}"
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
-                scope_projections['S1S2S3'] = ICompanyEIProjections(ei_metric={'units': units}, projections=projections)
+                scope_projections['S1S2S3'] = ICompanyEIProjections(ei_metric=units, projections=projections)
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
@@ -766,7 +771,7 @@ class EITargetProjector(object):
                         ei_projection_scopes[scope].projections.extend(ei_projections)
                     else:
                         ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections,
-                                                                            ei_metric=IntensityMetric.parse_obj({'units': target.target_base_year_unit}))
+                                                                            ei_metric=EI_Quantity(target.target_base_year_unit))
                 elif target.target_type == "absolute":
                     # Complicated case, the target must be switched from absolute value to intensity.
                     # We use the benchmark production data
@@ -821,8 +826,7 @@ class EITargetProjector(object):
                         ei_projection_scopes[scope].projections.extend(ei_projections)
                     else:
                         ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections,
-                                                                            ei_metric=IntensityMetric.parse_obj(
-                                                                                {'units': f"{target_value.u:~P}"}))
+                                                                            ei_metric=EI_Quantity (f"{target_value.u:~P}"))
                 else:
                     # No target (type) specified
                     ei_projection_scopes[scope] = None

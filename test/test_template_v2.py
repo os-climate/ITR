@@ -2,6 +2,7 @@ import json
 import os
 import unittest
 from numpy.testing import assert_array_equal
+from uncertainties import unumpy as unp
 
 import pandas as pd
 from ITR.data.osc_units import ureg, Q_, M_
@@ -81,7 +82,7 @@ class TestTemplateProvider(unittest.TestCase):
                 ColumnsConfig.SECTOR: [ c.sector ],
                 ColumnsConfig.REGION: [ c.region ],
             }, index=[0])
-            bm_production_data = (self.excel_production_bm.get_company_projected_production(company_sector_region_info)
+            bm_production_data = (self.base_production_bm.get_company_projected_production(company_sector_region_info)
                                   # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                   .iloc[0].T
                                   .astype(f'pint[{str(c.base_year_production.units)}]'))
@@ -104,46 +105,6 @@ class TestTemplateProvider(unittest.TestCase):
 
         amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
-
-    def _test_temp_score_from_excel_data(self):
-        """
-        DISABLED
-        When running all tests in the /test directory, this test fails. When running all tests in
-        test_template_provider.py, it passes. Indicates a state is saved somewhere(?). TODO: fix test.
-        To enable test again, remove the leading '_' of the function name.  
-        """
-        excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=Q_(1.5, ureg.delta_degC),
-                                                       benchmark_global_budget=Q_(396, ureg('Gt CO2')), is_AFOLU_included=False)
-        template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
-        data_warehouse = DataWarehouse(template_company_data, excel_production_bm, excel_EI_bm)
-        comids = ['US00130H1059', 'US0185223007', 'US0188021085', 'US0236081024', 'US0255371017']
-
-        # Calculate Temp Scores
-        temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.LONG],
-            scopes=[EScope.S1S2],
-            aggregation_method=PortfolioAggregationMethod.WATS,
-        )
-
-        portfolio = []
-        for company in comids:
-            portfolio.append(PortfolioCompany(
-                company_name=company,
-                company_id=company,
-                investment_value=100,
-                company_isin=company,
-            ))
-        # portfolio data
-        portfolio_data = ITR.utils.get_data(data_warehouse, portfolio)
-        scores = temp_score.calculate(portfolio_data)
-        agg_scores = temp_score.aggregate_scores(scores)
-
-        # verify company scores:
-        expected = pd.Series([1.81, 1.87, 2.10, 2.18, 1.95], dtype='pint[delta_degC]')
-        assert_array_equal(scores.temperature_score.values, expected)
-        # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.982, ureg.delta_degC), places=2)
 
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
@@ -229,14 +190,15 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(43215000.0+7269200, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(68874000.0, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(247960692.1, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(1773407672.95, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(287877763.61957714, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(1316305990.5630153, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(1441933181.74423, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2809084095.106841, ureg('t CO2')), places=7)
+        breakpoint()
+        self.assertAlmostEqual(unp.nominal_values(company_1.ghg_s1s2.to('t CO2')), 43215000.0+7269200, places=7)
+        self.assertAlmostEqual(unp.nominal_values(company_2.ghg_s1s2.to('t CO2')), 68874000., places=7)
+        self.assertAlmostEqual(unp.nominal_values(company_1.cumulative_budget.to('t CO2')), 247960692.1, places=7)
+        self.assertAlmostEqual(unp.nominal_values(company_2.cumulative_budget.to('t CO2')), 1773407672.95, places=7)
+        self.assertAlmostEqual(unp.nominal_values(company_1.cumulative_target.to('t CO2')), 287877763.61957714, places=7)
+        self.assertAlmostEqual(unp.nominal_values(company_2.cumulative_target.to('t CO2')), 1316305990.5630153, places=7)
+        self.assertAlmostEqual(unp.nominal_values(company_1.cumulative_trajectory.to('t CO2')), 1441933181.74423, places=7)
+        self.assertAlmostEqual(unp.nominal_values(company_2.cumulative_trajectory.to('t CO2')), 2809084095.106841, places=7)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,
@@ -250,6 +212,7 @@ class TestTemplateProvider(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    print(ureg('t CO2'))
     test = TestTemplateProvider()
     test.setUp()
     test.test_temp_score()

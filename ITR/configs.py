@@ -10,7 +10,7 @@ import pint
 from ITR.data.osc_units import ureg, Q_
 from typing import List
 
-from .interfaces import TemperatureScoreControls
+from ITR.interfaces import TemperatureScoreControls
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -166,9 +166,9 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         target_end_year=2050,
         projection_start_year=2010,
         projection_end_year=2019,
-        tcre=Q_(2.2, 'delta_degC'),
-        carbon_conversion=Q_(3664.0, 'Gt CO2'),
-        scenario_target_temperature=Q_(1.5, 'delta_degC')
+        tcre='2.2 delta_degC',
+        carbon_conversion=Q_('3664.0 Gt CO2'),
+        scenario_target_temperature='1.5 delta_degC'
     )
 
 

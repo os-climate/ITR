@@ -2,6 +2,8 @@ import warnings  # needed until apply behaves better with Pint quantities in arr
 import logging
 import pandas as pd
 import numpy as np
+from uncertainties import unumpy as unp
+
 from abc import ABC
 from typing import List, Type
 from pydantic import ValidationError
@@ -96,15 +98,8 @@ class DataWarehouse(ABC):
             pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df_company_data),
                       dtype='pint[Gt CO2]',
                       index=df_company_data.index)
-        df_company_data[self.column_config.BENCHMARK_TEMP] = \
-            pd.Series([self.benchmarks_projected_ei.benchmark_temperature] * len(df_company_data),
-                      dtype='pint[delta_degC]',
-                      index=df_company_data.index)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # See https://github.com/hgrecco/pint-pandas/issues/114
-            for col in [self.column_config.CUMULATIVE_TRAJECTORY, self.column_config.CUMULATIVE_TARGET, self.column_config.CUMULATIVE_BUDGET]:
-                df_company_data[col] = df_company_data[col].apply(lambda x: str(x))
+        # ICompanyAggregates wants this Quantity as a `str`
+        df_company_data[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df_company_data)
         companies = df_company_data.to_dict(orient="records")
         aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
         return aggregate_company_data
@@ -138,7 +133,7 @@ class DataWarehouse(ABC):
         :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
         projected_emissions = projected_ei.multiply(projected_production)
-        projected_emissions = projected_emissions.applymap(lambda x: x if isinstance(x,float) else x if np.isfinite(x.m) else np.nan)
+        projected_emissions = projected_emissions.applymap(lambda x: np.nan if unp.isnan(x) else x)
         null_idx = projected_emissions.index[projected_emissions.isnull().all(axis=1)]
         return pd.concat([projected_emissions.loc[null_idx, projected_emissions.columns[0]],
                           projected_emissions.loc[projected_emissions.index.difference(null_idx)].sum(axis=1)]).astype('pint[Mt CO2]')

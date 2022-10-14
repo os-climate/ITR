@@ -9,8 +9,8 @@ import re
 
 # openscm_units doesn't make it easy to set preprocessors.  This is one way to do it.
 unit_registry.preprocessors=[
-     lambda s1: re.sub(r'passenger.km', 'pkm', s1),
-     lambda s2: s2.replace('BoE', 'boe'),
+    lambda s1: re.sub(r'passenger.km', 'pkm', s1),
+    lambda s2: s2.replace('BoE', 'boe'),
 ]
 
 ureg = unit_registry
