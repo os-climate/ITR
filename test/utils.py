@@ -3,7 +3,7 @@ import pandas as pd
 import json
 from pint import Quantity
 
-from ITR.interfaces import IntensityMetric
+from ITR.interfaces import EI_Quantity
 from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection
 
 class QuantityEncoder(json.JSONEncoder):
@@ -81,7 +81,7 @@ def gen_company_data(company_name, company_id, region, sector, production,
         'ghg_s1s2': (production * bm_ei[2019]),
         'projected_targets': ICompanyEIProjectionsScopes(
             S1S2=ICompanyEIProjections.parse_obj({
-                'ei_metric': IntensityMetric(units=str(bm_ei[2019].u)),
+                'ei_metric': EI_Quantity(units=str(bm_ei[2019].u)),
                 'projections': [
                     ICompanyEIProjection.parse_obj({
                         'year':y,

@@ -13,7 +13,7 @@ import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, LoggingConfig
-from ITR.interfaces import ICompanyData, EScope, \
+from ITR.interfaces import ICompanyData, EScope, ProductionQuantity, EmissionsQuantity, EI_Quantity, \
     IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
     IProjection, ProjectionControls
@@ -413,7 +413,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > ProjectionControls.TARGET_YEAR].index)
         if c_ids_invalid_netzero_year:
             error_message = f"Invalid net-zero target years (>{ProjectionControls.TARGET_YEAR}) are entered for companies with ID: " \
-                            f"{c_ids_without_netzero_year}"
+                            f"{c_ids_invalid_netzero_year}"
             logger.error(error_message)
             raise ValueError(error_message)
         target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = ProjectionControls.TARGET_YEAR
@@ -472,13 +472,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         df_target_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index())]
                 else:
                     company_data[ColumnsConfig.TARGET_DATA] = None
-
-                if company_data[ColumnsConfig.PRODUCTION_METRIC]:
-                    company_data[ColumnsConfig.PRODUCTION_METRIC] = {
-                        'units': company_data[ColumnsConfig.PRODUCTION_METRIC]}
-                if company_data[ColumnsConfig.EMISSIONS_METRIC]:
-                    company_data[ColumnsConfig.EMISSIONS_METRIC] = {
-                        'units': company_data[ColumnsConfig.EMISSIONS_METRIC]}
 
                 # handling of missing market cap data is mainly done in _convert_from_template_company_data()
                 if company_data[ColumnsConfig.COMPANY_MARKET_CAP] is pd.NA:
@@ -547,7 +540,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
             emissions_scopes[scope] = [] \
                 if results.empty \
-                else [IEmissionRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
+                else [IEmissionRealization(year=year, value=EmissionsQuantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
 
     def _convert_to_historic_productions(self, productions: pd.DataFrame) -> Optional[List[IProductionRealization]]:
@@ -557,7 +550,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         if productions.empty:
             return None
-        return [IProductionRealization(year=year, value=productions[year].squeeze()) for year in self.historic_years]
+        return [IProductionRealization(year=year, value=ProductionQuantity(productions[year].squeeze())) for year in self.historic_years]
 
     def _convert_to_historic_ei(self, intensities: pd.DataFrame) -> Optional[IHistoricEIScopes]:
         """
@@ -574,5 +567,5 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
             intensity_scopes[scope] = [] \
                 if results.empty \
-                else [IEIRealization(year=year, value=results[year].squeeze()) for year in self.historic_years]
+                else [IEIRealization(year=year, value=EI_Quantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)
