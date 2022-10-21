@@ -78,8 +78,11 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope)
         company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
-        return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-            company_production, axis=0)
+        try:
+            return benchmark_production_projections.add(1).cumprod(axis=1).mul(
+                company_production, axis=0)
+        except TypeError:
+            breakpoint()
 
     def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame,
                                   scope: EScope = EScope.S1S2) -> pd.DataFrame:
@@ -393,10 +396,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
         """
+        excluded_cols = ['projected_targets', 'projected_intensities', 'historic_data']
         return pd.DataFrame.from_records(
-            [ICompanyData.parse_obj(c.dict()).dict() for c in self.get_company_data(company_ids)],
-            exclude=['projected_targets', 'projected_intensities', 'historic_data']).set_index(
-                self.column_config.COMPANY_ID)
+            [ICompanyData.parse_obj({k:v for k, v in c.dict().items() if k not in excluded_cols}).dict()
+             for c in self.get_company_data(company_ids)]).set_index(self.column_config.COMPANY_ID)
 
     def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
@@ -584,7 +587,8 @@ class EITrajectoryProjector(object):
                     warnings.simplefilter("ignore")
                     intensities[col] = s.map(
                         lambda x: Q_(np.nan, ei_units)
-                            if (x.m is pd.NA) or unp.isnan(x) else x).astype(f"pint[{ei_units}]")
+                            if (x.m is pd.NA) or unp.isnan(x) else x)
+                    intensities[col] = intensities[col].astype(f"pint[{ei_units}]")
 
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         for col in winsorized_intensities.columns:
@@ -855,7 +859,7 @@ class EITargetProjector(object):
                     continue
                 # TODO What if target is a 100% reduction.  Does it work whether or not netzero_year is set?
                 if netzero_year > target_year:  # add in netzero target at the end
-                    netzero_qty = Q_(0, target_value.u)
+                    netzero_qty = Q_(0.0, target_value.u)
                     CAGR = self._compute_CAGR(target_value, netzero_qty, (netzero_year - target_year))
                     ei_projections = [ICompanyEIProjection(year=year, value=target_value * (1 + CAGR) ** (y + 1))
                                       for y, year in enumerate(range(1 + target_year, 1 + netzero_year))]

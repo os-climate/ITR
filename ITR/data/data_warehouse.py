@@ -6,7 +6,8 @@ from abc import ABC
 from typing import List, Type
 from pydantic import ValidationError
 
-from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection, EScope
+from ITR.data.osc_units import ureg, Q_
+from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
@@ -49,7 +50,7 @@ class DataWarehouse(ABC):
             if c.ghg_s3:
                 # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
                 c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
-                c.ghg_s3 = 0
+                c.ghg_s3 = Q_(0, c.ghg_s3.u)
             if c.historic_data:
                 if c.historic_data.emissions and c.historic_data.emissions.S3:
                     c.historic_data.emissions.S1S2 = list( map(IEmissionRealization.add, c.historic_data.emissions.S1S2, c.historic_data.emissions.S3) )

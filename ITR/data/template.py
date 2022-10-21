@@ -2,13 +2,13 @@ import warnings  # needed until apply behaves better with Pint quantities in arr
 from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
-from uncertainties import ufloat
+from uncertainties import ufloat, UFloat
 from uncertainties import unumpy as unp
 import logging
 
 from pydantic import ValidationError
 
-from ITR.data.osc_units import ureg, Q_, M_
+from ITR.data.osc_units import ureg, Q_, M_, PA_
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
@@ -69,11 +69,13 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         if isinstance(y, pd.DataFrame):
             # Something went wrong with the GroupBy operation and we got a pd.DataFrame
             # insted of being called column-by-column.
+            logger.error("Cannot estimate value of whole DataFrame; Something went wrong with GroupBy operation")
             breakpoint()
-        # Thsi relies on the fact that we can now see Quantity(np.nan, ...) for both float and ufloat magnitudes
+            raise ValueError
+        # This relies on the fact that we can now see Quantity(np.nan, ...) for both float and ufloat magnitudes
         x = y[~y.map(unp.isnan)]
     except TypeError:
-        print(f"type_error({y}) returning {y.values}[0]")
+        logger.error(f"type_error({y}) returning {y.values}[0]")
         return y.iloc[0]
     if len(x) == 0:
         # If all inputs are NaN, return the first NaN
@@ -82,16 +84,24 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         # If there's only one non-NaN input, return that one
         return x.iloc[0]
     if isinstance(x.values[0], pint.Quantity):
-        units = x.values[0].u
-        assert(x.map(lambda z: z.u==units).all())
-        pa = x.astype(f"pint[{units}]")
-        est = Q_(ufloat(pa.mean().m, pa.std().m), units)
+        values = x.values
+        units = values[0].u
+        assert all([v.u==units for v in values])
+        values = np.array(list(map(lambda v: v.m if isinstance(v.m, UFloat) else ufloat(v.m, 0),  values)))
+        epsilon = unp.nominal_values(values).mean()/(2e13)
+        wavg = ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
+                      np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
+        if wavg.s <= np.sqrt(2*epsilon):
+            if wavg.s > epsilon:
+                logger.warning(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
+            wavg = wavg.n
+        est = Q_(wavg, units)
     else:
-        breakpoint()
-        print(f"non-qty: {x.values[0]};;;")
+        logger.error(f"non-qty: _estimated_values called on non-Quantity {x.values[0]};;;")
         est = x.mean()
     return est
 
+# FIXME: Should make this work with a pure PintArray
 def prioritize_submetric(x: pd.Series) -> pint.Quantity:
     """
     Parameters
@@ -336,7 +346,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'sub_metric'],
                          dropna=False)[esg_year_columns]
                 # then estimate values for each sub_metric (many/most of which will be NaN)
-                .agg(lambda x: _estimated_value(x))
+                .agg(_estimated_value)
                 .reset_index(level='sub_metric')
                 )
 
@@ -359,7 +369,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'sub_metric'],
                          dropna=False)[esg_year_columns]
                 # then estimate values for each sub_metric (many/most of which will be NaN)
-                .agg(lambda x: _estimated_value(x))
+                .agg(_estimated_value)
                 .reset_index(level='sub_metric')
                 )
 

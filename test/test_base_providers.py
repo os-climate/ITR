@@ -3,6 +3,7 @@ import unittest
 import os
 import pandas as pd
 import ITR
+from ITR.data.osc_units import ureg, Q_
 
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
@@ -12,7 +13,6 @@ from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProduct
     BaseProviderIntensityBenchmark
 from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes
-from ITR.data.osc_units import ureg, Q_
 from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 
@@ -37,14 +37,14 @@ class TestBaseProvider(unittest.TestCase):
         with open(self.company_json) as json_file:
             parsed_json = json.load(json_file)
         for company_data in parsed_json:
-            company_data['emissions_metric'] = {'units': 't CO2'}
+            company_data['emissions_metric'] = 't CO2'
             if company_data['sector'] == 'Electricity Utilities':
                 if company_data['region'] == 'Europe':
-                    company_data['production_metric'] = {'units': 'GJ'}
+                    company_data['production_metric'] = 'GJ'
                 else:
-                    company_data['production_metric'] = {'units': 'MWh'}
+                    company_data['production_metric'] = 'MWh'
             elif company_data['sector'] == 'Steel':
-                company_data['production_metric'] = {'units': 't Steel'}
+                company_data['production_metric'] = 't Steel'
         self.companies = [ICompanyData.parse_obj(company_data) for company_data in parsed_json]
         self.base_company_data = BaseCompanyDataProvider(self.companies)
 

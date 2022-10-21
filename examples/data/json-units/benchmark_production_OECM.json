@@ -7,12 +7,10 @@
       {
         "sector": "Steel",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -146,12 +144,10 @@
       {
         "sector": "Steel",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -285,12 +281,10 @@
       {
         "sector": "Steel",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -424,12 +418,10 @@
       {
         "sector": "Electricity Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -563,12 +555,10 @@
       {
         "sector": "Electricity Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -702,12 +692,10 @@
       {
         "sector": "Electricity Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -841,12 +829,10 @@
       {
         "sector": "Gas Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -980,12 +966,10 @@
       {
         "sector": "Gas Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1119,12 +1103,10 @@
       {
         "sector": "Gas Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1258,12 +1240,10 @@
       {
         "sector": "Utilities",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1397,12 +1377,10 @@
       {
         "sector": "Utilities",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1536,12 +1514,10 @@
       {
         "sector": "Utilities",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1675,12 +1651,10 @@
       {
         "sector": "Oil & Gas",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1814,12 +1788,10 @@
       {
         "sector": "Oil & Gas",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1953,12 +1925,10 @@
       {
         "sector": "Oil & Gas",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2092,12 +2062,10 @@
       {
         "sector": "Autos",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2231,12 +2199,10 @@
       {
         "sector": "Autos",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2370,12 +2336,10 @@
       {
         "sector": "Autos",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2509,12 +2473,10 @@
       {
         "sector": "Trucking",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2648,12 +2610,10 @@
       {
         "sector": "Trucking",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2787,12 +2747,10 @@
       {
         "sector": "Trucking",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2926,12 +2884,10 @@
       {
         "sector": "Aluminum",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3065,12 +3021,10 @@
       {
         "sector": "Aluminum",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3204,12 +3158,10 @@
       {
         "sector": "Aluminum",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3343,12 +3295,10 @@
       {
         "sector": "Cement",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3482,12 +3432,10 @@
       {
         "sector": "Cement",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3621,12 +3569,10 @@
       {
         "sector": "Cement",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3760,12 +3706,10 @@
       {
         "sector": "Construction Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3899,12 +3843,10 @@
       {
         "sector": "Construction Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4038,12 +3980,10 @@
       {
         "sector": "Construction Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4177,12 +4117,10 @@
       {
         "sector": "Residential Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4316,12 +4254,10 @@
       {
         "sector": "Residential Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4455,12 +4391,10 @@
       {
         "sector": "Residential Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4594,12 +4528,10 @@
       {
         "sector": "Commercial Buildings",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4733,12 +4665,10 @@
       {
         "sector": "Commercial Buildings",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4872,12 +4802,10 @@
       {
         "sector": "Commercial Buildings",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5011,12 +4939,10 @@
       {
         "sector": "Chemicals",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5150,12 +5076,10 @@
       {
         "sector": "Chemicals",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5289,12 +5213,10 @@
       {
         "sector": "Chemicals",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5428,12 +5350,10 @@
       {
         "sector": "Textiles",
         "region": "Global",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5567,12 +5487,10 @@
       {
         "sector": "Textiles",
         "region": "Europe",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5706,12 +5624,10 @@
       {
         "sector": "Textiles",
         "region": "North America",
-        "benchmark_metric": {
-          "units": "dimensionless"
-        },
+        "benchmark_metric": "dimensionless",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0

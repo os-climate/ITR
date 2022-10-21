@@ -5,17 +5,18 @@ from typing import Optional, Tuple, Type, List
 import pandas as pd
 import numpy as np
 import itertools
+from uncertainties import unumpy as unp, UFloat
 
 from .data.osc_units import ureg, Q_, PA_
-from ITR.interfaces import quantity
+from .interfaces import quantity
 
-from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, AggregationContribution, \
+from .interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, AggregationContribution, \
     ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
-from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-from ITR.configs import TemperatureScoreConfig
-from ITR import utils
-from ITR.data.data_warehouse import DataWarehouse
+from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
+from .configs import TemperatureScoreConfig, logger
+from . import utils
+from .data.data_warehouse import DataWarehouse
 
 
 class TemperatureScore(PortfolioAggregation):
@@ -233,14 +234,13 @@ class TemperatureScore(PortfolioAggregation):
                 .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
                 .where(pd.notnull(data), 0) \
                 .to_dict(orient="records")
-        aggregations = Aggregation(
+        aggregations = (Aggregation(
             score=weighted_scores.sum(),
             # proportion is not declared by anything to be a percent, so we make it a number from 0..1
             proportion=len(weighted_scores) / total_companies,
-            contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]
-        ), \
-                       data[self.c.COLS.CONTRIBUTION_RELATIVE], \
-                       data[self.c.COLS.CONTRIBUTION]
+            contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]), \
+                        data[self.c.COLS.CONTRIBUTION_RELATIVE], \
+                        data[self.c.COLS.CONTRIBUTION])
 
         return aggregations
 
@@ -283,11 +283,12 @@ class TemperatureScore(PortfolioAggregation):
             filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
             filtered_data[self.c.COLS.TEMPERATURE_SCORE] = filtered_data.apply(
                 lambda x: self.fallback_score if x[self.c.SCORE_RESULT_TYPE] == EScoreResultType.DEFAULT else x[self.c.COLS.TEMPERATURE_SCORE], axis=1).astype('pint[delta_degC]')
+            influence_percentage = self._calculate_aggregate_score(
+                filtered_data, self.c.COLS.CONTRIBUTION_RELATIVE, self.aggregation_method).sum()
             score_aggregation = ScoreAggregation(
                 grouped={},
                 all=score_aggregation_all,
-                influence_percentage=self._calculate_aggregate_score(
-                    filtered_data, self.c.COLS.CONTRIBUTION_RELATIVE, self.aggregation_method).sum())
+                influence_percentage=influence_percentage)
 
             # If there are grouping column(s) we'll group in pandas and pass the results to the aggregation
             if len(self.grouping) > 0:
