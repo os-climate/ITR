@@ -1,17 +1,19 @@
 import unittest
+import copy
+from typing import List
+
+import ITR
+from ITR.data.osc_units import ureg, Q_, PA_
+
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
     PortfolioCompany,
 )
-from ITR.data.osc_units import ureg, Q_, PA_
 
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-import copy
-import ITR
 from ITR.data.data_warehouse import DataWarehouse
-from typing import List
 from ITR.interfaces import ICompanyAggregates, ICompanyEIProjectionsScopes, IProjection
 
 
@@ -41,28 +43,28 @@ class EndToEndTest(unittest.TestCase):
         self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,
-            base_year_production=IProjection.parse_obj({"year": 2019, "value":Q_(1000000.0, ureg('t Steel'))}).value,
-            ghg_s1s2=IProjection.parse_obj({"year": 2019, "value":Q_(1698247.4347547039, ureg('t CO2'))}).value,
-            ghg_s3=IProjection.parse_obj({"year": 2019, "value":Q_(0.0, ureg('t CO2'))}).value,
-            emissions_metric={'units':'t CO2'},
-            production_metric={'units':'t Steel'},
+            base_year_production=Q_('1000000.0 t Steel'),
+            ghg_s1s2=Q_('1698247.4347547039 t CO2'),
+            ghg_s3=Q_('0.0 t CO2'),
+            emissions_metric='t CO2',
+            production_metric='t Steel',
             company_revenue=100,
             company_market_cap=100,
             company_enterprise_value=100,
             company_total_assets=100,
             company_cash_equivalents=100,
-            cumulative_budget="345325664.840567 t CO2",
-            cumulative_trajectory="3745094638.52858 t CO2",
-            cumulative_target="3769096510.09909 t CO2",
+            cumulative_budget=Q_("345325664.840567 t CO2"),
+            cumulative_trajectory=Q_("3745094638.52858 t CO2"),
+            cumulative_target=Q_("3769096510.09909 t CO2"),
             target_probability=0.428571428571428,
             isic='A12',
             sector='Steel',
             region='Europe',
-            benchmark_global_budget="396 Gt CO2",
+            benchmark_global_budget=Q_("396 Gt CO2"),
             benchmark_temperature="1.5 delta_degC",
             projected_intensities=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
-                    "ei_metric": {'units': "t CO2/(t Steel)"},
+                    "ei_metric": "t CO2/(t Steel)",
                     "projections": [
                         {
                             "year": "2019",
@@ -81,7 +83,7 @@ class EndToEndTest(unittest.TestCase):
             }),
             projected_targets=ICompanyEIProjectionsScopes.parse_obj({
                 "S1S2": {
-                    "ei_metric": {'units': "t CO2/(t Steel)"},
+                    "ei_metric": "t CO2/(t Steel)",
                     "projections": [
                         {
                             "year": "2019",
@@ -158,7 +160,7 @@ class EndToEndTest(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify that results exist
-        self.assertEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2)
 
     # Run some regression tests
     # @unittest.skip("only run for longer test runs")
@@ -199,7 +201,7 @@ class EndToEndTest(unittest.TestCase):
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2)
 
     def test_grouping(self):
         """
@@ -236,7 +238,7 @@ class EndToEndTest(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         for ind_level in industry_levels:
-            self.assertAlmostEqual(agg_scores.long.S1S2.grouped[ind_level].score, self.BASE_COMP_SCORE)
+            self.assertAlmostEqual(agg_scores.long.S1S2.grouped[ind_level].score, self.BASE_COMP_SCORE, places=2)
 
     def test_score_cap(self):
 
