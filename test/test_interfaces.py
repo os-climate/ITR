@@ -5,8 +5,9 @@ import pandas as pd
 
 from ITR.data.osc_units import ureg, Q_, PA_
 
-from ITR.interfaces import EScope, ProductionMetric, IntensityMetric, IProjection, IBenchmark, ICompanyData, \
-    ICompanyEIProjectionsScopes, ICompanyEIProjections, ITargetData, OSC_Metric
+from ITR.interfaces import EScope, BenchmarkMetric, ProductionMetric, EI_Metric, BenchmarkQuantity, EI_Quantity, \
+    UProjection, IProjection, IBenchmark, ICompanyData, \
+    ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection, ITargetData
 
 
 class TestInterfaces(unittest.TestCase):
@@ -23,23 +24,23 @@ class TestInterfaces(unittest.TestCase):
         self.assertEqual(EScope.get_result_scopes(), [EScope.S1S2, EScope.S3, EScope.S1S2S3])
 
     def test_ProductionMetric(self):
-        x = ProductionMetric(units='MWh')
-        print(f"\n ProductionMetric(units='MWh'): x.units = {x.units}\n\n")
+        x = ProductionMetric('MWh')
+        print(f"\n ProductionMetric('MWh'): {x}\n\n")
 
     def test_IProjection(self):
         row = pd.Series([0.9, 0.8, 0.7],
                        index=[2019, 2020, 2021],
                        name='ei_bm')
 
-        bm = IBenchmark(region='North America', sector='Steel', benchmark_metric=OSC_Metric(units='dimensionless'),
-                        projections=[IProjection(year=int(k), value=Q_(v, ureg('dimensionless'))) for k, v in row.items()])
+        bm = IBenchmark(region='North America', sector='Steel', benchmark_metric=BenchmarkMetric('dimensionless'),
+                        projections_nounits=[UProjection(year=int(k), value=v) for k, v in row.items()])
 
     def test_ICompanyProjectionScopes(self):
         row = pd.Series([0.9, 0.8, 0.7],
                        index=[2019, 2020, 2021],
                        name='nl_steel')
-        p = [IProjection(year=int(k), value=Q_(v, ureg('t Steel'))) for k, v in row.items()]
-        S1S2=ICompanyEIProjections(projections=p, ei_metric=IntensityMetric.parse_obj({'units':'t CO2/(t Steel)'}))
+        p = [ICompanyEIProjection(year=int(k), value=EI_Quantity(Q_(v, "t CO2/(t Steel)"))) for k, v in row.items()]
+        S1S2=ICompanyEIProjections(projections=p, ei_metric=EI_Metric('t CO2/(t Steel)'))
         x = ICompanyEIProjectionsScopes(S1S2=S1S2)
 
     def test_ICompanyData(self):
@@ -48,15 +49,15 @@ class TestInterfaces(unittest.TestCase):
             company_id="US6293775085",
             region="Europe",
             sector="Steel",
-            emissions_metric={"units": "t CO2"},
-            production_metric={"units": "t Steel"},
+            emissions_metric="t CO2",
+            production_metric="t Steel",
             target_probability=0.123,
             projected_targets = None,
             projected_intensities = None,
             country='US6293775085',
-            ghg_s1s2=89800001.4,
-            ghg_s3=89800001.4,
-            base_year_production=71500001.3960884,
+            ghg_s1s2=Q_(89800001.4,"t CO2"),
+            ghg_s3="89800001.4 t CO2",
+            base_year_production="71500001.3960884 t Steel",
             company_revenue=7370536918
         )
 
