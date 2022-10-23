@@ -13,6 +13,8 @@ from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggrega
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
+import pint
+
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
@@ -44,10 +46,10 @@ class DataWarehouse(ABC):
         # After projections have been made, shift S3 data into S1S2.  If we shift before we project,
         # then S3 targets will not be projected correctly.
         for c in self.company_data._companies:
-            if c.ghg_s3:
+            if c.ghg_s3 and not unp.isnan(c.ghg_s3.m):
                 # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
                 c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
-                c.ghg_s3 = Q_(0, c.ghg_s3.u)
+                c.ghg_s3 = Q_(0.0, c.ghg_s3.u)
             if c.historic_data:
                 if c.historic_data.emissions and c.historic_data.emissions.S3:
                     c.historic_data.emissions.S1S2 = list( map(IEmissionRealization.add, c.historic_data.emissions.S1S2, c.historic_data.emissions.S3) )
@@ -82,12 +84,26 @@ class DataWarehouse(ABC):
                 company_info_at_base_year).sort_index()
 
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
+        # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?
         projected_trajectories = self.company_data.get_company_projected_trajectories(company_ids)
         df_trajectory = self._get_cumulative_emissions(
             projected_ei=projected_trajectories,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
 
+        def fix_ragged_projected_targets(x):
+            year = x.index[0]
+            x_val = x[year]
+            if unp.isnan(x_val.m):
+                historic_ei_dict = { d['year']:d['value'] for d in df_company_data.loc[x.name].historic_data['emissions_intensities']['S1S2']}
+                return historic_ei_dict[year]
+            else:
+                return x_val
+
         projected_targets = self.company_data.get_company_projected_targets(company_ids)
+        # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
+        projected_targets[projected_targets.columns[0]] = (
+            projected_targets[[projected_targets.columns[0]]].apply(fix_ragged_projected_targets, axis=1)
+            )
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
@@ -134,7 +150,15 @@ class DataWarehouse(ABC):
         :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
         projected_emissions = projected_ei.multiply(projected_production)
-        projected_emissions = projected_emissions.applymap(lambda x: np.nan if unp.isnan(x) else x)
-        null_idx = projected_emissions.index[projected_emissions.isnull().all(axis=1)]
-        return pd.concat([projected_emissions.loc[null_idx, projected_emissions.columns[0]],
+        return projected_emissions.sum(axis=1).astype('pint[Mt CO2]')
+
+        # The following code is broken, due to the way unp.isnan straps away Quantity from scalars
+        # It was written to rescue data from automotive, but maybe not needed anymore?
+        nan_emissions = projected_emissions.applymap(lambda x: np.nan if unp.isnan(x) else x)
+        if nan_emissions.isnull().any(axis=0).any():
+            breakpoint()
+        null_idx = nan_emissions.index[nan_emissions.isnull().all(axis=1)]
+        # FIXME: this replaces the quantified NaNs in projected_emissions with straight-up NaNs,
+        # while also converting the remaining emissions to a consistent unit of 'Mt CO2'
+        return pd.concat([nan_emissions.loc[null_idx, nan_emissions.columns[0]],
                           projected_emissions.loc[projected_emissions.index.difference(null_idx)].sum(axis=1)]).astype('pint[Mt CO2]')
