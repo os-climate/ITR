@@ -1,9 +1,7 @@
 import warnings  # needed until quantile behaves better with Pint quantities in arrays
 import numpy as np
 import pandas as pd
-# from uncertainties import ufloat
-# from uncertainties.core import Variable as utype
-import uncertainties
+from uncertainties import UFloat, ufloat
 from uncertainties import unumpy as unp
 import pint
 
@@ -13,6 +11,8 @@ from typing import List, Type, Dict
 import logging
 
 from ITR.data.osc_units import Q_, PA_
+from ITR.data import _ufloat_nan
+
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, LoggingConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
@@ -44,14 +44,17 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         self._productions_benchmarks = production_benchmarks
 
     # Note that benchmark production series are dimensionless.
+    # FIXME: They also don't need a scope.  Remove scope when we change IBenchmark format...
     def _convert_benchmark_to_series(self, benchmark: IBenchmark, scope: EScope) -> pd.Series:
         """
         extracts the company projected intensity or production targets for a given scope
         :param scope: a scope
         :return: pd.Series
         """
-        return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector, scope),
-                         dtype=f'pint[{benchmark.benchmark_metric.units}]')
+        years, values = zip(*{r.year: r.value for r in benchmark.projections}.items())
+        units = str(benchmark.benchmark_metric)
+        return pd.Series(PA_(values, dtype=units), dtype=f'pint[{units}]',
+                         index = years, name=(benchmark.region, benchmark.sector, scope))
 
     # Production benchmarks are dimensionless, relevant for AnyScope
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
@@ -60,10 +63,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param scope: a scope
         :return: pd.DataFrame
         """
-        result = []
-        for bm in self._productions_benchmarks.dict()['AnyScope']['benchmarks']:
-            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm), scope))
-        df_bm = pd.DataFrame(result)
+        # The call to this function generates a 42-row (and counting...) DataFrame for the one row we're going to end up needing...
+        df_bm = pd.DataFrame([self._convert_benchmark_to_series(bm, scope) for bm in getattr(self._productions_benchmarks, scope.name).benchmarks])
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR, self.column_config.SCOPE]
 
         return df_bm
@@ -76,9 +77,15 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param scope: benchmark scope for projections
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
-        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope)
+        # get_benchmark_projections is an expensive call.  It's designed to return ALL benchmark info for ANY sector/region combo passed
+        # and it does all that work whether we need all the data or just one row.  Best to lift this out of any inner loop
+        # and use the valuable DataFrame it creates.
+        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope=EScope.S1S2)
         company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
+        if unp.isnan(company_production.values[0].m):
+            breakpoint()
         try:
+            # Similarly, we could pre-compute all but the final multiplication of this 30-term add/mult-add computation
             return benchmark_production_projections.add(1).cumprod(axis=1).mul(
                 company_production, axis=0)
         except TypeError:
@@ -94,6 +101,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param scope: a scope
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
+
         benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
         sectors = company_sector_region_info[self.column_config.SECTOR]
         regions = company_sector_region_info[self.column_config.REGION]
@@ -272,11 +280,17 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         try:
             production_units = company_dict[self.column_config.PRODUCTION_METRIC]['units']
         except TypeError:
-            breakpoint()
-        emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
+            production_units = str(company_dict[self.column_config.PRODUCTION_METRIC])
+        try:
+            emissions_units = company_dict[self.column_config.EMISSIONS_METRIC]['units']
+        except TypeError:
+            emissions_units = str(company_dict[self.column_config.EMISSIONS_METRIC])
+
         if company_dict[feature][scope.name]:
+            # Simple case: just one scope
             projections = company_dict[feature][scope.name]['projections']
         else:
+            # Complex case: S1+S2 or S1+S2+S3
             scopes = scope.value.split('+')
             projection_scopes = {s: company_dict[feature][s]['projections'] for s in scopes if company_dict[feature][s]}
             if len(projection_scopes) > 1:
@@ -289,6 +303,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 res = reduce(series_adder, projection_series.values())
                 return res
             elif len(projection_scopes) == 0:
+                breakpoint()
                 return pd.Series(
                     {year: np.nan for year in range(self.historic_years[-1] + 1, self.projection_controls.TARGET_YEAR + 1)},
                     name=company.company_id, dtype=f'pint[{emissions_units}/({production_units})]'
@@ -305,8 +320,13 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         We do so when companies are associated with benchmarks, in the DataWarehouse construction
         
         :param production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
-        :param scope: scope to calculate
-        """
+        """        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # FIXME: Note that we don't need to call with a scope, because production is independent of scope.
+            df_pp = production_bm._get_projected_production(scope=EScope.S1S2)
+        df_partial_pp = df_pp.add(1.0).cumprod(axis=1)
+
         for c in self._companies:
             if c.projected_targets is not None:
                 continue
@@ -316,23 +336,17 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             else:
                 base_year_production = next((p.value for p in c.historic_data.productions if
                                              p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    company_sector_region_info = pd.DataFrame({
-                        self.column_config.COMPANY_ID: [c.company_id],
-                        self.column_config.BASE_YEAR_PRODUCTION: [base_year_production.to(c.production_metric.units)],
-                        self.column_config.GHG_SCOPE12: [c.ghg_s1s2],
-                        self.column_config.GHG_SCOPE3: [c.ghg_s3],
-                        self.column_config.SECTOR: [c.sector],
-                        self.column_config.REGION: [c.region],
-                    }, index=[0])
-                    bm_production_data = (
-                            production_bm.get_company_projected_production(company_sector_region_info, scope)
-                            # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
-                            .iloc[0].T
-                            .astype(f'pint[{str(base_year_production.units)}]')
-                            )
-                c.projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
+                # FIXME: can delete SCOPE when we change shape of benchmarks...
+                try:
+                    co_cumprod = df_partial_pp.loc[c.region, c.sector, EScope.S1S2]
+                except KeyError:
+                    # FIXME: Should we fix region info upstream when setting up comopany data?
+                    co_cumprod = df_partial_pp.loc["Global", c.sector, EScope.S1S2]
+                # https://github.com/hgrecco/pint-pandas/issues/143
+                co_cumprod = pd.Series(PA_(co_cumprod.values * base_year_production, dtype=str(base_year_production.u)),
+                                       index=co_cumprod.index,
+                                       name=co_cumprod.name)
+                c.projected_targets = EITargetProjector().project_ei_targets(c, co_cumprod)
     
     # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
@@ -342,7 +356,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param company_ids: List of company ids
         :return: pd.Series with intensities for given company ids
         """
-        return self.get_company_projected_trajectories(company_ids)[year]
+        return self.get_company_projected_trajectories(company_ids, year=year)
 
     def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
         """
@@ -368,6 +382,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param variable_name: variable name of the projected feature
         :return: series of values
         """
+        # FIXME: this is an expensive operation as it converts all fields in the model just to get a single VARIABLE_NAME
         return self.get_company_fundamentals(company_ids)[variable_name]
 
     def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
@@ -381,6 +396,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         
         Note that BASE_EI is a combined S1S2 and S3 intensity metric (if S3 EI is available)
         """
+        # FIXME: this is an expensive operation as it converts many fields in the model just to get a small subset of the DataFrame
         df_fundamentals = self.get_company_fundamentals(company_ids)
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
@@ -401,32 +417,41 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             [ICompanyData.parse_obj({k:v for k, v in c.dict().items() if k not in excluded_cols}).dict()
              for c in self.get_company_data(company_ids)]).set_index(self.column_config.COMPANY_ID)
 
-    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: List[str], scope=EScope.S1S2, year=None) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
+        :param year: values for a specific year, or all years if None
         :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id
         """
-        trajectory_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_EI, EScope.S1S2)
-                           for c in self.get_company_data(company_ids)]
-        if trajectory_list:
+        projected_trajectories = [(c.company_id, getattr (c.projected_intensities, scope.name).projections)
+                                  # FIXME: we should make _companies a dict so we can look things up rather than searching every time!
+                                  for c in self._companies if c.company_id in company_ids]
+        if projected_trajectories:
+            if year:
+                company_ids, values = list(map(list, zip(*[(pt[0], [yvp.value for yvp in pt[1] if yvp.year==year][0]) for pt in projected_trajectories])))
+                return pd.Series(data=values, index=company_ids)
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
                 warnings.simplefilter("ignore")
-                return pd.DataFrame(trajectory_list)
+                company_ids, yvp_dicts = list(map(list, zip(*[(pt[0], {yvp.year:yvp.value for yvp in pt[1]}) for pt in projected_trajectories])))
+                return pd.DataFrame(data=yvp_dicts, index=company_ids)
         return pd.DataFrame()
 
-    def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_targets(self, company_ids: List[str], year=None) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
+        :param year: values for a specific year, or all years if None
         :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
         """
+        # FIXME: calling get_company_data is expensive!
         target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS, EScope.S1S2)
                        for c in self.get_company_data(company_ids)]
         if target_list:
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
                 warnings.simplefilter("ignore")
-                return pd.DataFrame(target_list)
+                df = pd.DataFrame(target_list)
+                return df.reindex(sorted(df.columns), axis=1)
         return pd.DataFrame()
 
 
@@ -580,15 +605,15 @@ class EITrajectoryProjector(object):
         # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
         intensities = intensities.T
         for col in intensities.columns:
-            s = intensities[col]
-            ei_units = f"{s.loc[s.first_valid_index()].u:~P}"
-            if s.notnull().any():
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    intensities[col] = s.map(
-                        lambda x: Q_(np.nan, ei_units)
-                            if (x.m is pd.NA) or unp.isnan(x) else x)
-                    intensities[col] = intensities[col].astype(f"pint[{ei_units}]")
+            pa = PA_._from_sequence(intensities[col])
+            pa_units = pa[0].u
+            pa_nans = unp.isnan(pa.data)
+            if pa_nans.any():
+                if [isinstance(pt.m, UFloat) for pt in pa[np.where(pa_nans)]]:
+                    u_pa_data = [_ufloat_nan if pn else pt if isinstance(pt, UFloat) else ufloat(pt, 0)
+                                 for pt, pn in zip(pa.data, pa_nans)]
+                    intensities[col] = pd.Series(PA_(u_pa_data, pa_units), dtype=pa.dtype,
+                                                 index=intensities[col].index, name=intensities[col].name)
 
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         for col in winsorized_intensities.columns:
@@ -602,31 +627,50 @@ class EITrajectoryProjector(object):
     def _winsorize(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            # quantile doesn't handle pd.NA inside Quantity
-            historic_intensities = historic_intensities.applymap(lambda x: np.nan if pd.isnull(x.m) else x)
-            # See https://github.com/hgrecco/pint-pandas/issues/114
-            winsorized: pd.DataFrame = historic_intensities.clip(
-                # Must set numeric_only to false to process Quantities
-                lower=historic_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index',
-                                                    numeric_only=False),
-                upper=historic_intensities.quantile(q=self.projection_controls.UPPER_PERCENTILE, axis='index',
-                                                    numeric_only=False),
-                axis='columns'
-            )
-        return winsorized
+            # quantile doesn't handle pd.NA inside Quantity; FIXME: we can use np.nan because not expecting UFloat in input data
+            try:
+                # Turns out we have to dequantify here: https://github.com/pandas-dev/pandas/issues/45968
+                # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
+                units = historic_intensities.apply(lambda x: x.iloc[0].u)
+                nominal_intensities = historic_intensities.apply(lambda x: unp.nominal_values(x.map(lambda y: y.m)))
+                uncertain_intensities = historic_intensities.apply(lambda x: unp.std_devs(x.map(lambda y: y.m)))
+                # See https://github.com/hgrecco/pint-pandas/issues/114
+                winsorized: pd.DataFrame = nominal_intensities.clip(
+                    lower=nominal_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index',
+                                                        numeric_only=False),
+                    upper=nominal_intensities.quantile(q=self.projection_controls.UPPER_PERCENTILE, axis='index',
+                                                        numeric_only=False),
+                    axis='columns'
+                )
+                if uncertain_intensities.values.sum() != 0:
+                    uwinsorized = winsorized.apply(lambda x: PA_(unp.uarray(x.values.data, uncertain_intensities[x.name].values), dtype=units[x.name]))
+                    return uwinsorized
+                winsorized_and_unitized = winsorized.apply(lambda x: PA_(x.values.data, dtype=units[x.name]))
+                return winsorized_and_unitized
+            except AttributeError:
+                breakpoint()
 
     def _interpolate(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
         # Interpolate NaNs surrounded by values, and extrapolate NaNs with last known value
-        interpolated = historic_intensities.copy()
-        for col in interpolated.columns:
-            # FIXME: need a unp.isnan that can see into Quantities
-            if unp.isnan(interpolated[col].values.quantity).all():
-                continue
-            qty = interpolated[col].values.quantity
-            s = pd.Series(data=qty.m, index=interpolated.index)
-            interpolated[col] = pd.Series(PA_(s.interpolate(method='linear', inplace=False, limit_direction='forward'),
-                                              dtype=f"{qty.u:~P}"), index=interpolated.index)
-        return interpolated
+        df = historic_intensities.copy()
+        for col in df.columns:
+            pa = PA_._from_sequence(df[col])
+            try:
+                if unp.isnan(pa.data).all():
+                    continue
+                # pd.Series.interpolate only works on numeric data, so push down into PintArray
+                # FIXME: throw some uncertainty into the mix.  If we see ... X NA Y ... and interpolat the NA as Z as function of X and Y
+                ser = pd.Series(data=pa.data, index=df.index)
+                df[col] = pd.Series(PA_(ser.interpolate(method='linear', inplace=False, limit_direction='forward').values,
+                                        dtype=pa.units),
+                                    dtype=pa.dtype, index=df.index)
+            except AttributeError:
+                breakpoint()
+            except ValueError:
+                breakpoint()
+            except StopIteration:
+                breakpoint()
+        return df
 
     def _get_trends(self, intensities: pd.DataFrame):
         # Compute year-on-year growth ratios of emissions intensities
@@ -634,7 +678,7 @@ class EITrajectoryProjector(object):
         intensities = intensities.T
         for col in intensities.columns:
             # ratios are dimensionless, so get rid of units, which confuse rolling/apply.  Some columns are NaN-only
-            intensities[col] = intensities[col].map(lambda x: x.m if isinstance(x, pint.Quantity) else x)
+            intensities[col] = intensities[col].map(lambda x: x.m if isinstance(x, pint.Quantity) else (breakpoint (), x))
             # FIXME: rolling windows require conversion to float64.  Don't want to be a nuisance...
             intensities[col] = unp.nominal_values(intensities[col])
         # TODO: do we want to fillna(0) or dropna()?
@@ -650,10 +694,11 @@ class EITrajectoryProjector(object):
     def _extrapolate(self, trends: pd.DataFrame, projection_years: range, historic_data: pd.DataFrame) -> pd.DataFrame:
         projected_intensities = historic_data.loc[historic_data.index.intersection(trends.index)].copy()
         # We need to do a mini-extrapolation if we don't have complete historic data
+        # These columns are heterogeneous as to units, so don't try to use PintArrays
         for year in historic_data.columns.tolist()[:-1]:
             # FIXME: need a version of unp.isnan that can see into Quantities
-            m = unp.isnan(projected_intensities[year + 1].map(lambda x: x.m))
-            projected_intensities.loc[m, year + 1] = projected_intensities.loc[m, year] * (1 + trends.loc[m])
+            mask = unp.isnan(projected_intensities[year + 1].map(lambda x: x.m))
+            projected_intensities.loc[mask, year + 1] = projected_intensities.loc[mask, year] * (1 + trends.loc[mask])
 
         # Now the big extrapolation
         for year in projection_years:
@@ -807,6 +852,7 @@ class EITargetProjector(object):
                                               None)
 
                     if last_year_data is None:  # No trajectory available either
+                        logger.warning(f"Company {company.company_name} has set targets for which there is no historic data")
                         ei_projection_scopes[scope] = None
                         continue
 
@@ -835,17 +881,16 @@ class EITargetProjector(object):
                     production_projections = production_bm.loc[last_year + 1: target_year]
                     ei_projections = emissions_projections / production_projections
 
-                    ei_projections = [ICompanyEIProjection(year=year, value=ei_projections[year])
-                                      for year in range(last_year + 1, target_year + 1)]
+                    model_ei_projections = [ICompanyEIProjection(year=year, value=ei_projections[year])
+                                            for year in range(last_year + 1, target_year + 1)]
                     # TODO: this condition should not arise if prioritization logic above is correct
                     # From here out most useful to have target_value as EI
-                    target_value = ei_projections[-1].value
+                    target_value = model_ei_projections[-1].value
                     if ei_projection_scopes[scope] is not None:
-                        ei_projection_scopes[scope].projections.extend(ei_projections)
+                        ei_projection_scopes[scope].projections.extend(model_ei_projections)
                     else:
-                        ei_projection_scopes[scope] = ICompanyEIProjections(projections=ei_projections,
-                                                                            ei_metric=IntensityMetric.parse_obj(
-                                                                                {'units': f"{target_value.u:~P}"}))
+                        ei_projection_scopes[scope] = ICompanyEIProjections(projections=model_ei_projections,
+                                                                            ei_metric=EI_Quantity (f"{target_value.u:~P}"))
                 else:
                     # No target (type) specified
                     ei_projection_scopes[scope] = None

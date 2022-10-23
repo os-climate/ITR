@@ -34,6 +34,8 @@ from ITR.interfaces import EScope, ETimeFrames, IEIBenchmarkScopes, IProductionB
 from ITR.data.osc_units import Q_
 from pint import Quantity
 from pint_pandas import PintType
+from uncertainties import unumpy as unp
+from uncertainties import UFloat
 
 import logging
 
@@ -63,7 +65,7 @@ if len(sys.argv)>1:
     args = parser.parse_args()
     company_data_path = args.file
 else:
-    company_data_path = os.path.join(root, examples_dir, data_dir, "20220720 ITR Tool Sample Data.xlsx")
+    company_data_path = os.path.join(root, examples_dir, data_dir, "20220927 ITR V2 Sample Data.xlsx")
 
 
 # load company data
@@ -144,20 +146,20 @@ def dequantify_plotly(px_func, df, **kwargs):
     for col in ['x', 'y']:
         s = df[kwargs[col]]
         if isinstance(s.dtype, PintType):
-            new_df[kwargs[col]] = s.values.quantity.to_base_units().m
+            new_df[kwargs[col]] = unp.nominal_values(s.values.quantity.to_base_units().m)
         elif s.map(lambda x: isinstance(x, Quantity)).any():
             item0 = s.values[0]
             s = s.astype(f"pint[{item0.u}]")
-            new_df[kwargs[col]] = s.values.quantity.m
+            new_df[kwargs[col]] = unp.nominal_values(s.values.quantity.m)
     if 'hover_data' in kwargs:
         for col in kwargs['hover_data']:
             s = df[col]
             if isinstance(s.dtype, PintType):
-                new_df[col] = s.values.quantity.to_base_units().m
+                new_df[col] = unp.nominal_values(s.values.quantity.to_base_units().m)
             elif s.map(lambda x: isinstance(x, Quantity)).any():
                 item0 = s.values[0]
                 s = s.astype(f"pint[{item0.u}]")
-                new_df[col] = s.values.quantity.m
+                new_df[col] = unp.nominal_values(s.values.quantity.m)
 
     return px_func (new_df, **kwargs)
 
@@ -609,6 +611,8 @@ def update_graph(
         raise PreventUpdate
     aggregated_scores = temperature_score.aggregate_scores(filt_df)  # calc temp score for companies left in pf
 
+    logger.warning(f"ready to plot!  {filt_df}")
+
     # Scatter plot
     fig1 = dequantify_plotly(px.scatter, filt_df, x="cumulative_target", y="cumulative_budget",
                              size="investment_value",
@@ -641,7 +645,7 @@ def update_graph(
     trace = go.Heatmap(
         x=filt_df.sector,
         y=filt_df.region,
-        z=filt_df.temperature_score.map(lambda x: x.m),
+        z=unp.nominal_values(filt_df.temperature_score.map(lambda x: x.m)),
         type='heatmap',
         colorscale='Temps',
         zmin = 1.49, zmax = 2.9,
@@ -682,14 +686,18 @@ def update_graph(
         else:
             agg_s3 = []
     
+        print("agg score")
+        print(agg_s1s2)
+        print(agg_s3)
+        print(filt_df)
         return agg_s1s2 + agg_s3
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
     df_temp_score = pd.DataFrame(
         data={0: pd.Series(methods, dtype='string'), 1: pd.Series(scores, dtype='pint[delta_degC]')})
-    df_temp_score[1] = pd.to_numeric(df_temp_score[1].astype('pint[delta_degC]').values.quantity.m).round(
-        2)  # rounding score
+    df_temp_score[1] = pd.to_numeric(unp.nominal_values(
+        df_temp_score[1].astype('pint[delta_degC]').values.quantity.m)).round(2)  # rounding score
     # Separate column for names on Bar chart
     # Highlight WATS and TETS
     Weight_Dict = {'WATS': 'Investment<Br>weighted',  # <Br> is needed to wrap x-axis label
@@ -720,14 +728,14 @@ def update_graph(
     df_for_output_table = filt_df[
         ['company_name', 'company_id', 'region', 'sector', 'cumulative_budget', 'investment_value', 'trajectory_score',
          'target_score', 'temperature_score']].copy()
-    df_for_output_table['temperature_score'] = df_for_output_table['temperature_score'].astype(
-        'pint[delta_degC]').values.quantity.m  # f"{q:.2f~#P}"
-    df_for_output_table['trajectory_score'] = pd.to_numeric(
-        df_for_output_table['trajectory_score'].astype('pint[delta_degC]').values.quantity.m).round(2)
-    df_for_output_table['target_score'] = pd.to_numeric(
-        df_for_output_table['target_score'].astype('pint[delta_degC]').values.quantity.m).round(2)
-    df_for_output_table['cumulative_budget'] = pd.to_numeric(
-        df_for_output_table['cumulative_budget'].astype('pint[Mt CO2]').values.quantity.m).round(2)
+    df_for_output_table['temperature_score'] = unp.nominal_values(df_for_output_table['temperature_score'].astype(
+        'pint[delta_degC]').values.quantity.m)  # f"{q:.2f~#P}"
+    df_for_output_table['trajectory_score'] = pd.to_numeric(unp.nominal_values(
+        df_for_output_table['trajectory_score'].astype('pint[delta_degC]').values.quantity.m)).round(2)
+    df_for_output_table['target_score'] = pd.to_numeric(unp.nominal_values(
+        df_for_output_table['target_score'].astype('pint[delta_degC]').values.quantity.m)).round(2)
+    df_for_output_table['cumulative_budget'] = pd.to_numeric(unp.nominal_values(
+        df_for_output_table['cumulative_budget'].astype('pint[Mt CO2]').values.quantity.m)).round(2)
     df_for_output_table['investment_value'] = df_for_output_table['investment_value'].apply(
         lambda x: "${:,.1f} Mn".format((x / 1000000)))  # formating column
     df_for_output_table.rename(
@@ -742,6 +750,8 @@ def update_graph(
         scores = aggregated_scores.long.S3.all.score.m
     else:
         raise ValueError("No aggregated scores")
+    if isinstance(scores, UFloat):
+        scores = scores.n
 
     return (
         fig1, fig5,

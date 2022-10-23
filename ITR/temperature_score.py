@@ -62,7 +62,8 @@ class TemperatureScore(PortfolioAggregation):
             return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
 
         # If only target data missing assign only trajectory_score to final score
-        elif np.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
+        elif unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
+            breakpoint()
             target_overshoot_ratio = np.nan
             target_temperature_score = np.nan
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
@@ -155,8 +156,7 @@ class TemperatureScore(PortfolioAggregation):
                     lambda row: self.get_score(row), axis=1))
 
         # Fix up dtypes for the new columns we just added
-        for c in [self.c.COLS.TEMPERATURE_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TRAJECTORY_SCORE,
-                  self.c.COLS.TARGET_SCORE]:
+        for c in [self.c.COLS.TEMPERATURE_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TARGET_SCORE]:
             scoring_data[c] = scoring_data[c].astype('pint[delta_degC]')
 
         scoring_data = self.cap_scores(scoring_data)
@@ -169,11 +169,14 @@ class TemperatureScore(PortfolioAggregation):
         :param data: The original data set as a pandas data frame
         :return: The data frame, with an updated s1s2s3 temperature score
         """
-        # Calculate the GHC
-        company_data = data[
+        from ITR.utils import umean
+
+        # Calculate the GHC--using umean to deal with uncertainties
+        # FIXME: what about median vs. mean?
+        company_data = umean(data[
             [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
              self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
-        ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]).mean()
+        ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]))
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -230,15 +233,18 @@ class TemperatureScore(PortfolioAggregation):
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            contributions = data \
+            data_contributions = data[['company_name', 'company_id', 'temperature_score', 'contribution_relative', 'contribution']] \
                 .sort_values(self.c.COLS.CONTRIBUTION_RELATIVE, ascending=False) \
                 .where(pd.notnull(data), 0) \
                 .to_dict(orient="records")
+        contribution_dicts = [{k:v if isinstance(v, str) else str(v)
+                               for k,v in contribution.items()}
+                              for contribution in data_contributions]
         aggregations = (Aggregation(
             score=weighted_scores.sum(),
             # proportion is not declared by anything to be a percent, so we make it a number from 0..1
             proportion=len(weighted_scores) / total_companies,
-            contributions=[AggregationContribution.parse_obj(contribution) for contribution in contributions]), \
+            contributions=[AggregationContribution.parse_obj(contribution) for contribution in contribution_dicts]), \
                         data[self.c.COLS.CONTRIBUTION_RELATIVE], \
                         data[self.c.COLS.CONTRIBUTION])
 

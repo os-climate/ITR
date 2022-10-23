@@ -203,13 +203,12 @@ def quantity(dimensionality: str) -> type:
     @classmethod
     def validate(cls, value):
         if isinstance(value, str):
-            v, u = value.split(' ', 1)
             try:
-                q = Q_(float(v), u)
+                q = Q_(value)
             except ValueError:
                 raise ValueError(f"cannot convert '{quantity}' to quantity")
             quantity = q
-        elif isinstance(value, Quantity):
+        elif isinstance(value, pint.Quantity):
             quantity = value
         else:
             raise TypeError (f"quantity takes either a Q_ value or a string fully expressing a quantified value; got {value}")
@@ -720,7 +719,8 @@ class ICompanyEIProjection(PintModel):
 
     def add(self, o):
         assert self.year==o.year
-        return IEIRealization(year=self.year, value = self.value + o.value)
+        return IEIRealization(year=self.year,
+                              value = self.value + 0 if unp.isnan(o.value.m) else o.value)
 
 
 class ICompanyEIProjections(BaseModel):
@@ -759,7 +759,8 @@ class IEmissionRealization(PintModel):
 
     def add(self, o):
         assert self.year==o.year
-        return IEmissionRealization(year=self.year, value = self.value + o.value)
+        return IEmissionRealization(year=self.year,
+                                    value = self.value + 0 if unp.isnan(o.value.m) else o.value)
 
 
 class IHistoricEmissionsScopes(PintModel):
@@ -776,7 +777,8 @@ class IEIRealization(PintModel):
 
     def add(self, o):
         assert self.year==o.year
-        return IEIRealization(year=self.year, value = self.value + o.value)
+        return IEIRealization(year=self.year,
+                              value = self.value + 0 if unp.isnan(o.value.m) else o.value)
 
 
 class IHistoricEIScopes(PintModel):
@@ -908,7 +910,7 @@ class ICompanyData(PintModel):
         return units        
 
     def _get_base_realization_from_historic(self, realized_values: List[BaseModel], units, base_year=None):
-        valid_realizations = [rv for rv in realized_values if rv.value is not None and not unp.isnan(rv.value)]
+        valid_realizations = [rv for rv in realized_values if rv.value is not None and not unp.isnan(rv.value.magnitude)]
         if not valid_realizations:
             retval = realized_values[0].copy()
             retval.year = None
@@ -917,6 +919,7 @@ class ICompanyData(PintModel):
         if base_year and valid_realizations[0].year != base_year:
             retval = realized_values[0].copy()
             retval.year = base_year
+            # FIXME: Unless and until we accept uncertainties as input, rather than computed data, we don't need to make this a UFloat here
             retval.value = Q_(np.nan, units)
             return retval
         return valid_realizations[0]
@@ -943,14 +946,16 @@ class ICompanyData(PintModel):
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
             # TODO: Should raise a warning here
         base_year = None
+        if self.base_year_production:
+            pass
         # Right now historic_data comes in via template.py ESG data
-        if self.historic_data and self.historic_data.productions:
+        elif self.historic_data and self.historic_data.productions:
             # TODO: This is a hack to get things going.
             base_realization = self._get_base_realization_from_historic(self.historic_data.productions, self.production_metric.units, base_year)
             base_year = base_realization.year
             self.base_year_production = base_realization.value
         else:
-            # raise ValueError(f"missing historic data for base_year_production for {self.company_name}")
+            raise ValueError(f"missing historic data for base_year_production for {self.company_name}")
             self.base_year_production = Q_(np.nan, str(self.production_metric))
         if self.ghg_s1s2 is None and self.historic_data and self.historic_data.emissions:
             if self.historic_data.emissions.S1S2:
@@ -998,21 +1003,11 @@ class ICompanyAggregates(ICompanyData):
     benchmark_temperature: quantity('delta_degC')
     benchmark_global_budget: emissions_quantity('t CO2')
 
+    # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
     # projected_targets: Optional[ICompanyEIProjectionsScopes]
     # projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
-    def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target,
-                 benchmark_temperature, benchmark_global_budget,
-                 *args, **kwargs):
-        super().__init__(cumulative_budget=pint_ify(cumulative_budget, 't CO2'),
-                         cumulative_trajectory=pint_ify(cumulative_trajectory, 't CO2'),
-                         cumulative_target=pint_ify(cumulative_target, 't CO2'),
-                         benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
-                         benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
-                         *args, **kwargs)
-
-
-class TemperatureScoreControls(PintModel):
+class TemperatureScoreControls(BaseModel):
     base_year: int
     target_end_year: int
     projection_start_year: int

@@ -11,10 +11,6 @@ import pandas as pd
 import pint
 import pint_pandas
 
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
-PA_ = pint_pandas.PintArray
-
 from .configs import PortfolioAggregationConfig, ColumnsConfig, logger
 from .interfaces import EScope
 
