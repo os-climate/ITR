@@ -7,6 +7,9 @@ from pint import set_application_registry
 from openscm_units import unit_registry
 import re
 
+import numpy as np
+from uncertainties import ufloat
+
 # openscm_units doesn't make it easy to set preprocessors.  This is one way to do it.
 unit_registry.preprocessors=[
     lambda s1: re.sub(r'passenger.km', 'pkm', s1),
@@ -32,3 +35,5 @@ pint.Context = ureg.Context
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
 from pint_pandas import PintType
 PintType.ureg = ureg
+
+_ufloat_nan = ufloat(np.nan, 0.0)

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from typing import List, Optional, Tuple
 from ITR.data.osc_units import ureg
 import pint
+from uncertainties import unumpy as unp
+from uncertainties import ufloat, UFloat
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
@@ -127,3 +130,25 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta
         scores = ts.anonymize_data_dump(scores)
 
     return scores, aggregations
+
+
+# https://stackoverflow.com/a/74137209/1291237
+def umean(quantified_data):
+    """
+    Assuming Gaussian statistics, uncertainties stem from Gaussian parent distributions. In such a case,
+    it is standard to weight the measurements (nominal values) by the inverse variance.
+
+    This function uses error propagation on the to get an uncertainty of the weighted average.
+    :param: A set of uncertainty values
+    :return: The weighted mean of the values, with a freshly calculated error term
+    """
+    values = np.array(list(map(lambda v: v.m if isinstance(v.m, UFloat) else ufloat(v.m, 0),  quantified_data)))
+    epsilon = unp.nominal_values(values).mean()/(2e13)
+    wavg = ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
+                  np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
+    if wavg.s <= np.sqrt(2*epsilon):
+        if wavg.s > epsilon:
+            logger.debug(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
+        wavg = wavg.n
+
+    return wavg

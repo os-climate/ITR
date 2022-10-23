@@ -73,9 +73,16 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
             breakpoint()
             raise ValueError
         # This relies on the fact that we can now see Quantity(np.nan, ...) for both float and ufloat magnitudes
-        x = y[~y.map(unp.isnan)]
+        x = PA_._from_sequence(y)
+        xq = x.quantity
+        xm = xq.m
+        x = y[~unp.isnan(PA_._from_sequence(y).quantity.m)]
     except TypeError:
         logger.error(f"type_error({y}) returning {y.values}[0]")
+        breakpoint()
+        x = PA_._from_sequence(y)
+        xq = x.quantity
+        xm = xq.m
         return y.iloc[0]
     if len(x) == 0:
         # If all inputs are NaN, return the first NaN
@@ -84,17 +91,11 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         # If there's only one non-NaN input, return that one
         return x.iloc[0]
     if isinstance(x.values[0], pint.Quantity):
+        from ITR.utils import umean
         values = x.values
         units = values[0].u
         assert all([v.u==units for v in values])
-        values = np.array(list(map(lambda v: v.m if isinstance(v.m, UFloat) else ufloat(v.m, 0),  values)))
-        epsilon = unp.nominal_values(values).mean()/(2e13)
-        wavg = ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
-                      np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
-        if wavg.s <= np.sqrt(2*epsilon):
-            if wavg.s > epsilon:
-                logger.warning(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
-            wavg = wavg.n
+        wavg = umean(values)
         est = Q_(wavg, units)
     else:
         logger.error(f"non-qty: _estimated_values called on non-Quantity {x.values[0]};;;")
@@ -284,12 +285,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df3 = df2.reset_index().set_index(['company_id', 'variable', 'scope'])
             df3 = pd.concat([df3.xs(VariablesConfig.PRODUCTIONS, level=1, drop_level=False)
                 .apply(
-                lambda x: x.map(lambda y: Q_(y if y is not pd.NA else np.nan,
+                lambda x: x.map(lambda y: Q_(float(y) if y is not pd.NA else np.nan,
                                              df_fundamentals.loc[df_fundamentals.company_id == x.name[0],
                                                                  'production_metric'].squeeze())), axis=1),
                 df3.xs(VariablesConfig.EMISSIONS, level=1, drop_level=False)
                 .apply(lambda x: x.map(
-                    lambda y: Q_(y if y is not pd.NA else np.nan,
+                    lambda y: Q_(float(y) if y is not pd.NA else np.nan,
                                  df_fundamentals.loc[df_fundamentals.company_id == x.name[0],
                                                      'emissions_metric'].squeeze())), axis=1)])
             df4 = df3.xs(VariablesConfig.EMISSIONS, level=1) / df3.xs((VariablesConfig.PRODUCTIONS, 'production'),
@@ -306,7 +307,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 for col in esg_year_columns:
-                    qty_col = df_esg[esg_has_units].apply(lambda x: Q_(np.nan if pd.isna(x[col]) else x[col], x['unit']), axis=1)
+                    qty_col = df_esg[esg_has_units].apply(lambda x: Q_(np.nan if pd.isna(x[col]) else float(x[col]), x['unit']), axis=1)
                     df_esg[col] = df_esg[col].astype('object')
                     df_esg.loc[df_esg[esg_has_units].index, col] = qty_col
             # FIXME: ...but we have to spill our units back to the corp table for now
@@ -472,6 +473,21 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # TODO pull ghg_s1s2 and ghg_s3 from historic data as appropriate
 
                 if df_historic_data is not None:
+                    # FIXME: Is this the best place to finalize base_year_production, ghg_s1s2, and ghg_s3 data?
+                    # Something tells me these parameters should be removed in favor of querying historical data directly
+                    if not ColumnsConfig.BASE_YEAR_PRODUCTION in company_data:
+                        company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = df_historic_data.loc[
+                            company_data[ColumnsConfig.COMPANY_ID], 'Productions', 'production'][
+                                TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                    if not ColumnsConfig.GHG_SCOPE12 in company_data:
+                        company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                            company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1S2'][
+                                TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                    if not ColumnsConfig.GHG_SCOPE3 in company_data:
+                        company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
+                            company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S3'][
+                                TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                                
                     company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
                         df_historic_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index()).dict()
                 else:
