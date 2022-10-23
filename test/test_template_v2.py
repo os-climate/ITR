@@ -100,7 +100,10 @@ class TestTemplateProvider(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS.
         )
 
-        portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)
+        try:
+            portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)
+        except RuntimeWarning:
+            breakpoint()
 
         amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
