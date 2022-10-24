@@ -2,26 +2,27 @@ import warnings # needed until apply behaves better with Pint quantities in arra
 from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
-from pint import Quantity
-import pint
 import logging
 
 from pydantic import ValidationError
+
+from ITR.data.osc_units import ureg, Q_
+import pint
+
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, LoggingConfig
 from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
-    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
-    IProductionRealization, IHistoricEIScopes, IHistoricData, IEmissionRealization, IEIRealization, IProjection
+    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, BenchmarkMetric, BenchmarkQuantity, IHistoricEmissionsScopes, \
+    IProductionRealization, ProductionQuantity, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
+    UProjection, IProjection, ProjectionControls, quantity, EmissionsQuantity, EI_Quantity
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
-ureg = pint.get_application_registry()
-Q_ = ureg.Quantity
-
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
+# FIXME: this is now out of data with our much better JSON-based benchmark data
 sector_to_production_metric = {'Electricity Utilities': 'GJ', 'Steel': 'Fe_ton', 'Oil & Gas': 'boe', 'Autos': 'pkm'}
 sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't CO2/Fe_ton', 'Oil & Gas': 'kg CO2/boe', 'Autos': 'g CO2/pkm'}
 
@@ -49,9 +50,10 @@ def convert_dimensionless_benchmark_excel_to_model(df_excel: dict, sheetname: st
         [column_name_region, column_name_sector])
 
     result = []
+    # FIXME: More pythonic to convert DF to dict and convert dict to Model
     for index, row in df_ei_bms.iterrows():
-        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units': 'dimensionless'},
-                        projections=[IProjection(year=int(k), value=Q_(v, ureg('dimensionless'))) for k, v in row.items()])
+        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric=BenchmarkMetric('dimensionless'),
+                        projections_nounits=[UProjection(year=int(k), value=float(v)) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
@@ -66,10 +68,11 @@ def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname
     df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
         [column_name_region, column_name_sector])
     result = []
+    # FIXME: More pythonic to convert DF to dict and convert dict to Model
     for index, row in df_ei_bms.iterrows():
         intensity_units = sector_to_intensity_metric[index[1]]
-        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric={'units':intensity_units},
-                        projections=[IProjection(year=int(k), value=Q_(v, ureg(intensity_units))) for k, v in row.items()])
+        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric=BenchmarkMetric(intensity_units),
+                        projections=[IProjection(year=int(k), value=Q_(float(v), intensity_units)) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
@@ -88,7 +91,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
                                                       column_config.REGION, column_config.SECTOR)
         super().__init__(
-            IProductionBenchmarkScopes(benchmark_metric={'units': 'dimensionless'}, S1S2=production_bms), column_config,
+            IProductionBenchmarkScopes(S1S2=production_bms), column_config,
             tempscore_config)
 
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
@@ -102,8 +105,8 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
 
 
 class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
-    def __init__(self, excel_path: str, benchmark_temperature: Quantity['delta_degC'],
-                 benchmark_global_budget: Quantity['CO2'], is_AFOLU_included: bool,
+    def __init__(self, excel_path: str, benchmark_temperature: quantity('delta_degC'),
+                 benchmark_global_budget: EmissionsQuantity, is_AFOLU_included: bool,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
@@ -119,6 +122,8 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
             tempscore_config)
 
 
+# FIXME: Should we merge with TemplateProviderCompany and just use a different excel input method
+# for this "simple" case?
 class ExcelProviderCompany(BaseCompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
@@ -128,11 +133,13 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
     :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
     """
 
-    def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+    def __init__(self, excel_path: str,
+                 column_config: Type[ColumnsConfig] = ColumnsConfig,
+                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
+                 projection_controls: Type[ProjectionControls] = ProjectionControls):
         self._companies = self._convert_from_excel_data(excel_path)
         self.historic_years = None
-        super().__init__(self._companies, column_config, tempscore_config)
+        super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
     def _check_company_data(self, company_tabs: dict) -> None:
         """
@@ -172,10 +179,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             df_historic = company_data[TabsConfig.HISTORIC_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False)
             df_historic = df_historic.merge(df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].rename('units'), left_index=True, right_index=True)
             df_historic.loc[df_historic.variable == 'Emissions', 'units'] = 't CO2'
-            df_historic.loc[df_historic.variable == 'Emission Intensities', 'units'] = 't CO2/' + df_historic.loc[df_historic.variable == 'Emission Intensities', 'units']
+            df_historic.loc[df_historic.variable == 'Emissions Intensities', 'units'] = 't CO2/' + df_historic.loc[df_historic.variable == 'Emissions Intensities', 'units']
             df_historic = self._get_historic_data(company_ids, df_historic)
         else:
             df_historic = None
+
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
     def _convert_series_to_projections(self, projections: pd.Series, ProjectionType: BaseModel) -> [IProjection]:
@@ -191,7 +199,6 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         """
         transforms target Dataframe into list of IDataProviderTarget instances
-
         :param df_fundamentals: pandas Dataframe with fundamental data
         :param df_targets: pandas Dataframe with targets
         :param df_ei: pandas Dataframe with emission intensities
@@ -207,8 +214,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 company_id = company_data[ColumnsConfig.COMPANY_ID]
                 production_metric = sector_to_production_metric[company_data[ColumnsConfig.SECTOR]]
                 intensity_metric = sector_to_intensity_metric[company_data[ColumnsConfig.SECTOR]]
-                company_data[ColumnsConfig.PRODUCTION_METRIC] = {'units': production_metric}
-                company_data[ColumnsConfig.EMISSIONS_METRIC] = {'units': 't CO2'}
+                company_data[ColumnsConfig.PRODUCTION_METRIC] = production_metric
+                company_data[ColumnsConfig.EMISSIONS_METRIC] = 't CO2'
                 # pint automatically handles any unit conversions required
 
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE12].squeeze()
@@ -219,10 +226,10 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 company_data[ColumnsConfig.GHG_SCOPE3] = Q_(np.nan if v is None else v, 't CO2')
                 company_data[ColumnsConfig.PROJECTED_TARGETS] = {'S1S2': {
                     'projections': self._convert_series_to_projections (df_targets.loc[company_id, :], ICompanyEIProjection),
-                    'ei_metric': {'units': intensity_metric}}}
+                    'ei_metric': intensity_metric}}
                 company_data[ColumnsConfig.PROJECTED_EI] = {'S1S2': {
                     'projections': self._convert_series_to_projections (df_ei.loc[company_id, :], ICompanyEIProjection),
-                    'ei_metric': {'units': intensity_metric}}}
+                    'ei_metric': intensity_metric}}
 
                 if df_historic is not None:
                     company_data[TabsConfig.HISTORIC_DATA] = self._convert_historic_data(
@@ -236,13 +243,14 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                     f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[
                         ColumnsConfig.COMPANY_NAME])
         return model_companies
-    
+
     # Workaround for bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero 
     def _np_sum(g):
         return np.sum(g.values)
 
+    # FIXME: Need to deal with S3 emissions as well
     def _get_projection(self, company_ids: List[str], projections: pd.DataFrame, production_metric: pd.DataFrame) \
-            -> pd.DataFrame:
+        -> pd.DataFrame:
         """
         get the projected emission intensities for list of companies
         :param company_ids: list of company ids
@@ -269,12 +277,20 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         return projected_emissions_s1s2
 
+    def _convert_target_data(self, target_data: pd.DataFrame) -> List[ITargetData]:
+        """
+        :param historic: historic production, emission and emission intensity data for a company
+        :return: IHistoricData Pydantic object
+        """
+        target_data = target_data.rename(columns={'target_year': 'target_end_year', 'target_reduction_ambition': 'target_reduction_pct',})
+        return [ITargetData(**td) for td in target_data.to_dict('records')]
+
     def _get_historic_data(self, company_ids: List[str], historic_data: pd.DataFrame) -> pd.DataFrame:
         """
         get the historic data for list of companies
         :param company_ids: list of company ids
-        :param historic_data: Dataframe Productions, Emissions, and Emission Intensities mixed together
-        :return: historic data with unit attributes added to yearly data on a per-element basis
+        :param historic_data: Dataframe Productions, Emissions, and Emissions Intensities mixed together
+        :return: historic data with unit attributes added on a per-element basis
         """
         self.historic_years = [column for column in historic_data.columns if type(column) == int]
 
@@ -290,23 +306,21 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
     def _convert_historic_data(self, historic: pd.DataFrame) -> IHistoricData:
         """
-        :param historic: historic production, emission and emission intensity data for a company
+        :param historic: historic production, emission and emission intensity data for a company (already unitized)
         :return: IHistoricData Pydantic object
         """
         productions = historic.loc[historic[ColumnsConfig.VARIABLE] == VariablesConfig.PRODUCTIONS]
         emissions = historic.loc[historic[ColumnsConfig.VARIABLE] == VariablesConfig.EMISSIONS]
         emissions_intensities = historic.loc[historic[ColumnsConfig.VARIABLE] == VariablesConfig.EMISSIONS_INTENSITIES]
-        return IHistoricData(
-            productions=self._convert_to_historic_productions(productions),
-            emissions=self._convert_to_historic_emissions(emissions),
-            emissionss_intensities=self._convert_to_historic_ei(emissions_intensities)
-        )
+        hd = IHistoricData(productions=self._convert_to_historic_productions(productions),
+                           emissions=self._convert_to_historic_emissions(emissions),
+                           emissions_intensities=self._convert_to_historic_ei(emissions_intensities))
+        return hd
 
     # Note that for the three following functions, we pd.Series.squeeze() the results because it's just one year / one company
     def _convert_to_historic_emissions(self, emissions: pd.DataFrame) -> Optional[IHistoricEmissionsScopes]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
-        :param convert_unit: whether or not to convert the units of measure
+        :param emissions: historic emissions data for a company
         :return: List of historic emissions per scope, or None if no data are provided
         """
         if emissions.empty:
@@ -317,26 +331,21 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
             emissions_scopes[scope] = [] \
                 if results.empty \
-                else [IEmissionRealization(year=year, value=Q_(*results[year].squeeze().split(' ', 1))) for year in self.historic_years]
+                else [IEmissionRealization(year=year, value=EmissionsQuantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
 
-    def _convert_to_historic_productions(self, productions: pd.DataFrame) \
-            -> Optional[List[IProductionRealization]]:
+    def _convert_to_historic_productions(self, productions: pd.DataFrame) -> Optional[List[IProductionRealization]]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
+        :param productions: historic production data for a company
         :return: A list containing historic productions, or None if no data are provided
         """
         if productions.empty:
             return None
+        return [IProductionRealization(year=year, value=ProductionQuantity(productions[year].squeeze())) for year in self.historic_years]
 
-        production_realizations = \
-            [IProductionRealization(year=year, value=Q_(*productions[year].squeeze().split(' ', 1))) for year in self.historic_years]
-        return production_realizations
-
-    def _convert_to_historic_ei(self, intensities: pd.DataFrame) \
-            -> Optional[IHistoricEIScopes]:
+    def _convert_to_historic_ei(self, intensities: pd.DataFrame) -> Optional[IHistoricEIScopes]:
         """
-        :param historic: historic production, emission and emission intensity data for a company
+        :param intensities: historic emission intensity data for a company
         :return: A list of historic emission intensities per scope, or None if no data are provided
         """
         if intensities.empty:
@@ -349,5 +358,5 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
             intensity_scopes[scope] = [] \
                 if results.empty \
-                else [IEIRealization(year=year, value=Q_(*results[year].squeeze().split(' ', 1))) for year in self.historic_years]
+                else [IEIRealization(year=year, value=EI_Quantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)

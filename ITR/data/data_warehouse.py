@@ -95,6 +95,9 @@ class DataWarehouse(ABC):
             x_val = x[year]
             if unp.isnan(x_val.m):
                 historic_ei_dict = { d['year']:d['value'] for d in df_company_data.loc[x.name].historic_data['emissions_intensities']['S1S2']}
+                if not historic_ei_dict or year not in historic_ei_dict:
+                    # We don't have a historic value, so leave as NaN
+                    return x_val
                 return historic_ei_dict[year]
             else:
                 return x_val

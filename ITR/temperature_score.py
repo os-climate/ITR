@@ -63,7 +63,6 @@ class TemperatureScore(PortfolioAggregation):
 
         # If only target data missing assign only trajectory_score to final score
         elif unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
-            breakpoint()
             target_overshoot_ratio = np.nan
             target_temperature_score = np.nan
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[

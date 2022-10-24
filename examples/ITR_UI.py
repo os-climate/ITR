@@ -672,10 +672,6 @@ def update_graph(
         else:
             agg_s3 = []
     
-        print("agg score")
-        print(agg_s1s2)
-        print(agg_s3)
-        print(filt_df)
         return agg_s1s2 + agg_s3
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]

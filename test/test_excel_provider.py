@@ -77,12 +77,13 @@ class TestExcelProvider(unittest.TestCase):
 
         # verify company scores:
         expected = pd.Series(
-            [ 4.59, 2.37, 1.76, 1.36, 1.87, 1.4, 1.4, 1.19, 4.44, 3.32, 3.56, temp_score.fallback_score, 3.46,
-              2.42, 2.85, 1.57, temp_score.fallback_score, temp_score.fallback_score, 1.23, 1.37, 1.57, 1.86,
-              temp_score.fallback_score, 1.57, 1.61, temp_score.fallback_score, temp_score.fallback_score, 1.37,
-              1.67, temp_score.fallback_score ], dtype='pint[delta_degC]')
+            [ 4.59, 2.37, 1.76, 1.36, 1.87, 1.4, 1.4, 1.19, 4.44, 3.32, 3.56, temp_score.fallback_score.m, 3.46,
+              2.42, 2.85, 1.57, temp_score.fallback_score.m, temp_score.fallback_score.m, 1.23, 1.37, 1.57, 1.86,
+              temp_score.fallback_score.m, 1.57, 1.61, temp_score.fallback_score.m, temp_score.fallback_score.m, 1.37,
+              1.67, temp_score.fallback_score.m ], dtype='pint[delta_degC]')
 
-        assert_array_equal(scores.temperature_score.values, expected)
+        # We no longer internally round to 2 digits, so take care of that here.
+        assert_array_equal(scores.temperature_score.map ( lambda x: Q_(round ( x.m, 2 ), x.u)), expected)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.407, ureg.delta_degC), places=2)
 
