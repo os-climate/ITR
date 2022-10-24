@@ -659,13 +659,15 @@ class IProjection(BaseModel):
 class IBenchmark(BaseModel):
     sector: str
     region: str
-    benchmark_metric: OSC_Metric
-    projections: List[IProjection]
+    benchmark_metric: BenchmarkMetric
+    projections_nounits: Optional[List[UProjection]]
+    projections: Optional[List[IProjection]]
 
-    def __init__(self, benchmark_metric, projections, *args, **kwargs):
+    def __init__(self, benchmark_metric, projections_nounits=None, projections=None, *args, **kwargs):
         # FIXME: Probably want to define `target_end_year` to be 2051, not 2050...
         super().__init__(benchmark_metric=benchmark_metric,
-                         projections=UProjections_to_IProjections(IProjection, projections, benchmark_metric),
+                         projections_nounits=projections_nounits,
+                         projections=projections,
                          *args, **kwargs)
         # Sadly we need to build the full projection range before cutting it down to size...
         # ...until Tiemann learns the bi-valence of dict and Model parameters
@@ -679,6 +681,8 @@ class IBenchmark(BaseModel):
             self.projections = [IProjection(year=p.year, value=BenchmarkQuantity(Q_(p.value, benchmark_metric))) for p in self.projections_nounits
                                 if p.year in range(ProjectionControls.BASE_YEAR,
                                                    ProjectionControls.TARGET_YEAR+1)]
+        elif not self.projections:
+            logger.warning(f"Empty Benchmark for sector {sector}, region {region}")
 
 
     def __getitem__(self, item):

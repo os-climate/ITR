@@ -450,8 +450,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
                 warnings.simplefilter("ignore")
-                df = pd.DataFrame(target_list)
-                return df.reindex(sorted(df.columns), axis=1)
+                # If target_list produces a ragged left edge, resort columns so that earliers year is leftmost
+                return pd.DataFrame(target_list).sort_index(axis=1)
         return pd.DataFrame()
 
 
