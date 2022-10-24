@@ -197,6 +197,14 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         mask = regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         regions.loc[~mask] = "Global"
 
+        # TODO: Remove this w/a, after associated benchmarks are clarified
+        # Currently, EI benchmark for S3 not available for certain sectors
+        # Temporal solution: remove such sectors from calculation
+        if scope == EScope.S3:
+            filtered_sector = 'Construction Buildings'
+            filtered_df = company_sector_region_info.loc[company_sector_region_info[self.column_config.SECTOR] != filtered_sector]
+            sectors = filtered_df[self.column_config.SECTOR]
+
         # benchmark_projection has a scope by construction
         benchmark_projection = benchmark_projection.loc[list(zip(regions, sectors, [scope] * len(sectors)))]
         benchmark_projection.index = sectors.index
