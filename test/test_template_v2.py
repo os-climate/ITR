@@ -193,7 +193,6 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        breakpoint()
         self.assertAlmostEqual(unp.nominal_values(company_1.ghg_s1s2.to('t CO2')), 43215000.0+7269200, places=7)
         self.assertAlmostEqual(unp.nominal_values(company_2.ghg_s1s2.to('t CO2')), 68874000., places=7)
         self.assertAlmostEqual(unp.nominal_values(company_1.cumulative_budget.to('t CO2')), 247960692.1, places=7)
