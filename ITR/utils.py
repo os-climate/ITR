@@ -13,7 +13,7 @@ from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
 from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
-
+from .temperature_score import TemperatureScore
 
 # If this file is moved, the computation of get_project_root may also need to change
 def get_project_root() -> Path:
@@ -143,12 +143,14 @@ def umean(quantified_data):
     :return: The weighted mean of the values, with a freshly calculated error term
     """
     values = np.array(list(map(lambda v: v.m if isinstance(v.m, UFloat) else ufloat(v.m, 0),  quantified_data)))
-    epsilon = unp.nominal_values(values).mean()/(2e13)
+    epsilon = 1e-7
     wavg = ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
                   np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
-    if wavg.s <= np.sqrt(2*epsilon):
-        if wavg.s > epsilon:
-            logger.debug(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
+    if wavg.s==0.0:
+        # Uncertainties of zero can unpromote back to floats
+        return wavg.n
+    elif wavg.s < epsilon:
+        logger.debug(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
         wavg = wavg.n
 
     return wavg
