@@ -18,8 +18,6 @@ from ITR.data.osc_units import ureg, Q_, M_
 from pint.errors import DimensionalityError
 
 
-print("ITR-MichaelTiemannOSC")
-
 @dataclass
 class ProjectionControls:
     LOWER_PERCENTILE: float = 0.1
