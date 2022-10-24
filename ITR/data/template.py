@@ -8,7 +8,7 @@ import logging
 
 from pydantic import ValidationError
 
-from ITR.data.osc_units import ureg, Q_, M_, PA_
+from ITR.data.osc_units import ureg, Q_, PA_
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
@@ -134,6 +134,7 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
     return y
 
             
+# FIXME: Should we change this to derive from ExcelProviderCompany?
 class TemplateProviderCompany(BaseCompanyDataProvider):
     """
     Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
@@ -437,14 +438,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             raise ValueError(error_message)
 
         return target_data
-
-    def _convert_series_to_IProjections(self, projections: pd.Series) -> [IProjection]:
-        """
-        Converts a Pandas Series to a list of IProjection
-        :param projections: Pandas Series with years as indices
-        :return: List of IProjection objects
-        """
-        return [IProjection(year=y, value=v) for y, v in projections.items()]
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame,
                              df_target_data: pd.DataFrame,
