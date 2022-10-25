@@ -317,7 +317,7 @@ macro = dbc.Row(
                     inline=True,
                 ),
                 html.Hr(),  # small space from the top
-                dbc.Row(  # Winzorization of scenarios
+                dbc.Row(  # Winsorization of scenarios
                     [
                         dbc.Col(
                             dbc.Label("\N{wrench} Select winsorization value cap range"),
@@ -648,7 +648,7 @@ def update_graph(
         z=unp.nominal_values(filt_df.temperature_score.map(lambda x: x.m)),
         type='heatmap',
         colorscale='Temps',
-        zmin = 1.49, zmax = 2.9,
+        zmin = 1.2, zmax = 2.5,
     )
     data = [trace]
     heatmap_fig = go.Figure(data=data)
