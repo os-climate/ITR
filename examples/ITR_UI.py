@@ -676,10 +676,22 @@ def update_graph(
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
-    df_temp_score = pd.DataFrame(
-        data={0: pd.Series(methods, dtype='string'), 1: pd.Series(scores, dtype='pint[delta_degC]')})
-    df_temp_score[1] = pd.to_numeric(unp.nominal_values(
-        df_temp_score[1].astype('pint[delta_degC]').values.quantity.m)).round(2)  # rounding score
+    scores_n, scores_s = [*map(list, zip(*map(lambda x: (x.m.n, x.m.s) if isinstance(x.m, UFloat) else (x.m, 0.0), scores)))]
+    if sum(scores_s) == 0:
+        df_temp_score = pd.DataFrame(
+            data={0: pd.Series(methods, dtype='string'),
+                  1: pd.Series([round (n, 2) for n in scores_n]),
+                  2: pd.Series(['magnitude'] * len(scores_n))}
+        )
+    else:
+        df_temp_score = pd.concat([pd.DataFrame(
+            data={0: pd.Series(methods, dtype='string'),
+                  1: pd.Series([round(n-s, 2) for n,s in zip(scores_n, scores_s)]),
+                  2: pd.Series(['nominal'] * len(scores_n))}),
+                                   pd.DataFrame(
+            data={0: pd.Series(methods, dtype='string'),
+                  1: pd.Series([round (2*s, 2) for s in scores_s]),
+                  2: pd.Series(['std_dev'] * len(scores_s))})])
     # Separate column for names on Bar chart
     # Highlight WATS and TETS
     Weight_Dict = {'WATS': 'Investment<Br>weighted',  # <Br> is needed to wrap x-axis label
@@ -691,8 +703,8 @@ def update_graph(
                    'MOTS': 'Market Cap<Br>weighted'}
     df_temp_score['Weight_method'] = df_temp_score[0].map(Weight_Dict)  # Mapping code to text
     # Creating barchart, plotting values of column `1`
-    port_score_diff_methods_fig = dequantify_plotly(px.bar, df_temp_score, x='Weight_method', y=1, text=1,
-                                                    title="Score by weighting scheme <br><sup>Assess the influence of weighting schemes on scores</sup>")
+    port_score_diff_methods_fig = px.bar( df_temp_score, x='Weight_method', y=1, color=2, text=1,
+                                          title="Score by weighting scheme <br><sup>Assess the influence of weighting schemes on scores</sup>")
     port_score_diff_methods_fig.update_traces(textposition='inside', textangle=0)
     port_score_diff_methods_fig.update_yaxes(title_text='Temperature score', range=[0.5, 3])
     port_score_diff_methods_fig.update_xaxes(title_text=None, tickangle=0)
