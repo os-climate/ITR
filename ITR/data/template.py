@@ -133,7 +133,32 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
             y.iloc[c] = y.iloc[c][0]
     return y
 
-            
+
+# Documentation for `number` can be found at f"https://ghgprotocol.org/sites/default/files/standards_supporting/Chapter{number}.pdf"
+# Appendix A covers Sampling
+# Appendix B covers Scenario Uncertainty
+# Appendix C covers Intensity Metrics
+# Appendix D contains Summary Tables
+# Appendix documentation for `letter` can be found at f"https://ghgprotocol.org/sites/default/files/standards_supporting/Appendix{letter}.pdf"
+s3_category_rdict = {
+    "1": "Purchased goods and services", 
+    "2": "Capital goods",
+    "3": "Fuel- and energy-related activities",
+    "4": "Upstream transportation and distribution",
+    "5": "Waste generated in operations",
+    "6": "Business travel",
+    "7": "Employee commuting",
+    "8": "Upstream leased assets",
+    "9": "Downstream transportation and distribution",
+    "10": "Processing of sold products",
+    "11": "Use of sold products",
+    "12": "End-of-life treatment of sold products",
+    "13": "Downstream leased assets",
+    "14": "Franchises",
+    "15": "Investments",
+}
+s3_category_dict = { v.lower():k for k, v in s3_category_rdict.items() }
+
 # FIXME: Should we change this to derive from ExcelProviderCompany?
 class TemplateProviderCompany(BaseCompanyDataProvider):
     """
@@ -185,7 +210,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             esg_data_sheet = TabsConfig.TEMPLATE_ESG_DATA_V2
             try:
                 df_esg = df_company_data[esg_data_sheet].drop(columns='company_lei').copy() # .iloc[0:45]
-                df_esg.loc[df_esg.sub_metric.map(lambda x: type(x)!=str), 'sub_metric'] = ''
+                df_esg.loc[df_esg.submetric.map(lambda x: type(x)!=str), 'submetric'] = ''
             except KeyError as e:
                 logger.error(f"Tab {esg_data_sheet} is required in input Excel file.")
                 raise KeyError
@@ -303,23 +328,20 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         else:
             # df_esg = df_esg.iloc[0:45]
             # We are already much tidier, so don't need the wide_to_long conversion.
-            esg_has_units = df_esg.unit.notna()
+            df_esg_hasunits = df_esg.unit.notna()
+            df_esg_nounits = df_esg[~df_esg_hasunits]
+            df_esg = df_esg[df_esg_hasunits]
             esg_year_columns = df_esg.columns[df_esg.columns.get_loc(2016):]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 for col in esg_year_columns:
-                    qty_col = df_esg[esg_has_units].apply(lambda x: Q_(np.nan if pd.isna(x[col]) else float(x[col]), x['unit']), axis=1)
+                    qty_col = df_esg.apply(lambda x: Q_(np.nan if pd.isna(x[col]) else float(x[col]), x['unit']), axis=1)
                     df_esg[col] = df_esg[col].astype('object')
-                    df_esg.loc[df_esg[esg_has_units].index, col] = qty_col
-            # FIXME: ...but we have to spill our units back to the corp table for now
-            merged_finance_and_esg = (
-                df_esg[esg_has_units].set_index('company_id')
-                .loc[df_fundamentals.index][['metric', 'unit']]
-                )
-            prod_mask = merged_finance_and_esg.metric == 'production'
-            prod_metrics = merged_finance_and_esg[prod_mask]
-            df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics.unit
-            em_metrics = merged_finance_and_esg[~prod_mask].reset_index().drop_duplicates()
+                    df_esg.loc[df_esg.index, col] = qty_col
+            prod_mask = df_esg.metric == 'production'
+            prod_metrics = df_esg[prod_mask].groupby(by=['company_id'])['unit'].agg(lambda x: x.values[0])
+            df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics
+            em_metrics = df_esg[~prod_mask]
             em_unit_ambig = em_metrics.groupby(by=['company_id', 'metric']).count()
             em_unit_ambig = em_unit_ambig[em_unit_ambig.unit>1]
             if len(em_unit_ambig)>0:
@@ -329,7 +351,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 logger.warning(f"The ITR Tool will choose one and covert all to that")
             else:
                 em_metrics.metrics = 'emissions'
-                em_metrics = em_metrics.drop_duplicates()
                 em_unit_ambig = em_metrics.groupby(by=['company_id', 'metric']).count()
                 em_unit_ambig = em_unit_ambig[em_unit_ambig.unit>1]
                 if len(em_unit_ambig)>0:
@@ -345,45 +366,47 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg[df_esg.metric.isin(['production'])].drop(columns=['unit', 'report_date'])
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
-                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'sub_metric'],
+                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
                          dropna=False)[esg_year_columns]
-                # then estimate values for each sub_metric (many/most of which will be NaN)
+                # then estimate values for each submetric (many/most of which will be NaN)
                 .agg(_estimated_value)
-                .reset_index(level='sub_metric')
+                .reset_index(level='submetric')
                 )
 
-            # Now prioritize the sub_metrics we want: the best non-NaN values for each company in each column
-            grouped_prod.sub_metric = pd.Categorical(grouped_prod['sub_metric'], ordered=True, categories=['equity', '', 'gross', 'net', 'full'])
+            # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
+            grouped_prod.submetric = pd.Categorical(grouped_prod['submetric'], ordered=True, categories=['equity', '', 'gross', 'net', 'full'])
             best_prod = (
-                grouped_prod.sort_values('sub_metric')
+                grouped_prod.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
             )
-            best_prod = best_prod.drop(columns='sub_metric')
+            best_prod = best_prod.drop(columns='submetric')
             best_prod[ColumnsConfig.VARIABLE] = VariablesConfig.PRODUCTIONS
             
+            s3_lookup_index = df_esg[df_esg.metric.str.lower().eq('s3') & df_esg.submetric.str.lower().isin(s3_category_dict)].index
+            df_esg.loc[s3_lookup_index, 'submetric'] = df_esg.loc[s3_lookup_index].submetric.str.lower().map(s3_category_dict)
             grouped_em = (
-                df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S1S2', 'S3', 'S1S2S3'])].drop(columns=['unit', 'report_date'])
+                df_esg.loc[em_metrics.index].drop(columns=['unit', 'report_date'])
                 .assign(metric=df_esg.metric.str.upper())
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
-                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'sub_metric'],
+                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
                          dropna=False)[esg_year_columns]
-                # then estimate values for each sub_metric (many/most of which will be NaN)
+                # then estimate values for each submetric (many/most of which will be NaN)
                 .agg(_estimated_value)
-                .reset_index(level='sub_metric')
+                .reset_index(level='submetric')
                 )
 
-            # Now prioritize the sub_metrics we want: the best non-NaN values for each company in each column
-            grouped_em.sub_metric = pd.Categorical(grouped_em['sub_metric'], ordered=True, categories=['', 'all', 'combined', 'total', 'location', 'market'])
+            # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
+            grouped_em.submetric = pd.Categorical(grouped_em['submetric'], ordered=True, categories=['', 'all', 'combined', 'total', 'location', 'market'])
             best_em = (
-                grouped_em.sort_values('sub_metric')
+                grouped_em.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
             )
-            best_em = best_em.drop(columns='sub_metric')
+            best_em = best_em.drop(columns='submetric')
             best_em[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
             df3 = pd.concat([best_prod, best_em]).reset_index(level='metric').rename(columns={'metric':'scope'}).set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)
             # XS is how we match labels in indexes.  Here 'variable' is level=2, (company_name=0, company_id=1)
