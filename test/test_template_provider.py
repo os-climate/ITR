@@ -3,8 +3,8 @@ import unittest
 
 import pandas as pd
 
-from numpy.testing import assert_array_equal
 import ITR
+from numpy.testing import assert_array_equal
 from ITR.data.base_providers import EITargetProjector
 from ITR.data.excel import ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany

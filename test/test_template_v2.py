@@ -1,13 +1,13 @@
 import json
 import os
 import unittest
+
+import ITR
 from numpy.testing import assert_array_equal
-from uncertainties import unumpy as unp
 
 import pandas as pd
 from ITR.data.osc_units import ureg, Q_, M_
 
-import ITR
 from ITR.data.base_providers import EITargetProjector, BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
 from ITR.data.data_warehouse import DataWarehouse
@@ -193,14 +193,14 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        self.assertAlmostEqual(unp.nominal_values(company_1.ghg_s1s2.to('t CO2')), 43215000.0+7269200, places=7)
-        self.assertAlmostEqual(unp.nominal_values(company_2.ghg_s1s2.to('t CO2')), 68874000., places=7)
-        self.assertAlmostEqual(unp.nominal_values(company_1.cumulative_budget.to('t CO2')), 247960692.1, places=7)
-        self.assertAlmostEqual(unp.nominal_values(company_2.cumulative_budget.to('t CO2')), 1773407672.95, places=7)
-        self.assertAlmostEqual(unp.nominal_values(company_1.cumulative_target.to('t CO2')), 287877763.61957714, places=7)
-        self.assertAlmostEqual(unp.nominal_values(company_2.cumulative_target.to('t CO2')), 1316305990.5630153, places=7)
-        self.assertAlmostEqual(unp.nominal_values(company_1.cumulative_trajectory.to('t CO2')), 1441933181.74423, places=7)
-        self.assertAlmostEqual(unp.nominal_values(company_2.cumulative_trajectory.to('t CO2')), 2809084095.106841, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.ghg_s1s2.to('t CO2')), 43215000.0+7269200, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.ghg_s1s2.to('t CO2')), 68874000., places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_budget.to('t CO2')), 247960692.1, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_budget.to('t CO2')), 1773407672.95, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_target.to('t CO2')), 287877763.61957714, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_target.to('t CO2')), 1316305990.5630153, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_trajectory.to('t CO2')), 1441933181.74423, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_trajectory.to('t CO2')), 2809084095.106841, places=7)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,

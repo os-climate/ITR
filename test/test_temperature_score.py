@@ -3,6 +3,7 @@ import os
 import unittest
 import pandas as pd
 
+import ITR
 from ITR.interfaces import ETimeFrames, EScope
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod

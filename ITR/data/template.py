@@ -2,12 +2,11 @@ import warnings  # needed until apply behaves better with Pint quantities in arr
 from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
-from uncertainties import ufloat, UFloat
-from uncertainties import unumpy as unp
 import logging
 
 from pydantic import ValidationError
 
+import ITR
 from ITR.data.osc_units import ureg, Q_, PA_
 import pint
 
@@ -76,7 +75,7 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         x = PA_._from_sequence(y)
         xq = x.quantity
         xm = xq.m
-        x = y[~unp.isnan(PA_._from_sequence(y).quantity.m)]
+        x = y[~ITR.isnan(PA_._from_sequence(y).quantity.m)]
     except TypeError:
         logger.error(f"type_error({y}) returning {y.values}[0]")
         breakpoint()
@@ -91,11 +90,13 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         # If there's only one non-NaN input, return that one
         return x.iloc[0]
     if isinstance(x.values[0], pint.Quantity):
-        from ITR.utils import umean
         values = x.values
         units = values[0].u
         assert all([v.u==units for v in values])
-        wavg = umean(values)
+        if ITR.HAS_UNCERTAINTIES:
+            wavg = ITR.umean(values)
+        else:
+            wavg = np.mean(values)
         est = Q_(wavg, units)
     else:
         logger.error(f"non-qty: _estimated_values called on non-Quantity {x.values[0]};;;")
@@ -124,7 +125,7 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
             # If we don't have a list to prioritize, don't try
             continue
         for p in range(0, len(x.iloc[0])):
-            if not unp.isnan(x.iloc[c][p]):
+            if not ITR.isnan(x.iloc[c][p]):
                 # Replace array to be prioritized with best choice
                 y.iloc[c] = x.iloc[c][p]
                 break
@@ -196,7 +197,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         
         df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
 
-        if TabsConfig.TEMPLATE_INPUT_DATA_V2:
+        if TabsConfig.TEMPLATE_INPUT_DATA_V2 and TabsConfig.TEMPLATE_INPUT_DATA_V2 in df_company_data:
             template_version = 2
             input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA_V2
         else:
@@ -302,7 +303,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df = pd.wide_to_long(df_historic, historic_scopes, i='company_id', j='year', sep='-',
                                  suffix='\d+').reset_index()
             df2 = (df.pivot(index='company_id', columns='year', values=historic_scopes)
-                   .stack(level=0)
+                   .stack(level=0, dropna=False)
                    .reset_index()
                    .rename(columns={'level_1': ColumnsConfig.SCOPE})
                    .set_index('company_id'))
@@ -383,7 +384,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             )
             best_prod = best_prod.drop(columns='submetric')
             best_prod[ColumnsConfig.VARIABLE] = VariablesConfig.PRODUCTIONS
-            
+
             s3_lookup_index = df_esg[df_esg.metric.str.lower().eq('s3') & df_esg.submetric.str.lower().isin(s3_category_dict)].index
             df_esg.loc[s3_lookup_index, 'submetric'] = df_esg.loc[s3_lookup_index].submetric.str.lower().map(s3_category_dict)
             grouped_em = (

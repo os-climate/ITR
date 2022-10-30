@@ -5,6 +5,7 @@ import datetime
 from typing import List
 import pandas as pd
 
+import ITR
 from utils import QuantityEncoder
 from ITR.data.base_providers import EITrajectoryProjector
 from ITR.interfaces import ICompanyData, ProjectionControls
