@@ -5,7 +5,7 @@ import pandas as pd
 from numpy.testing import assert_array_equal
 
 import ITR
-from ITR.interfaces import EScope, ETimeFrames, IntensityMetric
+from ITR.interfaces import EScope, ETimeFrames
 from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection
 from ITR.interfaces import IProductionBenchmarkScopes, IEIBenchmarkScopes, PortfolioCompany
 

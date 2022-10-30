@@ -3,6 +3,7 @@ import unittest
 
 import pandas as pd
 
+import ITR
 from ITR.data.osc_units import ureg, Q_, PA_
 
 from ITR.interfaces import EScope, BenchmarkMetric, ProductionMetric, EI_Metric, BenchmarkQuantity, EI_Quantity, \

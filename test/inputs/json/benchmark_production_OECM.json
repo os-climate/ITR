@@ -12,7 +12,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "1869.6 Fe * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -151,7 +152,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "217.3 Fe * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -290,7 +292,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "78.3 Fe * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -429,7 +432,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "25816.800661504 terawatt_hour",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -568,7 +572,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "3336.154864 terawatt_hour",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -707,7 +712,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "5255.713830000001 terawatt_hour",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -846,7 +852,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "129888.14955196861 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -985,7 +992,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "17582.63904953306 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1124,7 +1132,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "33594.45970367207 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1263,7 +1272,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "222821.197289564 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1402,7 +1412,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "29591.835824191086 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1541,7 +1552,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "52513.51596717099 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1680,7 +1692,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "564549.0121780417 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1819,7 +1832,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "68762.03156985894 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -1958,7 +1972,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "108491.50904939632 petajoule",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2097,7 +2112,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "5461.3840367186485 gigapkm",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2236,7 +2252,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "5461.3840367186485 gigapkm",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2375,7 +2392,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "5461.3840367186485 gigapkm",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2514,7 +2532,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "2776.901844166658 gigatkm",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2653,7 +2672,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "2776.9018441666585 gigatkm",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2792,7 +2812,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "2776.9018441666585 gigatkm",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -2931,7 +2952,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "84.02723999999999 Al * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3070,7 +3092,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "7.487 Al * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3209,7 +3232,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "3.8 Al * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3348,7 +3372,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "4200.0 Cement * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3487,7 +3512,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "336.0 Cement * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3626,7 +3652,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "141.3658536585366 Cement * megametric_ton",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3765,7 +3792,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "2149.430666683378 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -3904,7 +3932,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "317.82505952435446 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4043,7 +4072,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "521.4853028472266 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4182,7 +4212,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "184.36334155503516 billion * meter ** 2",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4321,7 +4352,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "22.107049953727156 billion * meter ** 2",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4460,7 +4492,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "26.2057889151065 billion * meter ** 2",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4599,7 +4632,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "100.51580770151716 billion * meter ** 2",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4738,7 +4772,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "6.269953553186876 billion * meter ** 2",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -4877,7 +4912,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "10.840953393665902 billion * meter ** 2",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5016,7 +5052,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "3900.3900000000003 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5155,7 +5192,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "640.0 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5294,7 +5332,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "866.0000000000001 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5433,7 +5472,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "1526.5107567033403 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5572,7 +5612,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "161.44276981012646 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0
@@ -5711,7 +5752,8 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "projections": [
+        "base_year_production": "74.25922439922275 USD * billion",
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0

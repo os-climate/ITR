@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from uncertainties import ufloat
-from uncertainties.core import Variable as utype
-from uncertainties import unumpy as unp
 
 from operator import add
 from enum import Enum
@@ -14,6 +11,7 @@ from pydantic import BaseModel, parse_obj_as, validator, root_validator
 from dataclasses import dataclass
 
 import pint
+import ITR
 from ITR.data.osc_units import ureg, Q_, M_
 from pint.errors import DimensionalityError
 
@@ -660,12 +658,15 @@ class IBenchmark(BaseModel):
     benchmark_metric: BenchmarkMetric
     projections_nounits: Optional[List[UProjection]]
     projections: Optional[List[IProjection]]
+    base_year_production: Optional[ProductionQuantity] # FIXME: applies only to production benchmarks
 
-    def __init__(self, benchmark_metric, projections_nounits=None, projections=None, *args, **kwargs):
+    def __init__(self, benchmark_metric, projections_nounits=None, projections=None,
+                 base_year_production=None, *args, **kwargs):
         # FIXME: Probably want to define `target_end_year` to be 2051, not 2050...
         super().__init__(benchmark_metric=benchmark_metric,
                          projections_nounits=projections_nounits,
                          projections=projections,
+                         base_year_production=base_year_production,
                          *args, **kwargs)
         # Sadly we need to build the full projection range before cutting it down to size...
         # ...until Tiemann learns the bi-valence of dict and Model parameters
@@ -722,7 +723,7 @@ class ICompanyEIProjection(PintModel):
     def add(self, o):
         assert self.year==o.year
         return IEIRealization(year=self.year,
-                              value = self.value + 0 if unp.isnan(o.value.m) else o.value)
+                              value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
 
 
 class ICompanyEIProjections(BaseModel):
@@ -762,7 +763,7 @@ class IEmissionRealization(PintModel):
     def add(self, o):
         assert self.year==o.year
         return IEmissionRealization(year=self.year,
-                                    value = self.value + 0 if unp.isnan(o.value.m) else o.value)
+                                    value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
 
 
 class IHistoricEmissionsScopes(PintModel):
@@ -780,7 +781,7 @@ class IEIRealization(PintModel):
     def add(self, o):
         assert self.year==o.year
         return IEIRealization(year=self.year,
-                              value = self.value + 0 if unp.isnan(o.value.m) else o.value)
+                              value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
 
 
 class IHistoricEIScopes(PintModel):
@@ -912,7 +913,7 @@ class ICompanyData(PintModel):
         return units        
 
     def _get_base_realization_from_historic(self, realized_values: List[BaseModel], units, base_year=None):
-        valid_realizations = [rv for rv in realized_values if rv.value is not None and not unp.isnan(rv.value.magnitude)]
+        valid_realizations = [rv for rv in realized_values if rv.value is not None and not ITR.isnan(rv.value.magnitude)]
         if not valid_realizations:
             retval = realized_values[0].copy()
             retval.year = None

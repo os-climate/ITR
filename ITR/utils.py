@@ -4,10 +4,9 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import List, Optional, Tuple
+import ITR
 from ITR.data.osc_units import ureg
 import pint
-from uncertainties import unumpy as unp
-from uncertainties import ufloat, UFloat
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
 from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
@@ -142,9 +141,9 @@ def umean(quantified_data):
     :param: A set of uncertainty values
     :return: The weighted mean of the values, with a freshly calculated error term
     """
-    values = np.array(list(map(lambda v: v.m if isinstance(v.m, UFloat) else ufloat(v.m, 0),  quantified_data)))
+    values = np.array(list(map(lambda v: v.m if isinstance(v.m, ITR.UFloat) else ITR.ufloat(v.m, 0),  quantified_data)))
     epsilon = 1e-7
-    wavg = ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
+    wavg = ITR.ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
                   np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
     if wavg.s==0.0:
         # Uncertainties of zero can unpromote back to floats

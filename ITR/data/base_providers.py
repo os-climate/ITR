@@ -1,8 +1,6 @@
 import warnings  # needed until quantile behaves better with Pint quantities in arrays
 import numpy as np
 import pandas as pd
-from uncertainties import UFloat, ufloat
-from uncertainties import unumpy as unp
 import pint
 
 from functools import reduce, partial
@@ -10,8 +8,8 @@ from operator import add
 from typing import List, Type, Dict
 import logging
 
+import ITR
 from ITR.data.osc_units import Q_, PA_
-from ITR.data import _ufloat_nan
 
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, LoggingConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
@@ -82,7 +80,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         # and use the valuable DataFrame it creates.
         benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope=EScope.S1S2)
         company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
-        if unp.isnan(company_production.values[0].m):
+        if ITR.isnan(company_production.values[0].m):
             breakpoint()
         try:
             # Similarly, we could pre-compute all but the final multiplication of this 30-term add/mult-add computation
@@ -604,16 +602,17 @@ class EITrajectoryProjector(object):
         # When columns are years and rows are all different intensity types, we cannot winsorize
         # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
         intensities = intensities.T
-        for col in intensities.columns:
-            pa = PA_._from_sequence(intensities[col])
-            pa_units = pa[0].u
-            pa_nans = unp.isnan(pa.data)
-            if pa_nans.any():
-                if [isinstance(pt.m, UFloat) for pt in pa[np.where(pa_nans)]]:
-                    u_pa_data = [_ufloat_nan if pn else pt if isinstance(pt, UFloat) else ufloat(pt, 0)
-                                 for pt, pn in zip(pa.data, pa_nans)]
-                    intensities[col] = pd.Series(PA_(u_pa_data, pa_units), dtype=pa.dtype,
-                                                 index=intensities[col].index, name=intensities[col].name)
+        if ITR.HAS_UNCERTAINTIES:
+            for col in intensities.columns:
+                pa = PA_._from_sequence(intensities[col])
+                pa_units = pa[0].u
+                pa_nans = ITR.isnan(pa.data)
+                if pa_nans.any():
+                    if [isinstance(pt.m, UFloat) for pt in pa[np.where(pa_nans)]]:
+                        u_pa_data = [_ufloat_nan if pn else pt if isinstance(pt, UFloat) else ufloat(pt, 0)
+                                     for pt, pn in zip(pa.data, pa_nans)]
+                        intensities[col] = pd.Series(PA_(u_pa_data, pa_units), dtype=pa.dtype,
+                                                     index=intensities[col].index, name=intensities[col].name)
 
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         for col in winsorized_intensities.columns:
@@ -632,8 +631,11 @@ class EITrajectoryProjector(object):
                 # Turns out we have to dequantify here: https://github.com/pandas-dev/pandas/issues/45968
                 # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
                 units = historic_intensities.apply(lambda x: x.iloc[0].u)
-                nominal_intensities = historic_intensities.apply(lambda x: unp.nominal_values(x.map(lambda y: y.m)))
-                uncertain_intensities = historic_intensities.apply(lambda x: unp.std_devs(x.map(lambda y: y.m)))
+                if ITR.HAS_UNCERTAINTIES:
+                    nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m)))
+                    uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m)))
+                else:
+                    nominal_intensities = historic_intensities.apply(lambda x: x.map(lambda y: y.m))
                 # See https://github.com/hgrecco/pint-pandas/issues/114
                 winsorized: pd.DataFrame = nominal_intensities.clip(
                     lower=nominal_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index',
@@ -642,9 +644,10 @@ class EITrajectoryProjector(object):
                                                         numeric_only=False),
                     axis='columns'
                 )
-                if uncertain_intensities.values.sum() != 0:
-                    uwinsorized = winsorized.apply(lambda x: PA_(unp.uarray(x.values.data, uncertain_intensities[x.name].values), dtype=units[x.name]))
-                    return uwinsorized
+                if ITR.HAS_UNCERTAINTIES:
+                    if uncertain_intensities.values.sum() != 0:
+                        uwinsorized = winsorized.apply(lambda x: PA_(ITR.uarray(x.values.data, uncertain_intensities[x.name].values), dtype=units[x.name]))
+                        return uwinsorized
                 winsorized_and_unitized = winsorized.apply(lambda x: PA_(x.values.data, dtype=units[x.name]))
                 return winsorized_and_unitized
             except AttributeError:
@@ -656,7 +659,7 @@ class EITrajectoryProjector(object):
         for col in df.columns:
             pa = PA_._from_sequence(df[col])
             try:
-                if unp.isnan(pa.data).all():
+                if ITR.isnan(pa.data).all():
                     continue
                 # pd.Series.interpolate only works on numeric data, so push down into PintArray
                 # FIXME: throw some uncertainty into the mix.  If we see ... X NA Y ... and interpolat the NA as Z as function of X and Y
@@ -680,7 +683,8 @@ class EITrajectoryProjector(object):
             # ratios are dimensionless, so get rid of units, which confuse rolling/apply.  Some columns are NaN-only
             intensities[col] = intensities[col].map(lambda x: x.m if isinstance(x, pint.Quantity) else (breakpoint (), x))
             # FIXME: rolling windows require conversion to float64.  Don't want to be a nuisance...
-            intensities[col] = unp.nominal_values(intensities[col])
+            if ITR.HAS_UNCERTAINTIES:
+                intensities[col] = ITR.nominal_values(intensities[col])
         # TODO: do we want to fillna(0) or dropna()?
         ratios: pd.DataFrame = intensities.rolling(window=2, axis='index', closed='right') \
             .apply(func=self._year_on_year_ratio, raw=True)  # .dropna(how='all',axis=0) # .fillna(0)
@@ -696,8 +700,8 @@ class EITrajectoryProjector(object):
         # We need to do a mini-extrapolation if we don't have complete historic data
         # These columns are heterogeneous as to units, so don't try to use PintArrays
         for year in historic_data.columns.tolist()[:-1]:
-            # FIXME: need a version of unp.isnan that can see into Quantities
-            mask = unp.isnan(projected_intensities[year + 1].map(lambda x: x.m))
+            # FIXME: need a version of ITR.isnan that can see into Quantities
+            mask = ITR.isnan(projected_intensities[year + 1].map(lambda x: x.m))
             projected_intensities.loc[mask, year + 1] = projected_intensities.loc[mask, year] * (1 + trends.loc[mask])
 
         # Now the big extrapolation
@@ -809,7 +813,7 @@ class EITargetProjector(object):
                     else:
                         # Get the intensity data
                         intensity_data = historic_data.emissions_intensities.__getattribute__(scope)
-                        last_year_data = next((i for i in reversed(intensity_data) if not unp.isnan(i.value.magnitude)),
+                        last_year_data = next((i for i in reversed(intensity_data) if not ITR.isnan(i.value.magnitude)),
                                               None)
 
                     if last_year_data is None:  # No historic data, so no trajectory projections to use either
@@ -848,7 +852,7 @@ class EITargetProjector(object):
                         last_year_prod = production_bm.loc[last_year]
                         last_year_data = IEmissionRealization(year=last_year, value=last_year_ei.value*last_year_prod)
                     else:
-                        last_year_data = next((e for e in reversed(emissions_data) if not unp.isnan(e.value.magnitude)),
+                        last_year_data = next((e for e in reversed(emissions_data) if not ITR.isnan(e.value.magnitude)),
                                               None)
 
                     if last_year_data is None:  # No trajectory available either
