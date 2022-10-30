@@ -2,12 +2,12 @@ import warnings  # needed until apply behaves better with Pint quantities in arr
 import logging
 import pandas as pd
 import numpy as np
-from uncertainties import unumpy as unp
 
 from abc import ABC
 from typing import List, Type
 from pydantic import ValidationError
 
+import ITR
 from ITR.data.osc_units import ureg, Q_
 from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
@@ -46,7 +46,7 @@ class DataWarehouse(ABC):
         # After projections have been made, shift S3 data into S1S2.  If we shift before we project,
         # then S3 targets will not be projected correctly.
         for c in self.company_data._companies:
-            if c.ghg_s3 and not unp.isnan(c.ghg_s3.m):
+            if c.ghg_s3 and not ITR.isnan(c.ghg_s3.m):
                 # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
                 c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
                 c.ghg_s3 = Q_(0.0, c.ghg_s3.u)
@@ -93,7 +93,7 @@ class DataWarehouse(ABC):
         def fix_ragged_projected_targets(x):
             year = x.index[0]
             x_val = x[year]
-            if unp.isnan(x_val.m):
+            if ITR.isnan(x_val.m):
                 historic_ei_dict = { d['year']:d['value'] for d in df_company_data.loc[x.name].historic_data['emissions_intensities']['S1S2']}
                 if not historic_ei_dict or year not in historic_ei_dict:
                     # We don't have a historic value, so leave as NaN
@@ -155,9 +155,9 @@ class DataWarehouse(ABC):
         projected_emissions = projected_ei.multiply(projected_production)
         return projected_emissions.sum(axis=1).astype('pint[Mt CO2]')
 
-        # The following code is broken, due to the way unp.isnan straps away Quantity from scalars
+        # The following code is broken, due to the way ITR.isnan straps away Quantity from scalars
         # It was written to rescue data from automotive, but maybe not needed anymore?
-        nan_emissions = projected_emissions.applymap(lambda x: np.nan if unp.isnan(x) else x)
+        nan_emissions = projected_emissions.applymap(lambda x: np.nan if ITR.isnan(x) else x)
         if nan_emissions.isnull().any(axis=0).any():
             breakpoint()
         null_idx = nan_emissions.index[nan_emissions.isnull().all(axis=1)]

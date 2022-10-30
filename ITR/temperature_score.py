@@ -5,8 +5,8 @@ from typing import Optional, Tuple, Type, List
 import pandas as pd
 import numpy as np
 import itertools
-from uncertainties import unumpy as unp, UFloat
 
+import ITR
 from .data.osc_units import ureg, Q_, PA_
 from .interfaces import quantity
 
@@ -56,13 +56,13 @@ class TemperatureScore(PortfolioAggregation):
         """
 
         # If both trajectory and target data missing assign default value
-        if (unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
-            unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
+        if (ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
+            ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
                 scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m <= 0:
             return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
 
         # If only target data missing assign only trajectory_score to final score
-        elif unp.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
+        elif ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
             target_overshoot_ratio = np.nan
             target_temperature_score = np.nan
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
@@ -172,10 +172,16 @@ class TemperatureScore(PortfolioAggregation):
 
         # Calculate the GHC--using umean to deal with uncertainties
         # FIXME: what about median vs. mean?
-        company_data = umean(data[
-            [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
-             self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
-        ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]))
+        if ITR.HAS_UNCERTAINTIES:
+            company_data = umean(data[
+                [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
+                 self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
+            ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]))
+        else:
+            company_data = data[
+                [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
+                 self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
+            ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]).mean()
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

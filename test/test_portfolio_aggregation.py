@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 import pandas as pd
+import ITR
 from utils import assert_pint_series_equal
 from ITR.portfolio_aggregation import PortfolioAggregationMethod, PortfolioAggregation
 from ITR.configs import ColumnsConfig
