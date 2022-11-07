@@ -1,0 +1,1113 @@
+{
+  "benchmark_temperature": "2.0 delta_degC",
+  "benchmark_global_budget": "1229 Gt CO2",
+  "is_AFOLU_included": false,
+  "S1": {
+    "benchmarks": [
+      {
+        "sector": "Cement",
+        "region": "Global",
+        "benchmark_metric": "t CO2/(t Cement)",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2021-02-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 0.49
+          },
+          {
+            "year": 2020,
+            "value": 0.49
+          },
+          {
+            "year": 2021,
+            "value": 0.491
+          },
+          {
+            "year": 2022,
+            "value": 0.491
+          },
+          {
+            "year": 2023,
+            "value": 0.491
+          },
+          {
+            "year": 2024,
+            "value": 0.492
+          },
+          {
+            "year": 2025,
+            "value": 0.492
+          },
+          {
+            "year": 2026,
+            "value": 0.484
+          },
+          {
+            "year": 2027,
+            "value": 0.477
+          },
+          {
+            "year": 2028,
+            "value": 0.469
+          },
+          {
+            "year": 2029,
+            "value": 0.462
+          },
+          {
+            "year": 2030,
+            "value": 0.454
+          },
+          {
+            "year": 2031,
+            "value": 0.449
+          },
+          {
+            "year": 2032,
+            "value": 0.444
+          },
+          {
+            "year": 2033,
+            "value": 0.439
+          },
+          {
+            "year": 2034,
+            "value": 0.434
+          },
+          {
+            "year": 2035,
+            "value": 0.429
+          },
+          {
+            "year": 2036,
+            "value": 0.42
+          },
+          {
+            "year": 2037,
+            "value": 0.411
+          },
+          {
+            "year": 2038,
+            "value": 0.402
+          },
+          {
+            "year": 2039,
+            "value": 0.393
+          },
+          {
+            "year": 2040,
+            "value": 0.384
+          },
+          {
+            "year": 2041,
+            "value": 0.376
+          },
+          {
+            "year": 2042,
+            "value": 0.367
+          },
+          {
+            "year": 2043,
+            "value": 0.359
+          },
+          {
+            "year": 2044,
+            "value": 0.351
+          },
+          {
+            "year": 2045,
+            "value": 0.343
+          },
+          {
+            "year": 2046,
+            "value": 0.335
+          },
+          {
+            "year": 2047,
+            "value": 0.327
+          },
+          {
+            "year": 2048,
+            "value": 0.319
+          },
+          {
+            "year": 2049,
+            "value": 0.312
+          },
+          {
+            "year": 2050,
+            "value": 0.304
+          }
+        ]
+      },
+      {
+        "sector": "Electricity Utilities",
+        "region": "Global",
+        "benchmark_metric": "t CO2/MWh",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2020-10-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 0.476
+          },
+          {
+            "year": 2020,
+            "value": 0.457
+          },
+          {
+            "year": 2021,
+            "value": 0.438
+          },
+          {
+            "year": 2022,
+            "value": 0.418
+          },
+          {
+            "year": 2023,
+            "value": 0.399
+          },
+          {
+            "year": 2024,
+            "value": 0.38
+          },
+          {
+            "year": 2025,
+            "value": 0.361
+          },
+          {
+            "year": 2026,
+            "value": 0.338
+          },
+          {
+            "year": 2027,
+            "value": 0.315
+          },
+          {
+            "year": 2028,
+            "value": 0.291
+          },
+          {
+            "year": 2029,
+            "value": 0.268
+          },
+          {
+            "year": 2030,
+            "value": 0.245
+          },
+          {
+            "year": 2031,
+            "value": 0.226
+          },
+          {
+            "year": 2032,
+            "value": 0.207
+          },
+          {
+            "year": 2033,
+            "value": 0.189
+          },
+          {
+            "year": 2034,
+            "value": 0.17
+          },
+          {
+            "year": 2035,
+            "value": 0.151
+          },
+          {
+            "year": 2036,
+            "value": 0.14
+          },
+          {
+            "year": 2037,
+            "value": 0.129
+          },
+          {
+            "year": 2038,
+            "value": 0.119
+          },
+          {
+            "year": 2039,
+            "value": 0.108
+          },
+          {
+            "year": 2040,
+            "value": 0.097
+          },
+          {
+            "year": 2041,
+            "value": 0.089
+          },
+          {
+            "year": 2042,
+            "value": 0.081
+          },
+          {
+            "year": 2043,
+            "value": 0.072
+          },
+          {
+            "year": 2044,
+            "value": 0.064
+          },
+          {
+            "year": 2045,
+            "value": 0.056
+          },
+          {
+            "year": 2046,
+            "value": 0.052
+          },
+          {
+            "year": 2047,
+            "value": 0.048
+          },
+          {
+            "year": 2048,
+            "value": 0.044
+          },
+          {
+            "year": 2049,
+            "value": 0.04
+          },
+          {
+            "year": 2050,
+            "value": 0.036
+          }
+        ]
+      },
+      {
+        "sector": "Shipping",
+        "region": "Global",
+        "benchmark_metric": "g CO2 / tkm",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2020-12-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 9.82
+          },
+          {
+            "year": 2020,
+            "value": 9.63
+          },
+          {
+            "year": 2021,
+            "value": 9.45
+          },
+          {
+            "year": 2022,
+            "value": 9.26
+          },
+          {
+            "year": 2023,
+            "value": 9.07
+          },
+          {
+            "year": 2024,
+            "value": 8.89
+          },
+          {
+            "year": 2025,
+            "value": 8.7
+          },
+          {
+            "year": 2026,
+            "value": 8.51
+          },
+          {
+            "year": 2027,
+            "value": 8.33
+          },
+          {
+            "year": 2028,
+            "value": 8.14
+          },
+          {
+            "year": 2029,
+            "value": 7.95
+          },
+          {
+            "year": 2030,
+            "value": 7.77
+          },
+          {
+            "year": 2031,
+            "value": 7.49
+          },
+          {
+            "year": 2032,
+            "value": 7.2
+          },
+          {
+            "year": 2033,
+            "value": 6.92
+          },
+          {
+            "year": 2034,
+            "value": 6.64
+          },
+          {
+            "year": 2035,
+            "value": 6.36
+          },
+          {
+            "year": 2036,
+            "value": 6.08
+          },
+          {
+            "year": 2037,
+            "value": 5.8
+          },
+          {
+            "year": 2038,
+            "value": 5.52
+          },
+          {
+            "year": 2039,
+            "value": 5.24
+          },
+          {
+            "year": 2040,
+            "value": 4.96
+          },
+          {
+            "year": 2041,
+            "value": 4.67
+          },
+          {
+            "year": 2042,
+            "value": 4.39
+          },
+          {
+            "year": 2043,
+            "value": 4.11
+          },
+          {
+            "year": 2044,
+            "value": 3.83
+          },
+          {
+            "year": 2045,
+            "value": 3.55
+          },
+          {
+            "year": 2046,
+            "value": 3.27
+          },
+          {
+            "year": 2047,
+            "value": 2.99
+          },
+          {
+            "year": 2048,
+            "value": 2.71
+          },
+          {
+            "year": 2049,
+            "value": 2.42
+          },
+          {
+            "year": 2050,
+            "value": 2.14
+          }
+        ]
+      }
+    ]
+  },
+  "S1S2": {
+    "benchmarks": [
+      {
+        "sector": "Aluminium",
+        "region": "Global",
+        "benchmark_metric": "tCO2 / t aluminium",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2021-02-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 5.437
+          },
+          {
+            "year": 2020,
+            "value": 5.255
+          },
+          {
+            "year": 2021,
+            "value": 5.074
+          },
+          {
+            "year": 2022,
+            "value": 4.893
+          },
+          {
+            "year": 2023,
+            "value": 4.712
+          },
+          {
+            "year": 2024,
+            "value": 4.531
+          },
+          {
+            "year": 2025,
+            "value": 4.349
+          },
+          {
+            "year": 2026,
+            "value": 4.108
+          },
+          {
+            "year": 2027,
+            "value": 3.866
+          },
+          {
+            "year": 2028,
+            "value": 3.625
+          },
+          {
+            "year": 2029,
+            "value": 3.383
+          },
+          {
+            "year": 2030,
+            "value": 3.142
+          },
+          {
+            "year": 2031,
+            "value": 2.974
+          },
+          {
+            "year": 2032,
+            "value": 2.807
+          },
+          {
+            "year": 2033,
+            "value": 2.64
+          },
+          {
+            "year": 2034,
+            "value": 2.472
+          },
+          {
+            "year": 2035,
+            "value": 2.305
+          },
+          {
+            "year": 2036,
+            "value": 2.213
+          },
+          {
+            "year": 2037,
+            "value": 2.121
+          },
+          {
+            "year": 2038,
+            "value": 2.03
+          },
+          {
+            "year": 2039,
+            "value": 1.938
+          },
+          {
+            "year": 2040,
+            "value": 1.846
+          },
+          {
+            "year": 2041,
+            "value": 1.781
+          },
+          {
+            "year": 2042,
+            "value": 1.715
+          },
+          {
+            "year": 2043,
+            "value": 1.65
+          },
+          {
+            "year": 2044,
+            "value": 1.584
+          },
+          {
+            "year": 2045,
+            "value": 1.519
+          },
+          {
+            "year": 2046,
+            "value": 1.478
+          },
+          {
+            "year": 2047,
+            "value": 1.437
+          },
+          {
+            "year": 2048,
+            "value": 1.397
+          },
+          {
+            "year": 2049,
+            "value": 1.356
+          },
+          {
+            "year": 2050,
+            "value": 1.316
+          }
+        ]
+      },
+      {
+        "sector": "Paper",
+        "region": "Global",
+        "benchmark_metric": "t CO2 per tof pulp, paper and paperboard",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2021-02-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 0.606
+          },
+          {
+            "year": 2020,
+            "value": 0.588
+          },
+          {
+            "year": 2021,
+            "value": 0.57
+          },
+          {
+            "year": 2022,
+            "value": 0.552
+          },
+          {
+            "year": 2023,
+            "value": 0.535
+          },
+          {
+            "year": 2024,
+            "value": 0.518
+          },
+          {
+            "year": 2025,
+            "value": 0.502
+          },
+          {
+            "year": 2026,
+            "value": 0.482
+          },
+          {
+            "year": 2027,
+            "value": 0.463
+          },
+          {
+            "year": 2028,
+            "value": 0.444
+          },
+          {
+            "year": 2029,
+            "value": 0.426
+          },
+          {
+            "year": 2030,
+            "value": 0.408
+          },
+          {
+            "year": 2031,
+            "value": 0.389
+          },
+          {
+            "year": 2032,
+            "value": 0.369
+          },
+          {
+            "year": 2033,
+            "value": 0.351
+          },
+          {
+            "year": 2034,
+            "value": 0.332
+          },
+          {
+            "year": 2035,
+            "value": 0.314
+          },
+          {
+            "year": 2036,
+            "value": 0.297
+          },
+          {
+            "year": 2037,
+            "value": 0.28
+          },
+          {
+            "year": 2038,
+            "value": 0.264
+          },
+          {
+            "year": 2039,
+            "value": 0.247
+          },
+          {
+            "year": 2040,
+            "value": 0.231
+          },
+          {
+            "year": 2041,
+            "value": 0.21
+          },
+          {
+            "year": 2042,
+            "value": 0.189
+          },
+          {
+            "year": 2043,
+            "value": 0.168
+          },
+          {
+            "year": 2044,
+            "value": 0.148
+          },
+          {
+            "year": 2045,
+            "value": 0.127
+          },
+          {
+            "year": 2046,
+            "value": 0.127
+          },
+          {
+            "year": 2047,
+            "value": 0.128
+          },
+          {
+            "year": 2048,
+            "value": 0.128
+          },
+          {
+            "year": 2049,
+            "value": 0.128
+          },
+          {
+            "year": 2050,
+            "value": 0.128
+          }
+        ]
+      },
+      {
+        "sector": "Steel",
+        "region": "Global",
+        "benchmark_metric": "t CO2/(t Steel)",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2021-02-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 1.525
+          },
+          {
+            "year": 2020,
+            "value": 1.498
+          },
+          {
+            "year": 2021,
+            "value": 1.471
+          },
+          {
+            "year": 2022,
+            "value": 1.445
+          },
+          {
+            "year": 2023,
+            "value": 1.418
+          },
+          {
+            "year": 2024,
+            "value": 1.393
+          },
+          {
+            "year": 2025,
+            "value": 1.367
+          },
+          {
+            "year": 2026,
+            "value": 1.317
+          },
+          {
+            "year": 2027,
+            "value": 1.269
+          },
+          {
+            "year": 2028,
+            "value": 1.221
+          },
+          {
+            "year": 2029,
+            "value": 1.175
+          },
+          {
+            "year": 2030,
+            "value": 1.13
+          },
+          {
+            "year": 2031,
+            "value": 1.093
+          },
+          {
+            "year": 2032,
+            "value": 1.057
+          },
+          {
+            "year": 2033,
+            "value": 1.022
+          },
+          {
+            "year": 2034,
+            "value": 0.988
+          },
+          {
+            "year": 2035,
+            "value": 0.954
+          },
+          {
+            "year": 2036,
+            "value": 0.925
+          },
+          {
+            "year": 2037,
+            "value": 0.897
+          },
+          {
+            "year": 2038,
+            "value": 0.869
+          },
+          {
+            "year": 2039,
+            "value": 0.841
+          },
+          {
+            "year": 2040,
+            "value": 0.813
+          },
+          {
+            "year": 2041,
+            "value": 0.785
+          },
+          {
+            "year": 2042,
+            "value": 0.758
+          },
+          {
+            "year": 2043,
+            "value": 0.731
+          },
+          {
+            "year": 2044,
+            "value": 0.704
+          },
+          {
+            "year": 2045,
+            "value": 0.677
+          },
+          {
+            "year": 2046,
+            "value": 0.667
+          },
+          {
+            "year": 2047,
+            "value": 0.655
+          },
+          {
+            "year": 2048,
+            "value": 0.644
+          },
+          {
+            "year": 2049,
+            "value": 0.632
+          },
+          {
+            "year": 2050,
+            "value": 0.621
+          }
+        ]
+      }
+    ]
+  },
+  "S1S2S3": {
+    "benchmarks": [
+      {
+        "sector": "Diversified Mining",
+        "region": "Global",
+        "benchmark_metric": "tCO2 / (t Copper)",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2021-02-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 59.796
+          },
+          {
+            "year": 2020,
+            "value": 59.238
+          },
+          {
+            "year": 2021,
+            "value": 58.516
+          },
+          {
+            "year": 2022,
+            "value": 57.787
+          },
+          {
+            "year": 2023,
+            "value": 57.048
+          },
+          {
+            "year": 2024,
+            "value": 56.302
+          },
+          {
+            "year": 2025,
+            "value": 55.354
+          },
+          {
+            "year": 2026,
+            "value": 54.092
+          },
+          {
+            "year": 2027,
+            "value": 52.809
+          },
+          {
+            "year": 2028,
+            "value": 51.504
+          },
+          {
+            "year": 2029,
+            "value": 50.178
+          },
+          {
+            "year": 2030,
+            "value": 48.87
+          },
+          {
+            "year": 2031,
+            "value": 47.6
+          },
+          {
+            "year": 2032,
+            "value": 46.313
+          },
+          {
+            "year": 2033,
+            "value": 45.009
+          },
+          {
+            "year": 2034,
+            "value": 43.688
+          },
+          {
+            "year": 2035,
+            "value": 42.352
+          },
+          {
+            "year": 2036,
+            "value": 41.266
+          },
+          {
+            "year": 2037,
+            "value": 40.168
+          },
+          {
+            "year": 2038,
+            "value": 39.056
+          },
+          {
+            "year": 2039,
+            "value": 37.933
+          },
+          {
+            "year": 2040,
+            "value": 36.877
+          },
+          {
+            "year": 2041,
+            "value": 35.955
+          },
+          {
+            "year": 2042,
+            "value": 35.02
+          },
+          {
+            "year": 2043,
+            "value": 34.072
+          },
+          {
+            "year": 2044,
+            "value": 33.11
+          },
+          {
+            "year": 2045,
+            "value": 32.135
+          },
+          {
+            "year": 2046,
+            "value": 31.5
+          },
+          {
+            "year": 2047,
+            "value": 30.855
+          },
+          {
+            "year": 2048,
+            "value": 30.2
+          },
+          {
+            "year": 2049,
+            "value": 29.534
+          },
+          {
+            "year": 2050,
+            "value": 28.858
+          }
+        ]
+      },
+      {
+        "sector": "Oil & Gas",
+        "region": "Global",
+        "benchmark_metric": "g CO2 / MJ",
+        "scenario name": "TPI 2 Degrees",
+        "release date": "2020-10-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 61.17
+          },
+          {
+            "year": 2020,
+            "value": 60.29
+          },
+          {
+            "year": 2021,
+            "value": 59.41
+          },
+          {
+            "year": 2022,
+            "value": 58.53
+          },
+          {
+            "year": 2023,
+            "value": 57.65
+          },
+          {
+            "year": 2024,
+            "value": 56.77
+          },
+          {
+            "year": 2025,
+            "value": 55.9
+          },
+          {
+            "year": 2026,
+            "value": 54.36
+          },
+          {
+            "year": 2027,
+            "value": 52.82
+          },
+          {
+            "year": 2028,
+            "value": 51.28
+          },
+          {
+            "year": 2029,
+            "value": 49.74
+          },
+          {
+            "year": 2030,
+            "value": 48.21
+          },
+          {
+            "year": 2031,
+            "value": 46.58
+          },
+          {
+            "year": 2032,
+            "value": 44.95
+          },
+          {
+            "year": 2033,
+            "value": 43.33
+          },
+          {
+            "year": 2034,
+            "value": 41.7
+          },
+          {
+            "year": 2035,
+            "value": 40.08
+          },
+          {
+            "year": 2036,
+            "value": 38.75
+          },
+          {
+            "year": 2037,
+            "value": 37.42
+          },
+          {
+            "year": 2038,
+            "value": 36.09
+          },
+          {
+            "year": 2039,
+            "value": 34.76
+          },
+          {
+            "year": 2040,
+            "value": 33.43
+          },
+          {
+            "year": 2041,
+            "value": 32.2
+          },
+          {
+            "year": 2042,
+            "value": 30.97
+          },
+          {
+            "year": 2043,
+            "value": 29.74
+          },
+          {
+            "year": 2044,
+            "value": 28.51
+          },
+          {
+            "year": 2045,
+            "value": 27.27
+          },
+          {
+            "year": 2046,
+            "value": 26.16
+          },
+          {
+            "year": 2047,
+            "value": 25.05
+          },
+          {
+            "year": 2048,
+            "value": 23.93
+          },
+          {
+            "year": 2049,
+            "value": 22.82
+          },
+          {
+            "year": 2050,
+            "value": 21.7
+          }
+        ]
+      }
+    ]
+  }
+}
