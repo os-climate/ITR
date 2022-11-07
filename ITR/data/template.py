@@ -408,6 +408,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 .apply(prioritize_submetric, axis=1)
             )
             best_em = best_em.drop(columns='submetric')
+            em_all_nan = best_em.apply(lambda x: x.map(lambda y: np.isnan(y.m)).all(), axis=1)
+            missing_em = best_em[em_all_nan]
+            if len(missing_em):
+                logger.warning(f"Emissions data missing for {missing_em.index}") 
+            best_em = best_em[~em_all_nan]
             best_em[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
             df3 = pd.concat([best_prod, best_em]).reset_index(level='metric').rename(columns={'metric':'scope'}).set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)
             # XS is how we match labels in indexes.  Here 'variable' is level=2, (company_name=0, company_id=1)
@@ -500,11 +505,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
                             company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1S2'][
                                 TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-                    if not ColumnsConfig.GHG_SCOPE3 in company_data:
-                        company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
-                            company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S3'][
-                                TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-                                
+                    try:
+                        if not ColumnsConfig.GHG_SCOPE3 in company_data:
+                            company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
+                                company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S3'][
+                                    TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                    except KeyError:
+                        # If there was no relevant historic data, don't try to use it
+                        pass
                     company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
                         df_historic_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index()).dict()
                 else:

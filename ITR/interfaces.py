@@ -35,7 +35,7 @@ class PintModel(BaseModel):
         arbitrary_types_allowed = True
 
 # List of all the production units we know
-_production_units = [ "Wh", "t Steel", "pkm", "tkm", "boe", "t Aluminum", "t Cement", "USD", "m**2" ]
+_production_units = [ "Wh", "t Steel", "pkm", "tkm", "boe", "t Aluminum", "t Cement", "t Copper", "USD", "m**2" ]
 _ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
 
 class ProductionMetric(str):
@@ -562,7 +562,7 @@ class EScope(SortableEnum):
 
         :return: A list of EScope objects
         """
-        return [cls.S1S2, cls.S3, cls.S1S2S3]
+        return [cls.S1, cls.S1S2, cls.S3, cls.S1S2S3]
 
 
 class ETimeFrames(SortableEnum):
@@ -617,6 +617,7 @@ class ScoreAggregation(BaseModel):
 
 
 class ScoreAggregationScopes(BaseModel):
+    S1: Optional[ScoreAggregation]
     S1S2: Optional[ScoreAggregation]
     S3: Optional[ScoreAggregation]
     S1S2S3: Optional[ScoreAggregation]
@@ -697,9 +698,14 @@ class IBenchmarks(BaseModel):
 
 class IProductionBenchmarkScopes(BaseModel):
     AnyScope: Optional[IBenchmarks]
+    S1: Optional[IBenchmarks]
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
 
 
-class IEIBenchmarkScopes(PintModel):
+class IEIBenchmarkScopes(BaseModel):
+    S1: Optional[IBenchmarks]
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
