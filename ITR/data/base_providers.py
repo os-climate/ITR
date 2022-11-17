@@ -608,8 +608,8 @@ class EITrajectoryProjector(object):
                 pa_units = pa[0].u
                 pa_nans = ITR.isnan(pa.data)
                 if pa_nans.any():
-                    if [isinstance(pt.m, UFloat) for pt in pa[np.where(pa_nans)]]:
-                        u_pa_data = [_ufloat_nan if pn else pt if isinstance(pt, UFloat) else ufloat(pt, 0)
+                    if [isinstance(pt.m, ITR.UFloat) for pt in pa[np.where(pa_nans)]]:
+                        u_pa_data = [ITR._ufloat_nan if pn else pt if isinstance(pt, ITR.UFloat) else ITR.ufloat(pt, 0)
                                      for pt, pn in zip(pa.data, pa_nans)]
                         intensities[col] = pd.Series(PA_(u_pa_data, pa_units), dtype=pa.dtype,
                                                      index=intensities[col].index, name=intensities[col].name)

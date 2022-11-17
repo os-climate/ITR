@@ -408,7 +408,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 .apply(prioritize_submetric, axis=1)
             )
             best_em = best_em.drop(columns='submetric')
-            em_all_nan = best_em.apply(lambda x: x.map(lambda y: np.isnan(y.m)).all(), axis=1)
+            em_all_nan = best_em.apply(lambda x: x.map(lambda y: ITR.isnan(y.m)).all(), axis=1)
             missing_em = best_em[em_all_nan]
             if len(missing_em):
                 logger.warning(f"Emissions data missing for {missing_em.index}") 
