@@ -8,8 +8,10 @@ from . import utils
 from . import temperature_score
 
 try:
-    from uncertainties import ufloat, UFloat, uarray
-    from uncertainties.unumpy import isnan, nominal_values, std_devs
+    import numpy as np
+    from uncertainties import ufloat, UFloat
+    from uncertainties.unumpy import uarray, isnan, nominal_values, std_devs
+    from .utils import umean
     HAS_UNCERTAINTIES = True
     _ufloat_nan = ufloat(np.nan, 0.0)
 except ModuleNotFoundError:
