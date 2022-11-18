@@ -34,14 +34,14 @@ from ITR.interfaces import EScope, ETimeFrames, IEIBenchmarkScopes, IProductionB
 from ITR.data.osc_units import Q_
 from pint import Quantity
 from pint_pandas import PintType
-from uncertainties import unumpy as unp
-from uncertainties import UFloat
 
 import logging
 
 import sys
 import argparse
 
+# from pint import pint_eval
+# pint_eval.tokenizer = pint_eval.uncertainty_tokenizer
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -146,20 +146,20 @@ def dequantify_plotly(px_func, df, **kwargs):
     for col in ['x', 'y']:
         s = df[kwargs[col]]
         if isinstance(s.dtype, PintType):
-            new_df[kwargs[col]] = unp.nominal_values(s.values.quantity.to_base_units().m)
+            new_df[kwargs[col]] = ITR.nominal_values(s.values.quantity.to_base_units().m)
         elif s.map(lambda x: isinstance(x, Quantity)).any():
             item0 = s.values[0]
             s = s.astype(f"pint[{item0.u}]")
-            new_df[kwargs[col]] = unp.nominal_values(s.values.quantity.m)
+            new_df[kwargs[col]] = ITR.nominal_values(s.values.quantity.m)
     if 'hover_data' in kwargs:
         for col in kwargs['hover_data']:
             s = df[col]
             if isinstance(s.dtype, PintType):
-                new_df[col] = unp.nominal_values(s.values.quantity.to_base_units().m)
+                new_df[col] = ITR.nominal_values(s.values.quantity.to_base_units().m)
             elif s.map(lambda x: isinstance(x, Quantity)).any():
                 item0 = s.values[0]
                 s = s.astype(f"pint[{item0.u}]")
-                new_df[col] = unp.nominal_values(s.values.quantity.m)
+                new_df[col] = ITR.nominal_values(s.values.quantity.m)
 
     return px_func (new_df, **kwargs)
 
@@ -645,7 +645,7 @@ def update_graph(
     trace = go.Heatmap(
         x=filt_df.sector,
         y=filt_df.region,
-        z=unp.nominal_values(filt_df.temperature_score.map(lambda x: x.m)),
+        z=ITR.nominal_values(filt_df.temperature_score.map(lambda x: x.m)),
         type='heatmap',
         colorscale='Temps',
         zmin = 1.2, zmax = 2.5,
@@ -690,22 +690,31 @@ def update_graph(
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
-    scores_n, scores_s = [*map(list, zip(*map(lambda x: (x.m.n, x.m.s) if isinstance(x.m, UFloat) else (x.m, 0.0), scores)))]
-    if sum(scores_s) == 0:
+    if ITR.HAS_UNCERTAINTIES:
+        scores_n, scores_s = [*map(list, zip(*map(lambda x: (x.m.n, x.m.s) if isinstance(x.m, UFloat) else (x.m, 0.0), scores)))]
+        if sum(scores_s) == 0:
+            df_temp_score = pd.DataFrame(
+                data={0: pd.Series(methods, dtype='string'),
+                      1: pd.Series([round (n, 2) for n in scores_n]),
+                      2: pd.Series(['magnitude'] * len(scores_n))}
+            )
+        else:
+            df_temp_score = pd.concat([pd.DataFrame(
+                data={0: pd.Series(methods, dtype='string'),
+                      1: pd.Series([round(n-s, 2) for n,s in zip(scores_n, scores_s)]),
+                      2: pd.Series(['nominal'] * len(scores_n))}),
+                                       pd.DataFrame(
+                data={0: pd.Series(methods, dtype='string'),
+                      1: pd.Series([round (2*s, 2) for s in scores_s]),
+                      2: pd.Series(['std_dev'] * len(scores_s))})])
+    else:
+        scores_n = list(map(lambda x: x.m, scores))
         df_temp_score = pd.DataFrame(
             data={0: pd.Series(methods, dtype='string'),
                   1: pd.Series([round (n, 2) for n in scores_n]),
                   2: pd.Series(['magnitude'] * len(scores_n))}
         )
-    else:
-        df_temp_score = pd.concat([pd.DataFrame(
-            data={0: pd.Series(methods, dtype='string'),
-                  1: pd.Series([round(n-s, 2) for n,s in zip(scores_n, scores_s)]),
-                  2: pd.Series(['nominal'] * len(scores_n))}),
-                                   pd.DataFrame(
-            data={0: pd.Series(methods, dtype='string'),
-                  1: pd.Series([round (2*s, 2) for s in scores_s]),
-                  2: pd.Series(['std_dev'] * len(scores_s))})])
+        
     # Separate column for names on Bar chart
     # Highlight WATS and TETS
     Weight_Dict = {'WATS': 'Investment<Br>weighted',  # <Br> is needed to wrap x-axis label
@@ -736,13 +745,13 @@ def update_graph(
     df_for_output_table = filt_df[
         ['company_name', 'company_id', 'region', 'sector', 'cumulative_budget', 'investment_value', 'trajectory_score',
          'target_score', 'temperature_score']].copy()
-    df_for_output_table['temperature_score'] = unp.nominal_values(df_for_output_table['temperature_score'].astype(
+    df_for_output_table['temperature_score'] = ITR.nominal_values(df_for_output_table['temperature_score'].astype(
         'pint[delta_degC]').values.quantity.m)  # f"{q:.2f~#P}"
-    df_for_output_table['trajectory_score'] = pd.to_numeric(unp.nominal_values(
+    df_for_output_table['trajectory_score'] = pd.to_numeric(ITR.nominal_values(
         df_for_output_table['trajectory_score'].astype('pint[delta_degC]').values.quantity.m)).round(2)
-    df_for_output_table['target_score'] = pd.to_numeric(unp.nominal_values(
+    df_for_output_table['target_score'] = pd.to_numeric(ITR.nominal_values(
         df_for_output_table['target_score'].astype('pint[delta_degC]').values.quantity.m)).round(2)
-    df_for_output_table['cumulative_budget'] = pd.to_numeric(unp.nominal_values(
+    df_for_output_table['cumulative_budget'] = pd.to_numeric(ITR.nominal_values(
         df_for_output_table['cumulative_budget'].astype('pint[Mt CO2]').values.quantity.m)).round(2)
     df_for_output_table['investment_value'] = df_for_output_table['investment_value'].apply(
         lambda x: "${:,.1f} Mn".format((x / 1000000)))  # formating column
@@ -758,7 +767,7 @@ def update_graph(
         scores = aggregated_scores.long.S3.all.score.m
     else:
         raise ValueError("No aggregated scores")
-    if isinstance(scores, UFloat):
+    if ITR.HAS_UNCERTAINTIES and isinstance(scores, UFloat):
         scores = scores.n
 
     return (
