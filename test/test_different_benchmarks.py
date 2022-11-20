@@ -19,7 +19,7 @@ from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from pint import Quantity
 from ITR.data.osc_units import ureg, Q_, PA_
 
-from utils import gen_company_data, DequantifyQuantity
+from utils import gen_company_data, DequantifyQuantity, assert_pint_series_equal
 # from utils import QuantityEncoder
 
 # For this test case, we prime the pump with known-aligned emissions intensities.
@@ -159,8 +159,9 @@ class TestEIBenchmarks(unittest.TestCase):
         print(scores[['company_name','company_id', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
+        breakpoint()
         expected = pd.Series([1.76, 1.55, 1.52], dtype='pint[delta_degC]')
-        assert_array_equal(scores.temperature_score.values, expected)
+        assert_pint_series_equal(self, scores.temperature_score, expected, places=2)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.61, ureg.delta_degC), places=2)
 

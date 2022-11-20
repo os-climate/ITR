@@ -5,11 +5,7 @@ import json
 import ITR
 from pint import Quantity
 
-<<<<<<< HEAD
-from ITR.interfaces import IntensityMetric
-=======
-from ITR.interfaces import EI_Metric, EI_Quantity
->>>>>>> Fixup code so it works without uncertainties package
+from ITR.interfaces import EI_Metric, EI_Quantity, EScope
 from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection
 
 class QuantityEncoder(json.JSONEncoder):
@@ -26,16 +22,16 @@ class DequantifyQuantity(json.JSONEncoder):
         else:
             super().default(q)
 
-def assert_pint_series_equal(case: unittest.case, left: pd.Series, right: pd.Series):
+def assert_pint_series_equal(case: unittest.case, left: pd.Series, right: pd.Series, places=7, msg=None, delta=None):
     # Helper function to avoid bug in pd.testing.assert_series_equal concerning pint series
     for d, data in enumerate(left):
-        case.assertAlmostEqual(data, right[d])
+        case.assertAlmostEqual(data, right[d], places, msg, delta)
 
     for d, data in enumerate(right):
-        case.assertAlmostEqual(data, left[d])
+        case.assertAlmostEqual(data, left[d], places, msg, delta)
 
 
-def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.DataFrame):
+def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.DataFrame, places=7, msg=None, delta=None):
     # Helper function to avoid bug in pd.testing.assert_frame_equal concerning pint series
     left_flat = left.values.flatten()
     right_flat = right.values.flatten()
@@ -43,7 +39,7 @@ def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.D
     errors = []
     for d, data in enumerate(left_flat):
         try:
-            case.assertAlmostEqual(data, right_flat[d])
+            case.assertAlmostEqual(data, right_flat[d], places, msg, delta)
         except AssertionError as e:
             errors.append(e.args[0])
     if errors:
@@ -51,7 +47,7 @@ def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.D
 
     for d, data in enumerate(right_flat):
         try:
-            case.assertAlmostEqual(data, left_flat[d])
+            case.assertAlmostEqual(data, left_flat[d], places, msg, delta)
         except AssertionError as e:
             errors.append((e.args[0]))
     if errors:
@@ -83,6 +79,7 @@ def gen_company_data(company_name, company_id, region, sector, production,
         'company_id': company_id,
         'region': region,
         'sector': sector,
+        'scope': EScope.S1S2,
         'base_year_production': production,
         'ghg_s1s2': (production * bm_ei[2019]),
         'projected_targets': ICompanyEIProjectionsScopes(

@@ -1248,7 +1248,7 @@
       {
         "sector": "Diversified Mining",
         "region": "Global",
-        "benchmark_metric": "tCO2 / (t Copper)",
+        "benchmark_metric": "t CO2 / (t Copper)",
         "scenario name": "TPI 1.5 Degrees",
         "release date": "2022-06-01",
         "projections_nounits": [
