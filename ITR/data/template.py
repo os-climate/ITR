@@ -266,7 +266,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
         else:
             missing_production_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.eq('production')].company_id.unique())
-            missing_esg_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.str.upper().isin(['S1', 'S1S2', 'S1S2S3'])].company_id.unique())
+            missing_esg_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.str.upper().isin(['S1', 'S1S2', 'S3', 'S1S2S3'])].company_id.unique())
             missing_esg_metrics_df = df_fundamentals.loc[missing_production_idx.union(missing_esg_idx)]
             
         if len(missing_esg_metrics_df)>0:
@@ -587,9 +587,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             return None
 
         emissions_scopes = {}
-        for scope in EScope.get_scopes():
-            results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
-            emissions_scopes[scope] = [] \
+        for scope_name in EScope.get_scopes():
+            results = emissions.loc[emissions[ColumnsConfig.SCOPE].name == scope_name]
+            emissions_scopes[scope_name] = [] \
                 if results.empty \
                 else [IEmissionRealization(year=year, value=EmissionsQuantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
@@ -614,9 +614,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         intensities = intensities.copy()
         intensity_scopes = {}
 
-        for scope in EScope.get_scopes():
-            results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
-            intensity_scopes[scope] = [] \
+        for scope_name in EScope.get_scopes():
+            results = intensities.loc[intensities[ColumnsConfig.SCOPE].name == scope_name]
+            intensity_scopes[scope_name] = [] \
                 if results.empty \
                 else [IEIRealization(year=year, value=EI_Quantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)

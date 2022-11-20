@@ -31,7 +31,7 @@ class ProjectionControls:
 
 
 # List of all the production units we know
-_production_units = [ "Wh", "t Steel", "pkm", "tkm", "boe", "t Aluminum", "t Cement", "t Copper", "USD", "m**2" ]
+_production_units = [ "Wh", "pkm", "tkm", "boe", "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "m**2" ]
 _ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
 
 class ProductionMetric(str):
@@ -664,6 +664,7 @@ class ICompanyEIProjections(BaseModel):
     ei_metric: EI_Metric
     projections: List[ICompanyEIProjection]
 
+    # FIXME: This looks entirely boilerplate--can __init__ be removed entirely?
     def __init__(self, ei_metric, projections, *args, **kwargs):
         super().__init__(ei_metric=ei_metric,
                          projections=projections,
@@ -754,8 +755,9 @@ class ICompanyData(BaseModel):
     company_name: str
     company_id: str
 
-    region: str  # TODO: make SortableEnums
     sector: str  # TODO: make SortableEnums
+    region: str  # TODO: make SortableEnums
+    scope: EScope # Computed according to data collected (intersection of target and historic data)
     target_probability: float = 0.5
 
     target_data: Optional[List[ITargetData]]

@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 import ITR
 from ITR.data.osc_units import ureg, Q_
-from ITR.interfaces import IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
+from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
@@ -64,6 +64,24 @@ class DataWarehouse(ABC):
             if c.projected_targets.S3:
                 c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
                 c.projected_targets.S3 = None
+            # Set scope information based on what company reports and what benchmark requres
+            c.scope = None
+            for scope in [EScope.S1S2S3, EScope.S1S2, EScope.S1, EScope.S3]:
+                try:
+                    if (benchmarks_projected_ei._EI_benchmarks.__getattribute__(scope.name)
+                        and c.projected_intensities.__getattribute__(scope.name)
+                        and c.projected_targets.__getattribute__(scope.name)):
+                        c.scope = scope
+                        break
+                except AttributeError:
+                    pass
+                logger.warning(
+                    f"Preferred scope {scope.value} for benchmark not supported by {c.company_name}'s data (company_id == {c.company_id})")
+            if not c.scope:
+                logger.warning(
+                    f"No scope match between benchmark and {c.company_name}'s reported data (company_id == {c.company_id}; removing company")
+                breakpoint()
+
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """

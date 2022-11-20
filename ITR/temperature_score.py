@@ -141,10 +141,11 @@ class TemperatureScore(PortfolioAggregation):
             scopes.append(EScope.S1S2)
         if EScope.S1S2S3 in scopes and EScope.S3 not in scopes:
             scopes.append(EScope.S3)
-
+        scopes = [s.name for s in scopes]
+        # FIXME: Creating all these combinations may actually be a waste of time: the company knows the scope in wants
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
-        scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID])
+        scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE])
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -216,7 +217,7 @@ class TemperatureScore(PortfolioAggregation):
             data = self._calculate_company_score(data)
 
         # We need to filter the scopes again, because we might have had to add a scope in the preparation step
-        data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
+        data = data[data[self.c.COLS.SCOPE].isin([s.name for s in self.scopes])]
         # with warnings.catch_warnings():
         #     warnings.simplefilter("ignore")
         #     # See https://github.com/hgrecco/pint-pandas/issues/114

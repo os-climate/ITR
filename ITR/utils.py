@@ -91,6 +91,8 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
     portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop("company_name", axis=1), how="left",
                               on=["company_id"])
+    # We translate the scope into a string because we don't store pure scopes in DataFrames
+    portfolio_data.scope = portfolio_data.scope.map(lambda x: x.name)
 
     return portfolio_data
 
