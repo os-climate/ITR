@@ -691,6 +691,7 @@ class IBenchmark(BaseModel):
 
 class IBenchmarks(BaseModel):
     benchmarks: List[IBenchmark]
+    production_centric = False
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -735,13 +736,6 @@ class ICompanyEIProjection(PintModel):
 class ICompanyEIProjections(BaseModel):
     ei_metric: IntensityMetric
     projections: List[ICompanyEIProjection]
-
-    # FIXME: This looks entirely boilerplate--can __init__ be removed entirely?
-    def __init__(self, ei_metric, projections, *args, **kwargs):
-        super().__init__(ei_metric=ei_metric,
-                         projections=UProjections_to_IProjections(ICompanyEIProjection, projections,
-                                                                  ei_metric.dict() if isinstance(ei_metric, BaseModel) else ei_metric),
-                         *args, **kwargs)
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -830,7 +824,6 @@ class ICompanyData(PintModel):
 
     sector: str  # TODO: make SortableEnums
     region: str  # TODO: make SortableEnums
-    scope: EScope # Computed according to data collected (intersection of target and historic data)
     target_probability: float = 0.5
 
     target_data: Optional[List[ITargetData]]
@@ -1007,12 +1000,14 @@ class ICompanyData(PintModel):
                     self.ghg_s3 = base_realization_s3.value * self.base_year_production
 
 
+# These aggregate terms are all derived from the benchmark being used
 class ICompanyAggregates(ICompanyData):
     cumulative_budget: emissions_quantity('t CO2')
     cumulative_trajectory: emissions_quantity('t CO2')
     cumulative_target: emissions_quantity('t CO2')
     benchmark_temperature: quantity('delta_degC')
-    benchmark_global_budget: emissions_quantity('t CO2')
+    benchmark_global_budget: EmissionsQuantity
+    scope: EScope
 
     # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
     # projected_targets: Optional[ICompanyEIProjectionsScopes]

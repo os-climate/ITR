@@ -3,6 +3,7 @@
   "benchmark_global_budget": "396 Gt CO2",
   "is_AFOLU_included": false,
   "S1": {
+    "production_centric": true,
     "benchmarks": [
       {
         "sector": "Steel",
@@ -10,7 +11,6 @@
         "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -148,7 +148,6 @@
         "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -286,7 +285,6 @@
         "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -424,7 +422,6 @@
         "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -562,7 +559,6 @@
         "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -700,7 +696,6 @@
         "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -838,7 +833,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -976,7 +970,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -1114,7 +1107,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -1252,7 +1244,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -1390,7 +1381,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -1528,7 +1518,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -1666,7 +1655,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -1804,7 +1792,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -1942,7 +1929,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -2080,7 +2066,6 @@
         "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -2218,7 +2203,6 @@
         "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -2356,7 +2340,6 @@
         "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -2494,7 +2477,6 @@
         "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -2632,7 +2614,6 @@
         "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -2770,7 +2751,6 @@
         "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -2908,7 +2888,6 @@
         "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -3046,7 +3025,6 @@
         "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -3184,7 +3162,6 @@
         "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -3322,7 +3299,6 @@
         "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -3460,7 +3436,6 @@
         "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -3598,7 +3573,6 @@
         "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -3736,7 +3710,6 @@
         "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -3874,7 +3847,6 @@
         "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4012,7 +3984,6 @@
         "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4150,7 +4121,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4288,7 +4258,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4426,7 +4395,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4564,7 +4532,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4702,7 +4669,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4840,7 +4806,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -4978,7 +4943,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -5116,7 +5080,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -5254,7 +5217,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -5392,7 +5354,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -5530,7 +5491,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -5668,7 +5628,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -5803,6 +5762,7 @@
     ]
   },
   "S2": {
+    "production_centric": true,
     "benchmarks": [
       {
         "sector": "Steel",
@@ -5810,7 +5770,6 @@
         "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -5948,7 +5907,6 @@
         "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -6086,7 +6044,6 @@
         "benchmark_metric": "t CO2e/(t Steel)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -6224,7 +6181,6 @@
         "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -6362,7 +6318,6 @@
         "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -6500,7 +6455,6 @@
         "benchmark_metric": "t CO2e/MWh",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -6638,7 +6592,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -6776,7 +6729,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -6914,7 +6866,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -7052,7 +7003,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -7190,7 +7140,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -7328,7 +7277,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -7466,7 +7414,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -7604,7 +7551,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -7742,7 +7688,6 @@
         "benchmark_metric": "t CO2e/GJ",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -7880,7 +7825,6 @@
         "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8018,7 +7962,6 @@
         "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8156,7 +8099,6 @@
         "benchmark_metric": "g CO2e/pkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8294,7 +8236,6 @@
         "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8432,7 +8373,6 @@
         "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8570,7 +8510,6 @@
         "benchmark_metric": "g CO2e/tkm",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8708,7 +8647,6 @@
         "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8846,7 +8784,6 @@
         "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -8984,7 +8921,6 @@
         "benchmark_metric": "t CO2e/(t Aluminum)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -9122,7 +9058,6 @@
         "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -9260,7 +9195,6 @@
         "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -9398,7 +9332,6 @@
         "benchmark_metric": "t CO2e/(t Cement)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -9536,7 +9469,6 @@
         "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -9674,7 +9606,6 @@
         "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -9812,7 +9743,6 @@
         "benchmark_metric": "t CO2e/(million USD)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -9950,7 +9880,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -10088,7 +10017,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -10226,7 +10154,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -10364,7 +10291,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -10502,7 +10428,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -10640,7 +10565,6 @@
         "benchmark_metric": "t CO2e/(million m**2)",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -10778,7 +10702,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -10916,7 +10839,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -11054,7 +10976,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -11192,7 +11113,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -11330,7 +11250,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -11468,7 +11387,6 @@
         "benchmark_metric": "kg CO2e/USD",
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
         "projections_nounits": [
           {
             "year": 2019,
@@ -11603,6 +11521,7 @@
     ]
   },
   "S1S2": {
+    "production_centric": true,
     "benchmarks": [
       {
         "sector": "Steel",
@@ -11612,8 +11531,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.653
@@ -11752,8 +11670,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.753
@@ -11892,8 +11809,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.163
@@ -12032,8 +11948,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.549
@@ -12172,8 +12087,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.279
@@ -12312,8 +12226,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.392
@@ -12452,8 +12365,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0662
@@ -12592,8 +12504,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.066
@@ -12732,8 +12643,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0636
@@ -12872,8 +12782,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.102
@@ -13012,8 +12921,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0707
@@ -13152,8 +13060,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0799
@@ -13292,8 +13199,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0675
@@ -13432,8 +13338,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0583
@@ -13572,8 +13477,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0635
@@ -13712,8 +13616,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 643.76
@@ -13852,8 +13755,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 96.054
@@ -13992,8 +13894,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 187.89
@@ -14132,8 +14033,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 916.83
@@ -14272,8 +14172,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 136.8
@@ -14412,8 +14311,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 267.58
@@ -14552,8 +14450,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 11.762
@@ -14692,8 +14589,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16.879
@@ -14832,8 +14728,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 29.33
@@ -14972,8 +14867,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.648
@@ -15112,8 +15006,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.544
@@ -15252,8 +15145,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.701
@@ -15392,8 +15284,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 88.256
@@ -15532,8 +15423,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 57.06
@@ -15672,8 +15562,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 66.74
@@ -15812,8 +15701,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 33735.0
@@ -15952,8 +15840,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16432.0
@@ -16092,8 +15979,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 27351.0
@@ -16232,8 +16118,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 59513.0
@@ -16372,8 +16257,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 111320.0
@@ -16512,8 +16396,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 60172.0
@@ -16652,8 +16535,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.16
@@ -16792,8 +16674,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.874
@@ -16932,8 +16813,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.832
@@ -17072,8 +16952,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.259
@@ -17212,8 +17091,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.205
@@ -17352,8 +17230,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.285
@@ -17487,6 +17364,7 @@
     ]
   },
   "S1S2S3": {
+    "production_centric": true,
     "benchmarks": [
       {
         "sector": "Steel",
@@ -17496,8 +17374,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.653
@@ -17636,8 +17513,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.753
@@ -17776,8 +17652,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.163
@@ -17916,8 +17791,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.549
@@ -18056,8 +17930,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.279
@@ -18196,8 +18069,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.392
@@ -18336,8 +18208,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0662
@@ -18476,8 +18347,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.066
@@ -18616,8 +18486,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0636
@@ -18756,8 +18625,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.102
@@ -18896,8 +18764,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0707
@@ -19036,8 +18903,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0799
@@ -19176,8 +19042,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0675
@@ -19316,8 +19181,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0583
@@ -19456,8 +19320,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.0635
@@ -19596,8 +19459,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 643.76
@@ -19736,8 +19598,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 96.054
@@ -19876,8 +19737,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 187.89
@@ -20016,8 +19876,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 916.83
@@ -20156,8 +20015,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 136.8
@@ -20296,8 +20154,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 267.58
@@ -20436,8 +20293,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 11.762
@@ -20576,8 +20432,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16.879
@@ -20716,8 +20571,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 29.33
@@ -20856,8 +20710,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.933
@@ -20996,8 +20849,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 29.109
@@ -21136,8 +20988,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 9.649
@@ -21276,8 +21127,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 88.256
@@ -21416,8 +21266,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 57.06
@@ -21556,8 +21405,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 66.74
@@ -21696,8 +21544,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 33735.0
@@ -21836,8 +21683,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 16432.0
@@ -21976,8 +21822,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 27351.0
@@ -22116,8 +21961,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 59513.0
@@ -22256,8 +22100,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 111320.0
@@ -22396,8 +22239,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 60172.0
@@ -22536,8 +22378,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.806
@@ -22676,8 +22517,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.418
@@ -22816,8 +22656,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 1.382
@@ -22956,8 +22795,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.259
@@ -23096,8 +22934,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.205
@@ -23236,8 +23073,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.285
@@ -23371,6 +23207,7 @@
     ]
   },
   "S3": {
+    "production_centric": true,
     "benchmarks": [
       {
         "sector": "Cement",
@@ -23380,8 +23217,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 2.285
@@ -23520,8 +23356,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 28.565
@@ -23660,8 +23495,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 8.948
@@ -23800,8 +23634,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.646
@@ -23940,8 +23773,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.543
@@ -24080,8 +23912,7 @@
         },
         "scenario name": "OECM 1.5 Degrees",
         "release date": "2022",
-        "production_centric": true,
-        "projections": [
+        "projections_nounits": [
           {
             "year": 2019,
             "value": 0.55

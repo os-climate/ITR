@@ -104,8 +104,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_regions = regions.copy()
         mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         benchmark_regions.loc[~mask] = "Global"
-
-        benchmark_projection = benchmark_projection.loc[list(zip(sectors, benchmark_regions, scopes))]
+        # Production benchmarks are always 'S1S2'
+        benchmark_projection = benchmark_projection.loc[list(zip(sectors, benchmark_regions, [EScope.S1S2]*len(scopes)))]
         benchmark_projection.index = sectors.index
         return benchmark_projection
 
@@ -148,8 +148,8 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         ei_base = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.base_year]
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
         df = df.add(last_ei, axis=0).astype(ei_base.dtype)
-        df = df.loc[:, :, :, EScope.S1S2]
-        df = df.droplevel([1,2])
+        df = df.loc[:, :, :, company_info_at_base_year[self.column_config.SCOPE]]
+        df = df.droplevel([1,2,3])
         return df
 
     def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
@@ -192,20 +192,18 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         sectors = company_sector_region_scope[self.column_config.SECTOR]
-        regions = company_sector_region_scope[self.column_config.REGION].copy()
+        regions = company_sector_region_scope[self.column_config.REGION]
         scopes = company_sector_region_scope[self.column_config.SCOPE]
-        projections = (company_sector_region_scope
-                       .reset_index()[['company_id', 'sector', 'region', 'scope']].set_index(['sector', 'region', 'scope'])
-                       .merge(self._EI_df, left_index=True, right_index=True, how='left'))
-        mask = projections.index.droplevel(level=['sector','region']).isna()
-        if mask.any():
-            missing_sector_region_scope = projections.loc[mask, ['company_id', 'sector', 'region', 'scope']]
-            projections = projections[~mask]
-            missing_sector_region_scope['region'] = 'Global'
-            global_projections = missing_sector_region_scope.merge(self._EI_df.reset_index(level='scope'), on=['sector', 'region', 'scope'], how='left')
-            benchmark_projections = pd.concat([projections, global_projections])
-        else:
-            benchmark_projections = projections
+        benchmark_regions = regions.copy()
+        benchmark_projections = self._EI_df.loc[sectors, :, scopes]
+        mask = benchmark_regions.isin(benchmark_projections.reset_index()[self.column_config.REGION])
+        benchmark_regions.loc[~mask] = "Global"
+        company_benchmark_info = pd.concat([pd.Series(data=company_sector_region_scope.index,
+                                                      index=company_sector_region_scope.index,
+                                                      name=self.column_config.COMPANY_ID),
+                                            sectors, benchmark_regions, scopes],
+                                           axis=1).set_index(['sector', 'region', 'scope'])
+        benchmark_projections = company_benchmark_info.merge(benchmark_projections, left_index=True, right_index=True)
         benchmark_projections.set_index(['company_id'], append=True, inplace=True)
         benchmark_projections = benchmark_projections.reorder_levels(['company_id', 'sector', 'region', 'scope'])
         return benchmark_projections
@@ -381,7 +379,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         df_fundamentals = self.get_company_fundamentals(company_ids)
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
-            company_ids, [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE,
+            company_ids, [self.column_config.SECTOR, self.column_config.REGION,
                           self.column_config.BASE_YEAR_PRODUCTION,
                           self.column_config.GHG_SCOPE12,
                           self.column_config.GHG_SCOPE3]]

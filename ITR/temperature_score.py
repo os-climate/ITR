@@ -142,10 +142,9 @@ class TemperatureScore(PortfolioAggregation):
         if EScope.S1S2S3 in scopes and EScope.S3 not in scopes:
             scopes.append(EScope.S3)
 
-        # FIXME: Creating all these combinations may actually be a waste of time: the company knows the scope in wants
         score_combinations = pd.DataFrame(list(itertools.product(*[companies, scopes, self.time_frames])),
                                           columns=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE, self.c.COLS.TIME_FRAME])
-        scoring_data = pd.merge(left=data, right=score_combinations, how='outer', on=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE])
+        scoring_data = pd.merge(left=data, right=score_combinations, how='inner', on=[self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE])
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
