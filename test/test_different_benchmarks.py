@@ -58,24 +58,23 @@ class TestEIBenchmarks(unittest.TestCase):
         ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.TPI_below_2_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
-        def gen_company_variation(company_name, company_id, region, sector, scope,
+        def gen_company_variation(company_name, company_id, region, sector,
                                   base_production,
                                   EI_df, ei_multiplier, ei_offset,
                                   ei_nz_year, ei_max_negative=None) -> ICompanyData:
             year_list = [2019, 2025, 2030, 2035, 2040, 2045, 2050]
             # the last slice(None) gives us all scopes to index against
             bm_ei = asPintDataFrame(EI_df.loc[(sector, region, slice(None)), year_list])
-            breakpoint()
 
             # We set intensities to be the wonky things
-            company_data = gen_company_data(company_name, company_id, region, sector, scope,
+            company_data = gen_company_data(company_name, company_id, region, sector,
                                             base_production,
                                             bm_ei * ei_multiplier + ei_offset,
                                             ei_nz_year, ei_max_negative)
             projected_intensities = company_data.projected_targets
             # We set targets to be the nicely aligned things
             # (which vary due to different sectors/regions/benchmarks)
-            company_data = gen_company_data(company_name, company_id, region, sector, scope,
+            company_data = gen_company_data(company_name, company_id, region, sector,
                                             base_production,
                                             bm_ei,
                                             2051, ei_max_negative)
@@ -83,23 +82,21 @@ class TestEIBenchmarks(unittest.TestCase):
             return company_data
 
         # Company AG is over-budget with its intensity projections, but OECM-aligned with their target projections
-        company_ag = gen_company_variation('Company AG', 'US0079031078', 'North America', 'Electricity Utilities', EScope.S1S2,
+        company_ag = gen_company_variation('Company AG', 'US0079031078', 'North America', 'Electricity Utilities',
                                            Q_(9.9, "TWh"),
                                            self.OECM_EI_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                            ei_nz_year = 2051, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
-        company_ah = gen_company_variation('Company AH', 'US00724F1012', 'North America', 'Electricity Utilities', EScope.S1S2,
+        company_ah = gen_company_variation('Company AH', 'US00724F1012', 'North America', 'Electricity Utilities',
                                            Q_(1.9, "TWh"),
                                            self.OECM_EI_bm._EI_df, 1.5, ei_offset = Q_(0, 'g CO2/kWh'),
                                            ei_nz_year = 2031)
 
-        company_ai = gen_company_variation('Company AI', 'FR0000125338', 'Europe', 'Electricity Utilities', EScope.S1S2,
+        company_ai = gen_company_variation('Company AI', 'FR0000125338', 'Europe', 'Electricity Utilities',
                                            Q_(4.9, "PJ"),
                                            self.OECM_EI_bm._EI_df * 0.8, 1.0, ei_offset = Q_(0, 't CO2/MWh'),
                                            ei_nz_year = 2051)
 
-        breakpoint()
-        
         # print(json.dumps(company_ag.dict(), cls=DequantifyQuantity, indent=2))
 
         # load company data
@@ -123,9 +120,15 @@ class TestEIBenchmarks(unittest.TestCase):
 
     def test_all_benchmarks(self):
         # Calculate Temp Scores
-        temp_score = TemperatureScore(
+        oecm_temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
             scopes=[EScope.S1S2],
+            aggregation_method=PortfolioAggregationMethod.WATS,
+        )
+
+        tpi_temp_score = TemperatureScore(
+            time_frames=[ETimeFrames.LONG],
+            scopes=[EScope.S1],
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
@@ -141,44 +144,44 @@ class TestEIBenchmarks(unittest.TestCase):
         # OECM
         # portfolio data
         portfolio_data = ITR.utils.get_data(self.OECM_warehouse, portfolio)
-        scores = temp_score.calculate(portfolio_data)
-        agg_scores = temp_score.aggregate_scores(scores)
+        scores = oecm_temp_score.calculate(portfolio_data)
+        agg_scores = oecm_temp_score.aggregate_scores(scores)
 
         print(scores[['company_name','company_id', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.78, 1.55, 1.52], dtype='pint[delta_degC]')
+        expected = pd.Series([1.77, 1.55, 1.44], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores.temperature_score, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.61, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.58, ureg.delta_degC), places=2)
 
         # TPI
         # portfolio data
         portfolio_data = ITR.utils.get_data(self.TPI_warehouse, portfolio)
-        scores = temp_score.calculate(portfolio_data)
-        agg_scores = temp_score.aggregate_scores(scores)
+        scores = tpi_temp_score.calculate(portfolio_data)
+        agg_scores = tpi_temp_score.aggregate_scores(scores)
 
         print(scores[['company_name','company_id', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.85, 1.76, 1.76], dtype='pint[delta_degC]')
-        assert_array_equal(scores.temperature_score.values, expected)
+        expected = pd.Series([1.64, 1.41, 1.31], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.79, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.45, ureg.delta_degC), places=2)
 
         # TPI below 2
         # portfolio data
         portfolio_data = ITR.utils.get_data(self.TPI_below_2_warehouse, portfolio)
-        scores = temp_score.calculate(portfolio_data)
-        agg_scores = temp_score.aggregate_scores(scores)
+        scores = tpi_temp_score.calculate(portfolio_data)
+        agg_scores = tpi_temp_score.aggregate_scores(scores)
 
         print(scores[['company_name','company_id', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.65, 1.54, 1.53], dtype='pint[delta_degC]')
-        assert_array_equal(scores.temperature_score.values, expected)
+        expected = pd.Series([1.52, 1.37, 1.58], dtype='pint[delta_degC]')
+        assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.57, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.49, ureg.delta_degC), places=2)
 
 if __name__ == "__main__":
     test = TestEIBenchmarks()

@@ -42,45 +42,62 @@ class DataWarehouse(ABC):
         self.column_config = column_config
         self.company_data = company_data
         self.company_data._calculate_target_projections(benchmark_projected_production)
+        self.company_scope = {}
         
-        # After projections have been made, shift S3 data into S1S2.  If we shift before we project,
-        # then S3 targets will not be projected correctly.
+        if (getattr(benchmarks_projected_ei._EI_benchmarks, 'S1S2')
+            and benchmarks_projected_ei._EI_benchmarks['S1S2'].production_centric):
+            # Production-Centric benchmark: After projections have been made, shift S3 data into S1S2.
+            # If we shift before we project, then S3 targets will not be projected correctly.
+            for c in self.company_data._companies:
+                if c.ghg_s3 and not ITR.isnan(c.ghg_s3.m):
+                    # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
+                    c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
+                    c.ghg_s3 = Q_(0.0, c.ghg_s3.u)
+                if c.historic_data:
+                    if c.historic_data.emissions and c.historic_data.emissions.S3:
+                        c.historic_data.emissions.S1S2 = list( map(IEmissionRealization.add, c.historic_data.emissions.S1S2, c.historic_data.emissions.S3) )
+                        c.historic_data.emissions.S3 = []
+                    if c.historic_data.emissions_intensities and c.historic_data.emissions_intensities.S3:
+                        c.historic_data.emissions_intensities.S1S2 = \
+                            list( map(IEIRealization.add, c.historic_data.emissions_intensities.S1S2, c.historic_data.emissions_intensities.S3) )
+                        c.historic_data.emissions_intensities.S3 = []
+                if c.projected_intensities.S3:
+                    c.projected_intensities.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_intensities.S1S2.projections, c.projected_intensities.S3.projections) )
+                    c.projected_intensities.S3 = None
+                if c.projected_targets.S3:
+                    c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
+                    c.projected_targets.S3 = None
+
+        # Set scope information based on what company reports and what benchmark requres
+        # benchmarks_projected_ei._EI_df makes life a bit easier...
+        missing_company_scopes = []
         for c in self.company_data._companies:
-            if c.ghg_s3 and not ITR.isnan(c.ghg_s3.m):
-                # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
-                c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
-                c.ghg_s3 = Q_(0.0, c.ghg_s3.u)
-            if c.historic_data:
-                if c.historic_data.emissions and c.historic_data.emissions.S3:
-                    c.historic_data.emissions.S1S2 = list( map(IEmissionRealization.add, c.historic_data.emissions.S1S2, c.historic_data.emissions.S3) )
-                    c.historic_data.emissions.S3 = []
-                if c.historic_data.emissions_intensities and c.historic_data.emissions_intensities.S3:
-                    c.historic_data.emissions_intensities.S1S2 = \
-                        list( map(IEIRealization.add, c.historic_data.emissions_intensities.S1S2, c.historic_data.emissions_intensities.S3) )
-                    c.historic_data.emissions_intensities.S3 = []
-            if c.projected_intensities.S3:
-                c.projected_intensities.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_intensities.S1S2.projections, c.projected_intensities.S3.projections) )
-                c.projected_intensities.S3 = None
-            if c.projected_targets.S3:
-                c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
-                c.projected_targets.S3 = None
-            # Set scope information based on what company reports and what benchmark requres
-            c.scope = None
-            for scope in [EScope.S1S2S3, EScope.S1S2, EScope.S1, EScope.S3]:
+            region = c.region
+            try:
+                bm_company_sector_region = benchmarks_projected_ei._EI_df.loc[c.sector, region]
+            except KeyError:
                 try:
-                    if (benchmarks_projected_ei._EI_benchmarks.__getattribute__(scope.name)
-                        and c.projected_intensities.__getattribute__(scope.name)
-                        and c.projected_targets.__getattribute__(scope.name)):
-                        c.scope = scope
-                        break
-                except AttributeError:
-                    pass
-                logger.warning(
-                    f"Preferred scope {scope.value} for benchmark not supported by {c.company_name}'s data (company_id == {c.company_id})")
-            if not c.scope:
-                logger.warning(
-                    f"No scope match between benchmark and {c.company_name}'s reported data (company_id == {c.company_id}; removing company")
-                breakpoint()
+                    region = 'Global'
+                    bm_company_sector_region = benchmarks_projected_ei._EI_df.loc[c.sector, region]
+                except KeyError:
+                    missing_company_scopes.append(c.company_id)
+                    continue
+            scopes = benchmarks_projected_ei._EI_df.loc[c.sector, region].index.tolist()
+            if len(scopes) == 1:
+                self.company_scope[c.company_id] = scopes[0]
+                continue
+            for scope in [EScope.S1S2, EScope.S1, EScope.S3]:
+                if scope in scopes:
+                    self.company_scope[c.company_id] = scope
+                    break
+            if c.company_id not in self.company_scope:
+                missing_company_scopes.append(c.company_id)
+
+        if missing_company_scopes:
+            logger.warning(
+                f"The following companies do not disclose scope data required by benchmark and will be removed: {missing_company_scopes}"
+            )
+            breakpoint()
 
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
@@ -93,8 +110,11 @@ class DataWarehouse(ABC):
         """
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
+        # These scope values will migrate to the ICompanyAggregates at the end
+        df_company_data.insert(4, 'scope', pd.Series(self.company_scope))
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
+        company_info_at_base_year.insert(2, 'scope', pd.Series(self.company_scope))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/128

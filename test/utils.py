@@ -72,10 +72,9 @@ def interpolate_value_at_year(y, bm_ei, ei_nz_year, ei_max_negative):
     return min(nz_interpolation, bm_interpolation)
 
 
-def gen_company_data(company_name, company_id, region, sector, scope, production,
+def gen_company_data(company_name, company_id, region, sector, production,
                      bm_ei_scopes, ei_nz_year=2051, ei_max_negative=None) -> ICompanyData:
-    bm_ei = asPintSeries(bm_ei_scopes.loc[:, :, scope].reset_index().iloc[0, 2:])
-    ei_metric = str(bm_ei.dtype)[5:-1]
+    ei_metric = str(bm_ei_scopes.iloc[0].dtype)[5:-1]
     if ei_max_negative is None:
         ei_max_negative = Quantity(0, ei_metric)
     company_dict = {
@@ -83,43 +82,44 @@ def gen_company_data(company_name, company_id, region, sector, scope, production
         'company_id': company_id,
         'region': region,
         'sector': sector,
-        'scope': scope,
         'base_year_production': production,
     }
-    # Right now we handle only one scope per sector/region/company
-    if scope == EScope.S1S2S3:
-        s1s2_s3_split = random.uniform(0.5,0.9)
-        company_dict['ghg_s1s2'] = (production * bm_ei[2019] * (1-s1s2_s3_split))
-        company_dict['ghg_s3'] = (production * bm_ei[2019] * s1s2_s3_split)
-        company_dict['projected_targets'] = ICompanyEIProjectionsScopes(
-            S1S2=ICompanyEIProjections.parse_obj({
-                'ei_metric': EI_Metric(ei_metric),
-                'projections': [
-                    ICompanyEIProjection.parse_obj({
-                        'year':y,
-                        'value': EI_Quantity(interpolate_value_at_year(y, bm_ei * (1-s1s2_s3_split), ei_nz_year, ei_max_negative)),
-                    }) for y in range(2019, 2051)
-                ]
-            }),
-            S3=ICompanyEIProjections.parse_obj({
-                'ei_metric': EI_Metric(ei_metric),
-                'projections': [
-                    ICompanyEIProjection.parse_obj({
-                        'year':y,
-                        'value': EI_Quantity(interpolate_value_at_year(y, bm_ei * s1s2_s3_split, ei_nz_year, ei_max_negative)),
-                    }) for y in range(2019, 2051)
-                ]
-            })
-        )
-    else:
-        if scope in [EScope.S1, EScope.S1S2]:
-            company_dict['ghg_s1s2'] = (production * bm_ei[2019])
-        elif scope == EScope.S3:
-            company_dict['ghg_s3'] = (production * bm_ei[2019])
+    scopes = bm_ei_scopes.droplevel([0,1]).index.tolist()
+    scope_projections = {}
+    for scope in scopes:
+        bm_ei = asPintSeries(bm_ei_scopes.loc[:, :, scope].reset_index().iloc[0, 2:])
+        if scope == EScope.S1S2S3:
+            if (EScope.S1S2 not in scopes
+                or not bm_ei_scopes.loc[:,:,EScope.S1S2S3].equals(bm_ei_scopes.loc[:,:,EScope.S1S2])):
+                s1s2_s3_split = random.uniform(0.5,0.9)
+                company_dict['ghg_s1s2'] = (production * bm_ei[2019] * (1-s1s2_s3_split))
+                company_dict['ghg_s3'] = (production * bm_ei[2019] * s1s2_s3_split)
+                scope_projections[EScope.S1S2.name] = {
+                    'ei_metric': EI_Metric(ei_metric),
+                    'projections': [
+                        ICompanyEIProjection.parse_obj({
+                            'year':y,
+                            'value': EI_Quantity(interpolate_value_at_year(y, bm_ei * (1-s1s2_s3_split), ei_nz_year, ei_max_negative)),
+                        }) for y in range(2019, 2051)
+                    ]
+                }
+                scope_projections[EScope.S3.name] = {
+                    'ei_metric': EI_Metric(ei_metric),
+                    'projections': [
+                        ICompanyEIProjection.parse_obj({
+                            'year':y,
+                            'value': EI_Quantity(interpolate_value_at_year(y, bm_ei * s1s2_s3_split, ei_nz_year, ei_max_negative)),
+                        }) for y in range(2019, 2051)
+                    ]
+                }
         else:
-            raise ValueError
-        company_dict['projected_targets'] = ICompanyEIProjectionsScopes(
-            **{scope.name:ICompanyEIProjections.parse_obj({
+            if scope in [EScope.S1, EScope.S1S2]:
+                company_dict['ghg_s1s2'] = (production * bm_ei[2019])
+            elif scope == EScope.S3:
+                company_dict['ghg_s3'] = (production * bm_ei[2019])
+            else:
+                raise ValueError
+            scope_projections[scope.name] = {
                 'ei_metric': EI_Metric(ei_metric),
                 'projections': [
                     ICompanyEIProjection.parse_obj({
@@ -127,8 +127,9 @@ def gen_company_data(company_name, company_id, region, sector, scope, production
                         'value': EI_Quantity(interpolate_value_at_year(y, bm_ei, ei_nz_year, ei_max_negative)),
                     }) for y in range(2019, 2051)
                 ]
-            })}
-        )
+            }
+
+    company_dict['projected_targets'] = ICompanyEIProjectionsScopes(**scope_projections)
     
     company_data = ICompanyData.parse_obj(company_dict)
     return company_data
