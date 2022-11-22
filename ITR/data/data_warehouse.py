@@ -8,7 +8,7 @@ from typing import List, Type
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_
+from ITR.data.osc_units import ureg, Q_, asPintSeries
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
@@ -48,11 +48,14 @@ class DataWarehouse(ABC):
             and benchmarks_projected_ei._EI_benchmarks['S1S2'].production_centric):
             # Production-Centric benchmark: After projections have been made, shift S3 data into S1S2.
             # If we shift before we project, then S3 targets will not be projected correctly.
+            logger.info(
+                f"Shifting S3 emissions data into S1 according to Production-Centric benchmark rules"
+            )
             for c in self.company_data._companies:
                 if c.ghg_s3 and not ITR.isnan(c.ghg_s3.m):
                     # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
                     c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
-                    c.ghg_s3 = Q_(0.0, c.ghg_s3.u)
+                    c.ghg_s3 = None # Q_(0.0, c.ghg_s3.u)
                 if c.historic_data:
                     if c.historic_data.emissions and c.historic_data.emissions.S3:
                         c.historic_data.emissions.S1S2 = list( map(IEmissionRealization.add, c.historic_data.emissions.S1S2, c.historic_data.emissions.S3) )
@@ -64,9 +67,11 @@ class DataWarehouse(ABC):
                 if c.projected_intensities.S3:
                     c.projected_intensities.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_intensities.S1S2.projections, c.projected_intensities.S3.projections) )
                     c.projected_intensities.S3 = None
+                    c.projected_intensities.S1S2S3 = None
                 if c.projected_targets.S3:
                     c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
                     c.projected_targets.S3 = None
+                    c.projected_targets.S1S2S3 = None
 
         # Set scope information based on what company reports and what benchmark requres
         # benchmarks_projected_ei._EI_df makes life a bit easier...
@@ -86,7 +91,7 @@ class DataWarehouse(ABC):
             if len(scopes) == 1:
                 self.company_scope[c.company_id] = scopes[0]
                 continue
-            for scope in [EScope.S1S2, EScope.S1, EScope.S3]:
+            for scope in [EScope.S1S2S3, EScope.S1S2, EScope.S1, EScope.S3]:
                 if scope in scopes:
                     self.company_scope[c.company_id] = scope
                     break
@@ -110,11 +115,8 @@ class DataWarehouse(ABC):
         """
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
-        # These scope values will migrate to the ICompanyAggregates at the end
-        df_company_data.insert(4, 'scope', pd.Series(self.company_scope))
 
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
-        company_info_at_base_year.insert(2, 'scope', pd.Series(self.company_scope))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/128
@@ -148,17 +150,23 @@ class DataWarehouse(ABC):
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
+        breakpoint()
         df_budget = self._get_cumulative_emissions(
             projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
-        df_company_data = pd.concat([df_company_data, df_trajectory, df_target, df_budget], axis=1)
-        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
-            pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df_company_data),
+        df_scope_data = pd.concat([df_trajectory, df_target, df_budget], axis=1).dropna(how='any')
+        df = df_company_data.join(df_scope_data.reset_index('scope'))
+        scope = df.scope
+        scope_index = df.columns.get_loc('region')+1
+        df = df.drop('scope', axis=1)
+        df.insert(scope_index, 'scope', scope)
+        df[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
+            pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df),
                       dtype='pint[Gt CO2]',
-                      index=df_company_data.index)
+                      index=df.index)
         # ICompanyAggregates wants this Quantity as a `str`
-        df_company_data[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df_company_data)
-        companies = df_company_data.to_dict(orient="records")
+        df[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df)
+        companies = df.to_dict(orient="records")
         aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
         return aggregate_company_data
 
@@ -191,15 +199,6 @@ class DataWarehouse(ABC):
         :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
         projected_emissions = projected_ei.multiply(projected_production)
-        return projected_emissions.sum(axis=1).astype('pint[Mt CO2]')
-
-        # The following code is broken, due to the way ITR.isnan straps away Quantity from scalars
-        # It was written to rescue data from automotive, but maybe not needed anymore?
-        nan_emissions = projected_emissions.applymap(lambda x: np.nan if ITR.isnan(x) else x)
-        if nan_emissions.isnull().any(axis=0).any():
-            breakpoint()
-        null_idx = nan_emissions.index[nan_emissions.isnull().all(axis=1)]
-        # FIXME: this replaces the quantified NaNs in projected_emissions with straight-up NaNs,
-        # while also converting the remaining emissions to a consistent unit of 'Mt CO2'
-        return pd.concat([nan_emissions.loc[null_idx, nan_emissions.columns[0]],
-                          projected_emissions.loc[projected_emissions.index.difference(null_idx)].sum(axis=1)]).astype('pint[Mt CO2]')
+        na_values = projected_emissions.iloc[:, 0].map(lambda x: ITR.isnan(x.m)).values
+        cumulative_emissions = projected_emissions[~na_values].sum(axis=1).astype('pint[Mt CO2]')
+        return cumulative_emissions

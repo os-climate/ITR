@@ -168,26 +168,21 @@ class TemperatureScore(PortfolioAggregation):
         :param data: The original data set as a pandas data frame
         :return: The data frame, with an updated s1s2s3 temperature score
         """
-        from ITR.utils import umean
+        data[self.c.SCORE_RESULT_TYPE] = pd.Categorical(data[self.c.SCORE_RESULT_TYPE], ordered=True,
+                                                        categories=EScoreResultType.get_result_types())
 
-        # Calculate the GHC--using umean to deal with uncertainties
-        # FIXME: what about median vs. mean?
-        if ITR.HAS_UNCERTAINTIES:
-            company_data = umean(data[
-                [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
-                 self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
-            ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]))
-        else:
-            company_data = data[
-                [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
-                 self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
-            ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE]).mean()
+        idx = data[
+            [self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE, self.c.COLS.GHG_SCOPE12,
+             self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
+        ].groupby([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE])[self.c.SCORE_RESULT_TYPE].transform(max) == data[self.c.SCORE_RESULT_TYPE]
+
+        company_data = data[idx].set_index([self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE])
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             data[self.c.COLS.TEMPERATURE_SCORE] = data.apply(
                 lambda row: self.get_ghc_temperature_score(row, company_data), axis=1
-            )
+            ).astype('pint[delta_degC]')
         return data
 
     def calculate(self, data: Optional[pd.DataFrame] = None,
