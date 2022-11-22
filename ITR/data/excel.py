@@ -327,9 +327,9 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             return None
 
         emissions_scopes = {}
-        for scope in EScope.get_scopes():
+        for scope in EScope.get_result_scopes():
             results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
-            emissions_scopes[scope] = [] \
+            emissions_scopes[scope.name] = [] \
                 if results.empty \
                 else [IEmissionRealization(year=year, value=EmissionsQuantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
@@ -354,9 +354,9 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         intensities = intensities.copy()
         intensity_scopes = {}
 
-        for scope in EScope.get_scopes():
+        for scope in EScope.get_result_scopes():
             results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
-            intensity_scopes[scope] = [] \
+            intensity_scopes[scope.name] = [] \
                 if results.empty \
                 else [IEIRealization(year=year, value=EI_Quantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)

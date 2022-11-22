@@ -153,27 +153,3 @@ def umean(quantified_data):
 
     return wavg
 
-def asPintSeries(series: pd.Series, name=None, errors='ignore') -> pd.Series:
-    if series.dtype != 'O':
-        if errors == 'ignore':
-            return series
-        if name:
-            raise ValueError ("'{name}' not dtype('O')")
-        elif series.name:
-            raise ValueError ("Series '{series.name}' not dtype('O')")
-        else:
-            raise ValueError ("Series not dtype('O')")
-    units = series.map(lambda x: x.u)
-    first_unit = units.iloc[0]
-    if len(set(units.values.tolist()))==1:
-        new_series = series.astype(f"pint[{first_unit}]")
-        return new_series
-    if errors != 'ignore':
-        raise ValueError(f"Element types not homogeneously ({first_unit})")
-    return series
-
-def asPintDataFrame(df: pd.DataFrame, errors='ignore') -> pd.DataFrame:
-    new_df = pd.DataFrame()
-    for col in df.columns:
-        new_df[col] = asPintSeries(df[col], name=col, errors=errors)
-    return new_df

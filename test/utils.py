@@ -5,7 +5,7 @@ import random
 
 import ITR
 from pint import Quantity
-from ITR.utils import asPintSeries
+from ITR.data.osc_units import asPintSeries
 
 from ITR.interfaces import EI_Metric, EI_Quantity, EScope
 from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection
@@ -87,10 +87,21 @@ def gen_company_data(company_name, company_id, region, sector, production,
     scopes = bm_ei_scopes.droplevel([0,1]).index.tolist()
     scope_projections = {}
     for scope in scopes:
-        bm_ei = asPintSeries(bm_ei_scopes.loc[:, :, scope].reset_index().iloc[0, 2:])
+        try:
+            bm_ei = asPintSeries(bm_ei_scopes.loc[sector, region, scope])
+        except KeyError:
+            bm_ei = asPintSeries(bm_ei_scopes.loc[sector, 'Global', scope])
         if scope == EScope.S1S2S3:
-            if (EScope.S1S2 not in scopes
-                or not bm_ei_scopes.loc[:,:,EScope.S1S2S3].equals(bm_ei_scopes.loc[:,:,EScope.S1S2])):
+            if EScope.S1S2 in scopes and EScope.S3 in scopes:
+                # Handled below
+                pass
+            elif EScope.S1S2 in scopes: # and EScope.S3 not in scopes
+                # Compute S3 from S1S2S3 - S1S2
+                company_dict['ghg_s3'] = production * (bm_ei[2019] - bm_ei_scopes.loc[sector, :, EScope.S1S2, 2019].iloc[0])
+            elif EScope.S3 in scopes: # and EScope.S1S2 not in scopes
+                # Compute S1S2 from S1S2S3 - S3
+                company_dict['ghg_s1s2'] = production * (bm_ei[2019] - bm_ei_scopes.loc[sector, :, EScope.S3, 2019].iloc[0])
+            else:
                 s1s2_s3_split = random.uniform(0.5,0.9)
                 company_dict['ghg_s1s2'] = (production * bm_ei[2019] * (1-s1s2_s3_split))
                 company_dict['ghg_s3'] = (production * bm_ei[2019] * s1s2_s3_split)
@@ -112,22 +123,24 @@ def gen_company_data(company_name, company_id, region, sector, production,
                         }) for y in range(2019, 2051)
                     ]
                 }
-        else:
-            if scope in [EScope.S1, EScope.S1S2]:
-                company_dict['ghg_s1s2'] = (production * bm_ei[2019])
-            elif scope == EScope.S3:
-                company_dict['ghg_s3'] = (production * bm_ei[2019])
-            else:
-                raise ValueError
-            scope_projections[scope.name] = {
-                'ei_metric': EI_Metric(ei_metric),
-                'projections': [
-                    ICompanyEIProjection.parse_obj({
-                        'year':y,
-                        'value': EI_Quantity(interpolate_value_at_year(y, bm_ei, ei_nz_year, ei_max_negative)),
-                    }) for y in range(2019, 2051)
-                ]
-            }
+                continue
+
+        if scope == EScope.S1S2 or (scope == EScope.S1 and EScope.S1S2 not in scopes):
+            company_dict['ghg_s1s2'] = (production * bm_ei[2019])
+        elif scope == EScope.S3:
+            company_dict['ghg_s3'] = (production * bm_ei[2019])
+        elif scope == EScope.S1S2S3:
+            pass
+
+        scope_projections[scope.name] = {
+            'ei_metric': EI_Metric(ei_metric),
+            'projections': [
+                ICompanyEIProjection.parse_obj({
+                    'year':y,
+                    'value': EI_Quantity(interpolate_value_at_year(y, bm_ei, ei_nz_year, ei_max_negative)),
+                }) for y in range(2019, 2051)
+            ]
+        }
 
     company_dict['projected_targets'] = ICompanyEIProjectionsScopes(**scope_projections)
     

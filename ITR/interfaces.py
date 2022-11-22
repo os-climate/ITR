@@ -562,6 +562,7 @@ class EScope(SortableEnum):
 
         :return: A list of EScope objects
         """
+        # FIXME: Should this also contain cls.S2 or no?
         return [cls.S1, cls.S1S2, cls.S3, cls.S1S2S3]
 
 
@@ -584,6 +585,14 @@ class EScoreResultType(Enum):
     DEFAULT = "Default"
     TRAJECTORY_ONLY = "Trajectory only"
     COMPLETE = "Complete"
+
+    @classmethod
+    def get_result_types(cls) -> List[str]:
+        """
+        Get a list of all result types, ordered by priority (first << last priority).
+        :return: A list of the EScoreResultType values
+        """
+        return [EScoreResultType.DEFAULT, EScoreResultType.TRAJECTORY_ONLY, EScoreResultType.COMPLETE]
 
 
 class AggregationContribution(PintModel):
@@ -730,7 +739,7 @@ class ICompanyEIProjection(PintModel):
     def add(self, o):
         assert self.year==o.year
         return IEIRealization(year=self.year,
-                              value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
+                              value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
 class ICompanyEIProjections(BaseModel):
