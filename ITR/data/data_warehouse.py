@@ -150,7 +150,6 @@ class DataWarehouse(ABC):
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
-        breakpoint()
         df_budget = self._get_cumulative_emissions(
             projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
