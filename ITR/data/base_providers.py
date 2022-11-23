@@ -148,8 +148,10 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.base_year]
         df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
-        df = df.add(last_ei, axis=0).astype(ei_base.dtype)
-        df = df.loc[zip(company_info_at_base_year.index, company_info_at_base_year.scope)]
+        df = df.add(last_ei, axis=0)
+        idx = pd.Index.intersection(df.index,
+                                    pd.MultiIndex.from_arrays([company_info_at_base_year.index, company_info_at_base_year.scope]))
+        df = df.loc[idx]
         return df
 
     def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
@@ -193,8 +195,23 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         benchmark_projections = self._EI_df
         df = company_sector_region_scope[['sector', 'region', 'scope']]
-        # FIXME: what happens with non-matching regions?
-        company_benchmark_projections = df.merge(benchmark_projections, left_on=['sector', 'region', 'scope'], right_index=True, how='left')
+
+        df = df.merge(benchmark_projections, left_on=['sector','region','scope'], right_index=True, how='left')
+        mask = df.iloc[:, -1].isna()
+        if mask.any():
+            df = df.reset_index()
+            mask = df.iloc[:, -1].isna()
+            benchmark_global = benchmark_projections.loc[:, 'Global', :]
+            df1 = df[mask].iloc[:, 0:4].merge(benchmark_global, left_on=['sector','scope'], right_index=True, how='left')
+            mask1 = df1.iloc[:, -1].isna()
+            df2 = df1[~mask1].copy()
+            df2.region = 'Global'
+            df.loc[df2.index, :] = df2
+            mask2 = df.iloc[:, -1].isna()
+            df3 = df[~mask2]
+            company_benchmark_projections = df3.set_index('company_id')
+        else:
+            company_benchmark_projections = df
         company_benchmark_projections.set_index('scope', append=True, inplace=True)
         return company_benchmark_projections.drop(['sector', 'region'], axis=1)
 
