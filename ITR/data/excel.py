@@ -30,14 +30,14 @@ sector_to_intensity_metric = {'Electricity Utilities': 't CO2/MWh', 'Steel': 't 
 
 # Utils functions:
 
-def convert_dimensionless_benchmark_excel_to_model(df_excel: dict, sheetname: str, column_name_region: str,
-                                                   column_name_sector: str) -> IBenchmarks:
+def convert_dimensionless_benchmark_excel_to_model(df_excel: dict, sheetname: str,
+                                                   column_name_sector: str, column_name_region: str) -> IBenchmarks:
     """
     Converts excel into IBenchmarks
     :param df_excel: dictionary with a pd.DataFrame for each key representing a sheet of an Excel file
     :param sheetname: name of Excel file sheet to convert
-    :param column_name_region: name of region
     :param column_name_sector: name of sector
+    :param column_name_region: name of region
     :return: IBenchmarks instance (list of IBenchmark)
     """
     try:
@@ -46,35 +46,42 @@ def convert_dimensionless_benchmark_excel_to_model(df_excel: dict, sheetname: st
         logger.error(f"Sheet {sheetname} not in benchmark Excel file.")
         raise
 
-    df_ei_bms = df_sheet.reset_index().drop(columns=['index']).set_index(
-        [column_name_region, column_name_sector])
+    df_production = df_sheet.reset_index(drop=True).set_index(
+        [column_name_sector, column_name_region, 'benchmark_metric', 'scope'])
 
     result = []
     # FIXME: More pythonic to convert DF to dict and convert dict to Model
-    for index, row in df_ei_bms.iterrows():
-        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric=BenchmarkMetric('dimensionless'),
+    for index, row in df_production.iterrows():
+        bm = IBenchmark(sector=index[0], region=index[1], benchmark_metric=BenchmarkMetric('dimensionless'),
                         projections_nounits=[UProjection(year=int(k), value=float(v)) for k, v in row.items()])
         result.append(bm)
     return IBenchmarks(benchmarks=result)
 
 
-def convert_intensity_benchmark_excel_to_model(df_excel: pd.DataFrame, sheetname: str, column_name_region: str,
-                                               column_name_sector: str) -> IBenchmarks:
+def convert_benchmarks_ei_excel_to_model(df_excel: pd.DataFrame, sheetname: str,
+                                         column_name_sector: str, column_name_region: str,
+                                         benchmark_temperature,
+                                         benchmark_global_budget,
+                                         is_AFOLU_included) -> IEIBenchmarkScopes:
     """
     Converts excel into IBenchmarks
     :param excal_path: file path to excel
-    :return: IBenchmarks instance (list of IBenchmark)
+    :return: IEIBenchmarkScopes instance
     """
-    df_ei_bms = df_excel[sheetname].reset_index().drop(columns=['index']).set_index(
-        [column_name_region, column_name_sector])
-    result = []
+    df_ei_bms = df_excel[sheetname].reset_index(drop=True).set_index(
+        [column_name_sector, column_name_region, 'benchmark_metric', 'scope'])
+    bm_dict = { scope_name:[] for scope_name in EScope.get_scopes() }
+    bm_dict['benchmark_temperature'] = benchmark_temperature
+    bm_dict['benchmark_global_budget'] = benchmark_global_budget
+    bm_dict['is_AFOLU_included'] = is_AFOLU_included
     # FIXME: More pythonic to convert DF to dict and convert dict to Model
     for index, row in df_ei_bms.iterrows():
-        intensity_units = sector_to_intensity_metric[index[1]]
-        bm = IBenchmark(region=index[0], sector=index[1], benchmark_metric=BenchmarkMetric(intensity_units),
-                        projections=[IProjection(year=int(k), value=Q_(float(v), intensity_units)) for k, v in row.items()])
-        result.append(bm)
-    return IBenchmarks(benchmarks=result)
+        bm = IBenchmark(sector=index[0], region=index[1], benchmark_metric=index[2],
+                        projections=[IProjection(year=int(k), value=Q_(float(v), index[2])) for k, v in row.items()])
+        bm_dict[index[3]].append(bm)
+    for scope_name in EScope.get_scopes():
+        bm_dict[scope_name] = IBenchmarks(benchmarks=bm_dict[scope_name])
+    return IEIBenchmarkScopes(**bm_dict)
 
 
 class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
@@ -87,9 +94,11 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
+        for sheetname, df in self.benchmark_excel.items():
+            self.benchmark_excel[sheetname] = df.fillna(method='ffill')
         self._convert_excel_to_model = convert_dimensionless_benchmark_excel_to_model
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
-                                                      column_config.REGION, column_config.SECTOR)
+                                                      column_config.SECTOR, column_config.REGION)
         super().__init__(
             IProductionBenchmarkScopes(S1S2=production_bms), column_config,
             tempscore_config)
@@ -100,9 +109,10 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         :param scope:
         :return:
         """
-        return self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].set_index(
-            [self.column_config.REGION, self.column_config.SECTOR])
-
+        df = self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].drop(columns='benchmark_metric')
+        df.loc[:, 'scope'] = df.scope.map(lambda x: EScope[x])
+        df.set_index([self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE], inplace=True)
+        return df
 
 class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
     def __init__(self, excel_path: str, benchmark_temperature: quantity('delta_degC'),
@@ -110,16 +120,15 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
-        self._convert_excel_to_model = convert_intensity_benchmark_excel_to_model
-        EI_benchmarks = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
-                                                     column_config.REGION, column_config.SECTOR)
-        super().__init__(
-            IEIBenchmarkScopes(S1S2=EI_benchmarks,
-                               benchmark_temperature=benchmark_temperature,
-                               benchmark_global_budget=benchmark_global_budget,
-                               is_AFOLU_included=is_AFOLU_included),
-            column_config,
-            tempscore_config)
+        for sheetname, df in self.benchmark_excel.items():
+            self.benchmark_excel[sheetname] = df.fillna(method='ffill')
+        self._convert_excel_to_model = convert_benchmarks_ei_excel_to_model
+        ei_bm_scopes = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_EI,
+                                                    column_config.SECTOR, column_config.REGION,
+                                                    benchmark_temperature, benchmark_global_budget, is_AFOLU_included)
+        super().__init__(ei_bm_scopes,
+                         column_config,
+                         tempscore_config)
 
 
 # FIXME: Should we merge with TemplateProviderCompany and just use a different excel input method
@@ -179,7 +188,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             df_historic = company_data[TabsConfig.HISTORIC_DATA].set_index(ColumnsConfig.COMPANY_ID, drop=False)
             df_historic = df_historic.merge(df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].rename('units'), left_index=True, right_index=True)
             df_historic.loc[df_historic.variable == 'Emissions', 'units'] = 't CO2'
-            df_historic.loc[df_historic.variable == 'Emissions Intensities', 'units'] = 't CO2/' + df_historic.loc[df_historic.variable == 'Emissions Intensities', 'units']
+            # If you think the following line of code is ugly, please answer https://stackoverflow.com/q/74555323/1291237
+            df_historic.loc[df_historic.variable == 'Emissions Intensities', 'units'] = df_historic.loc[df_historic.variable == 'Emissions Intensities'].apply(lambda x: f"t CO2/({x.units})", axis=1)
             df_historic = self._get_historic_data(company_ids, df_historic)
         else:
             df_historic = None
@@ -301,9 +311,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             raise ValueError(error_message)
 
         for year in self.historic_years:
-            historic_data[year] = historic_data[year].map(str) + " " + historic_data['units']
+            historic_data[year] = historic_data.apply(lambda x: f"{x[year]} {x.units}", axis=1)
         return historic_data.loc[company_ids]
 
+    # In the following several methods, we implement SCOPE as STRING (used by Excel handlers)
+    # so that the resulting scope dictionary can be used to pass values to named arguments
     def _convert_historic_data(self, historic: pd.DataFrame) -> IHistoricData:
         """
         :param historic: historic production, emission and emission intensity data for a company (already unitized)
@@ -327,9 +339,9 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             return None
 
         emissions_scopes = {}
-        for scope in EScope.get_result_scopes():
-            results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
-            emissions_scopes[scope.name] = [] \
+        for scope_name in EScope.get_scopes():
+            results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope_name]
+            emissions_scopes[scope_name] = [] \
                 if results.empty \
                 else [IEmissionRealization(year=year, value=EmissionsQuantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
@@ -354,9 +366,9 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         intensities = intensities.copy()
         intensity_scopes = {}
 
-        for scope in EScope.get_result_scopes():
-            results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
-            intensity_scopes[scope.name] = [] \
+        for scope_name in EScope.get_scopes():
+            results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope_name]
+            intensity_scopes[scope_name] = [] \
                 if results.empty \
                 else [IEIRealization(year=year, value=EI_Quantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)

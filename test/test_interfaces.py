@@ -22,7 +22,7 @@ class TestInterfaces(unittest.TestCase):
         pass
 
     def test_Escope(self):
-        self.assertEqual(EScope.get_result_scopes(), [EScope.S1S2, EScope.S3, EScope.S1S2S3])
+        self.assertEqual(EScope.get_result_scopes(), [EScope.S1, EScope.S1S2, EScope.S3, EScope.S1S2S3])
 
     def test_ProductionMetric(self):
         x = ProductionMetric('MWh')

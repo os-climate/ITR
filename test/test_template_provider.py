@@ -34,11 +34,12 @@ class TestTemplateProvider(unittest.TestCase):
         self.data_warehouse = DataWarehouse(self.template_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
         self.company_info_at_base_year = pd.DataFrame(
-            [[Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
-             [Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'North America'],
-             [Q_(0.22457393169277, ureg('t CO2/GJ')), Q_(1.22472003e+08, 'MWh'), 'MWh', 'Electricity Utilities', 'Europe']],
-            index=self.company_ids,
-            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC, ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+            [['Electricity Utilities', 'North America', EScope.S1S2, Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh'],
+             ['Electricity Utilities', 'North America', EScope.S1S2, Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh'],
+             ['Electricity Utilities', 'Europe', EScope.S1S2, Q_(0.22457393169277, ureg('t CO2/GJ')), Q_(1.22472003e+08, 'MWh'), 'MWh']],
+            index=pd.Index(self.company_ids, 'company_id'),
+            columns=[ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE,
+                     ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC])
 
     def test_target_projections(self):
         comids = ['US00130H1059', 'US0185223007',
@@ -67,13 +68,14 @@ class TestTemplateProvider(unittest.TestCase):
                 ColumnsConfig.GHG_SCOPE12: [ c.ghg_s1s2 ],
                 ColumnsConfig.SECTOR: [ c.sector ],
                 ColumnsConfig.REGION: [ c.region ],
+                ColumnsConfig.SCOPE: [ EScope.S1S2 ],
             }, index=[0])
             bm_production_data = (self.excel_production_bm.get_company_projected_production(company_sector_region_info,
                                                                                             EScope.S1S2)
                                   # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                   .iloc[0].T
                                   .astype(f'pint[{str(c.base_year_production.units)}]'))
-            projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data).S1S2
+            projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
             print(f"{c.company_name}: {projected_targets}")
         
 
@@ -129,7 +131,7 @@ class TestTemplateProvider(unittest.TestCase):
 
         # verify company scores:
         expected = pd.Series([1.81, 1.87, 2.10, 2.18, 1.95], dtype='pint[delta_degC]')
-        assert_array_equal(scores.temperature_score.values, expected)
+        assert_pint_series_equal(scores.temperature_score.values, expected)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.982, ureg.delta_degC), places=2)
 
@@ -212,20 +214,22 @@ class TestTemplateProvider(unittest.TestCase):
 
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities
-        company_1 = self.data_warehouse.get_preprocessed_company_data(self.company_ids)[0]
-        company_2 = self.data_warehouse.get_preprocessed_company_data(self.company_ids)[2]
+        breakpoint()
+        companies = self.data_warehouse.get_preprocessed_company_data(self.company_ids)
+        company_1 = companies[0]
+        company_2 = companies[1]
         self.assertEqual(company_1.company_name, "AES Corp.")
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(43215000.0+7269200, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(68874000.0, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(247960692.1, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(1773407672.95, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(287877763.61957714, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(1316305990.5630153, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(1441933181.74423, ureg('t CO2')), places=7)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2809084095.106841, ureg('t CO2')), places=7)
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(43215000.0+7269200, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(68874000.0, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(247960692.1, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(1773407672.95, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(287877763.61957714, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(1316305990.5630153, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(1441933181.74423, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2809084095.106841, ureg('t CO2')), places=4)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,

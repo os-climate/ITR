@@ -773,7 +773,7 @@ class IEmissionRealization(PintModel):
     def add(self, o):
         assert self.year==o.year
         return IEmissionRealization(year=self.year,
-                                    value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
+                                    value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
 class IHistoricEmissionsScopes(PintModel):
@@ -791,7 +791,7 @@ class IEIRealization(PintModel):
     def add(self, o):
         assert self.year==o.year
         return IEIRealization(year=self.year,
-                              value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
+                              value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
 class IHistoricEIScopes(PintModel):

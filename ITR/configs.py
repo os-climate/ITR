@@ -143,7 +143,7 @@ class TargetConfig:
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
-    PROJECTED_EI = "projected_ei_in_Wh"
+    PROJECTED_EI = "projected_ei" # really "projected_trajectory"
     PROJECTED_PRODUCTION = "projected_production"
     PROJECTED_TARGET = "projected_target"
     HISTORIC_DATA = "historic_data"
