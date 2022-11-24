@@ -319,10 +319,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 base_year_production = next((p.value for p in c.historic_data.productions if
                                              p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
                 try:
-                    co_cumprod = df_partial_pp.loc[c.sector, c.region]
+                    co_cumprod = df_partial_pp.loc[c.sector, c.region, EScope.S1S2]
                 except KeyError:
                     # FIXME: Should we fix region info upstream when setting up comopany data?
-                    co_cumprod = df_partial_pp.loc["Global", c.sector]
+                    co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.S1S2]
                 # https://github.com/hgrecco/pint-pandas/issues/143
                 co_cumprod = pd.Series(PA_(co_cumprod.values * base_year_production, dtype=str(base_year_production.u)),
                                        index=co_cumprod.index,

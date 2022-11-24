@@ -1,9 +1,8 @@
 import os
 import unittest
 import pandas as pd
-from numpy.testing import assert_array_equal
-import ITR
 
+import ITR
 from ITR.data.excel import ExcelProviderCompany, ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
@@ -168,7 +167,7 @@ class TestExcelProvider(unittest.TestCase):
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
     def test_get_projected_production(self):
-        expected_data_2025 = pd.Series([265004610.697241008, 1514111502.05006719, 309608970.229243457],
+        expected_data_2025 = pd.Series([122891226.4644476, 702142574.05294633, 146787786.599656552],
                                        index=self.company_ids,
                                        name=2025,
                                        dtype='pint[MWh]').astype('object')
@@ -176,10 +175,8 @@ class TestExcelProvider(unittest.TestCase):
         assert_pint_series_equal(self, production, expected_data_2025, places=4)
 
     def test_get_cumulative_value(self):
-        projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]],
-                                          dtype='pint[t CO2/GJ]')
-        projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]],
-                                            dtype='pint[GJ]')
+        projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype='pint[t CO2/GJ]')
+        projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]], dtype='pint[GJ]')
         expected_data = pd.Series([10.0, 50.0], dtype='pint[t CO2]')
         emissions = self.excel_provider._get_cumulative_emissions(projected_ei=projected_emission,
                                                                   projected_production=projected_production)
@@ -196,12 +193,12 @@ class TestExcelProvider(unittest.TestCase):
         self.assertEqual(company_2.company_id, "US00724F1012")
         self.assertAlmostEqual(company_1.ghg_s1s2, Q_(640.885111270135, 'Mt CO2'), places=4)
         self.assertAlmostEqual(company_2.ghg_s1s2, Q_(1027.6039725941699, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(3027.50972, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(17297.7643, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(33509.7903, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(52676.0959, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(33230.3608, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(78918.0284, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(31.7335215, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(181.310393, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(17336.3993, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(27182.4712, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17216.9854, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40328.2147, 'Mt CO2'), places=4)
 
     def test_get_value(self):
         expected_data = pd.Series([20248547997.0,
@@ -209,9 +206,10 @@ class TestExcelProvider(unittest.TestCase):
                                    10283015132.0],
                                   index=pd.Index(self.company_ids, name='company_id'),
                                   name='company_revenue')
-        pd.testing.assert_series_equal(self.excel_company_data.get_value(company_ids=self.company_ids,
-                                                                         variable_name=ColumnsConfig.COMPANY_REVENUE),
-                                       expected_data)
+        pd.testing.assert_series_equal(
+            self.excel_company_data.get_value(company_ids=self.company_ids,
+                                              variable_name=ColumnsConfig.COMPANY_REVENUE),
+            expected_data)
 
 
 if __name__ == "__main__":
