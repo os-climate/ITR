@@ -701,7 +701,7 @@ class IEmissionRealization(BaseModel):
     def add(self, o):
         assert self.year==o.year
         return IEmissionRealization(year=self.year,
-                                    value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
+                                    value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
 class IHistoricEmissionsScopes(BaseModel):
@@ -709,7 +709,7 @@ class IHistoricEmissionsScopes(BaseModel):
     S2: List[IEmissionRealization]
     S1S2: List[IEmissionRealization]
     S3: List[IEmissionRealization]
-    S1S2S3: Optional[List[IEmissionRealization]]
+    S1S2S3: List[IEmissionRealization]
 
 
 class IEIRealization(BaseModel):
@@ -719,7 +719,7 @@ class IEIRealization(BaseModel):
     def add(self, o):
         assert self.year==o.year
         return IEIRealization(year=self.year,
-                              value = self.value + 0 if ITR.isnan(o.value.m) else o.value)
+                              value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
 class IHistoricEIScopes(BaseModel):
@@ -727,7 +727,7 @@ class IHistoricEIScopes(BaseModel):
     S2: List[IEIRealization]
     S1S2: List[IEIRealization]
     S3: List[IEIRealization]
-    S1S2S3: Optional[List[IEIRealization]]
+    S1S2S3: List[IEIRealization]
 
 
 class IHistoricData(BaseModel):

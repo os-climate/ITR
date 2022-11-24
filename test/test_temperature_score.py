@@ -26,6 +26,8 @@ class TestTemperatureScore(unittest.TestCase):
                                              "data_test_temperature_score.csv"), sep=";")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
+            df['scope'] = EScope.S1S2
+            # df.loc[df.company_name.eq("Company AA"), 'scope'] = EScope.S1S2S3
             df['ghg_s1s2'] = df['ghg_s1s2'].astype('pint[t CO2]')
             df['ghg_s3'] = df['ghg_s3'].astype('pint[t CO2]')
             for cumulative in ['cumulative_budget', 'cumulative_target', 'cumulative_trajectory']:
@@ -53,8 +55,8 @@ class TestTemperatureScore(unittest.TestCase):
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company AA") &
                                    (scores["time_frame"] == ETimeFrames.LONG) &
-                                   (scores["scope"] == EScope.S1S2S3)
-                                   ]["temperature_score"].iloc[0], Q_(1.79, ureg.delta_degC), places=5,
+                                   (scores["scope"] == EScope.S1S2)
+                                   ]["temperature_score"].iloc[0], Q_(1.79, ureg.delta_degC), places=2,
                                msg="The aggregated fallback temp score was incorrect")
 
     def test_temp_score_overwrite_tcre(self) -> None:
@@ -78,8 +80,8 @@ class TestTemperatureScore(unittest.TestCase):
         self.assertAlmostEqual(scores[
                                    (scores["company_name"] == "Company AA") &
                                    (scores["time_frame"] == ETimeFrames.LONG) &
-                                   (scores["scope"] == EScope.S1S2S3)
-                                   ]["temperature_score"].iloc[0], Q_(1.63, ureg.delta_degC), places=5,
+                                   (scores["scope"] == EScope.S1S2)
+                                   ]["temperature_score"].iloc[0], Q_(1.63, ureg.delta_degC), places=2,
                                msg="The aggregated fallback temp score was incorrect")
 
     def test_portfolio_aggregations(self):

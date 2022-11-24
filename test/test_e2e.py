@@ -99,7 +99,8 @@ class EndToEndTest(unittest.TestCase):
                         }
                     ]
                 }
-            })
+            }),
+            scope=EScope.S1S2
         )
 
         # pf

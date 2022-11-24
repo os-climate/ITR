@@ -134,7 +134,8 @@ class DataWarehouse(ABC):
             year = x.index[0]
             x_val = x[year]
             if ITR.isnan(x_val.m):
-                historic_ei_dict = { d['year']:d['value'] for d in df_company_data.loc[x.name].historic_data['emissions_intensities']['S1S2']}
+                df = df_company_data.loc[x.name[0]]
+                historic_ei_dict = { d['year']:d['value'] for d in df.historic_data['emissions_intensities']['S1S2']}
                 if not historic_ei_dict or year not in historic_ei_dict:
                     # We don't have a historic value, so leave as NaN
                     return x_val

@@ -550,7 +550,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         get the historic data for list of companies
         :param company_ids: list of company ids
-        :param historic_data: Dataframe Productions, Emissions, and Emission Intensities mixed together
+        :param historic_data: Dataframe Productions, Emissions, and Emissions Intensities mixed together
         :return: historic data with unit attributes added on a per-element basis
         """
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
@@ -563,6 +563,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             historic_data[year] = historic_data[year].map(str) + " " + historic_data['units']
         return historic_data.loc[company_ids]
 
+    # In the following several methods, we implement SCOPE as STRING (used by Excel handlers)
+    # so that the resulting scope dictionary can be used to pass values to named arguments
     def _convert_historic_data(self, historic: pd.DataFrame) -> IHistoricData:
         """
         :param historic: historic production, emission and emission intensity data for a company (already unitized)
@@ -587,9 +589,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             return None
 
         emissions_scopes = {}
-        for scope in EScope.get_result_scopes():
-            results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope]
-            emissions_scopes[scope.name] = [] \
+        for scope_name in EScope.get_scopes():
+            results = emissions.loc[emissions[ColumnsConfig.SCOPE] == scope_name]
+            emissions_scopes[scope_name] = [] \
                 if results.empty \
                 else [IEmissionRealization(year=year, value=EmissionsQuantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEmissionsScopes(**emissions_scopes)
@@ -614,9 +616,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         intensities = intensities.copy()
         intensity_scopes = {}
 
-        for scope in EScope.get_result_scopes():
-            results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope]
-            intensity_scopes[scope.name] = [] \
+        for scope_name in EScope.get_scopes():
+            results = intensities.loc[intensities[ColumnsConfig.SCOPE] == scope_name]
+            intensity_scopes[scope_name] = [] \
                 if results.empty \
                 else [IEIRealization(year=year, value=EI_Quantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)

@@ -25,7 +25,7 @@ class TestBaseProvider(unittest.TestCase):
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
-        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_PC.json")
+        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_S3.json")
 
         # load company data
         with open(self.company_json) as json_file:
@@ -59,15 +59,16 @@ class TestBaseProvider(unittest.TestCase):
                             "US00724F1012",
                             "FR0000125338"]
         self.company_info_at_base_year = pd.DataFrame(
-            [[Q_(1.6982474347547, 't CO2/MWh'), Q_(1.04827859e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
-              'North America'],
-             [Q_(0.476586931582279, 't CO2/MWh'), Q_(5.98937002e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
-              'North America'],
-             [Q_(0.22457393169277, 't CO2/GJ'), Q_(1.22472003e+08, 'GJ'), {'units': 'GJ'}, 'Electricity Utilities',
-              'Europe']],
-            index=self.company_ids,
-            columns=[ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC,
-                     ColumnsConfig.SECTOR, ColumnsConfig.REGION])
+            [['Electricity Utilities', 'North America', EScope.S1S2,
+              Q_(1.6982474347547, 't CO2/MWh'), Q_(1.04827859e+08, 'MWh'), 'MWh'],
+             ['Electricity Utilities', 'North America', EScope.S1S2,
+              Q_(0.476586931582279, 't CO2/MWh'), Q_(5.98937002e+08, 'MWh'), 'MWh'],
+             ['Electricity Utilities', 'Europe', EScope.S1S2,
+             Q_(0.22457393169277, 't CO2/GJ'), Q_(1.22472003e+08, 'GJ'), 'GJ']],
+            index=pd.Index(self.company_ids, name='company_id'),
+            columns=[ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE,
+                     ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC])
+
 
     def test_temp_score_from_json_data(self):
         return
@@ -157,16 +158,17 @@ class TestBaseProvider(unittest.TestCase):
         assert_pint_series_equal(self, cumulative_emissions, expected_data)
 
     def test_get_company_data(self):
-        company_1 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[0]
-        company_2 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[1]
+        companies = self.base_warehouse.get_preprocessed_company_data(self.company_ids)
+        company_1 = companies[0]
+        company_2 = companies[1]
         self.assertEqual(company_1.company_name, "Company AG")
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
         self.assertAlmostEqual(company_1.ghg_s1s2, Q_(640.885111270135, 'Mt CO2'))
         self.assertAlmostEqual(company_2.ghg_s1s2, Q_(1027.6039725941746, 'Mt CO2'))
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(1243.12627215, 'Mt CO2'))
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(7102.6379066, 'Mt CO2'))
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(31.5853822, 'Mt CO2'))
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(180.4639946, 'Mt CO2'))
         self.assertAlmostEqual(company_1.cumulative_target, Q_(17342.428074012, 'Mt CO2'))
         self.assertAlmostEqual(company_2.cumulative_target, Q_(27191.86385207, 'Mt CO2'))
         self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17222.95745575, 'Mt CO2'))
