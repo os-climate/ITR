@@ -145,9 +145,12 @@ class DataWarehouse(ABC):
 
         projected_targets = self.company_data.get_company_projected_targets(company_ids)
         # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
-        projected_targets[projected_targets.columns[0]] = (
-            projected_targets[[projected_targets.columns[0]]].apply(fix_ragged_projected_targets, axis=1)
-            )
+        try:
+            projected_targets[projected_targets.columns[0]] = (
+                projected_targets[[projected_targets.columns[0]]].apply(fix_ragged_projected_targets, axis=1)
+                )
+        except IndexError:
+            breakpoint()
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
