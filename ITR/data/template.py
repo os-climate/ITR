@@ -426,6 +426,40 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # df_historic now ready for conversion to model for each company
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
+        def get_scoped_df(df, mask, names=None):
+            return df.loc[mask[mask].index].set_index(names)
+
+        df = df_historic_data.reset_index()
+        index_names = ['company_id', 'variable']
+        mask_nonprod = df.variable.ne('Productions')
+        mask_s1 = df[mask_nonprod].scope.eq('S1')
+        mask_s2 = df[mask_nonprod].scope.eq('S2')
+        mask_s1s2 = df[mask_nonprod].scope.eq('S1S2')
+        mask_s3 = df[mask_nonprod].scope.eq('S3')
+        mask_s1s2s3 = df[mask_nonprod].scope.eq('S1S2S3')
+
+        tmp_s1s2 = df.loc[mask_s1s2[mask_s1s2].index, (df.columns[3:])].apply(lambda x: all([np.isnan(y.m) for y in x]), axis=1)
+        idx_s1s2 = df.loc[tmp_s1s2[tmp_s1s2].index].index
+        df_s1 = get_scoped_df(df, mask_s1, index_names)
+        df_s2 = get_scoped_df(df, mask_s2, index_names)
+        midx_s1s2 = pd.MultiIndex.from_tuples(zip(df.loc[idx_s1s2].company_id, df.loc[idx_s1s2].variable),
+                                              names=index_names)
+        df.loc[idx_s1s2, self.historic_years] = (df_s1.loc[midx_s1s2, self.historic_years]
+                                                 .add(df_s2.loc[midx_s1s2, self.historic_years])
+                                                 .set_axis(idx_s1s2))
+        
+        tmp_s1s2s3 = df.loc[mask_s1s2s3[mask_s1s2s3].index, (df.columns[3:])].apply(lambda x: all([np.isnan(y.m) for y in x]), axis=1)
+        idx_s1s2s3 = df.loc[tmp_s1s2s3[tmp_s1s2s3].index].index
+        df_s1s2 = get_scoped_df(df, mask_s1s2, index_names)
+        df_s3 = get_scoped_df(df, mask_s3, index_names)
+        midx_s1s2s3 = pd.MultiIndex.from_tuples(zip(df.loc[idx_s1s2s3].company_id, df.loc[idx_s1s2s3].variable),
+                                                names=index_names)
+        df.loc[idx_s1s2s3, self.historic_years] = (df_s1s2.loc[midx_s1s2s3, self.historic_years]
+                                                   .add(df_s3.loc[midx_s1s2s3, self.historic_years])
+                                                   .set_axis(idx_s1s2s3))
+
+        df_historic_data = df.set_index(['company_id', 'variable', 'scope'])
+        
         test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
         try:
             df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()

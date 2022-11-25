@@ -130,27 +130,20 @@ class DataWarehouse(ABC):
             projected_ei=projected_trajectories,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
 
-        def fix_ragged_projected_targets(x):
-            year = x.index[0]
-            x_val = x[year]
-            if ITR.isnan(x_val.m):
-                df = df_company_data.loc[x.name[0]]
-                historic_ei_dict = { d['year']:d['value'] for d in df.historic_data['emissions_intensities']['S1S2']}
-                if not historic_ei_dict or year not in historic_ei_dict:
-                    # We don't have a historic value, so leave as NaN
-                    return x_val
-                return historic_ei_dict[year]
-            else:
-                return x_val
-
         projected_targets = self.company_data.get_company_projected_targets(company_ids)
         # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
-        try:
-            projected_targets[projected_targets.columns[0]] = (
-                projected_targets[[projected_targets.columns[0]]].apply(fix_ragged_projected_targets, axis=1)
-                )
-        except IndexError:
-            breakpoint()
+        for col, year_data in projected_targets.items():
+            mask = year_data.isna()
+            if mask.any():
+                projected_targets.loc[mask, col] = projected_trajectories.loc[mask, col]
+            else:
+                break
+
+        # Fill in target projections so that we compute cumulative emissions consistently for targets and trajectories
+        projected_targets = pd.concat([projected_trajectories.loc[projected_targets.index,
+                                                                  projected_trajectories.columns.difference(projected_targets.columns)],
+                                       projected_targets], axis=1)
+
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
@@ -202,6 +195,9 @@ class DataWarehouse(ABC):
         :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
         projected_emissions = projected_ei.multiply(projected_production)
-        na_values = projected_emissions.iloc[:, 0].map(lambda x: ITR.isnan(x.m)).values
+        try:
+            na_values = projected_emissions.iloc[:, 0].map(lambda x: ITR.isnan(x.m)).values
+        except AttributeError:
+            breakpoint()
         cumulative_emissions = projected_emissions[~na_values].sum(axis=1).astype('pint[Mt CO2]')
         return cumulative_emissions

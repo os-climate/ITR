@@ -107,9 +107,17 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
               .set_index(['company_id', 'scope']))
         # We drop the meaningless S1S2 from the production benchmark and replace it with the company's scope.
         # This is needed to make indexes align when we go to multiply production times intensity for a scope.
-        company_benchmark_projections = df.merge(benchmark_projection.droplevel('scope'), left_on=['sector', 'region'], right_index=True, how='left')
-        # FIXME: what happens with non-matching regions?
-        return company_benchmark_projections.drop(['sector', 'region'], axis=1)
+        company_benchmark_projections = df.merge(benchmark_projection.droplevel('scope'),
+                                                 left_on=['sector', 'region'], right_index=True, how='left')
+        mask = company_benchmark_projections.iloc[:, -1].isna()
+        if mask.any():
+            # Patch up unknown regions as "Global"
+            global_benchmark_projections = df[mask].merge(benchmark_projection.loc[(slice(None), 'Global'), :].droplevel(['region','scope']),
+                                                          left_on=['sector'], right_index=True, how='left').drop(columns='region')
+            combined_benchmark_projections = pd.concat([company_benchmark_projections[~mask].drop(columns='region'),
+                                                        global_benchmark_projections])
+            return combined_benchmark_projections.drop(columns='sector')
+        return company_benchmark_projections.drop(columns=['sector', 'region'])
 
 
 class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
@@ -376,9 +384,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE,
         ColumnsConfig.GHG_SCOPE12, ColumnsConfig.GHG_SCOPE3
         
-        Note that BASE_EI is a combined S1S2 and S3 intensity metric (if S3 EI is available)
+        The BASE_EI column is for the scope in the SCOPE column.
         """
         # FIXME: this is an expensive operation as it converts many fields in the model just to get a small subset of the DataFrame
+        # FIXME: this creates an untidy data mess.  GHG_SCOPE12 and GHG_SCOPE3 are anachronisms.
         df_fundamentals = self.get_company_fundamentals(company_ids)
         base_year = self.temp_config.CONTROLS_CONFIG.base_year
         company_info = df_fundamentals.loc[
@@ -547,10 +556,10 @@ class EITrajectoryProjector(object):
                         except KeyError:
                             this_missing_data.append(f"{company.company_id} - {scope.name}")
                 elif scope == EScope.S1S2S3:  # Implement when S3 data is available
-                    breakpoint()
+                    # breakpoint()
                     pass
                 elif scope == EScope.S3:  # Remove when S3 data is available - will be handled by 'else'
-                    breakpoint()
+                    # breakpoint()
                     pass
                 else:  # S1 and S2 cannot be computed from other EIs, so use emissions and productions
                     try:
@@ -766,7 +775,7 @@ class EITargetProjector(object):
         targets, historic_data, projected_intensities = company.target_data, company.historic_data, company.projected_intensities
         ei_projection_scopes = {'S1': None, 'S2': None, 'S1S2': None, 'S3': None, 'S1S2S3': None}
         for scope_name in ei_projection_scopes.keys():
-            scope_targets = [target for target in targets if target.target_scope == scope_name]
+            scope_targets = [target for target in targets if target.target_scope.name == scope_name]
             if not scope_targets:
                 continue
             netzero_year = max([t.netzero_year for t in scope_targets if t.netzero_year] + [0])
