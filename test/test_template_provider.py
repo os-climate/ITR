@@ -1,10 +1,8 @@
 import os
 import unittest
-
 import pandas as pd
 
 import ITR
-from numpy.testing import assert_array_equal
 from ITR.data.base_providers import EITargetProjector
 from ITR.data.excel import ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
@@ -26,18 +24,23 @@ class TestTemplateProvider(unittest.TestCase):
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_data_path = os.path.join(self.root, "inputs", "20220215 ITR Tool Sample Data.xlsx")
-        self.sector_data_path = os.path.join(self.root, "inputs", "OECM_EI_and_production_benchmarks.xlsx")
+        self.sector_data_path = os.path.join(self.root, "inputs", "benchmark_OECM_S3.xlsx")
         self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=Q_(1.5, ureg.delta_degC),
-                                                           benchmark_global_budget=Q_(396, ureg('Gt CO2')), is_AFOLU_included=False)
+        self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path,
+                                                           benchmark_temperature=Q_(1.5, ureg.delta_degC),
+                                                           benchmark_global_budget=Q_(396, ureg('Gt CO2')),
+                                                           is_AFOLU_included=False)
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         self.data_warehouse = DataWarehouse(self.template_company_data, self.excel_production_bm, self.excel_EI_bm)
         self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
         self.company_info_at_base_year = pd.DataFrame(
-            [['Electricity Utilities', 'North America', EScope.S1S2, Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh'],
-             ['Electricity Utilities', 'North America', EScope.S1S2, Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh'],
-             ['Electricity Utilities', 'Europe', EScope.S1S2, Q_(0.22457393169277, ureg('t CO2/GJ')), Q_(1.22472003e+08, 'MWh'), 'MWh']],
-            index=pd.Index(self.company_ids, 'company_id'),
+            [['Electricity Utilities', 'North America', EScope.S1S2,
+              Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh'],
+             ['Electricity Utilities', 'North America', EScope.S1S2,
+              Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh'],
+             ['Electricity Utilities', 'Europe', EScope.S1S2,
+              Q_(0.22457393169277, ureg('t CO2/GJ')), Q_(1.22472003e+08, 'MWh'), 'MWh']],
+            index=pd.Index(self.company_ids, name='company_id'),
             columns=[ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE,
                      ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC])
 
@@ -63,20 +66,17 @@ class TestTemplateProvider(unittest.TestCase):
         company_data = self.template_company_data.get_company_data(comids)
         for c in company_data:
             company_sector_region_info = pd.DataFrame({
-                ColumnsConfig.COMPANY_ID: [ c.company_id ],
                 ColumnsConfig.BASE_YEAR_PRODUCTION: [ c.base_year_production ],
                 ColumnsConfig.GHG_SCOPE12: [ c.ghg_s1s2 ],
                 ColumnsConfig.SECTOR: [ c.sector ],
                 ColumnsConfig.REGION: [ c.region ],
                 ColumnsConfig.SCOPE: [ EScope.S1S2 ],
-            }, index=[0])
-            bm_production_data = (self.excel_production_bm.get_company_projected_production(company_sector_region_info,
-                                                                                            EScope.S1S2)
+            }, pd.Index([ c.company_id ], name='company_id'))
+            bm_production_data = (self.excel_production_bm.get_company_projected_production(company_sector_region_info)
                                   # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                                   .iloc[0].T
                                   .astype(f'pint[{str(c.base_year_production.units)}]'))
             projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
-            print(f"{c.company_name}: {projected_targets}")
         
 
     def test_temp_score(self):
@@ -95,16 +95,17 @@ class TestTemplateProvider(unittest.TestCase):
         amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
 
-    def _test_temp_score_from_excel_data(self):
+    def test_temp_score_from_excel_data(self):
         """
-        DISABLED
         When running all tests in the /test directory, this test fails. When running all tests in
         test_template_provider.py, it passes. Indicates a state is saved somewhere(?). TODO: fix test.
         To enable test again, remove the leading '_' of the function name.  
         """
         excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=Q_(1.5, ureg.delta_degC),
-                                                       benchmark_global_budget=Q_(396, ureg('Gt CO2')), is_AFOLU_included=False)
+        excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path,
+                                                      benchmark_temperature=Q_(1.5, ureg.delta_degC),
+                                                      benchmark_global_budget=Q_(396, ureg('Gt CO2')),
+                                                      is_AFOLU_included=False)
         template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         data_warehouse = DataWarehouse(template_company_data, excel_production_bm, excel_EI_bm)
         comids = ['US00130H1059', 'US0185223007', 'US0188021085', 'US0236081024', 'US0255371017']
@@ -126,34 +127,36 @@ class TestTemplateProvider(unittest.TestCase):
             ))
         # portfolio data
         portfolio_data = ITR.utils.get_data(data_warehouse, portfolio)
+        breakpoint()
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
         expected = pd.Series([1.81, 1.87, 2.10, 2.18, 1.95], dtype='pint[delta_degC]')
-        assert_pint_series_equal(scores.temperature_score.values, expected)
+        assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.982, ureg.delta_degC), places=2)
 
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
         expected_data = pd.DataFrame([pd.Series(
-            [ 736.5611630584306, 670.6945556381868, 652.0241794830396, 633.9609621586619, 616.4851589184714,
-              599.577667113139, 583.2200053096483, 567.3942930894011, 552.0832315032865, 537.2700841623491,
-              522.9386589433873, 509.0732902894834, 495.6588220861187, 482.68059109415606, 470.12441092158,
-              457.9765565164745, 446.22374916428697, 434.85314197298084, 423.8523058302087, 413.2092158171572,
-              402.9122380642123, 392.9501170340772, 383.3119632184416, 373.9872412347546, 364.96575831008926,
-              356.23765313951037, 347.79338510676763, 339.62372385553056, 331.7197391997657, 324.07279136222746,
-              316.67452153039267, 309.51684271951467 ], name='US0079031078', dtype='pint[t CO2/GWh]'),
+            [ 605.169493, 574.121512, 555.451136, 537.387918, 519.912115,
+              503.004623, 486.646961, 470.821249, 455.510188, 440.697040,
+              426.365615, 412.500246, 399.085778, 386.107547, 373.551367,
+              361.403513, 349.650705, 338.280098, 327.279262, 316.636172,
+              306.339194, 296.377073, 286.738919, 277.414197, 268.392714,
+              259.664609, 251.220341, 243.050680, 235.146695, 227.499747,
+              220.101478, 212.943799, ],
+            name='US0079031078', dtype='pint[t CO2/GWh]'),
                                       pd.Series(
             [2.1951083625828733, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
-             2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0], name='KR7005490008',
-                                          dtype='pint[t CO2/(t Steel)]')],
-                                     index=company_ids)
+             2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0],
+            name='KR7005490008', dtype='pint[t CO2/(t Steel)]')],
+                                     index=pd.Index(company_ids, name='company_id'))
         expected_data.columns = range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                       TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)
         trajectories = self.template_company_data.get_company_projected_trajectories(company_ids)
-        assert_pint_frame_equal(self, trajectories, expected_data)
+        assert_pint_frame_equal(self, trajectories.loc[(slice(None), EScope.S1S2), :], expected_data, places=2)
 
     def test_get_benchmark(self):
         # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific
@@ -196,13 +199,12 @@ class TestTemplateProvider(unittest.TestCase):
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
     def test_get_projected_production(self):
-        expected_data_2025 = pd.Series([106866369.91163988, 610584093.0081439, 128474170.5748834],
+        expected_data_2025 = pd.Series([122891226.4644476, 702142574.05294633, 146787786.599656552],
                                        index=self.company_ids,
                                        name=2025,
                                        dtype='pint[MWh]').astype('object')
-        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year,
-                                                                               EScope.S1S2)[2025]
-        assert_pint_series_equal(self, production, expected_data_2025)
+        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        assert_pint_series_equal(self, production, expected_data_2025, places=4)
 
     def test_get_cumulative_value(self):
         projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype='pint[t CO2/GJ]')
@@ -237,9 +239,10 @@ class TestTemplateProvider(unittest.TestCase):
                                    55955872344.1],
                                   index=pd.Index(self.company_ids, name='company_id'),
                                   name='company_revenue')
-        pd.testing.assert_series_equal(self.template_company_data.get_value(company_ids=self.company_ids,
-                                                                            variable_name=ColumnsConfig.COMPANY_REVENUE),
-                                       expected_data)
+        pd.testing.assert_series_equal(
+            self.template_company_data.get_value(company_ids=self.company_ids,
+                                                 variable_name=ColumnsConfig.COMPANY_REVENUE),
+            expected_data)
 
 
 if __name__ == "__main__":
