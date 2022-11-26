@@ -139,11 +139,6 @@ class DataWarehouse(ABC):
             else:
                 break
 
-        # Fill in target projections so that we compute cumulative emissions consistently for targets and trajectories
-        projected_targets = pd.concat([projected_trajectories.loc[projected_targets.index,
-                                                                  projected_trajectories.columns.difference(projected_targets.columns)],
-                                       projected_targets], axis=1)
-
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TARGET)
@@ -152,16 +147,12 @@ class DataWarehouse(ABC):
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
         df_scope_data = pd.concat([df_trajectory, df_target, df_budget], axis=1)
         df = df_company_data.join(df_scope_data.reset_index('scope'))
-        scope = df.scope
-        invalid_scope_mask = scope.isna()
+        invalid_scope_mask = df.scope.isna()
         if invalid_scope_mask.any():
             logger.error(
-                f"dropping companies with invalid scope data: {scope[invalid_scope_mask].index.to_list()}"
+                f"dropping companies with invalid scope data: {df.scope[invalid_scope_mask].index.to_list()}"
             )
-            df = df[~invalid_scope_mask]
-        scope_index = df.columns.get_loc('region')+1
-        df = df.drop('scope', axis=1)
-        df.insert(scope_index, 'scope', scope)
+            df = df[~invalid_scope_mask].copy()
         df[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
             pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df),
                       dtype='pint[Gt CO2]',

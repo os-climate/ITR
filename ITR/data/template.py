@@ -406,13 +406,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
+                .drop(columns='submetric')
             )
-            best_em = best_em.drop(columns='submetric')
             em_all_nan = best_em.apply(lambda x: x.map(lambda y: ITR.isnan(y.m)).all(), axis=1)
             missing_em = best_em[em_all_nan]
             if len(missing_em):
                 logger.warning(f"Emissions data missing for {missing_em.index}") 
-            best_em = best_em[~em_all_nan]
+                best_em = best_em[~em_all_nan].copy()
             best_em[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
             df3 = pd.concat([best_prod, best_em]).reset_index(level='metric').rename(columns={'metric':'scope'}).set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)
             # XS is how we match labels in indexes.  Here 'variable' is level=2, (company_name=0, company_id=1)

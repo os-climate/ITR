@@ -9,7 +9,7 @@ from typing import List, Type, Dict
 import logging
 
 import ITR
-from ITR.data.osc_units import Q_, PA_
+from ITR.data.osc_units import Q_, PA_, asPintSeries
 
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, LoggingConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
@@ -578,6 +578,9 @@ class EITrajectoryProjector(object):
 
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
+            if company.company_id not in extrapolations.index.get_level_values(0):
+                # There's no extrapolation to add...
+                continue
             scope_projections = {}
             scope_dfs = {}
             scope_names = EScope.get_scopes()
@@ -586,8 +589,9 @@ class EITrajectoryProjector(object):
                     scope_projections[scope_name] = None
                     continue
                 results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, EScope[scope_name])]
+                results = asPintSeries(results)
                 units = f"{results.values[0].u:~P}"
-                scope_dfs[scope_name] = results.astype(f"pint[{units}]")
+                scope_dfs[scope_name] = results
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections[scope_name] = ICompanyEIProjections(ei_metric=units, projections=projections)
@@ -609,7 +613,8 @@ class EITrajectoryProjector(object):
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
         # When columns are years and rows are all different intensity types, we cannot winsorize
         # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
-        intensities = intensities.T
+        na_intensities = intensities.apply(lambda x: x.isna().all(), axis=1)
+        intensities = intensities[~na_intensities].T
         if ITR.HAS_UNCERTAINTIES:
             for col in intensities.columns:
                 pa = PA_._from_sequence(intensities[col])
@@ -638,12 +643,13 @@ class EITrajectoryProjector(object):
             try:
                 # Turns out we have to dequantify here: https://github.com/pandas-dev/pandas/issues/45968
                 # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
-                units = historic_intensities.apply(lambda x: x.iloc[0].u)
+                units = historic_intensities.apply(lambda x: x[x.first_valid_index()].u
+                                                   if x.first_valid_index() and isinstance(x[x.first_valid_index()], pint.Quantity) else None)
                 if ITR.HAS_UNCERTAINTIES:
-                    nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m)))
-                    uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m)))
+                    nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan)))
+                    uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else 0)))
                 else:
-                    nominal_intensities = historic_intensities.apply(lambda x: x.map(lambda y: y.m))
+                    nominal_intensities = historic_intensities.apply(lambda x: x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan))
                 # See https://github.com/hgrecco/pint-pandas/issues/114
                 winsorized: pd.DataFrame = nominal_intensities.clip(
                     lower=nominal_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index',
@@ -709,7 +715,7 @@ class EITrajectoryProjector(object):
         # These columns are heterogeneous as to units, so don't try to use PintArrays
         for year in historic_data.columns.tolist()[:-1]:
             # FIXME: need a version of ITR.isnan that can see into Quantities
-            mask = ITR.isnan(projected_intensities[year + 1].map(lambda x: x.m))
+            mask = ITR.isnan(projected_intensities[year + 1].map(lambda x: x.m if isinstance(x, pint.Quantity) else np.nan))
             projected_intensities.loc[mask, year + 1] = projected_intensities.loc[mask, year] * (1 + trends.loc[mask])
 
         # Now the big extrapolation
