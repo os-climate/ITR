@@ -150,9 +150,15 @@ class DataWarehouse(ABC):
         df_budget = self._get_cumulative_emissions(
             projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
-        df_scope_data = pd.concat([df_trajectory, df_target, df_budget], axis=1).dropna(how='any')
+        df_scope_data = pd.concat([df_trajectory, df_target, df_budget], axis=1)
         df = df_company_data.join(df_scope_data.reset_index('scope'))
         scope = df.scope
+        invalid_scope_mask = scope.isna()
+        if invalid_scope_mask.any():
+            logger.error(
+                f"dropping companies with invalid scope data: {scope[invalid_scope_mask].index.to_list()}"
+            )
+            df = df[~invalid_scope_mask]
         scope_index = df.columns.get_loc('region')+1
         df = df.drop('scope', axis=1)
         df.insert(scope_index, 'scope', scope)
