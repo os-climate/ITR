@@ -27,10 +27,10 @@ class DequantifyQuantity(json.JSONEncoder):
 def assert_pint_series_equal(case: unittest.case, left: pd.Series, right: pd.Series, places=7, msg=None, delta=None):
     # Helper function to avoid bug in pd.testing.assert_series_equal concerning pint series
     for d, data in enumerate(left):
-        case.assertAlmostEqual(data, right[d], places, msg, delta)
+        case.assertAlmostEqual(data, right[d].to(data.u), places, msg, delta)
 
     for d, data in enumerate(right):
-        case.assertAlmostEqual(data, left[d], places, msg, delta)
+        case.assertAlmostEqual(data, left[d].to(data.u), places, msg, delta)
 
 
 def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.DataFrame, places=7, msg=None, delta=None):

@@ -24,7 +24,7 @@ class TestTemplateProvider(unittest.TestCase):
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_data_path = os.path.join(self.root, "inputs", "20220215 ITR Tool Sample Data.xlsx")
-        self.sector_data_path = os.path.join(self.root, "inputs", "benchmark_OECM_S3.xlsx")
+        self.sector_data_path = os.path.join(self.root, "inputs", "benchmark_OECM_PC.xlsx")
         self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
         self.excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path,
                                                            benchmark_temperature=Q_(1.5, ureg.delta_degC),
@@ -35,14 +35,15 @@ class TestTemplateProvider(unittest.TestCase):
         self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
         self.company_info_at_base_year = pd.DataFrame(
             [['Electricity Utilities', 'North America', EScope.S1S2,
-              Q_(1.6982474347547, ureg('t CO2/GJ')), Q_(1.04827859e+08, 'MWh'), 'MWh'],
+              Q_(408.8060718270887, ureg('t CO2/GWh')), Q_(120964.446, 'GWh'), 'GWh'],
              ['Electricity Utilities', 'North America', EScope.S1S2,
-              Q_(0.476586931582279, ureg('t CO2/GJ')), Q_(5.98937002e+08, 'MWh'), 'MWh'],
-             ['Electricity Utilities', 'Europe', EScope.S1S2,
-              Q_(0.22457393169277, ureg('t CO2/GJ')), Q_(1.22472003e+08, 'MWh'), 'MWh']],
+              Q_(0.38594178905100457 , ureg('Mt CO2/TWh')), Q_(216.60189565, 'TWh'), 'TWh'],
+             ['Steel', 'Asia', EScope.S1S2,
+              Q_(2.1951083625828733, ureg('t CO2/(t Steel)')), Q_(35.898, 'Mt Steel'), 'Mt Steel']],
             index=pd.Index(self.company_ids, name='company_id'),
             columns=[ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE,
                      ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC])
+        self.company_info_at_base_year['ghg_s1s2'] = self.company_info_at_base_year.base_year_production.mul(self.company_info_at_base_year.ei_at_base_year)
 
     def test_target_projections(self):
         comids = ['US00130H1059', 'US0185223007',
@@ -127,15 +128,15 @@ class TestTemplateProvider(unittest.TestCase):
             ))
         # portfolio data
         portfolio_data = ITR.utils.get_data(data_warehouse, portfolio)
-        breakpoint()
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = pd.Series([1.81, 1.87, 2.10, 2.18, 1.95], dtype='pint[delta_degC]')
+        expected = pd.Series([2.2029, 2.2172, 2.8979, 3.0672, 3.6141], dtype='pint[delta_degC]')
+        breakpoint()
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.982, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.7999, ureg.delta_degC), places=2)
 
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
@@ -199,10 +200,9 @@ class TestTemplateProvider(unittest.TestCase):
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
     def test_get_projected_production(self):
-        expected_data_2025 = pd.Series([122891226.4644476, 702142574.05294633, 146787786.599656552],
+        expected_data_2025 = pd.Series([Q_(141808.38251721274, ureg('GWh')), Q_(253.92555819491457, ureg('TWh')), Q_(36.562113000000025, ureg('Mt Steel'))],
                                        index=self.company_ids,
-                                       name=2025,
-                                       dtype='pint[MWh]').astype('object')
+                                       name=2025)
         production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
         assert_pint_series_equal(self, production, expected_data_2025, places=4)
 

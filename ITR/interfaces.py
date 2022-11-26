@@ -746,7 +746,7 @@ class ITargetData(BaseModel):
 
     target_base_year_qty: float
     target_base_year_unit: str
-    target_reduction_pct: float
+    target_reduction_pct: float # This is actually a fraction, not a percentage.  1.0 = complete reduction to zero.
 
     @root_validator
     def must_be_greater_than_2022(cls, v):
