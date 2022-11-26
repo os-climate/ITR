@@ -2,6 +2,7 @@
 This module handles initialization of pint functionality
 """
 
+import numpy as np
 import pandas as pd
 from pint import get_application_registry
 
@@ -87,11 +88,15 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore') -> pd.Series:
             raise ValueError ("Series '{series.name}' not dtype('O')")
         else:
             raise ValueError ("Series not dtype('O')")
-    units = series.map(lambda x: x.u)
-    first_unit = units.iloc[0]
+    na_values = series.isna()
+    units = series[~na_values].map(lambda x: x.u)
+    first_unit = units[units.first_valid_index()]
     if len(set(units.values.tolist()))==1:
-        new_series = series.astype(f"pint[{first_unit}]")
-        return new_series
+        new_series = series.copy()
+        # FIXME: new_series.loc[na_values[na_values].index] = Q_(np.nan, first_unit) doesn't work, so...
+        for idx in na_values[na_values].index:
+            new_series.loc[idx] = Q_(np.nan, first_unit)
+        return new_series.astype(f"pint[{first_unit}]")
     if errors != 'ignore':
         raise ValueError(f"Element types not homogeneously ({first_unit})")
     return series

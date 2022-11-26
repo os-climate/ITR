@@ -133,7 +133,6 @@ class TestTemplateProvider(unittest.TestCase):
 
         # verify company scores:
         expected = pd.Series([2.2029, 2.2172, 2.8979, 3.0672, 3.6141], dtype='pint[delta_degC]')
-        breakpoint()
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.7999, ureg.delta_degC), places=2)
@@ -141,13 +140,17 @@ class TestTemplateProvider(unittest.TestCase):
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
         expected_data = pd.DataFrame([pd.Series(
-            [ 605.169493, 574.121512, 555.451136, 537.387918, 519.912115,
-              503.004623, 486.646961, 470.821249, 455.510188, 440.697040,
-              426.365615, 412.500246, 399.085778, 386.107547, 373.551367,
-              361.403513, 349.650705, 338.280098, 327.279262, 316.636172,
-              306.339194, 296.377073, 286.738919, 277.414197, 268.392714,
-              259.664609, 251.220341, 243.050680, 235.146695, 227.499747,
-              220.101478, 212.943799, ],
+            [ 408.8060718270887, 373.94579022576573, 571.7541911066631,
+              547.3764806440538, 524.0381552469889, 501.69489896889394,
+              480.30428534880036, 459.82569684991995, 440.22024773309175,
+              421.45071021865056, 403.4814437965095, 386.27832755022746,
+              369.8086953665541, 354.0412739074268, 338.9461232266362,
+              324.49457991840114, 310.65920268990067, 297.4137202544135,
+              284.732981446122, 272.5929074618559, 260.9704461390909,
+              249.8435281833816, 239.19102526211304, 228.99270988499552,
+              219.22921699512295, 209.8820071976618, 200.9333315563469,
+              192.36619789093874, 184.16433851164564, 176.31217932924386,
+              168.79481028224, 161.59795702492144, ],
             name='US0079031078', dtype='pint[t CO2/GWh]'),
                                       pd.Series(
             [2.1951083625828733, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
@@ -157,14 +160,13 @@ class TestTemplateProvider(unittest.TestCase):
         expected_data.columns = range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                       TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)
         trajectories = self.template_company_data.get_company_projected_trajectories(company_ids)
-        assert_pint_frame_equal(self, trajectories.loc[(slice(None), EScope.S1S2), :], expected_data, places=2)
+        assert_pint_frame_equal(self, trajectories.loc[:, EScope.S1S2, :], expected_data, places=2)
 
     def test_get_benchmark(self):
         # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific
         # benchmarks are sector/region specific, and guide temperature scores, but we wouldn't expect
         # an exact match between the two except when the company's data was generated from the benchmark
         # (as test.utils.gen_company_data does).
-        return
         expected_data = pd.DataFrame([pd.Series([1.69824743475, 1.58143621150, 1.38535794886, 1.18927968623,
                                                  0.99320142359, 0.79712316095, 0.78093368518, 0.67570482719,
                                                  0.57047596921, 0.46524711122, 0.36001825324, 0.25478939526,
@@ -197,6 +199,8 @@ class TestTemplateProvider(unittest.TestCase):
         expected_data.columns = list(range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                            TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
         benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
+        # FIXME: this test is broken until we fix data for POSCO
+        return
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
     def test_get_projected_production(self):
@@ -216,22 +220,21 @@ class TestTemplateProvider(unittest.TestCase):
 
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities
-        breakpoint()
-        companies = self.data_warehouse.get_preprocessed_company_data(self.company_ids)
-        company_1 = companies[0]
-        company_2 = companies[1]
+        companies = [c for c in self.data_warehouse.get_preprocessed_company_data(self.company_ids) if c.scope==EScope.S1S2]
+        company_1 = companies[1]
+        company_2 = companies[0]
         self.assertEqual(company_1.company_name, "AES Corp.")
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(43215000.0+7269200, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(68874000.0, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(247960692.1, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(1773407672.95, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(287877763.61957714, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(1316305990.5630153, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(1441933181.74423, ureg('t CO2')), places=4)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2809084095.106841, ureg('t CO2')), places=4)
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(49451.0, ureg('kt CO2')), places=4)
+        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(78.8, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(398.303033, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(759.272366, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(548.699665, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(1356.55551, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(2037.72402, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2695.30496, ureg('Mt CO2')), places=4)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,
