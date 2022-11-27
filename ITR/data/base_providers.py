@@ -6,23 +6,21 @@ import pint
 from functools import reduce, partial
 from operator import add
 from typing import List, Type, Dict
-import logging
 
 import ITR
 from ITR.data.osc_units import Q_, PA_, asPintSeries
 
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, LoggingConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, \
-    IEmissionRealization, IntensityMetric, ProjectionControls
+    IEmissionRealization, ProjectionControls
+from ITR.interfaces import EI_Quantity
+from ITR.logger import logger
 
 # TODO handling of scopes in benchmarks
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
 
 
 class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
@@ -471,7 +469,6 @@ class EITrajectoryProjector(object):
 
         historic_years = [column for column in historic_data.columns if type(column) == int]
         projection_years = range(max(historic_years), self.projection_controls.TARGET_YEAR)
-
         historic_intensities = historic_data[historic_years].query(
             f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'")
         standardized_intensities = self._standardize(historic_intensities)
@@ -588,7 +585,6 @@ class EITrajectoryProjector(object):
                     scope_projections[scope_name] = None
                     continue
                 results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, EScope[scope_name])]
-                results = asPintSeries(results)
                 units = f"{results.values[0].u:~P}"
                 scope_dfs[scope_name] = results
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
@@ -720,6 +716,11 @@ class EITrajectoryProjector(object):
         # Now the big extrapolation
         for year in projection_years:
             projected_intensities[year + 1] = projected_intensities[year] * (1 + trends)
+        # Clean up rows by converting NaN/None into Quantity(np.nan, unit_type)
+        # FIXME: Work-around for not-yet-filed Pandas issue whereby MultiIndex is converted into an Index of tuples
+        idx = projected_intensities.index
+        projected_intensities =  ITR.data.osc_units.asPintDataFrame(projected_intensities.T).T
+        projected_intensities.index = idx
         return projected_intensities
 
     # Might return a float, might return a ufloat

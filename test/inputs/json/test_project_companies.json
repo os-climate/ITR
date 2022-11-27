@@ -4,6 +4,8 @@
     "company_id": "US0079031078",
     "region": "North America",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.428571428571428,
     "historic_data": {
       "productions": [
@@ -293,6 +295,8 @@
     "company_id": "US00724F1012",
     "region": "North America",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -476,6 +480,8 @@
     "company_id": "FR0000125338",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "emissions_intensities": {
@@ -598,6 +604,8 @@
     "company_id": "US17275R1023",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -887,6 +895,8 @@
     "company_id": "CH0198251305",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -1176,6 +1186,8 @@
     "company_id": "US1266501006",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -1465,6 +1477,8 @@
     "company_id": "FR0000120644",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -1754,6 +1768,8 @@
     "company_id": "US24703L1035",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2043,6 +2059,8 @@
     "company_id": "TW0002308004",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2332,6 +2350,8 @@
     "company_id": "FR0000120321",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2621,6 +2641,8 @@
     "company_id": "CH0038863350",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2910,6 +2932,8 @@
     "company_id": "US8356993076",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -3199,6 +3223,8 @@
     "company_id": "JP3401400001",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -3488,6 +3514,8 @@
     "company_id": "US6541061031",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -3777,6 +3805,8 @@
     "company_id": "GB0031274896",
     "region": "North America",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4066,6 +4096,8 @@
     "company_id": "US6293775085",
     "region": "Europe",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4243,6 +4275,8 @@
     "company_id": "US7134481081",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4532,6 +4566,8 @@
     "company_id": "JP0000000001",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4821,6 +4857,8 @@
     "company_id": "NL0000000002",
     "region": "South America",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5110,6 +5148,8 @@
     "company_id": "IT0000000003",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5399,6 +5439,8 @@
     "company_id": "SE0000000004",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5688,6 +5730,8 @@
     "company_id": "SE0000000005",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5977,6 +6021,8 @@
     "company_id": "NL0000000006",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -6266,6 +6312,8 @@
     "company_id": "CN0000000007",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -6555,6 +6603,8 @@
     "company_id": "CN0000000008",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -6844,6 +6894,8 @@
     "company_id": "CN0000000009",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -7133,6 +7185,8 @@
     "company_id": "BR0000000010",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -7422,6 +7476,8 @@
     "company_id": "BR0000000011",
     "region": "Europe",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -7711,6 +7767,8 @@
     "company_id": "BR0000000012",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -8000,6 +8058,8 @@
     "company_id": "AR0000000013",
     "region": "Europe",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [

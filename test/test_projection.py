@@ -49,8 +49,6 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
     return is_equal
 
 
-obsolete_tests = ['Company AI', 'Company AR', 'Company F', 'Company J']
-
 class TestProjector(unittest.TestCase):
     """
     Test the projector that converts historic data into emission intensity projections
@@ -65,7 +63,7 @@ class TestProjector(unittest.TestCase):
             company_dicts = json.load(file)
         for company_dict in company_dicts:
             company_dict['report_date'] = datetime.date(2021, 12, 31)
-        self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts if company_dict['company_name'] not in obsolete_tests]
+        self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
         self.projector = EITrajectoryProjector()
 
     def test_project(self):
@@ -73,7 +71,7 @@ class TestProjector(unittest.TestCase):
         with open(self.json_reference_path, 'r') as file:
             reference_projections = json.load(file)
 
-        projections_dict = [projection.dict() for projection in projections if projection.company_name not in obsolete_tests]
+        projections_dict = [projection.dict() for projection in projections]
         test_successful = is_pint_dict_equal(projections_dict, reference_projections)
 
         self.assertEqual(test_successful, True)

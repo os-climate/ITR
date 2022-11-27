@@ -10,11 +10,12 @@ from typing import TYPE_CHECKING, Callable
 from pydantic import BaseModel, parse_obj_as, validator, root_validator
 from dataclasses import dataclass
 
-import pint
 import ITR
+from ITR.logger import logger
 from ITR.data.osc_units import ureg, Q_, M_
-from pint.errors import DimensionalityError
 
+import pint
+from pint.errors import DimensionalityError
 
 @dataclass
 class ProjectionControls:
@@ -709,6 +710,7 @@ class IBenchmarks(BaseModel):
 class IProductionBenchmarkScopes(BaseModel):
     AnyScope: Optional[IBenchmarks]
     S1: Optional[IBenchmarks]
+    S2: Optional[IBenchmarks]
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
@@ -836,7 +838,7 @@ class ICompanyData(PintModel):
     target_probability: float = 0.5
 
     target_data: Optional[List[ITargetData]]
-    historic_data: Optional[IHistoricData]
+    historic_data: Optional[IHistoricData] # IHistoric data can contain None values; need to convert to Quantified NaNs
 
     country: Optional[str]
 
@@ -937,6 +939,28 @@ class ICompanyData(PintModel):
             return retval
         return valid_realizations[0]
 
+    def _normalize_historic_data(self, historic_data: IHistoricData, production_metric: ProductionMetric, emissions_metric: EmissionsMetric) -> IHistoricData:
+        def _normalize(value, metric):
+            if value is not None:
+                return value.to(metric)
+            return Q_(np.nan, metric)
+        
+        if historic_data is None:
+            return None
+
+        if historic_data.productions:
+            historic_data.productions = [IProductionRealization(year=p.year, value=_normalize (p.value, production_metric))
+                                         for p in historic_data.productions]
+        ei_metric = f"{emissions_metric} / ({production_metric})"
+        for scope_name in EScope.get_scopes():
+            if historic_data.emissions:
+                setattr(historic_data.emissions, scope_name, [IEmissionRealization(year=p.year, value=_normalize(p.value, emissions_metric))
+                                                              for p in getattr(historic_data.emissions, scope_name)])
+            if historic_data.emissions_intensities:
+                setattr(historic_data.emissions_intensities, scope_name, [IEIRealization(year=p.year, value=_normalize(p.value, ei_metric))
+                                                                          for p in getattr(historic_data.emissions_intensities, scope_name)])
+        return historic_data
+
     def __init__(self, emissions_metric=None, production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None,
                  target_data=None, historic_data=None, *args, **kwargs):
         super().__init__(emissions_metric=emissions_metric,
@@ -958,6 +982,7 @@ class ICompanyData(PintModel):
             else:
                 self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
             # TODO: Should raise a warning here
+        self.historic_data = self._normalize_historic_data(self.historic_data, self.production_metric, self.emissions_metric)
         base_year = None
         if self.base_year_production:
             pass
@@ -968,7 +993,7 @@ class ICompanyData(PintModel):
             base_year = base_realization.year
             self.base_year_production = base_realization.value
         else:
-            raise ValueError(f"missing historic data for base_year_production for {self.company_name}")
+            logger.warning(f"missing historic data for base_year_production for {self.company_name}")
             self.base_year_production = Q_(np.nan, str(self.production_metric))
         if self.ghg_s1s2 is None and self.historic_data and self.historic_data.emissions:
             if self.historic_data.emissions.S1S2:
