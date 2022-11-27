@@ -71,6 +71,12 @@ class TemperatureScore(PortfolioAggregation):
                 (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
                     self.c.CONTROLS_CONFIG.tcre_multiplier)
             score = trajectory_temperature_score
+            print(f"""trajectory_overshoot_ratio = {scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY]} / {scorable_row[
+                self.c.COLS.CUMULATIVE_BUDGET]} = {trajectory_overshoot_ratio}""")
+            print(f"""trajectory_temperature_score = {scorable_row[self.c.COLS.BENCHMARK_TEMP]} + \
+                ({scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET]} * ({trajectory_overshoot_ratio} - 1.0) *
+                    {self.c.CONTROLS_CONFIG.tcre_multiplier}) = {trajectory_temperature_score}""")
+            print(f"score = {trajectory_temperature_score}")
             return score, trajectory_temperature_score, trajectory_overshoot_ratio, \
                 target_temperature_score, target_overshoot_ratio, EScoreResultType.TRAJECTORY_ONLY
 
