@@ -14,10 +14,10 @@ from .interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, Aggr
     ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-from .configs import TemperatureScoreConfig, logger
+from .configs import TemperatureScoreConfig
 from . import utils
 from .data.data_warehouse import DataWarehouse
-
+from .logger import logger
 
 class TemperatureScore(PortfolioAggregation):
     """

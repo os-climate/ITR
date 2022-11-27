@@ -2,7 +2,6 @@ import warnings  # needed until apply behaves better with Pint quantities in arr
 from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
-import logging
 
 from pydantic import ValidationError
 
@@ -11,19 +10,16 @@ from ITR.data.osc_units import ureg, Q_, PA_
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, LoggingConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig
 from ITR.interfaces import ICompanyData, EScope, ProductionQuantity, EmissionsQuantity, EI_Quantity, \
     IHistoricEmissionsScopes, \
     IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
     IProjection, ProjectionControls
 from ITR.utils import get_project_root
-
+from ITR.logger import logger
 
 pkg_root = get_project_root()
 df_country_regions = pd.read_csv(f"{pkg_root}/data/input/country_region_info.csv")
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
 
 
 def ITR_country_to_region(country:str) -> str:

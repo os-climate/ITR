@@ -4,8 +4,6 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from __future__ import annotations
 
-import logging
-
 import pint
 from ITR.data.osc_units import ureg, Q_
 from typing import List
@@ -143,7 +141,7 @@ class TargetConfig:
 
 class TabsConfig:
     FUNDAMENTAL = "fundamental_data"
-    PROJECTED_EI = "projected_ei" # really "projected_trajectory"
+    PROJECTED_EI = "projected_ei" # really "projected
     PROJECTED_PRODUCTION = "projected_production"
     PROJECTED_TARGET = "projected_target"
     HISTORIC_DATA = "historic_data"
@@ -172,16 +170,3 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
     )
 
 
-class LoggingConfig:
-    FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-
-    @classmethod
-    def add_config_to_logger(cls, logger: logging.Logger):
-        logger.setLevel(logging.INFO)
-        formatter = logging.Formatter(cls.FORMAT)
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-        logger.addHandler(stream_handler)
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)

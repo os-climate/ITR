@@ -11,9 +11,9 @@ import pandas as pd
 import pint
 import pint_pandas
 
-from .configs import PortfolioAggregationConfig, ColumnsConfig, logger
+from .configs import PortfolioAggregationConfig, ColumnsConfig
 from .interfaces import EScope
-
+from .logger import logger
 
 class PortfolioAggregationMethod(Enum):
     """
@@ -48,11 +48,13 @@ class PortfolioAggregationMethod(Enum):
             PortfolioAggregationMethod.ECOTS: column_config.COMPANY_EV_PLUS_CASH,
             PortfolioAggregationMethod.AOTS: column_config.COMPANY_TOTAL_ASSETS,
             PortfolioAggregationMethod.ROTS: column_config.COMPANY_REVENUE,
+
+            # The test case tells us these shoule be correct
+            PortfolioAggregationMethod.WATS: column_config.COMPANY_MARKET_CAP,
+            PortfolioAggregationMethod.TETS: column_config.COMPANY_MARKET_CAP,
         }
 
         try:
-            # FIXME: What should WATS return?
-            # FIXME: What should TETS return?
             return map_value_column[method]
         except KeyError:
             logger.warning(f"method '{method}' not found (type({method}) = {type(method)}; defaulting to COMPANY_MARKET_CAP")

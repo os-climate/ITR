@@ -2,7 +2,6 @@ import warnings # needed until apply behaves better with Pint quantities in arra
 from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
-import logging
 
 from pydantic import ValidationError
 
@@ -11,14 +10,12 @@ import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, LoggingConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig
 from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, BenchmarkMetric, BenchmarkQuantity, IHistoricEmissionsScopes, \
     IProductionRealization, ProductionQuantity, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
     UProjection, IProjection, ProjectionControls, quantity, EmissionsQuantity, EI_Quantity
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
+from ITR.logger import logger
 
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units

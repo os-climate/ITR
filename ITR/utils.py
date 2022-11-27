@@ -4,15 +4,17 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import List, Optional, Tuple
+
 import ITR
 from ITR.data.osc_units import ureg
 import pint
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
-from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
+from .configs import ColumnsConfig, TemperatureScoreConfig
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
+from .logger import logger
 
 # If this file is moved, the computation of get_project_root may also need to change
 def get_project_root() -> Path:

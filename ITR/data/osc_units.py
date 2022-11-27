@@ -4,7 +4,7 @@ This module handles initialization of pint functionality
 
 import numpy as np
 import pandas as pd
-from pint import get_application_registry
+from pint import get_application_registry, Quantity
 
 ureg = get_application_registry()
 
@@ -78,7 +78,24 @@ ureg.define("Fe_ton = t Steel")
 # ureg.define("mercure = Hg = Mercury")
 # ureg.define("PM10 = [ PM10_emissions ]")
 
-def asPintSeries(series: pd.Series, name=None, errors='ignore') -> pd.Series:
+def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -> pd.Series:
+    """
+    Parameters
+    ----------
+    series : pd.Series possibly containing Quantity values, not already in a PintArray.
+    name : the name to give to the resulting series
+    errors : { 'raise', 'ignore' }, default 'ignore'
+    inplace : bool, default False
+             If True, perform operation in-place.
+
+    Returns
+    -------
+    If there is only one type of unit in the series, a PintArray version of the series,
+    replacing NULL values with Quantity (np.nan, unit_type).
+
+    Raises ValueError if there are more than one type of units in the series.
+    Silently series if no conversion needed to be done.
+    """
     if series.dtype != 'O':
         if errors == 'ignore':
             return series
@@ -89,20 +106,42 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore') -> pd.Series:
         else:
             raise ValueError ("Series not dtype('O')")
     na_values = series.isna()
-    units = series[~na_values].map(lambda x: x.u)
-    first_unit = units[units.first_valid_index()]
-    if len(set(units.values.tolist()))==1:
-        new_series = series.copy()
-        # FIXME: new_series.loc[na_values[na_values].index] = Q_(np.nan, first_unit) doesn't work, so...
-        for idx in na_values[na_values].index:
-            new_series.loc[idx] = Q_(np.nan, first_unit)
+    units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)
+    unit_first_idx = units.first_valid_index()
+    if unit_first_idx is not None and len(set(units.values.tolist()))==1:
+        first_unit = units[unit_first_idx]
+        if inplace:
+            new_series = series
+        else:
+            new_series = series.copy()
+        if name:
+            new_series.name = name
+        na_index = na_values[na_values].index
+        new_series.loc[na_index] = pd.Series(Q_(np.nan, first_unit), index=na_index)
         return new_series.astype(f"pint[{first_unit}]")
     if errors != 'ignore':
-        raise ValueError(f"Element types not homogeneously ({first_unit})")
+        raise ValueError(f"Element types not homogeneously ({first_unit}): {series}")
     return series
 
-def asPintDataFrame(df: pd.DataFrame, errors='ignore') -> pd.DataFrame:
-    new_df = pd.DataFrame()
+def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.DataFrame:
+    """
+    Parameters
+    ----------
+    df : pd.DataFrame with columns to be converted into PintArrays where possible.
+    errors : { 'raise', 'ignore' }, default 'ignore'
+    inplace : bool, default False
+             If True, perform operation in-place.
+
+    Returns
+    -------
+    A pd.DataFrame with columns converted to PintArrays where possible.
+    Raises ValueError if there are more than one type of units in any of the columns.
+    """
+    if inplace:
+        new_df = df
+    else:
+        new_df = pd.DataFrame()
     for col in df.columns:
-        new_df[col] = asPintSeries(df[col], name=col, errors=errors)
+        new_df[col] = asPintSeries(df[col], name=col, errors=errors, inplace=inplace)
+    new_df.index = df.index
     return new_df

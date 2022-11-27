@@ -11,12 +11,12 @@ import ITR
 from ITR.data.osc_units import ureg, Q_, asPintSeries
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
+from ITR.logger import logger
 
 import pint
 
 logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
 
 
 class DataWarehouse(ABC):
@@ -102,7 +102,6 @@ class DataWarehouse(ABC):
             logger.warning(
                 f"The following companies do not disclose scope data required by benchmark and will be removed: {missing_company_scopes}"
             )
-            breakpoint()
 
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
