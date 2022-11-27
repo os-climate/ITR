@@ -25,6 +25,7 @@ class TestInterfaces(unittest.TestCase):
     def test_tcre(self):
         tsc = TemperatureScoreConfig()
         self.assertEqual(tsc.CONTROLS_CONFIG.tcre_multiplier, Q_(0.0006004366812227075, 'delta_degC/(Gt CO2)'))
+        print(f"tcre_multiplier: {tsc.CONTROLS_CONFIG.tcre_multiplier} == {Q_(0.0006004366812227075, 'delta_degC/(Gt CO2)')}")
 
     def test_Escope(self):
         self.assertEqual(EScope.get_result_scopes(), [EScope.S1, EScope.S1S2, EScope.S3, EScope.S1S2S3])
