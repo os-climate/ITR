@@ -92,6 +92,7 @@ class TestTemplateProvider(unittest.TestCase):
         portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)
 
         amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
+        print(amended_portfolio.iloc[0])
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
 
     def test_temp_score_from_excel_data(self):
