@@ -287,8 +287,8 @@ class TemperatureScore(PortfolioAggregation):
             score_aggregation_all, \
             filtered_data[self.c.COLS.CONTRIBUTION_RELATIVE], \
             filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
-            filtered_data[self.c.COLS.TEMPERATURE_SCORE] = filtered_data.apply(
-                lambda x: self.fallback_score if x[self.c.SCORE_RESULT_TYPE] == EScoreResultType.DEFAULT else x[self.c.COLS.TEMPERATURE_SCORE], axis=1).astype('pint[delta_degC]')
+            mask = filtered_data['score_result_type'].eq(EScoreResultType.DEFAULT)
+            filtered_data.loc[mask, self.c.COLS.TEMPERATURE_SCORE] = self.fallback_score
             influence_percentage = self._calculate_aggregate_score(
                 filtered_data, self.c.COLS.CONTRIBUTION_RELATIVE, self.aggregation_method).sum()
             score_aggregation = ScoreAggregation(

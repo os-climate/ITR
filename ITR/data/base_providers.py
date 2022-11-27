@@ -47,8 +47,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        years, values = zip(*{r.year: r.value for r in benchmark.projections}.items())
         units = str(benchmark.benchmark_metric)
+        years, values = list(map(list, zip(*{r.year: r.value.to(units).m for r in benchmark.projections}.items())))
         return pd.Series(PA_(values, dtype=units), dtype=f'pint[{units}]',
                          index = years, name=(benchmark.sector, benchmark.region, scope))
 
