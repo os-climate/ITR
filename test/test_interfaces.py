@@ -9,6 +9,7 @@ from ITR.data.osc_units import ureg, Q_, PA_
 from ITR.interfaces import EScope, BenchmarkMetric, ProductionMetric, EI_Metric, BenchmarkQuantity, EI_Quantity, \
     UProjection, IProjection, IBenchmark, ICompanyData, \
     ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection, ITargetData
+from ITR.configs import TemperatureScoreConfig
 
 
 class TestInterfaces(unittest.TestCase):
@@ -20,6 +21,10 @@ class TestInterfaces(unittest.TestCase):
         """
         """
         pass
+
+    def test_tcre(self):
+        tsc = TemperatureScoreConfig()
+        self.assertEqual(tsc.CONTROLS_CONFIG.tcre_multiplier, Q_(0.0006004366812227075, 'delta_degC/(Gt CO2)'))
 
     def test_Escope(self):
         self.assertEqual(EScope.get_result_scopes(), [EScope.S1, EScope.S1S2, EScope.S3, EScope.S1S2S3])
