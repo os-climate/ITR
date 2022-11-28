@@ -5,16 +5,16 @@ import numpy as np
 
 from pydantic import ValidationError
 
-from ITR.data.osc_units import ureg, Q_
+from ITR.data.osc_units import ureg, Q_, BenchmarkMetric
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, ProjectionControls
 from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
-    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, BenchmarkMetric, BenchmarkQuantity, IHistoricEmissionsScopes, \
+    IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, ProductionQuantity, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
-    UProjection, IProjection, ProjectionControls, quantity, EmissionsQuantity, EI_Quantity
+    UProjection, IProjection, quantity, EmissionsQuantity, EI_Quantity
 from ITR.logger import logger
 
 
@@ -126,7 +126,6 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
         super().__init__(ei_bm_scopes,
                          column_config,
                          tempscore_config)
-        assert tempscore_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
 
 
 # FIXME: Should we merge with TemplateProviderCompany and just use a different excel input method
@@ -146,7 +145,6 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
         self._companies = self._convert_from_excel_data(excel_path)
         self.historic_years = None
-        assert tempscore_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
     def _check_company_data(self, company_tabs: dict) -> None:

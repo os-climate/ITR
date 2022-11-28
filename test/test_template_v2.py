@@ -1,17 +1,16 @@
 import json
 import os
 import unittest
+from numpy.testing import assert_array_equal
+import pandas as pd
 
 import ITR
-from numpy.testing import assert_array_equal
-
-import pandas as pd
 from ITR.data.osc_units import ureg, Q_, M_
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 
 from ITR.data.base_providers import EITargetProjector, BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany, IProductionBenchmarkScopes, IEIBenchmarkScopes
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
@@ -80,19 +79,17 @@ class TestTemplateProvider(unittest.TestCase):
                   'US69349H1077', 'KR7005490008',
                   ]
         company_data = self.template_company_data.get_company_data(comids)
+        company_dict = {
+            field : [ getattr(c, field) for c in company_data ]
+            for field in [ ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION ]
+        }
+        company_dict[ColumnsConfig.SCOPE] = [ EScope.S1S2 ] * len(company_data)
+        company_index = [ c.company_id for c in company_data ]
+        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name='company_id'))
+        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
+        # FIXME: We should pre-compute some of these target projections and make them reference data
         for c in company_data:
-            company_sector_region_info = pd.DataFrame({
-                ColumnsConfig.BASE_YEAR_PRODUCTION: [ c.base_year_production ],
-                ColumnsConfig.GHG_SCOPE12: [ c.ghg_s1s2 ],
-                ColumnsConfig.SECTOR: [ c.sector ],
-                ColumnsConfig.REGION: [ c.region ],
-                ColumnsConfig.SCOPE: [ EScope.S1S2 ],
-            }, pd.Index([ c.company_id ], name='company_id'))
-            bm_production_data = (self.base_production_bm.get_company_projected_production(company_sector_region_info)
-                                  # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
-                                  .iloc[0].T
-                                  .astype(f'pint[{str(c.base_year_production.units)}]'))
-            projected_targets = EITargetProjector().project_ei_targets(c, bm_production_data)
+            assert c.projected_targets == EITargetProjector(self.template_company_data.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)])
         
 
     def test_temp_score(self):
