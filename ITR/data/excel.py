@@ -126,6 +126,7 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
         super().__init__(ei_bm_scopes,
                          column_config,
                          tempscore_config)
+        assert tempscore_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
 
 
 # FIXME: Should we merge with TemplateProviderCompany and just use a different excel input method
@@ -145,6 +146,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
         self._companies = self._convert_from_excel_data(excel_path)
         self.historic_years = None
+        assert tempscore_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
     def _check_company_data(self, company_tabs: dict) -> None:

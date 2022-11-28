@@ -172,6 +172,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
         self._companies = self._convert_from_template_company_data(excel_path)
+        assert tempscore_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:

@@ -116,6 +116,7 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta
     """
 
     config = TemperatureScoreConfig
+    assert config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
     if controls:
         TemperatureScoreConfig.CONTROLS_CONFIG = controls
     ts = TemperatureScore(time_frames=time_frames, scopes=scopes, fallback_score=fallback_score,
