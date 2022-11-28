@@ -164,7 +164,6 @@ class ProjectionControls:
     LOWER_DELTA: float = -0.10
     UPPER_DELTA: float = +0.03
 
-    # FIXME: Should agree with TemperatureScoreConfig.CONTROLS_CONFIG
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050
     TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)
@@ -173,8 +172,6 @@ class ProjectionControls:
 class TemperatureScoreControls(BaseModel):
     base_year: int
     target_end_year: int
-    projection_start_year: int
-    projection_end_year: int
     tcre: quantity('delta_degC')
     carbon_conversion: EmissionsQuantity
     scenario_target_temperature: quantity('delta_degC')
@@ -189,13 +186,11 @@ class TemperatureScoreControls(BaseModel):
 
 class TemperatureScoreConfig(PortfolioAggregationConfig):
     SCORE_RESULT_TYPE = 'score_result_type'
-    # FIXME: BASE_YEAR and TARGET_END_YEAR should agree with ProjectionControls
+    # FIXME: Sooner or later, mutable default arguments cause problems.
     CONTROLS_CONFIG = TemperatureScoreControls(
-        base_year=2019,
-        target_end_year=2050,
-        projection_start_year=2010,
-        projection_end_year=2019,
-        tcre=Q_(2.2, 'delta_degC'),
-        carbon_conversion=Q_(3664.0, 'Gt CO2'),
-        scenario_target_temperature=Q_(1.5, 'delta_degC')
+        base_year=ProjectionControls.BASE_YEAR,
+        target_end_year=ProjectionControls.TARGET_YEAR,
+        tcre='2.2 delta_degC',
+        carbon_conversion='3664.0 Gt CO2',
+        scenario_target_temperature='1.5 delta_degC'
     )

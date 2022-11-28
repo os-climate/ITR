@@ -3,18 +3,18 @@ from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
-from ITR.data.osc_units import ureg, Q_, BenchmarkMetric
+from ITR.data.osc_units import ureg, Q_, BenchmarkMetric, EmissionsQuantity, EI_Quantity, quantity
 import pint
 
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, ProjectionControls
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, ProjectionControls
-from ITR.interfaces import BaseModel, ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
+from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, ProductionQuantity, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
-    UProjection, IProjection, quantity, EmissionsQuantity, EI_Quantity
+    UProjection, IProjection
 from ITR.logger import logger
 
 
