@@ -35,6 +35,7 @@ class TemperatureScore(PortfolioAggregation):
                  grouping: Optional[List] = None, config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(config)
         self.c: Type[TemperatureScoreConfig] = config
+        assert self.c.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         self.fallback_score = fallback_score
 
         self.time_frames = time_frames

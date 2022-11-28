@@ -36,6 +36,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         super().__init__()
         self.temp_config = tempscore_config
+        assert self.temp_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         self.column_config = column_config
         self._productions_benchmarks = production_benchmarks
 
