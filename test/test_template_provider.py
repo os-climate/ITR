@@ -3,17 +3,16 @@ import unittest
 import pandas as pd
 
 import ITR
+from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
+from ITR.temperature_score import TemperatureScore
+from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.data.osc_units import ureg, Q_
 from ITR.data.base_providers import EITargetProjector
 from ITR.data.excel import ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
-from ITR.temperature_score import TemperatureScore
-from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.data.osc_units import ureg, Q_
-from utils import assert_pint_frame_equal
-from test_base_providers import assert_pint_series_equal
+from utils import assert_pint_series_equal, assert_pint_frame_equal
 
 
 class TestTemplateProvider(unittest.TestCase):
