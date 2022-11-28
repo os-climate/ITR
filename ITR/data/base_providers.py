@@ -10,13 +10,13 @@ from typing import List, Type, Dict
 import ITR
 from ITR.data.osc_units import Q_, PA_, asPintSeries
 
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, IProjection, ICompanyEIProjections, ICompanyEIProjectionsScopes, IHistoricEIScopes, \
     IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, \
-    IEmissionRealization, ProjectionControls
+    IEmissionRealization
 from ITR.interfaces import EI_Quantity
 from ITR.logger import logger
 
@@ -36,7 +36,6 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         super().__init__()
         self.temp_config = tempscore_config
-        assert self.temp_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         self.column_config = column_config
         self._productions_benchmarks = production_benchmarks
 

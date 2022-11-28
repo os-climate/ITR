@@ -78,6 +78,422 @@ ureg.define("Fe_ton = t Steel")
 # ureg.define("mercure = Hg = Mercury")
 # ureg.define("PM10 = [ PM10_emissions ]")
 
+# List of all the production units we know
+_production_units = [ "Wh", "pkm", "tkm", "boe", "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "m**2" ]
+_ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
+
+class ProductionMetric(str):
+    """
+    Valid production metrics accepted by ITR tool
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            examples=_production_units,
+        )
+
+    @classmethod
+    def validate(cls, units):
+        if not isinstance(units, str):
+            raise TypeError('string required')
+        qty = ureg(units)
+        for pu in _production_units:
+            if qty.is_compatible_with(pu):
+                return cls(units)
+        raise ValueError(f"{v} not relateable to {_production_units}")
+
+    def __repr__(self):
+        return f"ProductionMetric({super().__repr__()})"
+
+class EmissionsMetric(str):
+    """
+    Valid production metrics accepted by ITR tool
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            examples=['g CO2', 'kg CO2', 't CO2', 'Mt CO2'],
+        )
+
+    @classmethod
+    def validate(cls, units):
+        if not isinstance(units, str):
+            raise TypeError('string required')
+        qty = ureg(units)
+        if qty.is_compatible_with('t CO2'):
+            return cls(units)
+        raise ValueError(f"{units} not relateable to 't CO2'")
+
+    def __repr__(self):
+        return f'EmissionsMetric({super().__repr__()})'
+
+class EI_Metric(str):
+    """
+    Valid production metrics accepted by ITR tool
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            examples=['g CO2/pkm', 'kg CO2/tkm', 't CO2/(t Steel)', 'Mt CO2/TWh'],
+        )
+
+    @classmethod
+    def validate(cls, units):
+        if not isinstance(units, str):
+            raise TypeError('string required')
+        qty = ureg(units)
+        for ei_u in _ei_units:
+            if qty.is_compatible_with(ei_u):
+                return cls(units)
+        raise ValueError(f"{units} not relateable to {_ei_units}")
+
+    def __repr__(self):
+        return f'EI_Metric({super().__repr__()})'
+
+class BenchmarkMetric(str):
+    """
+    Valid benchmark metrics accepted by ITR tool
+    """
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            examples=['dimensionless', 'g CO2/pkm', 'kg CO2/tkm', 't CO2/(t Steel)', 'Mt CO2/TWh'],
+        )
+
+    @classmethod
+    def validate(cls, units):
+        if not isinstance(units, str):
+            raise TypeError('string required')
+        if units=='dimensionless':
+            return cls(units)
+        qty = ureg(units)
+        for ei_u in _ei_units:
+            if qty.is_compatible_with(ei_u):
+                return cls(units)
+        raise ValueError(f"{units} not relateable to 'dimensionless' or {_ei_units}")
+
+    def __repr__(self):
+        return f'BenchmarkMetric({super().__repr__()})'
+
+# Borrowed from https://github.com/hgrecco/pint/issues/1166
+registry = ureg
+
+schema_extra = dict(definitions=[
+    dict(
+        Quantity=dict(type="string"),
+        EmissionsQuantity=dict(type="string"),
+        ProductionQuantity=dict(type="string"),
+        EI_Quantity=dict(type="string"),
+        BenchmarkQuantity=dict(type="string"),
+    )
+])
+
+# Dimensionality is something like `[mass]`, not `t CO2`.  And this returns a TYPE, not a Quantity
+
+def quantity(dimensionality: str) -> type:
+    """A method for making a pydantic compliant Pint quantity field type."""
+
+    try:
+        if isinstance(dimensionality, Quantity):
+            registry.get_dimensionality(dimensionality)
+    except KeyError:
+        raise ValueError(f"{dimensionality} is not a valid dimensionality in pint!")
+
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value):
+        if isinstance(value, str):
+            try:
+                q = Q_(value)
+            except ValueError:
+                raise ValueError(f"cannot convert '{quantity}' to quantity")
+            quantity = q
+        elif isinstance(value, Quantity):
+            quantity = value
+        else:
+            raise TypeError (f"quantity takes either a Q_ value or a string fully expressing a quantified value; got {value}")
+        if quantity.is_compatible_with(dimensionality):
+            return quantity
+        assert quantity.check(cls.dimensionality), f"Dimensionality of {quantity} incompatible with {cls.dimensionality}"
+        return quantity
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(
+            {"$ref": "#/definitions/Quantity"}
+        )
+    
+    return type(
+        "Quantity",
+        (Quantity,),
+        dict(
+            __get_validators__=__get_validators__,
+            __modify_schema__=__modify_schema__,
+            dimensionality=dimensionality,
+            validate=validate,
+        ),
+    )
+# end of borrowing
+
+
+class EmissionsQuantity(Quantity):
+    """A method for making a pydantic compliant Pint emissions quantity."""
+
+    def __new__(cls, value, units=None):
+        # Re-used the instance we are passed.  Do we need to copy?
+        return value
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            # simplified regex here for brevity, see the wikipedia link above
+            dimensionaltiy='t CO2',
+            # some example postcodes
+            examples=['g CO2', 'kg CO2', 't CO2', 'Mt CO2'],
+        )
+
+    @classmethod
+    def validate(cls, quantity):
+        if quantity is None:
+            breakpoint()
+        if isinstance(quantity, str):
+            v, u = quantity.split(' ', 1)
+            try:
+                q = Q_(float(v), u)
+            except ValueError:
+                raise ValueError(f"cannot convert '{quantity}' to quantity")
+            quantity = q
+        if not isinstance(quantity, Quantity):
+            raise TypeError(f"pint.Quantity required ({quantity}, type = {type(quantity)})")
+        if quantity.is_compatible_with('t CO2'):
+            return quantity
+        raise DimensionalityError (quantity, 't CO2', dim1='', dim2='', extra_msg=f"Dimensionality must be compatible with 't CO2'")
+
+    def __repr__(self):
+        return f'EmissionsQuantity({super().__repr__()})'
+
+    class Config:
+        validate_assignment = True
+        schema_extra = schema_extra
+        json_encoders = {
+            Quantity: str,
+        }
+
+
+class ProductionQuantity(str):
+    """A method for making a pydantic compliant Pint production quantity."""
+
+    def __new__(cls, value, units=None):
+        # Re-used the instance we are passed.  Do we need to copy?
+        return value
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            # simplified regex here for brevity, see the wikipedia link above
+            dimensionaltiy='[production_units]',
+            # some example postcodes
+            examples=_production_units,
+        )
+
+    @classmethod
+    def validate(cls, quantity):
+        if quantity is None:
+            breakpoint()
+        if isinstance(quantity, str):
+            v, u = quantity.split(' ', 1)
+            try:
+                q = Q_(float(v), u)
+            except ValueError:
+                raise ValueError(f"cannot convert '{quantity}' to quantity")
+            quantity = q
+        if not isinstance(quantity, Quantity):
+            raise TypeError('pint.Quantity required')
+        for pu in _production_units:
+            if quantity.is_compatible_with(pu):
+                return quantity
+        raise DimensionalityError (quantity, str(_production_units), dim1='', dim2='', extra_msg=f"Dimensionality must be compatible with [{_production_units}]")
+
+    def __repr__(self):
+        return f'ProductionQuantity({super().__repr__()})'
+
+    class Config:
+        validate_assignment = True
+        schema_extra = schema_extra
+        json_encoders = {
+            Quantity: str,
+        }
+
+
+class EI_Quantity(str):
+    """A method for making a pydantic compliant Pint Emissions Intensity quantity."""
+
+    def __new__(cls, value, units=None):
+        # Re-used the instance we are passed.  Do we need to copy?
+        return value
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            # simplified regex here for brevity, see the wikipedia link above
+            dimensionaltiy='ei units',
+            # some example postcodes
+            examples=_ei_units,
+        )
+
+    @classmethod
+    def validate(cls, quantity):
+        if quantity is None:
+            breakpoint()
+        if isinstance(quantity, str):
+            v, u = quantity.split(' ', 1)
+            try:
+                q = Q_(float(v), u)
+            except ValueError:
+                raise ValueError(f"cannot convert '{quantity}' to quantity")
+            quantity = q
+        if not isinstance(quantity, Quantity):
+            raise TypeError('pint.Quantity required')
+        for ei_u in _ei_units:
+            if quantity.is_compatible_with(ei_u):
+                return quantity
+        raise DimensionalityError (quantity, str(_ei_units), dim1='', dim2='', extra_msg=f"Dimensionality must be compatible with [{_ei_units}]")
+
+    def __repr__(self):
+        return f'EI_Quantity({super().__repr__()})'
+
+    class Config:
+        validate_assignment = True
+        schema_extra = schema_extra
+        json_encoders = {
+            Quantity: str,
+        }
+
+
+class BenchmarkQuantity(str):
+    """A method for making a pydantic compliant Pint Benchmark quantity (which includes dimensionless production growth)."""
+
+    def __new__(cls, value, units=None):
+        # Re-used the instance we are passed.  Do we need to copy?
+        return value
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            # simplified regex here for brevity, see the wikipedia link above
+            dimensionaltiy='ei units',
+            # some example postcodes
+            examples=_ei_units,
+        )
+
+    @classmethod
+    def validate(cls, quantity):
+        if isinstance(quantity, str):
+            v, u = quantity.split(' ', 1)
+            try:
+                q = Q_(float(v), u)
+            except ValueError:
+                raise ValueError(f"cannot convert '{quantity}' to quantity")
+            quantity = q
+        if not isinstance(quantity, Quantity):
+            raise TypeError('pint.Quantity required')
+        if str(quantity.u) == 'dimensionless':
+            return quantity
+        for ei_u in _ei_units:
+            if quantity.is_compatible_with(ei_u):
+                return quantity
+        raise DimensionalityError (quantity, str(_ei_units), dim1='', dim2='', extra_msg=f"Dimensionality must be 'dimensionless' or compatible with [{_ei_units}]")
+
+    def __repr__(self):
+        return f'BenchmarkQuantity({super().__repr__()})'
+
+    class Config:
+        validate_assignment = True
+        schema_extra = schema_extra
+        json_encoders = {
+            Quantity: str,
+        }
+
+
 def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -> pd.Series:
     """
     Parameters

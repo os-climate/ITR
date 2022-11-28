@@ -6,15 +6,14 @@ import numpy as np
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_
+from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig
-from ITR.interfaces import ICompanyData, EScope, ProductionQuantity, EmissionsQuantity, EI_Quantity, \
-    IHistoricEmissionsScopes, \
-    IProductionRealization, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
-    IProjection, ProjectionControls
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, ProjectionControls
+from ITR.interfaces import ICompanyData, EScope, IHistoricEmissionsScopes, IProductionRealization, \
+    IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
+    IProjection
 from ITR.utils import get_project_root
 from ITR.logger import logger
 
@@ -172,7 +171,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                  tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
         self._companies = self._convert_from_template_company_data(excel_path)
-        assert tempscore_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:

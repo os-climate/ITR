@@ -39,7 +39,6 @@ class DataWarehouse(ABC):
         self.benchmark_projected_production = benchmark_projected_production
         self.benchmarks_projected_ei = benchmarks_projected_ei
         self.temp_config = tempscore_config
-        assert self.temp_config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
         self.column_config = column_config
         self.company_data = company_data
         self.company_data._calculate_target_projections(benchmark_projected_production)

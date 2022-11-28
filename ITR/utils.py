@@ -9,8 +9,8 @@ import ITR
 from ITR.data.osc_units import ureg
 import pint
 
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
-from .configs import ColumnsConfig, TemperatureScoreConfig
+from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
+from .configs import ColumnsConfig, TemperatureScoreControls, TemperatureScoreConfig
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
@@ -116,7 +116,6 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta
     """
 
     config = TemperatureScoreConfig
-    assert config.CONTROLS_CONFIG.tcre == Q_(2.2, 'delta_degC')
     if controls:
         TemperatureScoreConfig.CONTROLS_CONFIG = controls
     ts = TemperatureScore(time_frames=time_frames, scopes=scopes, fallback_score=fallback_score,

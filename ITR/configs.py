@@ -4,11 +4,12 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from __future__ import annotations
 
+import pandas as pd
 import pint
-from ITR.data.osc_units import ureg, Q_
+from ITR.data.osc_units import ureg, Q_, quantity, EmissionsQuantity
 from typing import List
-
-from .interfaces import TemperatureScoreControls
+from pydantic import BaseModel
+from dataclasses import dataclass
 
 class ColumnsConfig:
     # Define a constant for each column used in the
@@ -155,9 +156,39 @@ class PortfolioAggregationConfig:
     COLS = ColumnsConfig
 
 
+@dataclass
+class ProjectionControls:
+    LOWER_PERCENTILE: float = 0.1
+    UPPER_PERCENTILE: float = 0.9
+
+    LOWER_DELTA: float = -0.10
+    UPPER_DELTA: float = +0.03
+
+    # FIXME: Should agree with TemperatureScoreConfig.CONTROLS_CONFIG
+    BASE_YEAR: int = 2019
+    TARGET_YEAR: int = 2050
+    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)
+
+
+class TemperatureScoreControls(BaseModel):
+    base_year: int
+    target_end_year: int
+    projection_start_year: int
+    projection_end_year: int
+    tcre: quantity('delta_degC')
+    carbon_conversion: EmissionsQuantity
+    scenario_target_temperature: quantity('delta_degC')
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    @property
+    def tcre_multiplier(self) -> quantity('delta_degC/(t CO2)'):
+        return self.tcre / self.carbon_conversion
+
+
 class TemperatureScoreConfig(PortfolioAggregationConfig):
     SCORE_RESULT_TYPE = 'score_result_type'
-    # Unfortunately we need to cross over to interfaces.py
     # FIXME: BASE_YEAR and TARGET_END_YEAR should agree with ProjectionControls
     CONTROLS_CONFIG = TemperatureScoreControls(
         base_year=2019,
@@ -168,5 +199,3 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion=Q_(3664.0, 'Gt CO2'),
         scenario_target_temperature=Q_(1.5, 'delta_degC')
     )
-
-

@@ -5,9 +5,9 @@ import random
 
 import ITR
 from pint import Quantity
-from ITR.data.osc_units import asPintSeries
+from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
 
-from ITR.interfaces import EI_Metric, EI_Quantity, EScope
+from ITR.interfaces import EScope
 from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection
 
 class QuantityEncoder(json.JSONEncoder):

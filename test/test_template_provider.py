@@ -3,15 +3,15 @@ import unittest
 import pandas as pd
 
 import ITR
+from ITR.data.osc_units import ureg, Q_
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.data.osc_units import ureg, Q_
 from ITR.data.base_providers import EITargetProjector
 from ITR.data.excel import ExcelProviderProductionBenchmark, ExcelProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from utils import assert_pint_series_equal, assert_pint_frame_equal
 
 
@@ -64,7 +64,6 @@ class TestTemplateProvider(unittest.TestCase):
                   'US69349H1077', 'KR7005490008',
                   ]
         company_data = self.template_company_data.get_company_data(comids)
-
         company_dict = {
             field : [ getattr(c, field) for c in company_data ]
             for field in [ ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION ]
