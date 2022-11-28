@@ -14,8 +14,8 @@ from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany, IProductionBenchmarkScopes, IEIBenchmarkScopes
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from utils import assert_pint_frame_equal
-from test_base_providers import assert_pint_series_equal
+from utils import assert_pint_series_equal, assert_pint_frame_equal
+
 
 pd.options.display.width=999
 pd.options.display.max_columns=99

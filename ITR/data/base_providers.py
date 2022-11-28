@@ -233,7 +233,6 @@ class BaseCompanyDataProvider(CompanyDataProvider):
     :param projection_controls: An optional ProjectionControls object containing projection settings
     """
 
-    # FIXME: TemperatureScoreConfig and ProjectionControls both have their own BASE_YEAR/TARGET_END_YEAR concepts
     def __init__(self,
                  companies: List[ICompanyData],
                  column_config: Type[ColumnsConfig] = ColumnsConfig,

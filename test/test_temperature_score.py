@@ -117,6 +117,8 @@ class TestTemperatureScore(unittest.TestCase):
                                    (scores["scope"] == EScope.S1S2)
                                    ]["temperature_score"].iloc[0], Q_(1.63, ureg.delta_degC), places=2,
                                msg="The aggregated fallback temp score was incorrect")
+        # We have to put this back as it can screw up other subsequent tests; unittests don't restore mutable default arguments
+        overwritten_temp_score.c.CONTROLS_CONFIG.tcre = Q_(2.2, ureg.delta_degC)
 
     def test_portfolio_aggregations(self):
         scores = self.temperature_score.calculate(self.data)

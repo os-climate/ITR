@@ -4,12 +4,10 @@ import unittest
 import pandas as pd
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_
-
-from ITR.interfaces import EScope, BenchmarkMetric, ProductionMetric, EI_Metric, BenchmarkQuantity, EI_Quantity, \
-    UProjection, IProjection, IBenchmark, ICompanyData, \
-    ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection, ITargetData
+from ITR.data.osc_units import ureg, Q_, PA_, BenchmarkMetric, ProductionMetric, EI_Metric, BenchmarkQuantity, EI_Quantity
 from ITR.configs import TemperatureScoreConfig
+from ITR.interfaces import EScope, UProjection, IProjection, IBenchmark, ICompanyData, \
+    ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection, ITargetData
 
 
 class TestInterfaces(unittest.TestCase):
