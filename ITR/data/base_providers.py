@@ -47,8 +47,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         return pd.Series({r.year: r.value for r in benchmark.projections}, name=(benchmark.region, benchmark.sector, scope),
                          dtype=f'pint[{benchmark.benchmark_metric.units}]')
 
-    # Production benchmarks are dimensionless.  S1S2 has nothing to do with any company data.
-    # It's a label in the top-level of benchmark data.  Currently S1S2 is the only label with any data.
+    # Production benchmarks are dimensionless, relevant for AnyScope
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
         Converts IProductionBenchmarkScopes into dataframe for a scope
@@ -56,21 +55,22 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: pd.DataFrame
         """
         result = []
-        for bm in self._productions_benchmarks.dict()[str(scope)]['benchmarks']:
+        for bm in self._productions_benchmarks.dict()['AnyScope']['benchmarks']:
             result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm), scope))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR, self.column_config.SCOPE]
 
         return df_bm
 
-    def get_company_projected_production(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
+    def get_company_projected_production(self, company_sector_region_info: pd.DataFrame, scope: EScope) -> pd.DataFrame:
         """
         get the projected productions for list of companies in ghg_scope12
         :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :param scope: benchmark scope for projections
         :return: DataFrame of projected productions for [base_year - base_year + 50]
         """
-        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope=EScope.S1S2)
+        benchmark_production_projections = self.get_benchmark_projections(company_sector_region_info, scope)
         company_production = company_sector_region_info[self.column_config.BASE_YEAR_PRODUCTION]
         return benchmark_production_projections.add(1).cumprod(axis=1).mul(
             company_production, axis=0)
@@ -88,7 +88,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
         sectors = company_sector_region_info[self.column_config.SECTOR]
         regions = company_sector_region_info[self.column_config.REGION]
-        scopes = [EScope.S1S2] * len(sectors)
+        scopes = [scope] * len(sectors)
         benchmark_regions = regions.copy()
         mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         benchmark_regions.loc[~mask] = "Global"
@@ -107,6 +107,12 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._EI_benchmarks = EI_benchmarks
         self.temp_config = tempscore_config
         self.column_config = column_config
+        # Benchmark's scope, for which we calculate
+        self.scope_to_calc = None
+        if self._EI_benchmarks.S1S2 != None:
+            self.scope_to_calc = EScope.S1S2
+        elif self._EI_benchmarks.S3 != None:
+            self.scope_to_calc = EScope.S3
 
     def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
         """
@@ -116,7 +122,8 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
-        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
+        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year,
+                                                              self.scope_to_calc)
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.base_year]
@@ -162,7 +169,10 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: pd.DataFrame
         """
         results = []
-        for bm in self._EI_benchmarks.__getattribute__(str(scope)).benchmarks:
+        scope_attr = self._EI_benchmarks.__getattribute__(str(scope))
+        if not scope_attr:
+            raise ValueError(f"Scope {str(scope)} not found in loaded benchmark")
+        for bm in scope_attr.benchmarks:
             results.append(self._convert_benchmark_to_series(bm, scope))
         with warnings.catch_warnings():
             # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
@@ -186,6 +196,14 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         benchmark_projection = self._get_projected_intensities(scope)  # TODO optimize performance
         mask = regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         regions.loc[~mask] = "Global"
+
+        # TODO: Remove this w/a, after associated benchmarks are clarified
+        # Currently, EI benchmark for S3 not available for certain sectors
+        # Temporal solution: remove such sectors from calculation
+        if scope == EScope.S3:
+            filtered_sector = 'Construction Buildings'
+            filtered_df = company_sector_region_info.loc[company_sector_region_info[self.column_config.SECTOR] != filtered_sector]
+            sectors = filtered_df[self.column_config.SECTOR]
 
         # benchmark_projection has a scope by construction
         benchmark_projection = benchmark_projection.loc[list(zip(regions, sectors, [scope] * len(sectors)))]
@@ -269,12 +287,13 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             {p['year']: p['value'] for p in projections},
             name=company.company_id, dtype=f'pint[{emissions_units}/({production_units})]')
 
-    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark):
+    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark, scope: EScope):
         """
         We cannot calculate target projections until after we have loaded benchmark data.
         We do so when companies are associated with benchmarks, in the DataWarehouse construction
         
         :param production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
+        :param scope: scope to calculate
         """
         for c in self._companies:
             if c.projected_targets is not None:
@@ -296,7 +315,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                         self.column_config.REGION: [c.region],
                     }, index=[0])
                     bm_production_data = (
-                            production_bm.get_company_projected_production(company_sector_region_info)
+                            production_bm.get_company_projected_production(company_sector_region_info, scope)
                             # We transpose the data so that we get a pd.Series that will accept the pint units as a whole (not element-by-element)
                             .iloc[0].T
                             .astype(f'pint[{str(base_year_production.units)}]')

@@ -243,6 +243,26 @@ class TemperatureScore(PortfolioAggregation):
 
         return aggregations
 
+    def _filter_data(self, data: pd.DataFrame, time_frame: ETimeFrames, scope: EScope) -> pd.DataFrame:
+        '''
+        Filter company data by multiple conditions
+
+        :param data: company data
+        :param time_frame: time frame to filter
+        :param scope: scope to filter
+        :return: filtered company data
+        '''
+        cond_timeframe = (data[self.c.COLS.TIME_FRAME] == time_frame)
+        cond_scope = (data[self.c.COLS.SCOPE] == scope)
+        # only for S3 - filter out data w/o S3 provided
+        cond_s3_empty = (scope != EScope.S3) or data[self.c.COLS.GHG_SCOPE3].notna()
+
+        filtered_data = data[cond_timeframe &
+                             cond_scope&
+                             cond_s3_empty].copy()
+        filtered_data[self.grouping] = filtered_data[self.grouping].fillna("unknown")
+        return filtered_data
+
     def _get_score_aggregation(self, data: pd.DataFrame, time_frame: ETimeFrames, scope: EScope) -> \
             Optional[ScoreAggregation]:
         """
@@ -254,9 +274,7 @@ class TemperatureScore(PortfolioAggregation):
         :param scope: A scope
         :return: A score aggregation, containing the aggregations for the whole data set and each individual group
         """
-        filtered_data = data[(data[self.c.COLS.TIME_FRAME] == time_frame) &
-                             (data[self.c.COLS.SCOPE] == scope)].copy()
-        filtered_data[self.grouping] = filtered_data[self.grouping].fillna("unknown")
+        filtered_data = self._filter_data(data, time_frame, scope)
         total_companies = len(filtered_data)
         if not filtered_data.empty:
             score_aggregation_all, \

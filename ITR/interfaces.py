@@ -326,9 +326,7 @@ class IBenchmarks(BaseModel):
 
 
 class IProductionBenchmarkScopes(BaseModel):
-    S1S2: Optional[IBenchmarks]
-    S3: Optional[IBenchmarks]
-    S1S2S3: Optional[IBenchmarks]
+    AnyScope: Optional[IBenchmarks]
 
 
 class IEIBenchmarkScopes(PintModel):

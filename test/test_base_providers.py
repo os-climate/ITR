@@ -22,10 +22,16 @@ class TestBaseProvider(unittest.TestCase):
     """
 
     def setUp(self) -> None:
+        self._setUpWithEIBM("benchmark_EI_OECM_PC.json")
+
+    def setUpS3(self) -> None:
+        self._setUpWithEIBM("benchmark_EI_S3.json")
+
+    def _setUpWithEIBM(self, eibm_filename) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
-        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_PC.json")
+        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", eibm_filename)
 
         # load company data
         with open(self.company_json) as json_file:
@@ -57,14 +63,17 @@ class TestBaseProvider(unittest.TestCase):
         self.base_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.base_EI_bm)
         self.company_ids = ["US0079031078",
                             "US00724F1012",
-                            "FR0000125338"]
+                            "FR0000125338",
+                            "US17275R1023"]
         self.company_info_at_base_year = pd.DataFrame(
             [[Q_(1.6982474347547, 't CO2/MWh'), Q_(1.04827859e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
               'North America'],
              [Q_(0.476586931582279, 't CO2/MWh'), Q_(5.98937002e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
               'North America'],
              [Q_(0.22457393169277, 't CO2/GJ'), Q_(1.22472003e+08, 'GJ'), {'units': 'GJ'}, 'Electricity Utilities',
-              'Europe']],
+              'Europe'],
+             [Q_(0.476586931582279, 't CO2/MWh'), Q_(5.98937002e+08, 'MWh'), {'units': 'MWh'}, 'Electricity Utilities',
+              'North America']],
             index=self.company_ids,
             columns=[ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC,
                      ColumnsConfig.SECTOR, ColumnsConfig.REGION])
@@ -133,15 +142,37 @@ class TestBaseProvider(unittest.TestCase):
 
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
+    def test_get_benchmark_scope_matters(self):
+        '''
+        Simple sanity test, to verify, that getting intensity benchmarks
+        takes in account primary scope - S1S2 or S3
+        '''
+        # benchmarks for default scope S1S2
+        bm_s1s2 = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
+
+        # Reload EI benchmark with primary scope S3
+        self.setUpS3()
+        bm_s3 = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
+
+        # Verify that different scope results into different values, but same index and columns
+        self.assertTrue(bm_s1s2.index.equals(bm_s3.index))
+        self.assertTrue(bm_s1s2.columns.equals(bm_s3.columns))
+        self.assertFalse(bm_s1s2.equals(bm_s3))
+
     def test_get_projected_production(self):
         # Note that 40763845.66650752 MWh = 146749844.39942706 gigajoule
         # expected_data_2025 is all MWh, but productions vector is heterogeneous
-        expected_data_2025 = pd.Series([122926534.69719231, 702344308.6611674, 40763845.66650752],
+        expected_data_2025 = pd.Series([122926534.69719231, 702344308.6611674, 40763845.66650752, 702344308.6611674],
                                        index=self.company_ids,
                                        name=2025,
                                        dtype='pint[MWh]')
-        productions = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        productions = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year,
+                                                                               EScope.S1S2)[2025]
         assert_pint_series_equal(self, expected_data_2025, productions)
+        productions_s3 = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year,
+                                                                                  EScope.S3)[2025]
+        # test benchmarks for S1S2 and S3 are the same -> expected data is the same
+        assert_pint_series_equal(self, expected_data_2025, productions_s3)
 
     def test_get_cumulative_value(self):
         projected_ei = pd.DataFrame(
@@ -172,15 +203,49 @@ class TestBaseProvider(unittest.TestCase):
         self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17222.95745575, 'Mt CO2'))
         self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40343.09136801, 'Mt CO2'))
 
+        # Reload EI benchmark with primary scope S3
+        self.setUpS3()
+
+        # Verify company data for S3
+        company_1 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[0]
+        company_2 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[3]
+        self.assertEqual(company_1.company_name, "Company AG")
+        self.assertEqual(company_2.company_name, "Company AJ")
+        self.assertEqual(company_1.company_id, "US0079031078")
+        self.assertEqual(company_2.company_id, "US17275R1023")
+        self.assertEquals(company_1.ghg_s3, Q_(0, 'Mt CO2'))
+        self.assertAlmostEqual(company_2.ghg_s3, Q_(100080009.401725, 't CO2'))
+
     def test_get_value(self):
         expected_data = pd.Series([20248547997.0,
                                    276185899.0,
-                                   10283015132.0],
+                                   10283015132.0,
+                                   1860376238.2982879],
                                   index=pd.Index(self.company_ids, name='company_id'),
                                   name='company_revenue')
         pd.testing.assert_series_equal(self.base_company_data.get_value(company_ids=self.company_ids,
                                                                         variable_name=ColumnsConfig.COMPANY_REVENUE),
                                        expected_data)
+
+    def test_scope_to_calc(self):
+        # For default EI benchmark, expect scope to calculate is S1S2
+        self.assertEqual(self.base_EI_bm.scope_to_calc, EScope.S1S2)
+        company_with_s3 = self.base_warehouse.company_data._companies[3]
+        # Verify S3 is folded into S1S2
+        self.assertEqual(company_with_s3.ghg_s3, 0)
+
+        # Reload EI benchmark with primary scope S3
+        self.setUpS3()
+
+        # Verify expected scope to calculate S3
+        self.assertEqual(self.base_EI_bm.scope_to_calc, EScope.S3)
+        company_with_s3 = self.base_warehouse.company_data._companies[3]
+        # Verify S3 is NOT folded into S1S2
+        self.assertNotEqual(company_with_s3.ghg_s3, 0)
+
+    def test_production_benchmark_any_scope(self):
+        pbm = self.base_production_bm._productions_benchmarks
+        self.assertEqual(len(pbm.AnyScope.benchmarks), 42)
 
 
 if __name__ == "__main__":
