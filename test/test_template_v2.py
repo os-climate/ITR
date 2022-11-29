@@ -111,46 +111,6 @@ class TestTemplateProvider(unittest.TestCase):
         amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
 
-    def _test_temp_score_from_excel_data(self):
-        """
-        DISABLED
-        When running all tests in the /test directory, this test fails. When running all tests in
-        test_template_provider.py, it passes. Indicates a state is saved somewhere(?). TODO: fix test.
-        To enable test again, remove the leading '_' of the function name.  
-        """
-        excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path, benchmark_temperature=Q_(1.5, ureg.delta_degC),
-                                                       benchmark_global_budget=Q_(396, ureg('Gt CO2')), is_AFOLU_included=False)
-        template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
-        data_warehouse = DataWarehouse(template_company_data, excel_production_bm, excel_EI_bm)
-        comids = ['US00130H1059', 'US0185223007', 'US0188021085', 'US0236081024', 'US0255371017']
-
-        # Calculate Temp Scores
-        temp_score = TemperatureScore(
-            time_frames=[ETimeFrames.LONG],
-            scopes=[EScope.S1S2],
-            aggregation_method=PortfolioAggregationMethod.WATS,
-        )
-
-        portfolio = []
-        for company in comids:
-            portfolio.append(PortfolioCompany(
-                company_name=company,
-                company_id=company,
-                investment_value=100,
-                company_isin=company,
-            ))
-        # portfolio data
-        portfolio_data = ITR.utils.get_data(data_warehouse, portfolio)
-        scores = temp_score.calculate(portfolio_data)
-        agg_scores = temp_score.aggregate_scores(scores)
-
-        # verify company scores:
-        expected = pd.Series([1.81, 1.87, 2.10, 2.18, 1.95], dtype='pint[delta_degC]')
-        assert_array_equal(scores.temperature_score.values, expected)
-        # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.982, ureg.delta_degC), places=2)
-
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
         expected_data = pd.DataFrame([pd.Series(
