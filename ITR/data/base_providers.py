@@ -79,12 +79,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         company_production = company_production[self.column_config.BASE_YEAR_PRODUCTION]
         if ITR.isnan(company_production.values[0].m):
             breakpoint()
-        try:
-            # Similarly, we could pre-compute all but the final multiplication of this 30-term add/mult-add computation
-            return company_benchmark_projections.add(1).cumprod(axis=1).mul(
-                company_production, axis=0)
-        except TypeError:
-            breakpoint()
+        return company_benchmark_projections.add(1).cumprod(axis=1).mul(
+            company_production, axis=0)
 
     def get_benchmark_projections(self, company_sector_region_scope: pd.DataFrame) -> pd.DataFrame:
         """
