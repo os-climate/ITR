@@ -89,7 +89,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
         with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
         :param scope: a scope
-        :return: A DataFrame with company and intensity benchmarks per calendar year per row
+        :return: An all-quantified DataFrame with intensity benchmark data per calendar year per row, indexed by company.
         """
 
         benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
@@ -191,8 +191,8 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param company_sector_region_scope: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+        :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
+        with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         benchmark_projections = self._EI_df
@@ -200,23 +200,28 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         if scope_to_calc is not None:
             df[df.scope.eq(scope_to_calc)]
 
-        df = df.merge(benchmark_projections, left_on=['sector','region','scope'], right_index=True, how='left')
+        df = df.join(benchmark_projections, on=['sector','region','scope'], how='left')
         mask = df.iloc[:, -1].isna()
         if mask.any():
+            # We have request for benchmark data for either regions or scopes we don't have...
+            # Resetting the index gives us row numbers useful for editing DataFrame with fallback data
             df = df.reset_index()
             mask = df.iloc[:, -1].isna()
             benchmark_global = benchmark_projections.loc[:, 'Global', :]
-            df1 = df[mask].iloc[:, 0:4].merge(benchmark_global, left_on=['sector','scope'], right_index=True, how='left')
-            mask1 = df1.iloc[:, -1].isna()
-            df2 = df1[~mask1].copy()
-            df2.region = 'Global'
-            df.loc[df2.index, :] = df2
-            mask2 = df.iloc[:, -1].isna()
-            df3 = df[~mask2]
-            company_benchmark_projections = df3.set_index('company_id')
+            # DF1 selects all global data matching sector and scope...
+            df1 = df[mask].iloc[:, 0:4].join(benchmark_global, on=['sector','scope'], how='inner')
+            # ...which we can then mark as 'Global'
+            df1.region = 'Global'
+            df.loc[df1.index, :] = df1
+            # Remove any NaN rows from DF we could not update
+            mask1 = df.iloc[:, -1].isna()
+            df2 = df[~mask1]
+            # Restore the COMPANY_ID index; we no longer need row numbers to keep edits straight
+            company_benchmark_projections = df2.set_index('company_id')
         else:
             company_benchmark_projections = df
         company_benchmark_projections.set_index('scope', append=True, inplace=True)
+        # Drop SECTOR and REGION as the result will be used by math functions operating across the whole DataFrame
         return company_benchmark_projections.drop(['sector', 'region'], axis=1)
 
 
