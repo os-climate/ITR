@@ -81,7 +81,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
     :param data_warehouse: DataWarehouse instances
     :param portfolio: A list of PortfolioCompany models
-    :return: A data frame containing the relevant company data
+    :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
     """
     df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio])
 
@@ -92,7 +92,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
     df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
     portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop("company_name", axis=1), how="left",
-                              on=["company_id"])
+                              on=["company_id"]).set_index(['company_id', 'scope'])
     return portfolio_data
 
 

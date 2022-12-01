@@ -120,7 +120,7 @@ class DataWarehouse(ABC):
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/128
             projected_production = self.benchmark_projected_production.get_company_projected_production(
-                company_info_at_base_year, self.benchmarks_projected_ei.scope_to_calc).sort_index()
+                company_info_at_base_year).sort_index()
 
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
         # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?
@@ -145,20 +145,26 @@ class DataWarehouse(ABC):
             projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_BUDGET)
         df_scope_data = pd.concat([df_trajectory, df_target, df_budget], axis=1)
-        df = df_company_data.join(df_scope_data.reset_index('scope'))
-        invalid_scope_mask = df.scope.isna()
-        if invalid_scope_mask.any():
-            logger.error(
-                f"dropping companies with invalid scope data: {df.scope[invalid_scope_mask].index.to_list()}"
+        na_scope_mask = df_scope_data.isna().apply(lambda x: x.any(), axis=1)
+        if na_scope_mask.any():
+            logger.info(
+                f"Dropping invalid scope data: {na_scope_mask[na_scope_mask].index}"
             )
-            df = df[~invalid_scope_mask].copy()
-        df[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
-            pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df),
+            df_scope_data = df_scope_data[~na_scope_mask]
+        df_company_scope = df_company_data.join(df_scope_data.reset_index('scope'))
+        na_company_mask = df_company_scope.scope.isna()
+        if na_company_mask.any():
+            logger.warning(
+                f"Dropping companies with no scope data: {df_company_scope[na_company_mask].index.get_level_values(level='company_id').to_list()}"
+            )
+        df_company_data = df_company_scope[~na_company_mask].copy()
+        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
+            pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df_company_data),
                       dtype='pint[Gt CO2]',
-                      index=df.index)
+                      index=df_company_data.index)
         # ICompanyAggregates wants this Quantity as a `str`
-        df[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df)
-        companies = df.to_dict(orient="records")
+        df_company_data[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df_company_data)
+        companies = df_company_data.to_dict(orient="records")
         aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
         return aggregate_company_data
 

@@ -53,7 +53,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
                          index = years, name=(benchmark.sector, benchmark.region, scope))
 
     # Production benchmarks are dimensionless, relevant for AnyScope
-    def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
+    def _get_projected_production(self, scope: EScope = EScope.AnyScope) -> pd.DataFrame:
         """
         Converts IProductionBenchmarkScopes into dataframe for a scope
         :param scope: a scope
@@ -77,12 +77,12 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         company_benchmark_projections = self.get_benchmark_projections(company_sector_region_scope)
         company_production = company_sector_region_scope[[self.column_config.SCOPE, self.column_config.BASE_YEAR_PRODUCTION]].set_index(self.column_config.SCOPE, append=True)
         company_production = company_production[self.column_config.BASE_YEAR_PRODUCTION]
-        if ITR.isnan(company_production.values[0].m):
-            breakpoint()
+        # If we don't have valid production data for base year, we get back a nan result that's a pain to debug
+        assert not ITR.isnan(company_production.values[0].m)
         return company_benchmark_projections.add(1).cumprod(axis=1).mul(
             company_production, axis=0)
 
-    def get_benchmark_projections(self, company_sector_region_scope: pd.DataFrame) -> pd.DataFrame:
+    def get_benchmark_projections(self, company_sector_region_scope: pd.DataFrame, scope: EScope = EScope.AnyScope) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with production benchmarks per company_id given a region and sector.
@@ -92,7 +92,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
 
-        benchmark_projection = self._get_projected_production()  # TODO optimize performance
+        benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
         df = (company_sector_region_scope[['sector', 'region', 'scope']]
               .reset_index()
               .drop_duplicates()
@@ -135,7 +135,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._EI_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
         
 
-    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame, scope_to_calc: EScope = None) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
@@ -144,7 +144,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
         intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year,
-                                                              self.scope_to_calc)
+                                                              scope_to_calc)
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.base_year]
@@ -187,7 +187,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                       dtype=f'pint[{str(benchmark.benchmark_metric)}]')
         return s
 
-    def _get_intensity_benchmarks(self, company_sector_region_scope: pd.DataFrame) -> pd.DataFrame:
+    def _get_intensity_benchmarks(self, company_sector_region_scope: pd.DataFrame, scope_to_calc: EScope = None) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
@@ -197,6 +197,8 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         benchmark_projections = self._EI_df
         df = company_sector_region_scope[['sector', 'region', 'scope']]
+        if scope_to_calc is not None:
+            df[df.scope.eq(scope_to_calc)]
 
         df = df.merge(benchmark_projections, left_on=['sector','region','scope'], right_index=True, how='left')
         mask = df.iloc[:, -1].isna()
@@ -297,7 +299,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             else:
                 projections = company_dict[feature][list(projection_scopes.keys())[0]]['projections']
 
-    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark, scope: EScope):
+    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark):
         """
         We cannot calculate target projections until after we have loaded benchmark data.
         We do so when companies are associated with benchmarks, in the DataWarehouse construction
@@ -307,7 +309,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # FIXME: Note that we don't need to call with a scope, because production is independent of scope.
-            df_pp = production_bm._get_projected_production()
+            # We use the arbitrary EScope.AnyScope just to be explicit about that.
+            df_pp = production_bm._get_projected_production(EScope.AnyScope)
         df_partial_pp = df_pp.add(1.0).cumprod(axis=1)
 
         for c in self._companies:
@@ -320,10 +323,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 base_year_production = next((p.value for p in c.historic_data.productions if
                                              p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
                 try:
-                    co_cumprod = df_partial_pp.loc[c.sector, c.region, EScope.S1S2]
+                    co_cumprod = df_partial_pp.loc[c.sector, c.region, EScope.AnyScope]
                 except KeyError:
                     # FIXME: Should we fix region info upstream when setting up comopany data?
-                    co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.S1S2]
+                    co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.AnyScope]
                 # https://github.com/hgrecco/pint-pandas/issues/143
                 co_cumprod = pd.Series(PA_(co_cumprod.values * base_year_production, dtype=str(base_year_production.u)),
                                        index=co_cumprod.index,
@@ -601,10 +604,13 @@ class EITrajectoryProjector(object):
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
+        na_intensities = intensities.apply(lambda x: x.isna().all(), axis=1)
+        if na_intensities.any():
+            logger.warning(f"Standardization dropping {na_intensities[na_intensities].index.to_list()} due to fully empty rows data")
+            intensities = intensities[~na_intensities]
         # When columns are years and rows are all different intensity types, we cannot winsorize
         # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
-        na_intensities = intensities.apply(lambda x: x.isna().all(), axis=1)
-        intensities = intensities[~na_intensities].T
+        intensities = intensities.T
         if ITR.HAS_UNCERTAINTIES:
             for col in intensities.columns:
                 pa = PA_._from_sequence(intensities[col])
@@ -617,6 +623,8 @@ class EITrajectoryProjector(object):
                         intensities[col] = pd.Series(PA_(u_pa_data, pa_units), dtype=pa.dtype,
                                                      index=intensities[col].index, name=intensities[col].name)
 
+        # At the starting point, we expect that if we have S1, S2, and S1S2 intensities, that S1+S2 = S1S2
+        # After winsorization, this is no longer true, because S1 and S2 will be clipped differently than S1S2.
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
         for col in winsorized_intensities.columns:
             winsorized_intensities[col] = winsorized_intensities[col].astype(intensities[col].dtype)
@@ -627,56 +635,54 @@ class EITrajectoryProjector(object):
             return standardized_intensities.T
 
     def _winsorize(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # quantile doesn't handle pd.NA inside Quantity; FIXME: we can use np.nan because not expecting UFloat in input data
-            try:
-                # Turns out we have to dequantify here: https://github.com/pandas-dev/pandas/issues/45968
-                # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
-                units = historic_intensities.apply(lambda x: x[x.first_valid_index()].u
-                                                   if x.first_valid_index() and isinstance(x[x.first_valid_index()], pint.Quantity) else None)
-                if ITR.HAS_UNCERTAINTIES:
-                    nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan)))
-                    uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else 0)))
-                else:
-                    nominal_intensities = historic_intensities.apply(lambda x: x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan))
-                # See https://github.com/hgrecco/pint-pandas/issues/114
-                winsorized: pd.DataFrame = nominal_intensities.clip(
-                    lower=nominal_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index',
-                                                        numeric_only=False),
-                    upper=nominal_intensities.quantile(q=self.projection_controls.UPPER_PERCENTILE, axis='index',
-                                                        numeric_only=False),
-                    axis='columns'
-                )
-                if ITR.HAS_UNCERTAINTIES:
-                    if uncertain_intensities.values.sum() != 0:
-                        uwinsorized = winsorized.apply(lambda x: PA_(ITR.uarray(x.values.data, uncertain_intensities[x.name].values), dtype=units[x.name]))
-                        return uwinsorized
-                winsorized_and_unitized = winsorized.apply(lambda x: PA_(x.values.data, dtype=units[x.name]))
-                return winsorized_and_unitized
-            except AttributeError:
-                breakpoint()
+        # quantile doesn't handle pd.NA inside Quantity; FIXME: we can use np.nan because not expecting UFloat in input data
+
+        # Turns out we have to dequantify here: https://github.com/pandas-dev/pandas/issues/45968
+        # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
+        units = historic_intensities.apply(lambda x: x[x.first_valid_index()].u
+                                           if x.first_valid_index() and isinstance(x[x.first_valid_index()], pint.Quantity) else None)
+        # FIXME: we already remove all-NA rows before this function is called.  Can any non-unit data leak to here?
+        na_units = units.isna()
+        if na_units.any():
+            logger.warning(f"Winsorization dropping {na_units[na_units].index.to_list()} due to null unit information")
+            historic_intensities = historic_intensities[~units_na]
+        if ITR.HAS_UNCERTAINTIES:
+            nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan)))
+            uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else 0)))
+        else:
+            nominal_intensities = historic_intensities.apply(lambda x: x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan))
+        # See https://github.com/hgrecco/pint-pandas/issues/114
+        lower=nominal_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index', numeric_only=False)
+        upper=nominal_intensities.quantile(q=self.projection_controls.UPPER_PERCENTILE, axis='index', numeric_only=False)
+        winsorized: pd.DataFrame = nominal_intensities.clip(
+            lower=lower,
+            upper=upper,
+            axis='columns'
+        )
+        if ITR.HAS_UNCERTAINTIES:
+            # FIXME: the clipping process can properly introduce uncertainties.  The low and high values that are clipped could be
+            # replaced by the clipped values +/- the lower and upper percentile values respectively.
+            if uncertain_intensities.values.sum() != 0:
+                uwinsorized = winsorized.apply(lambda x: PA_(ITR.uarray(x.values.data, uncertain_intensities[x.name].values), dtype=units[x.name]))
+                return uwinsorized
+        # FIXME: If we have S1, S2, and S1S2 intensities, should we treat winsorized(S1)+winsorized(S2) as winsorized(S1S2)?
+        # FIXME: If we have S1S2 (or S1 and S2) and S3 and S1S23 intensities, should we treat winsorized(S1S2)+winsorized(S3) as winsorized(S1S2S3)?
+        winsorized_and_unitized = winsorized.apply(lambda x: PA_(x.values.data, dtype=units[x.name]))
+        return winsorized_and_unitized
 
     def _interpolate(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
         # Interpolate NaNs surrounded by values, and extrapolate NaNs with last known value
         df = historic_intensities.copy()
         for col in df.columns:
             pa = PA_._from_sequence(df[col])
-            try:
-                if ITR.isnan(pa.data).all():
-                    continue
-                # pd.Series.interpolate only works on numeric data, so push down into PintArray
-                # FIXME: throw some uncertainty into the mix.  If we see ... X NA Y ... and interpolat the NA as Z as function of X and Y
-                ser = pd.Series(data=pa.data, index=df.index)
-                df[col] = pd.Series(PA_(ser.interpolate(method='linear', inplace=False, limit_direction='forward').values,
-                                        dtype=pa.units),
-                                    dtype=pa.dtype, index=df.index)
-            except AttributeError:
-                breakpoint()
-            except ValueError:
-                breakpoint()
-            except StopIteration:
-                breakpoint()
+            if ITR.isnan(pa.data).all():
+                continue
+            # pd.Series.interpolate only works on numeric data, so push down into PintArray
+            # FIXME: throw some uncertainty into the mix.  If we see ... X NA Y ... and interpolat the NA as Z as function of X and Y
+            ser = pd.Series(data=pa.data, index=df.index)
+            df[col] = pd.Series(PA_(ser.interpolate(method='linear', inplace=False, limit_direction='forward').values,
+                                    dtype=pa.units),
+                                dtype=pa.dtype, index=df.index)
         return df
 
     def _get_trends(self, intensities: pd.DataFrame):

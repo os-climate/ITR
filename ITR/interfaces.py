@@ -52,6 +52,7 @@ class EScope(SortableEnum):
     S3 = "S3"
     S1S2 = "S1+S2"
     S1S2S3 = "S1+S2+S3"
+    AnyScope = 'AnyScope'
 
     @classmethod
     def get_scopes(cls) -> List[str]:
