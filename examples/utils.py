@@ -52,10 +52,11 @@ def collect_company_contributions(aggregated_portfolio, amended_portfolio, analy
             temperature_scores.append(contribution.temperature_score)
     company_contributions = pd.DataFrame(data={'company_name': company_names, 'contribution': relative_contributions, 'temperature_score': temperature_scores})
     additional_columns = ['company_name', 'company_id', 'company_market_cap', 'investment_value'] + grouping
-    company_contributions = company_contributions.merge(right=amended_portfolio[additional_columns], how='left', on='company_name')
+    company_contributions = company_contributions.merge(right=amended_portfolio.reset_index()[additional_columns], how='left', on='company_name')
     company_contributions['portfolio_percentage'] = 100 * company_contributions['investment_value'] / company_contributions['investment_value'].sum()
     company_contributions['ownership_percentage'] = 100 * company_contributions['investment_value'] / company_contributions['company_market_cap']
     company_contributions = company_contributions.sort_values(by='contribution', ascending=False)
+    company_contributions.set_index('company_id')
     return company_contributions
 
 
@@ -97,6 +98,7 @@ def plot_grouped_statistics(aggregated_portfolio, company_contributions, analysi
 
 
 def anonymize(portfolio, provider):
+    portfolio = portfolio.reset_index()
     portfolio_companies = portfolio['company_name'].unique()
     for index, company_name in enumerate(portfolio_companies):
         portfolio.loc[portfolio['company_name'] == company_name, 'company_id'] = 'C' + str(index + 1)
@@ -115,6 +117,7 @@ def anonymize(portfolio, provider):
             provider.data['fundamental_data'].loc[provider.data['fundamental_data']['company_name'] == company_name, 'company_id'] = '_' + str(index + 1)
             provider.data['fundamental_data'].loc[provider.data['fundamental_data']['company_name'] == company_name, 'company_name'] = 'Company_' + str(
                 index + 1)
+    portfolio = portfolio.set_index('company_id')
     return portfolio, provider
 
 
