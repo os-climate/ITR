@@ -425,7 +425,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                                   if c.company_id in company_ids
                                   if getattr(c.projected_intensities, scope.name)]
         if projected_trajectories:
-            if year:
+            if year is not None:
                 company_ids, scopes, values = list(map(list, zip(*[(pt[0], pt[1], [yvp.value for yvp in pt[2] if yvp.year==year][0]) for pt in projected_trajectories])))
                 index=pd.MultiIndex.from_tuples(zip(company_ids, scopes), names=["company_id", "scope"])
                 return pd.Series(data=values, index=index)
