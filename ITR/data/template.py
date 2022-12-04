@@ -67,16 +67,11 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
             breakpoint()
             raise ValueError
         # This relies on the fact that we can now see Quantity(np.nan, ...) for both float and ufloat magnitudes
-        x = PA_._from_sequence(y)
-        xq = x.quantity
-        xm = xq.m
+        # remove NaNs, which mess with mean estimation
         x = y[~ITR.isnan(PA_._from_sequence(y).quantity.m)]
     except TypeError:
-        logger.error(f"type_error({y}) returning {y.values}[0]")
+        logger.error(f"type_error({y}), so returning {y.values}[0]")
         breakpoint()
-        x = PA_._from_sequence(y)
-        xq = x.quantity
-        xm = xq.m
         return y.iloc[0]
     if len(x) == 0:
         # If all inputs are NaN, return the first NaN
@@ -85,14 +80,13 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         # If there's only one non-NaN input, return that one
         return x.iloc[0]
     if isinstance(x.values[0], pint.Quantity):
-        values = x.values
-        units = values[0].u
-        assert all([v.u==units for v in values])
+        # Let PintArray do all the work of harmonizing compatible units
+        x = PA_._from_sequence(x)
         if ITR.HAS_UNCERTAINTIES:
-            wavg = ITR.umean(values)
+            wavg = ITR.umean(x.quantity.m)
         else:
-            wavg = np.mean(values)
-        est = Q_(wavg, units)
+            wavg = np.mean(x.quantity.m)
+        est = Q_(wavg, x.quantity.u)
     else:
         logger.error(f"non-qty: _estimated_values called on non-Quantity {x.values[0]};;;")
         est = x.mean()
