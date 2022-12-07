@@ -22,15 +22,19 @@ ureg.define("LNG = 3.44 / 2.75 CH4")
 #     print(ureg("t LNG").to("t CO2"))
 # will print 3.44 t CO2
 
-ureg.define("Fe = [iron] = Steel")
-ureg.define("iron = Fe")
+ureg.define("Alloys = [alloys]")
 ureg.define("Al = [aluminum] = Aluminum")
+ureg.define("Biofuel = [biofuel]")
 ureg.define("aluminium = Al")
 ureg.define("Cement = [cement]")
 ureg.define("cement = Cement")
 ureg.define("Cu = [copper] = Copper")
 ureg.define("Paper = [paper] = Pulp")
 ureg.define("Paperboard = Paper")
+ureg.define("Petrochemicals = [petrochemicals]")
+ureg.define("Petroleum = [petroleum]")
+ureg.define("Fe = [iron] = Steel")
+ureg.define("iron = Fe")
 
 # For reports that use 10,000 t instead of 1e3 or 1e6
 ureg.define('myria- = 10000')
@@ -44,12 +48,16 @@ ureg.define("USD = [currency]")
 ureg.define("EUR = nan USD")
 ureg.define("JPY = nan USD")
 
+ureg.define("bcm = 38.2 PJ = 17 Mt CO2e")
 ureg.define("btu = Btu")
 ureg.define("mmbtu = 1e6 btu")
 # ureg.define("boe = 5.712 GJ")
 ureg.define("boe = 6.1178632 GJ")
 ureg.define("mboe = 1e3 boe")
 ureg.define("mmboe = 1e6 boe")
+ureg.define("scf = [scf] = 1 ft**3")
+ureg.define("mscf = 1000 scf = Mscf")
+ureg.define("mmscf = 1000000 scf = MMscf")
 
 # Transportation activity
 
@@ -79,7 +87,7 @@ ureg.define("Fe_ton = t Steel")
 # ureg.define("PM10 = [ PM10_emissions ]")
 
 # List of all the production units we know
-_production_units = [ "Wh", "pkm", "tkm", "boe", "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "m**2" ]
+_production_units = [ "Wh", "pkm", "tkm", "bcm", "boe", 't Alloys', "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
 _ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
 
 class ProductionMetric(str):
@@ -560,4 +568,8 @@ def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.Data
     for col in df.columns:
         new_df[col] = asPintSeries(df[col], name=col, errors=errors, inplace=inplace)
     new_df.index = df.index
+    # When DF.COLUMNS is a MultiIndex, the naive column-by-column construction replaces MultiIndex values
+    # with the anonymous tuple of the MultiIndex and DF.COLUMNS becomes just an Index of tuples.
+    # We need to restore the MultiIndex or lose information.
+    new_df.columns = df.columns
     return new_df

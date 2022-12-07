@@ -631,6 +631,7 @@ class EITrajectoryProjector(object):
         for company in companies:
             if company.company_id not in extrapolations.index.get_level_values(0):
                 # There's no extrapolation to add...
+                # breakpoint()
                 continue
             scope_projections = {}
             scope_dfs = {}
@@ -663,6 +664,7 @@ class EITrajectoryProjector(object):
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
         na_intensities = intensities.apply(lambda x: x.isna().all(), axis=1)
         if na_intensities.any():
+            # breakpoint()
             logger.warning(f"Standardization dropping {na_intensities[na_intensities].index.to_list()} due to fully empty rows data")
             intensities = intensities[~na_intensities]
         # When columns are years and rows are all different intensity types, we cannot winsorize
@@ -701,6 +703,7 @@ class EITrajectoryProjector(object):
         # FIXME: we already remove all-NA rows before this function is called.  Can any non-unit data leak to here?
         na_units = units.isna()
         if na_units.any():
+            # breakpoint()
             logger.warning(f"Winsorization dropping {na_units[na_units].index.to_list()} due to null unit information")
             historic_intensities = historic_intensities[~units_na]
         if ITR.HAS_UNCERTAINTIES:
@@ -775,10 +778,9 @@ class EITrajectoryProjector(object):
         for year in projection_years:
             projected_intensities[year + 1] = projected_intensities[year] * (1 + trends)
         # Clean up rows by converting NaN/None into Quantity(np.nan, unit_type)
-        # FIXME: Work-around for not-yet-filed Pandas issue whereby MultiIndex is converted into an Index of tuples
-        idx = projected_intensities.index
-        projected_intensities =  ITR.data.osc_units.asPintDataFrame(projected_intensities.T).T
-        projected_intensities.index = idx
+        columnwise_intensities = ITR.data.osc_units.asPintDataFrame(projected_intensities.T)
+        # Restore row-wise shape of DataFrame
+        projected_intensities =  columnwise_intensities.T
         return projected_intensities
 
     # Might return a float, might return a ufloat
