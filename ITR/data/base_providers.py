@@ -486,6 +486,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param year: values for a specific year, or all years if None
         :return: A pandas DataFrame with projected intensity targets per company, indexed by company_id
         """
+        # Tempting as it is to follow the pattern of constructing the same way we create `projected_trajectories`
+        # targets are trickier because they have ragged left edges that want to fill with NaNs when put into DataFrames.
+        # _convert_projections_to_series has the nice side effect that PintArrays produce NaNs with units.
+        # So if we just need a year from this dataframe, we compute the whole dataframe and return one column.
+        # Feel free to write a better implementation if you have time!
         target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS, scope)
                        for c in self.get_company_data(company_ids)
                        for scope in EScope.get_result_scopes()
@@ -494,9 +499,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
                 warnings.simplefilter("ignore")
-                # If target_list produces a ragged left edge, resort columns so that earliers year is leftmost
+                # If target_list produces a ragged left edge, resort columns so that earliest year is leftmost
                 df = pd.DataFrame(target_list).sort_index(axis=1)
                 df.index.set_names(['company_id', 'scope'], inplace=True)
+                if year is not None:
+                    return df[year]
                 return df
         return pd.DataFrame()
 

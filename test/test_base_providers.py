@@ -174,6 +174,20 @@ class TestBaseProvider(unittest.TestCase):
         productions = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
         assert_pint_series_equal(self, expected_data_2025, productions)
 
+    def test_get_projected_targets(self):
+        expected_data_2025 = pd.Series([122926534.69719231, 702344308.6611674, 40763845.66650752, 702344308.6611674],
+                                       index=self.company_ids,
+                                       name=2025,
+                                       dtype='pint[MWh]')
+        expected_data_2025 = pd.Series([Q_(1.2920428864089595, 't CO2 / MWh'),
+                                        Q_(0.413042007371309, 't CO2 / MWh'),
+                                        Q_(0.17005401282971486, 't CO2 / GJ'),
+                                        Q_(0.04623233372785435, 't CO2 / GJ')],
+                                       index = pd.MultiIndex.from_tuples(zip(self.company_ids, [EScope.S1S2]*len(self.company_ids))),
+                                       name=2025)
+        target_projections = self.base_company_data.get_company_projected_targets(self.company_ids, 2025)
+        assert_pint_series_equal(self, expected_data_2025, target_projections)
+
     def test_get_cumulative_value(self):
         projected_ei = pd.DataFrame(
             [[Q_(1.0, 't CO2/MWh'), Q_(2.0, 't CO2/MWh')], [Q_(3.0, 't CO2/MWh'), Q_(4.0, 't CO2/MWh')]],
