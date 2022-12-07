@@ -832,7 +832,7 @@ class EITargetProjector(object):
 
     def project_ei_targets(self, company: ICompanyData, production_proj: pd.Series) -> ICompanyEIProjectionsScopes:
         """Input:
-        @company: Company-specific data, including target data
+        @company: Company-specific data: target_data and base_year_production
         @production_proj: company's production projection computed from region-sector benchmark growth rates
 
         If the company has no target or the target can't be processed, then the output the emission database, unprocessed

@@ -173,8 +173,8 @@ class TestEIBenchmarks(unittest.TestCase):
         print(scores[['company_name', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.74, 1.55, 1.58, 1.44], dtype='pint[delta_degC]')
-        assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
+        expected = pd.Series(PA_([1.74, 1.55, 1.58, 1.44], dtype='pint[delta_degC]'))
+        assert_pint_series_equal(self, scores.temperature_score, expected, places=2)
         # verify that results exist
         self.assertAlmostEqual(agg_scores.long.S1S2S3.all.score, Q_(1.58, ureg.delta_degC), places=2)
 

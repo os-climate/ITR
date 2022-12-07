@@ -6,9 +6,11 @@ from typing import List
 import pandas as pd
 
 import ITR
-from utils import QuantityEncoder
-from ITR.data.base_providers import EITrajectoryProjector
-from ITR.interfaces import ICompanyData, ProjectionControls
+from utils import QuantityEncoder, assert_pint_series_equal
+from ITR.data.osc_units import PA_
+from ITR.configs import ColumnsConfig
+from ITR.data.base_providers import BaseProviderProductionBenchmark, EITrajectoryProjector, EITargetProjector
+from ITR.interfaces import EScope, ICompanyData, ProjectionControls, IProductionBenchmarkScopes, ITargetData
 
 
 def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
@@ -58,6 +60,12 @@ class TestProjector(unittest.TestCase):
         self.root: str = os.path.dirname(os.path.abspath(__file__))
         self.source_path: str = os.path.join(self.root, "inputs", "json", "test_project_companies.json")
         self.json_reference_path: str = os.path.join(self.root, "inputs", "json", "test_project_reference.json")
+        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
+        # load production benchmarks
+        with open(self.benchmark_prod_json) as json_file:
+            parsed_json = json.load(json_file)
+        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
+        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         with open(self.source_path, 'r') as file:
             company_dicts = json.load(file)
@@ -75,6 +83,53 @@ class TestProjector(unittest.TestCase):
         test_successful = is_pint_dict_equal(projections_dict, reference_projections)
 
         self.assertEqual(test_successful, True)
+
+    def test_targets(self):
+        # Test that both absolute targets and intensity targets produce sane results
+        # Our ICompanyData need only have: company_id, company_name, base_year_production, ghg_scope12, sector, region, target_data
+        # We need bm production data in case we need to convert supplied emissions data to calculate intensity targets or
+        # supplied intensity data to compute absolute targets
+        company_data = self.companies
+        company_dict = {
+            field : [ getattr(c, field) for c in company_data ]
+            for field in [ ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION ]
+        }
+        company_dict[ColumnsConfig.SCOPE] = [ EScope.S1S2 ] * len(company_data)
+        company_index = [ c.company_id for c in company_data ]
+        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name='company_id'))
+        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
+        expected_0 = pd.Series(PA_([0.123, # 2019
+                                    0.116, 0.108, 0.102, 0.096, 0.09, 0.084, 0.079, 0.074, 0.07, 0.066, # 2020-2029
+                                    0.062, 0.047, 0.036, 0.028, 0.021, 0.016, 0.013, 0.01, 0.007, 0.006, # 2030-2039
+                                    0.004, 0.003, 0.003, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.0, # 2040-2049
+                                    0.0], # 2050
+                                   dtype='pint[t CO2/GJ]'),
+                               index=range(2019,2051),
+                               name='expected_0')
+        target_0 = ITargetData(**{
+            'netzero_year': 2050,
+            'target_type': 'intensity',
+            'target_scope': EScope.S1S2,
+            'target_start_year': 2020,
+            'target_base_year': 2019,
+            'target_end_year': 2030,
+            'target_base_year_qty': 0.131037611,
+            'target_base_year_unit': 't CO2/GJ',
+            'target_reduction_pct': 0.5,
+        })
+        expected = [ expected_0 ]
+        company_data[0].target_data = [ target_0 ]
+        for i, c in enumerate(company_data):
+            if c.target_data:
+                projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)])
+                assert_pint_series_equal(self,
+                                         pd.Series(PA_([x.value.m for x in projected_targets.S1S2.projections],
+                                                       dtype=projected_targets.S1S2.ei_metric),
+                                                   index=range(2019,2051)),
+                                         expected[i], places=3)
+            else:
+                assert c.projected_targets is None
+        
 
     # Need test data in order to test mean
     def test_median(self):
