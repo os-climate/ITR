@@ -135,6 +135,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._EI_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
         
 
+    # SDA stands for Sectoral Decarbonization Approach; see https://sciencebasedtargets.org/resources/files/SBTi-Power-Sector-15C-guide-FINAL.pdf
     def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame, scope_to_calc: EScope = None) -> pd.DataFrame:
         """
         Overrides subclass method
@@ -316,7 +317,51 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             # FIXME: Note that we don't need to call with a scope, because production is independent of scope.
             # We use the arbitrary EScope.AnyScope just to be explicit about that.
             df_pp = production_bm._get_projected_production(EScope.AnyScope)
+
+        # The benchmark projected production format is based on year-over-year growth and starts out like this:
+
+        #                                                2019     2020            2049       2050
+        # region                 sector        scope                    ...                                                  
+        # Steel                  Global        AnyScope   0.0   0.00306  ...     0.0155     0.0155
+        #                        Europe        AnyScope   0.0   0.00841  ...     0.0155     0.0155
+        #                        North America AnyScope   0.0   0.00748  ...     0.0155     0.0155
+        # Electricity Utilities  Global        AnyScope   0.0    0.0203  ...     0.0139     0.0139
+        #                        Europe        AnyScope   0.0    0.0306  ...   -0.00113   -0.00113
+        #                        North America AnyScope   0.0    0.0269  ...   0.000426   0.000426
+        # etc.
+
+        # To compute the projected production for a company in given sector/region, we need to start with the
+        # base_year_production for that company and apply the year-over-year changes projected by the benchmark
+        # until all years are computed.  We need to know production of each year, not only the final year
+        # because the cumumulative emissions of the company will be the sum of the emissions of each year,
+        # which depends on both the production projection (computed here) and the emissions intensity projections
+        # (computed elsewhere).
+
+        # Let Y2019 be the production of a company in 2019.
+        # Y2020 = Y2019 + (Y2019 * df_pp[2020]) = Y2019 + Y2019 * (1.0 + df_pp[2020])
+        # Y2021 = Y2020 + (Y2020 * df_pp[2020]) = Y2020 + Y2020 * (1.0 + df_pp[2021])
+        # etc.
+
+        # The Pandas `cumprod` function calculates precisely the cumulative product we need
+        # As the math shows above, the terms we need to accumulate are 1.0 + growth.
+        
         df_partial_pp = df_pp.add(1.0).cumprod(axis=1)
+
+        # This results in a project that looks like this:
+        #                                                2019     2020  ...      2049      2050
+        # region                 sector        scope                    ...                    
+        # Steel                  Global        AnyScope   1.0  1.00306  ...  1.419076  1.441071
+        #                        Europe        AnyScope   1.0  1.00841  ...  1.465099  1.487808
+        #                        North America AnyScope   1.0  1.00748  ...  1.457011  1.479594
+        # Electricity Utilities  Global        AnyScope   1.0  1.02030  ...  2.907425  2.947838
+        #                        Europe        AnyScope   1.0  1.03060  ...  1.751802  1.749822
+        #                        North America AnyScope   1.0  1.02690  ...  2.155041  2.155959
+        # etc.
+
+        # In the following loop, we build a cumulative product series that multiplies each company's
+        # base year production by the appropriate region/sector row of `df_partial_pp` (using
+        # the region "Global" if the company's region doesn't otherwise match the benchmark)
+        # to provide the company-specific projection estimate.
 
         for c in self._companies:
             if c.projected_targets is not None:
