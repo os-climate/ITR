@@ -580,7 +580,7 @@ class EITrajectoryProjector(object):
     # The purpose of this function is not to infer scope data that might be interesting,
     # but rather to impute the scope data that is actually required, no more, no less.
     def _compute_missing_historic_ei(self, companies: List[ICompanyData], historic_data: pd.DataFrame):
-        scopes = [scope for scope in EScope.get_result_scopes()]
+        scopes = EScope.get_result_scopes()
         missing_data = []
         for company in companies:
             # Create keys to index historic_data DataFrame for readability
