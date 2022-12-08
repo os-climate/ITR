@@ -8,7 +8,7 @@ import pandas as pd
 import ITR
 from utils import QuantityEncoder, assert_pint_series_equal
 from ITR.data.osc_units import PA_
-from ITR.configs import ColumnsConfig
+from ITR.configs import ColumnsConfig, VariablesConfig
 from ITR.data.base_providers import BaseProviderProductionBenchmark, EITrajectoryProjector, EITargetProjector
 from ITR.interfaces import EScope, ICompanyData, ProjectionControls, IProductionBenchmarkScopes, ITargetData
 
@@ -130,6 +130,26 @@ class TestProjector(unittest.TestCase):
             else:
                 assert c.projected_targets is None
         
+    def test_extrapolate(self):
+        with open(os.path.join(self.root, "inputs", "json", "test_fillna_companies.json"), 'r') as file:
+            company_dicts = json.load(file)
+        for company_dict in company_dicts:
+            company_dict['report_date'] = datetime.date(2021, 12, 31)
+        fillna_data = [ICompanyData(**company_dict) for company_dict in company_dicts]
+
+        ei_projector = EITrajectoryProjector(ProjectionControls(UPPER_PERCENTILE=0.9, LOWER_PERCENTILE=0.1))
+        historic_data = ei_projector._extract_historic_data(fillna_data)
+        ei_projector._compute_missing_historic_ei(fillna_data, historic_data)
+
+        historic_years = [column for column in historic_data.columns if type(column) == int]
+        projection_years = range(max(historic_years), ei_projector.projection_controls.TARGET_YEAR)
+        historic_intensities = historic_data[historic_years].query(
+            f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'")
+        standardized_intensities = ei_projector._standardize(historic_intensities)
+        intensity_trends = ei_projector._get_trends(standardized_intensities)
+        extrapolated = ei_projector._extrapolate(intensity_trends, projection_years, historic_data)
+        ei_projector._add_projections_to_companies(fillna_data, extrapolated)
+        # Figure out what to test here--just making it through with funny company data is step 1!
 
     # Need test data in order to test mean
     def test_median(self):

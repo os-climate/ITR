@@ -8,7 +8,7 @@ from operator import add
 from typing import List, Type, Dict
 
 import ITR
-from ITR.data.osc_units import Q_, PA_, asPintSeries
+from ITR.data.osc_units import Q_, PA_, asPintSeries, PintType
 
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
@@ -284,7 +284,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 {p['year']: p['value'] for p in projections},
                 name=(company.company_id, scope), dtype=f'pint[{emissions_units}/({production_units})]')
         else:
-            breakpoint()
+            assert False
             # Complex case: S1+S2 or S1+S2+S3...we really don't handle yet
             scopes = [EScope[s] for s in scope.value.split('+')]
             projection_scopes = {s: company_dict[feature][s]['projections'] for s in scopes if company_dict[feature][s.name]}
@@ -597,7 +597,8 @@ class EITrajectoryProjector(object):
                 if scope == EScope.S1S2:
                     try:  # Try to add S1 and S2 emissions intensities
                         historic_data.loc[ei_keys[scope]] = (
-                            historic_data.loc[ei_keys[EScope.S1]] + historic_data.loc[ei_keys[EScope.S2]])
+                            historic_data.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, EScope.S1)]
+                            + historic_data.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, EScope.S2)])
                         append_this_missing_data = False
                     except KeyError:  # Either S1 or S2 emissions intensities not readily available
                         try:  # Try to compute S1+S2 EIs from S1+S2 emissions and productions
@@ -607,12 +608,19 @@ class EITrajectoryProjector(object):
                         except KeyError:
                             this_missing_data.append(f"{company.company_id} - {scope.name}")
                 elif scope == EScope.S1S2S3:  # Implement when S3 data is available
-                    # breakpoint()
-                    pass
-                elif scope == EScope.S3:  # Remove when S3 data is available - will be handled by 'else'
-                    # breakpoint()
-                    pass
-                else:  # S1 and S2 cannot be computed from other EIs, so use emissions and productions
+                    try:  # Try to add S1S2 and S3 emissions intensities
+                        historic_data.loc[ei_keys[scope]] = (
+                            historic_data.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, EScope.S1S2)]
+                            + historic_data.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, EScope.S3)])
+                        append_this_missing_data = False
+                    except KeyError:  # Either S1 or S2 emissions intensities not readily available
+                        try:  # Try to compute S1+S2 EIs from S1+S2 emissions and productions
+                            historic_data.loc[ei_keys[scope]] = (
+                                historic_data.loc[emissions_keys[scope]] / historic_data.loc[production_key])
+                            append_this_missing_data = False
+                        except KeyError:
+                            this_missing_data.append(f"{company.company_id} - {scope.name}")
+                else:  # S1, S2, and S3 cannot be computed from other EIs, so use emissions and productions
                     try:
                         historic_data.loc[ei_keys[scope]] = (
                             historic_data.loc[emissions_keys[scope]] / historic_data.loc[production_key])
@@ -629,10 +637,6 @@ class EITrajectoryProjector(object):
 
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations: pd.DataFrame):
         for company in companies:
-            if company.company_id not in extrapolations.index.get_level_values(0):
-                # There's no extrapolation to add...
-                # breakpoint()
-                continue
             scope_projections = {}
             scope_dfs = {}
             scope_names = EScope.get_scopes()
@@ -641,7 +645,13 @@ class EITrajectoryProjector(object):
                     scope_projections[scope_name] = None
                     continue
                 results = extrapolations.loc[(company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, EScope[scope_name])]
-                units = f"{results.values[0].u:~P}"
+                results = asPintSeries(results)
+                if not isinstance(results.dtype, PintType):
+                    if results.isna().all():
+                        scope_projections[scope_name] = None
+                        continue
+                    assert False
+                units = f"{results.dtype.units:~P}"
                 scope_dfs[scope_name] = results
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
@@ -649,24 +659,20 @@ class EITrajectoryProjector(object):
             if scope_projections['S1'] and scope_projections['S2'] and not scope_projections['S1S2']:
                 results = scope_dfs['S1'] + scope_dfs['S2']
                 units = f"{results.values[0].u:~P}"
+                scope_dfs['S1S2'] = results
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections['S1S2'] = ICompanyEIProjections(ei_metric=units, projections=projections)
-            # FIXME: do we really need to do this?  We're going to migrate S3 to S1S2 and ignore S1S2S3...
             if scope_projections['S1S2'] and scope_projections['S3'] and not scope_projections['S1S2S3']:
                 results = scope_dfs['S1S2'] + scope_dfs['S3']
                 units = f"{results.values[0].u:~P}"
+                # We don't need to compute scope_dfs['S1S2S3'] because nothing further depends on accessing it here
                 projections = [IProjection(year=year, value=value) for year, value in results.items()
                                if year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
                 scope_projections['S1S2S3'] = ICompanyEIProjections(ei_metric=units, projections=projections)
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
-        na_intensities = intensities.apply(lambda x: x.isna().all(), axis=1)
-        if na_intensities.any():
-            # breakpoint()
-            logger.warning(f"Standardization dropping {na_intensities[na_intensities].index.to_list()} due to fully empty rows data")
-            intensities = intensities[~na_intensities]
         # When columns are years and rows are all different intensity types, we cannot winsorize
         # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
         intensities = intensities.T
@@ -700,12 +706,6 @@ class EITrajectoryProjector(object):
         # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
         units = historic_intensities.apply(lambda x: x[x.first_valid_index()].u
                                            if x.first_valid_index() and isinstance(x[x.first_valid_index()], pint.Quantity) else None)
-        # FIXME: we already remove all-NA rows before this function is called.  Can any non-unit data leak to here?
-        na_units = units.isna()
-        if na_units.any():
-            # breakpoint()
-            logger.warning(f"Winsorization dropping {na_units[na_units].index.to_list()} due to null unit information")
-            historic_intensities = historic_intensities[~units_na]
         if ITR.HAS_UNCERTAINTIES:
             nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan)))
             uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else 0)))

@@ -1,0 +1,620 @@
+[
+  {
+    "company_name": "Company NullALot",
+    "company_id": "US0000000000",
+    "region": "North America",
+    "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
+    "target_probability": 0.428571428571428,
+    "historic_data": {
+      "productions": [
+        {
+          "year": 2009,
+          "value": null
+        },
+        {
+          "year": 2010,
+          "value": null
+        },
+        {
+          "year": 2011,
+          "value": null
+        },
+        {
+          "year": 2012,
+          "value": null
+        },
+        {
+          "year": 2013,
+          "value": null
+        },
+        {
+          "year": 2014,
+          "value": "1682769059.4097404 GJ"
+        },
+        {
+          "year": 2015,
+          "value": "1149435381.0097404 GJ"
+        },
+        {
+          "year": 2016,
+          "value": "1351884837.0097404 GJ"
+        },
+        {
+          "year": 2017,
+          "value": "870361875.4897404 GJ"
+        },
+        {
+          "year": 2018,
+          "value": "388838913.9697404 GJ"
+        },
+        {
+          "year": 2019,
+          "value": "377380291.0897404 GJ"
+        },
+        {
+          "year": 2020,
+          "value": "377380291.0897404 GJ"
+        },
+        {
+          "year": 2021,
+          "value": "377380291.0897404 GJ"
+        }
+      ],
+      "emissions": {
+        "S1": [
+          {
+            "year": 2009,
+            "value": "74121549.8360392 t CO2"
+          },
+          {
+            "year": 2010,
+            "value": "77200005.8360392 t CO2"
+          },
+          {
+            "year": 2011,
+            "value": "74010717.8360392 t CO2"
+          },
+          {
+            "year": 2012,
+            "value": "78912218.8360392 t CO2"
+          },
+          {
+            "year": 2013,
+            "value": "75863005.8360392 t CO2"
+          },
+          {
+            "year": 2014,
+            "value": "79630005.8360392 t CO2"
+          },
+          {
+            "year": 2015,
+            "value": "70339005.8360392 t CO2"
+          },
+          {
+            "year": 2016,
+            "value": "70457005.8360392 t CO2"
+          },
+          {
+            "year": 2017,
+            "value": "64527005.8360392 t CO2"
+          },
+          {
+            "year": 2018,
+            "value": "54154005.8360392 t CO2"
+          },
+          {
+            "year": 2019,
+            "value": "49092005.8360392 t CO2"
+          },
+          {
+            "year": 2020,
+            "value": "49092005.8360392 t CO2"
+          },
+          {
+            "year": 2021,
+            "value": "49092005.8360392 t CO2"
+          }
+        ],
+        "S2": [
+          {
+            "year": 2009,
+            "value": null
+          },
+          {
+            "year": 2010,
+            "value": null
+          },
+          {
+            "year": 2011,
+            "value": null
+          },
+          {
+            "year": 2012,
+            "value": null
+          },
+          {
+            "year": 2013,
+            "value": null
+          },
+          {
+            "year": 2014,
+            "value": null
+          },
+          {
+            "year": 2015,
+            "value": "367805.836039191 t CO2"
+          },
+          {
+            "year": 2016,
+            "value": null
+          },
+          {
+            "year": 2017,
+            "value": "226005.836039191 t CO2"
+          },
+          {
+            "year": 2018,
+            "value": null
+          },
+          {
+            "year": 2019,
+            "value": "359005.836039191 t CO2"
+          },
+          {
+            "year": 2020,
+            "value": null
+          },
+          {
+            "year": 2021,
+            "value": "359005.836039191 t CO2"
+          }
+        ],
+        "S1S2": [],
+        "S3": [
+          {
+            "year": 2020,
+            "value": "382033006.724808300816639 t CO2"
+          },
+          {
+            "year": 2021,
+            "value": "382000000 t CO2"
+          }
+	],
+        "S1S2S3": []
+      },
+      "emissions_intensities": {
+        "S1": [
+          {
+            "year": 2009,
+            "value": null
+          },
+          {
+            "year": 2010,
+            "value": null
+          },
+          {
+            "year": 2011,
+            "value": null
+          },
+          {
+            "year": 2012,
+            "value": null
+          },
+          {
+            "year": 2013,
+            "value": null
+          },
+          {
+            "year": 2014,
+            "value": "0.6132777815614572 t CO2/GJ"
+          },
+          {
+            "year": 2015,
+            "value": "0.793079394192882 t CO2/GJ"
+          },
+          {
+            "year": 2016,
+            "value": "0.6754442173157448 t CO2/GJ"
+          },
+          {
+            "year": 2017,
+            "value": "0.9608302238244408 t CO2/GJ"
+          },
+          {
+            "year": 2018,
+            "value": "1.8049528748804293 t CO2/GJ"
+          },
+          {
+            "year": 2019,
+            "value": "1.6859184505842997 t CO2/GJ"
+          },
+          {
+            "year": 2020,
+            "value": "1.6859184505842997 t CO2/GJ"
+          },
+          {
+            "year": 2021,
+            "value": "1.6859184505842997 t CO2/GJ"
+          }
+        ],
+        "S2": [
+          {
+            "year": 2009,
+            "value": null
+          },
+          {
+            "year": 2010,
+            "value": null
+          },
+          {
+            "year": 2011,
+            "value": null
+          },
+          {
+            "year": 2012,
+            "value": null
+          },
+          {
+            "year": 2013,
+            "value": null
+          },
+          {
+            "year": 2014,
+            "value": "0.002233506501709902 t CO2/GJ"
+          },
+          {
+            "year": 2015,
+            "value": null
+          },
+          {
+            "year": 2016,
+            "value": "0.0029335602608281442 t CO2/GJ"
+          },
+          {
+            "year": 2017,
+            "value": null
+          },
+          {
+            "year": 2018,
+            "value": "0.011998993586920128 t CO2/GJ"
+          },
+          {
+            "year": 2019,
+            "value": null
+          },
+          {
+            "year": 2020,
+            "value": "0.0123289841704041 t CO2/GJ"
+          },
+          {
+            "year": 2021,
+            "value": null
+          }
+        ],
+        "S1S2": [],
+        "S3": [
+          {
+            "year": 2020,
+            "value": "1.0123289841704041 t CO2/GJ"
+          },
+          {
+            "year": 2021,
+            "value": "1.0 t CO2/GJ"
+          }
+	],
+        "S1S2S3": []
+      }
+    }
+  },
+  {
+    "company_name": "Company NullS3",
+    "company_id": "US00000000S3",
+    "region": "North America",
+    "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
+    "target_probability": 0.428571428571428,
+    "historic_data": {
+      "productions": [
+        {
+          "year": 2009,
+          "value": null
+        },
+        {
+          "year": 2010,
+          "value": null
+        },
+        {
+          "year": 2011,
+          "value": null
+        },
+        {
+          "year": 2012,
+          "value": null
+        },
+        {
+          "year": 2013,
+          "value": null
+        },
+        {
+          "year": 2014,
+          "value": "1682769059.4097404 GJ"
+        },
+        {
+          "year": 2015,
+          "value": "1149435381.0097404 GJ"
+        },
+        {
+          "year": 2016,
+          "value": "1351884837.0097404 GJ"
+        },
+        {
+          "year": 2017,
+          "value": "870361875.4897404 GJ"
+        },
+        {
+          "year": 2018,
+          "value": "388838913.9697404 GJ"
+        },
+        {
+          "year": 2019,
+          "value": "377380291.0897404 GJ"
+        },
+        {
+          "year": 2020,
+          "value": "377380291.0897404 GJ"
+        },
+        {
+          "year": 2021,
+          "value": "377380291.0897404 GJ"
+        }
+      ],
+      "emissions": {
+        "S1": [
+          {
+            "year": 2009,
+            "value": "74121549.8360392 t CO2"
+          },
+          {
+            "year": 2010,
+            "value": "77200005.8360392 t CO2"
+          },
+          {
+            "year": 2011,
+            "value": "74010717.8360392 t CO2"
+          },
+          {
+            "year": 2012,
+            "value": "78912218.8360392 t CO2"
+          },
+          {
+            "year": 2013,
+            "value": "75863005.8360392 t CO2"
+          },
+          {
+            "year": 2014,
+            "value": "79630005.8360392 t CO2"
+          },
+          {
+            "year": 2015,
+            "value": "70339005.8360392 t CO2"
+          },
+          {
+            "year": 2016,
+            "value": "70457005.8360392 t CO2"
+          },
+          {
+            "year": 2017,
+            "value": "64527005.8360392 t CO2"
+          },
+          {
+            "year": 2018,
+            "value": "54154005.8360392 t CO2"
+          },
+          {
+            "year": 2019,
+            "value": "49092005.8360392 t CO2"
+          },
+          {
+            "year": 2020,
+            "value": "49092005.8360392 t CO2"
+          },
+          {
+            "year": 2021,
+            "value": "49092005.8360392 t CO2"
+          }
+        ],
+        "S2": [
+          {
+            "year": 2009,
+            "value": null
+          },
+          {
+            "year": 2010,
+            "value": null
+          },
+          {
+            "year": 2011,
+            "value": null
+          },
+          {
+            "year": 2012,
+            "value": null
+          },
+          {
+            "year": 2013,
+            "value": null
+          },
+          {
+            "year": 2014,
+            "value": null
+          },
+          {
+            "year": 2015,
+            "value": "367805.836039191 t CO2"
+          },
+          {
+            "year": 2016,
+            "value": null
+          },
+          {
+            "year": 2017,
+            "value": "226005.836039191 t CO2"
+          },
+          {
+            "year": 2018,
+            "value": null
+          },
+          {
+            "year": 2019,
+            "value": "359005.836039191 t CO2"
+          },
+          {
+            "year": 2020,
+            "value": null
+          },
+          {
+            "year": 2021,
+            "value": "359005.836039191 t CO2"
+          }
+        ],
+        "S1S2": [],
+        "S3": [
+          {
+            "year": 2020,
+            "value": null
+          },
+          {
+            "year": 2021,
+            "value": null
+          }
+	],
+        "S1S2S3": []
+      },
+      "emissions_intensities": {
+        "S1": [
+          {
+            "year": 2009,
+            "value": null
+          },
+          {
+            "year": 2010,
+            "value": null
+          },
+          {
+            "year": 2011,
+            "value": null
+          },
+          {
+            "year": 2012,
+            "value": null
+          },
+          {
+            "year": 2013,
+            "value": null
+          },
+          {
+            "year": 2014,
+            "value": "0.6132777815614572 t CO2/GJ"
+          },
+          {
+            "year": 2015,
+            "value": "0.793079394192882 t CO2/GJ"
+          },
+          {
+            "year": 2016,
+            "value": "0.6754442173157448 t CO2/GJ"
+          },
+          {
+            "year": 2017,
+            "value": "0.9608302238244408 t CO2/GJ"
+          },
+          {
+            "year": 2018,
+            "value": "1.8049528748804293 t CO2/GJ"
+          },
+          {
+            "year": 2019,
+            "value": "1.6859184505842997 t CO2/GJ"
+          },
+          {
+            "year": 2020,
+            "value": "1.6859184505842997 t CO2/GJ"
+          },
+          {
+            "year": 2021,
+            "value": "1.6859184505842997 t CO2/GJ"
+          }
+        ],
+        "S2": [
+          {
+            "year": 2009,
+            "value": null
+          },
+          {
+            "year": 2010,
+            "value": null
+          },
+          {
+            "year": 2011,
+            "value": null
+          },
+          {
+            "year": 2012,
+            "value": null
+          },
+          {
+            "year": 2013,
+            "value": null
+          },
+          {
+            "year": 2014,
+            "value": "0.002233506501709902 t CO2/GJ"
+          },
+          {
+            "year": 2015,
+            "value": null
+          },
+          {
+            "year": 2016,
+            "value": "0.0029335602608281442 t CO2/GJ"
+          },
+          {
+            "year": 2017,
+            "value": null
+          },
+          {
+            "year": 2018,
+            "value": "0.011998993586920128 t CO2/GJ"
+          },
+          {
+            "year": 2019,
+            "value": null
+          },
+          {
+            "year": 2020,
+            "value": "0.0123289841704041 t CO2/GJ"
+          },
+          {
+            "year": 2021,
+            "value": null
+          }
+        ],
+        "S1S2": [],
+        "S3": [
+          {
+            "year": 2020,
+            "value": null
+          },
+          {
+            "year": 2021,
+            "value": null
+          }
+	],
+        "S1S2S3": []
+      }
+    }
+  }
+]
