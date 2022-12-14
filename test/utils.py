@@ -10,10 +10,12 @@ from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
 from ITR.interfaces import EScope
 from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEIProjections, ICompanyEIProjection
 
-class QuantityEncoder(json.JSONEncoder):
+class ITR_Encoder(json.JSONEncoder):
     def default(self, q):
         if isinstance(q, Quantity):
             return str(q)
+        elif isinstance(q, EScope):
+            return q.value
         else:
             super().default(q)
 
@@ -60,6 +62,10 @@ def assert_pint_frame_equal(case: unittest.case, left: pd.DataFrame, right: pd.D
 
 # General way to generate copmany data using Netzero Year (Slope)
 
+# This method of value interpolation differs from the one in base_providers.py
+# It estimates a little on the high side because it is linear, not CAGR-based
+# But because benchmarks give data every 5 years, the cumulative error vs. the
+# benchmarks is small.
 def interpolate_value_at_year(y, bm_ei, ei_nz_year, ei_max_negative):
     i = bm_ei.index.searchsorted(y)
     if i==0:

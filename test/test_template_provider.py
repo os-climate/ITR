@@ -130,12 +130,12 @@ class TestTemplateProvider(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = pd.Series([2.2029, 2.2172, 2.8979, 3.0672,
+        expected = pd.Series([2.2636, 2.4497, 2.9640, 3.1084,
                               # 3.6141 -- AEP (American Electric Power, US0255371017 only has S1 target data, so does not produce a valid S1S2 result)
                               ], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.59629402, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.69643306, ureg.delta_degC), places=2)
 
         # Calculate Temp Scores
         temp_score_s1 = TemperatureScore(
@@ -148,10 +148,10 @@ class TestTemplateProvider(unittest.TestCase):
         agg_scores_s1 = temp_score_s1.aggregate_scores(scores_s1)
 
         # verify company scores:
-        expected_s1 = pd.Series([2.6920689931780917], dtype='pint[delta_degC]')
+        expected_s1 = pd.Series([2.7611487435468574], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores_s1.temperature_score.values, expected_s1, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.6920689931780917, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.7611487435468574, ureg.delta_degC), places=2)
         
 
     def test_get_projected_value(self):
@@ -248,10 +248,12 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertAlmostEqual(company_2.ghg_s1s2, Q_(78.8, ureg('Mt CO2')), places=4)
         self.assertAlmostEqual(company_1.cumulative_budget, Q_(398.303033, ureg('Mt CO2')), places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, Q_(759.272366, ureg('Mt CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(548.699665, ureg('Mt CO2')), places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(1356.55551, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(703.209227, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(1472.88934, ureg('Mt CO2')), places=4)
         self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(2037.72402, ureg('Mt CO2')), places=4)
         self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2695.30496, ureg('Mt CO2')), places=4)
+        assert len(company_1.projected_targets.S1S2.projections)==len(company_1.projected_intensities.S1S2.projections)
+        assert len(company_2.projected_targets.S1S2.projections)==len(company_2.projected_intensities.S1S2.projections)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,

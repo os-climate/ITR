@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 import ITR
 from ITR.data.osc_units import ureg, Q_, asPintSeries
-from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection
+from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.logger import logger
@@ -69,7 +69,21 @@ class DataWarehouse(ABC):
                     c.projected_intensities.S3 = None
                     c.projected_intensities.S1S2S3 = None
                 if c.projected_targets.S3:
-                    c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
+                    try:
+                        c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
+                    except AttributeError:
+                        if c.projected_targets.S2:
+                            logger.warning(f"Scope 1+2 target projections should have been created for {c.company_id}; repairing")
+                            c.projected_targets.S1S2 = ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
+                                                                             projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1.projections, c.projected_targets.S2.projections) ))
+                        else:
+                            logger.warning(f"Scope 2 target projections missing from company with ID {c.company_id}; treating as zero")
+                            c.projected_targets.S1S2 = ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
+                                                                             projections = c.projected_targets.S1.projections)
+                        if c.projected_targets.S3:
+                            c.projected_targets.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1S2.projections, c.projected_targets.S3.projections) )
+                        else:
+                            logger.warning(f"Scope 3 target projections missing from company with ID {c.company_id}; treating as zero")
                     c.projected_targets.S3 = None
                     c.projected_targets.S1S2S3 = None
 
@@ -132,9 +146,9 @@ class DataWarehouse(ABC):
         projected_targets = self.company_data.get_company_projected_targets(company_ids)
         # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
         for col, year_data in projected_targets.items():
-            mask = year_data.isna()
+            mask = year_data.apply(lambda x: ITR.isnan(x.m))
             if mask.any():
-                projected_targets.loc[mask, col] = projected_trajectories.loc[mask, col]
+                projected_targets.loc[mask[mask].index, col] = projected_trajectories.loc[mask[mask].index, col]
             else:
                 break
 
@@ -197,9 +211,6 @@ class DataWarehouse(ABC):
         :return: cumulative emissions based on weighted sum of emissions intensity * production
         """
         projected_emissions = projected_ei.multiply(projected_production)
-        try:
-            na_values = projected_emissions.iloc[:, 0].map(lambda x: ITR.isnan(x.m)).values
-        except AttributeError:
-            breakpoint()
+        na_values = projected_emissions.iloc[:, 0].map(lambda x: ITR.isnan(x.m)).values
         cumulative_emissions = projected_emissions[~na_values].sum(axis=1).astype('pint[Mt CO2]')
         return cumulative_emissions

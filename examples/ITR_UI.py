@@ -126,7 +126,7 @@ def recalculate_individual_itr(eibm):
     Warehouse = DataWarehouse(template_company_data, base_production_bm, EI_bm)
     temperature_score = TemperatureScore(
                             time_frames = [ETimeFrames.LONG],
-                            scopes=[EI_bm.scope_to_calc],
+                            scopes=None, # None means "use the appropriate scopes for the benchmark
                             # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
                             aggregation_method=PortfolioAggregationMethod.WATS
                             )
@@ -197,9 +197,9 @@ controls = dbc.Row( # always do in rows ...
                 ),
                 dcc.RangeSlider(
                     id="temp-score",
-                    min=0, max=4, value=[0, 4],
+                    min=0, max=8.5, value=[0, 8.5],
                     step=0.5,
-                    marks={i / 10: str(i / 10) for i in range(0, 40, 5)},
+                    marks={i / 10: str(i / 10) for i in range(0, 85, 5)},
                 ),
                 dbc.Row(
                     [
@@ -623,8 +623,8 @@ def update_graph(
     fig1.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5))
 
     # Covered companies analysis
-    scope_column = 'ghg_' + EI_bm.scope_to_calc.name.lower()
-    coverage = filt_df[['company_id', scope_column, 'cumulative_target']].copy()
+    scope_column = 'ghg_' + (EI_bm.scope_to_calc if hasattr(EI_bm, 'scope_to_calc') else EScope.S1S2).name.lower()
+    coverage = filt_df.reset_index('company_id')[['company_id', scope_column, 'cumulative_target']].copy()
     zeroE = Q_(0, 't CO2')
     coverage['coverage_category'] = np.where(coverage[scope_column].isnull(),
                                              np.where(coverage['cumulative_target'] == zeroE, "Not Covered",
@@ -664,7 +664,7 @@ def update_graph(
                                        y="temperature_score", text="temperature_score",
                                        color="sector", title="Highest temperature scores by company")
     high_score_fig.update_traces(textposition='inside', textangle=0)
-    high_score_fig.update_yaxes(title_text='Temperature score', range=[1, 4])
+    high_score_fig.update_yaxes(title_text='Temperature score', range=[1, 8.5])
     high_score_fig.update_layout({'legend_title_text': '', 'transition_duration': 500})
     high_score_fig.update_layout(xaxis_title=None,
                                  legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5))
@@ -674,19 +674,18 @@ def update_graph(
         global EI_bm
 
         temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG],
-                                             scopes=[EI_bm.scope_to_calc],
+                                             scopes=None,
                                              aggregation_method=agg_method)  # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
+        agg_zero = Q_(0.0, 'delta_degC')
+        agg_score = agg_zero
         if aggregated_scores.long.S1S2:
-            agg_s1s2 = [agg_method.value,aggregated_scores.long.S1S2.all.score]
-        else:
-            agg_s1s2 = []
+            agg_score = aggregated_scores.long.S1S2.all.score
         if aggregated_scores.long.S3:
-            agg_s3 = [agg_method.value,aggregated_scores.long.S3.all.score]
-        else:
-            agg_s3 = []
-    
-        return agg_s1s2 + agg_s3
+            agg_score = agg_score + aggregated_scores.long.S3.all.score
+        elif agg_score == agg_zero:
+            return []
+        return [agg_method.value, agg_score]
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
@@ -742,9 +741,9 @@ def update_graph(
     port_score_diff_methods_fig.update_layout(transition_duration=500)
 
     # input for the dash table
-    df_for_output_table = filt_df[
+    df_for_output_table = filt_df.reset_index('company_id')[
         ['company_name', 'company_id', 'region', 'sector', 'cumulative_budget', 'investment_value', 'trajectory_score',
-         'target_score', 'temperature_score']].copy()
+         'target_score', 'temperature_score', 'scope']].copy()
     df_for_output_table['temperature_score'] = ITR.nominal_values(df_for_output_table['temperature_score'].astype(
         'pint[delta_degC]').values.quantity.m)  # f"{q:.2f~#P}"
     df_for_output_table['trajectory_score'] = pd.to_numeric(ITR.nominal_values(
@@ -755,11 +754,13 @@ def update_graph(
         df_for_output_table['cumulative_budget'].astype('pint[Mt CO2]').values.quantity.m)).round(2)
     df_for_output_table['investment_value'] = df_for_output_table['investment_value'].apply(
         lambda x: "${:,.1f} Mn".format((x / 1000000)))  # formating column
+    df_for_output_table['scope'] = df_for_output_table['scope'].map(str)
     df_for_output_table.rename(
         columns={'company_name': 'Name', 'company_id': 'ISIN', 'region': 'Region', 'sector': 'Industry',
                  'cumulative_budget': 'Emissions budget', 'investment_value': 'Notional',
                  'trajectory_score': 'Historical emissions score', 'target_score': 'Target score',
-                 'temperature_score': 'Weighted temperature score'}, inplace=True)
+                 'temperature_score': 'Weighted temperature score',
+                 'scope': 'Scope'}, inplace=True)
 
     if aggregated_scores.long.S1S2:
         scores = aggregated_scores.long.S1S2.all.score.m

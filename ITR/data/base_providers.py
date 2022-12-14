@@ -2,6 +2,9 @@ import warnings  # needed until quantile behaves better with Pint quantities in 
 import numpy as np
 import pandas as pd
 import pint
+from pint import DimensionalityError
+import pydantic
+from pydantic import ValidationError
 
 from functools import reduce, partial
 from operator import add
@@ -49,7 +52,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         units = str(benchmark.benchmark_metric)
         years, values = list(map(list, zip(*{r.year: r.value.to(units).m for r in benchmark.projections}.items())))
-        return pd.Series(PA_(values, dtype=units), dtype=f'pint[{units}]',
+        return pd.Series(PA_(values, dtype=units),
                          index = years, name=(benchmark.sector, benchmark.region, scope))
 
     # Production benchmarks are dimensionless, relevant for AnyScope
@@ -61,7 +64,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         # The call to this function generates a 42-row (and counting...) DataFrame for the one row we're going to end up needing...
         df_bm = pd.DataFrame([self._convert_benchmark_to_series(bm, scope) for bm in getattr(self._productions_benchmarks, scope.name).benchmarks])
-        df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR, self.column_config.SCOPE]
+        df_bm.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
         return df_bm
 
     def get_company_projected_production(self, company_sector_region_scope: pd.DataFrame) -> pd.DataFrame:
@@ -199,7 +202,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         benchmark_projections = self._EI_df
         df = company_sector_region_scope[['sector', 'region', 'scope']]
         if scope_to_calc is not None:
-            df[df.scope.eq(scope_to_calc)]
+            df = df[df.scope.eq(scope_to_calc)]
 
         df = df.join(benchmark_projections, on=['sector','region','scope'], how='left')
         mask = df.iloc[:, -1].isna()
@@ -373,14 +376,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 base_year_production = next((p.value for p in c.historic_data.productions if
                                              p.year == self.temp_config.CONTROLS_CONFIG.base_year), None)
                 try:
-                    co_cumprod = df_partial_pp.loc[c.sector, c.region, EScope.AnyScope]
+                    co_cumprod = df_partial_pp.loc[c.sector, c.region, EScope.AnyScope].astype('pint[]') * base_year_production
                 except KeyError:
                     # FIXME: Should we fix region info upstream when setting up comopany data?
-                    co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.AnyScope]
-                # https://github.com/hgrecco/pint-pandas/issues/143
-                co_cumprod = pd.Series(PA_(co_cumprod.values * base_year_production, dtype=str(base_year_production.u)),
-                                       index=co_cumprod.index,
-                                       name=co_cumprod.name)
+                    co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.AnyScope].astype('pint[]') * base_year_production
                 c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(c, co_cumprod)
     
     # ??? Why prefer TRAJECTORY over TARGET?
@@ -751,7 +750,7 @@ class EITrajectoryProjector(object):
         intensities = intensities.T
         for col in intensities.columns:
             # ratios are dimensionless, so get rid of units, which confuse rolling/apply.  Some columns are NaN-only
-            intensities[col] = intensities[col].map(lambda x: x.m if isinstance(x, pint.Quantity) else (breakpoint (), x))
+            intensities[col] = intensities[col].map(lambda x: x.m if isinstance(x, pint.Quantity) else x)
             # FIXME: rolling windows require conversion to float64.  Don't want to be a nuisance...
             if ITR.HAS_UNCERTAINTIES:
                 intensities[col] = ITR.nominal_values(intensities[col])
@@ -792,7 +791,8 @@ class EITargetProjector(object):
     """
     This class projects emissions intensities from a company's targets and historic data. Targets are specified per
     scope in terms of either emissions or emission intensity reduction. Interpolation between last known historic data
-    and (a) target(s) is CAGR-based.
+    and (a) target(s) is CAGR-based, but not entirely CAGR (beacuse zero can only be approached asymptotically
+    and any CAGR that approaches zero in finite time must have extraordinarily steep initial drop, which is unrealistic).
 
     Remember that pd.Series are always well-behaved with pint[] quantities.  pd.DataFrame columns are well-behaved,
     but data across columns is not always well-behaved.  We therefore make this function assume we are projecting targets
@@ -839,11 +839,22 @@ class EITargetProjector(object):
         """
         targets = company.target_data
         ei_projection_scopes = {'S1': None, 'S2': None, 'S1S2': None, 'S3': None, 'S1S2S3': None}
+        nz_target_years = {'S1': None, 'S2': None, 'S1S2': None, 'S3': None, 'S1S2S3': None}
         for scope_name in ei_projection_scopes.keys():
             scope_targets = [target for target in targets if target.target_scope.name == scope_name]
             if not scope_targets:
                 continue
             netzero_year = max([t.netzero_year for t in scope_targets if t.netzero_year] + [0])
+            if netzero_year:
+                nz_target_years[scope_name] = netzero_year
+        # FIXME: Here's where we'd add some logic to propagate netzero targets forward and backward:
+        # * if both S1 and S2 set a netzero target year, then S1S2 has a netzero target for that year
+        # * if S1S2 has a netzero target year, then S1 and S2 both have netzero targets for that year
+        for scope_name in ei_projection_scopes.keys():
+            scope_targets = [target for target in targets if target.target_scope.name == scope_name]
+            if not scope_targets:
+                continue
+            netzero_year = nz_target_years[scope_name]
             scope_targets_intensity = self._normalize_scope_targets(
                 [target for target in scope_targets if target.target_type == "intensity"])
             scope_targets_absolute = self._normalize_scope_targets(
@@ -881,19 +892,23 @@ class EITargetProjector(object):
 
                     # If target is not the first one for this scope, we continue from last year of the previous target
                     if ei_projection_scopes[scope_name]:
-                        (_, last_ei_year), (_, last_ei_value) = ei_projection_scopes[scope_name].projections[-1] 
+                        (_, last_ei_year), (_, last_ei_value) = ei_projection_scopes[scope_name].projections[-1]
+                        last_ei_value = last_ei_value.to(target.target_base_year_unit)
+                        skip_first_year = 1
                     else:
                         last_ei_year = target.target_base_year
                         last_ei_value = Q_(target.target_base_year_qty, target.target_base_year_unit)
+                        skip_first_year = 0
 
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                     target_ei_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
                                          target.target_base_year_unit)
-                    CAGR = self._compute_CAGR(last_ei_value, target_ei_value, (target_year - last_ei_year))
-                    model_ei_projections = [ICompanyEIProjection(year=year, value=last_ei_value * (1 + CAGR) ** (y + 1))
-                                            for y, year in enumerate(range(last_ei_year, 1+target_year))
+                    CAGR = self._compute_CAGR(last_ei_year, last_ei_value, target_year, target_ei_value)
+                    model_ei_projections = [ICompanyEIProjection(year=year, value=CAGR[year])
+                                            for year in range(last_ei_year+skip_first_year, 1+target_year)
                                             if year >= self.projection_controls.BASE_YEAR]
+
                 elif target.target_type == "absolute":
                     # Complicated case, the target must be switched from absolute value to intensity.
                     # We use the benchmark production data
@@ -904,28 +919,28 @@ class EITargetProjector(object):
                         (_, last_ei_year), (_, last_ei_value) = ei_projection_scopes[scope_name].projections[-1]
                         last_prod_value = production_proj.loc[last_ei_year]
                         last_em_value = last_ei_value * last_prod_value
+                        last_em_value = last_em_value.to(target.target_base_year_unit)
+                        skip_first_year = 1
                     else:
                         last_ei_year, last_em_value = (target.target_base_year, Q_(target.target_base_year_qty, target.target_base_year_unit))
                         # FIXME: just have to trust that this particular value ties to the first target's year/value pair
                         last_prod_value = company.base_year_production
                         last_ei_value = last_em_value / last_prod_value
+                        skip_first_year = 0
 
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                     target_em_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
                                       target.target_base_year_unit)
-                    CAGR = self._compute_CAGR(last_em_value, target_em_value, (target_year - last_ei_year))
+                    CAGR = self._compute_CAGR(last_ei_year, last_em_value, target_year, target_em_value)
 
-                    model_emissions_projections = [last_em_value * (1 + CAGR) ** (y + 1)
-                                                   for y, year in enumerate(range(last_ei_year, 1+target_year))]
-                    emissions_projections = pd.Series(model_emissions_projections,
-                                                      index=range(last_ei_year, target_year + 1),
-                                                      dtype=f'pint[{target.target_base_year_unit}]')
+                    model_emissions_projections = CAGR.loc[(last_ei_year+skip_first_year):target_year]
+                    emissions_projections = model_emissions_projections.astype(f'pint[{target.target_base_year_unit}]')
                     idx = production_proj.index.intersection(emissions_projections.index)
                     ei_projections = emissions_projections.loc[idx] / production_proj.loc[idx]
 
                     model_ei_projections = [ICompanyEIProjection(year=year, value=ei_projections[year])
-                                            for year in range(last_ei_year, 1+target_year)
+                                            for year in range(last_ei_year+skip_first_year, 1+target_year)
                                             if year >= self.projection_controls.BASE_YEAR]
                 else:
                     # No target (type) specified
@@ -950,9 +965,9 @@ class EITargetProjector(object):
                 # TODO What if target is a 100% reduction.  Does it work whether or not netzero_year is set?
                 if netzero_year > target_year:  # add in netzero target at the end
                     netzero_qty = Q_(0.0, target_ei_value.u)
-                    CAGR = self._compute_CAGR(target_ei_value, netzero_qty, (netzero_year - target_year))
-                    ei_projections = [ICompanyEIProjection(year=year, value=target_ei_value * (1 + CAGR) ** (y + 1))
-                                      for y, year in enumerate(range(1 + target_year, 1 + netzero_year))]
+                    CAGR = self._compute_CAGR(target_year, target_ei_value, netzero_year, netzero_qty)
+                    ei_projections = [ICompanyEIProjection(year=year, value=CAGR[year])
+                                      for year in range(1 + target_year, 1 + netzero_year)]
                     ei_projection_scopes[scope_name].projections.extend(ei_projections)
                     target_year = netzero_year
                     target_ei_value = netzero_qty
@@ -965,29 +980,38 @@ class EITargetProjector(object):
 
         return ICompanyEIProjectionsScopes(**ei_projection_scopes)
 
-    def _compute_CAGR(self, first, last, period):
-        """Input:
-        @first: the value of the first datapoint in the Calculation (most recent actual datapoint)
-        @last: last value (value at future target year)
-        @period: number of periods in the CAGR"""
+    def _compute_CAGR(self, first_year: int, first_value: pint.Quantity, last_year: int, last_value: pint.Quantity) -> pd.Series:
+        """Compute CAGR, returning pd.Series of the growth (or reduction) applied to first to converge with last
+        :param first_year: the year of the first datapoint in the Calculation (most recent actual datapoint)
+        :param first_value: the value of the first datapoint in the Calculation (most recent actual datapoint)
+        :param last_year: the year of the final target
+        :param last_value: the value of the final target
 
-        if period == 0:
-            res = 0
+        :return: pd.Series index by the years from first_year:last_year
+        """
+
+        period = last_year - first_year
+        if period <= 0:
+            return pd.Series(PA_([], dtype=f"pint[{first_value.u:~P}]"))
+        if last_value >= first_value or first_value.m == 0:
+            # If we have a slack target, i.e., target goal is actually above current data, clamp so CAGR computes as zero
+            return pd.Series(PA_([first_value.m] * (period+1), dtype=f"{first_value.u:~P}"),
+                             index=range(first_year, last_year+1),
+                             name='CAGR')
+
+        # CAGR doesn't work well with large reductions, so solve with cases:
+        CAGR_limit = 1/11.11
+        if last_value < first_value * CAGR_limit:
+            # - If CAGR target > 90% reduction, blend a linear reduction with CAGR to get CAGR-like shape that actually hits the target
+            cagr_factor = CAGR_limit ** (1 / period)
+            cagr_data = [cagr_factor ** y * first_value.m - (CAGR_limit * first_value.m - last_value.m) * (y / period)
+                         for y, year in enumerate(range(first_year, last_year+1))]
         else:
-            # TODO: Replace ugly fix => pint unit error in below expression
-            # CAGR doesn't work well with 100% reduction, so set it to small
-            if last == 0:
-                last = first / 201.0
-            elif last > first:
-                # If we have a slack target, i.e., target goal is actually above current data, clamp so CAGR computes as zero
-                last = first
-            try:
-                res = (last / first).to_base_units().magnitude ** (1 / period) - 1
-            except ZeroDivisionError as e:
-                if last > 0:
-                    logger.warning("last > 0 and first==0 in CAGR...setting CAGR to 0-.5")
-                    res = -0.5
-                else:
-                    # It's all zero from here on out...clamp down on any emissions that poke up
-                    res = -1
-        return res
+            # - If CAGR target <= 90% reduction, use CAGR model directly
+            cagr_factor = (last_value / first_value).m ** (1 / period)
+            cagr_data = [cagr_factor ** y * first_value.m
+                         for y, year in enumerate(range(first_year, last_year+1))]
+        cagr_result = pd.Series(PA_(cagr_data, dtype=f"{first_value.u:~P}"),
+                                index=range(first_year, last_year+1),
+                                name='CAGR')
+        return cagr_result

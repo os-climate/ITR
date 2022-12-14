@@ -6,7 +6,7 @@ from typing import List
 import pandas as pd
 
 import ITR
-from utils import QuantityEncoder, assert_pint_series_equal
+from utils import ITR_Encoder, assert_pint_series_equal
 from ITR.data.osc_units import PA_
 from ITR.configs import ColumnsConfig, VariablesConfig
 from ITR.data.base_providers import BaseProviderProductionBenchmark, EITrajectoryProjector, EITargetProjector
@@ -16,7 +16,7 @@ from ITR.interfaces import EScope, ICompanyData, ProjectionControls, IProduction
 def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
     is_equal = True
     for i in range(len(result)):
-        if json.dumps(result[i], cls=QuantityEncoder) != json.dumps(reference[i], cls=QuantityEncoder):
+        if json.dumps(result[i], cls=ITR_Encoder) != json.dumps(reference[i], cls=ITR_Encoder):
             print(f"Differences in projections_dict[{i}]: company_name = {result[i]['company_name']}; company_id = {result[i]['company_id']}")
             for k, v in result[i].items():
                 if k == 'ghg_s1s2' and not reference[i].get(k):
@@ -31,9 +31,9 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                             if not v.get(scope):
                                 print(f"projection has no scope {scope} for {k}")
                                 is_equal = False
-                            elif json.dumps(v[scope]['projections'], cls=QuantityEncoder) != json.dumps(vref[scope]['projections'], cls=QuantityEncoder):
+                            elif json.dumps(v[scope]['projections'], cls=ITR_Encoder) != json.dumps(vref[scope]['projections'], cls=ITR_Encoder):
                                 print(f"{k} differ for scope {scope}")
-                                print(f"computed {k}:\n{json.dumps(v[scope]['projections'], cls=QuantityEncoder)}\n\nreference {k}:\n{json.dumps(vref[scope]['projections'], cls=QuantityEncoder)}\n\n")
+                                print(f"computed {k}:\n{json.dumps(v[scope]['projections'], cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref[scope]['projections'], cls=ITR_Encoder)}\n\n")
                                 is_equal = False
                         elif v.get(scope):
                             print(f"reference has no scope {scope} for projection_intensities")
@@ -41,8 +41,8 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                     continue
                 try:
                     vref = reference[i][k]
-                    if json.dumps(v, cls=QuantityEncoder) != json.dumps(vref, cls=QuantityEncoder):
-                        print(f"computed {k}:\n{json.dumps(v, cls=QuantityEncoder)}\n\nreference {k}:\n{json.dumps(vref, cls=QuantityEncoder)}\n\n")
+                    if json.dumps(v, cls=ITR_Encoder) != json.dumps(vref, cls=ITR_Encoder):
+                        print(f"computed {k}:\n{json.dumps(v, cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref, cls=ITR_Encoder)}\n\n")
                         is_equal = False
                 except KeyError as e:
                     print(f"missing in reference: {k}: {json.dumps(v)}\n\n")
@@ -98,10 +98,10 @@ class TestProjector(unittest.TestCase):
         company_index = [ c.company_id for c in company_data ]
         company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name='company_id'))
         bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
-        expected_0 = pd.Series(PA_([0.123, # 2019
-                                    0.116, 0.108, 0.102, 0.096, 0.09, 0.084, 0.079, 0.074, 0.07, 0.066, # 2020-2029
-                                    0.062, 0.047, 0.036, 0.028, 0.021, 0.016, 0.013, 0.01, 0.007, 0.006, # 2030-2039
-                                    0.004, 0.003, 0.003, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.0, # 2040-2049
+        expected_0 = pd.Series(PA_([0.131, # 2019
+                                    0.123, 0.116, 0.108, 0.102, 0.096, 0.09, 0.084, 0.079, 0.074, 0.07,  # 2020-2029
+                                    0.066, 0.058, 0.051, 0.045, 0.039, 0.034, 0.03, 0.026, 0.023, 0.02,   # 2030-2039
+                                    0.017, 0.014, 0.012, 0.01, 0.008, 0.006, 0.005, 0.003, 0.002, 0.001, # 2040-2049
                                     0.0], # 2050
                                    dtype='pint[t CO2/GJ]'),
                                index=range(2019,2051),

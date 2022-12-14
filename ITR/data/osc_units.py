@@ -4,7 +4,7 @@ This module handles initialization of pint functionality
 
 import numpy as np
 import pandas as pd
-from pint import get_application_registry, Quantity
+from pint import get_application_registry, Quantity, DimensionalityError
 
 ureg = get_application_registry()
 
@@ -58,6 +58,7 @@ ureg.define("mmboe = 1e6 boe")
 ureg.define("scf = [scf] = 1 ft**3")
 ureg.define("mscf = 1000 scf = Mscf")
 ureg.define("mmscf = 1000000 scf = MMscf")
+ureg.define("bscf = 1000000000 scf")
 
 # Transportation activity
 
@@ -315,7 +316,7 @@ class EmissionsQuantity(Quantity):
     @classmethod
     def validate(cls, quantity):
         if quantity is None:
-            breakpoint()
+            raise ValueError
         if isinstance(quantity, str):
             v, u = quantity.split(' ', 1)
             try:
@@ -368,7 +369,7 @@ class ProductionQuantity(str):
     @classmethod
     def validate(cls, quantity):
         if quantity is None:
-            breakpoint()
+            raise ValueError
         if isinstance(quantity, str):
             v, u = quantity.split(' ', 1)
             try:
@@ -422,7 +423,7 @@ class EI_Quantity(str):
     @classmethod
     def validate(cls, quantity):
         if quantity is None:
-            breakpoint()
+            raise ValueError
         if isinstance(quantity, str):
             v, u = quantity.split(' ', 1)
             try:

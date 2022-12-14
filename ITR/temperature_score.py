@@ -142,11 +142,15 @@ class TemperatureScore(PortfolioAggregation):
         companies = data.index.get_level_values(self.c.COLS.COMPANY_ID).unique()
 
         # If scope S1S2S3 is in the list of scopes to calculate, we need to calculate the other two as well
-        scopes = self.scopes.copy()
-        if EScope.S1S2S3 in self.scopes and EScope.S1S2 not in self.scopes:
-            scopes.append(EScope.S1S2)
-        if EScope.S1S2S3 in scopes and EScope.S3 not in scopes:
-            scopes.append(EScope.S3)
+        if self.scopes:
+            scopes = self.scopes.copy()
+            if EScope.S1S2S3 in self.scopes and EScope.S1S2 not in self.scopes:
+                scopes.append(EScope.S1S2)
+            if EScope.S1S2S3 in scopes and EScope.S3 not in scopes:
+                scopes.append(EScope.S3)
+        else:
+            scopes = data.index.get_level_values(self.c.COLS.SCOPE).unique()
+            # No need to append any scopes not found in any company data...
 
         df_combinations = pd.DataFrame(list(itertools.product(*[companies, self.time_frames, scopes])),
                                        columns=[self.c.COLS.COMPANY_ID, self.c.COLS.TIME_FRAME, self.c.COLS.SCOPE])
@@ -178,7 +182,7 @@ class TemperatureScore(PortfolioAggregation):
 
     def _calculate_company_score(self, data):
         """
-        Calculate the combined s1s2s3 scores for all companies.
+        Calculate the combined, weighted s1s2s3 scores for all companies.
 
         :param data: The original data set as a pandas data frame
         :return: The data frame, with an updated s1s2s3 temperature score
@@ -193,7 +197,7 @@ class TemperatureScore(PortfolioAggregation):
         # FIXME: This goes to a lot of work to get the "best" SCORE_RESULT_TYPE
         # and it's used as the reference for combing through "all" the data
         # in get_ghc_temperature_score, but then we compute temperature scores
-        # for truly ALL rows.  Why waste time scoring "bad" SCORE_RESULT_TYPEs.
+        # for truly ALL rows.  Why waste time scoring "bad" SCORE_RESULT_TYPEs?
         # We should be able to return company_timeframe_data and call it a day, no?
         company_timeframe_data = data[idx]
 
@@ -225,13 +229,18 @@ class TemperatureScore(PortfolioAggregation):
 
         data = self._prepare_data(data)
 
-        if EScope.S1S2S3 in self.scopes:
-            self._check_column(data, self.c.COLS.GHG_SCOPE12)
-            self._check_column(data, self.c.COLS.GHG_SCOPE3)
-            data = self._calculate_company_score(data)
+        if self.scopes:
+            if EScope.S1S2S3 in self.scopes:
+                self._check_column(data, self.c.COLS.GHG_SCOPE12)
+                self._check_column(data, self.c.COLS.GHG_SCOPE3)
+                data = self._calculate_company_score(data)
 
-        # We need to filter the scopes again, because we might have had to add a scope in the preparation step
-        data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
+            # We need to filter the scopes again, because we might have had to add a scope in the preparation step
+            data = data[data[self.c.COLS.SCOPE].isin(self.scopes)]
+        else:
+            # We are happy to have computed all the scores that might be useful, according to the benchmark
+            pass
+
         # with warnings.catch_warnings():
         #     warnings.simplefilter("ignore")
         #     # See https://github.com/hgrecco/pint-pandas/issues/114
@@ -323,12 +332,21 @@ class TemperatureScore(PortfolioAggregation):
         """
 
         score_aggregations = ScoreAggregations()
-        for time_frame in self.time_frames:
-            score_aggregation_scopes = ScoreAggregationScopes()
-            for scope in self.scopes:
-                if data[data[self.c.COLS.TIME_FRAME].eq(time_frame)&data[self.c.COLS.SCOPE].eq(scope)].size:
-                    score_aggregation_scopes.__setattr__(scope.name, self._get_score_aggregation(data, time_frame, scope))
-            score_aggregations.__setattr__(time_frame.value, score_aggregation_scopes)
+        if self.scopes:
+            for time_frame in self.time_frames:
+                score_aggregation_scopes = ScoreAggregationScopes()
+                for scope in self.scopes:
+                    if data[data[self.c.COLS.TIME_FRAME].eq(time_frame)&data[self.c.COLS.SCOPE].eq(scope)].size:
+                        score_aggregation_scopes.__setattr__(scope.name, self._get_score_aggregation(data, time_frame, scope))
+                score_aggregations.__setattr__(time_frame.value, score_aggregation_scopes)
+        else:
+            grouped_timeframes = data[data[self.c.COLS.TIME_FRAME].isin(self.time_frames)].groupby(self.c.COLS.TIME_FRAME)
+            for time_frame, timeframe_group in grouped_timeframes:
+                score_aggregation_scopes = ScoreAggregationScopes()
+                grouped_scopes = timeframe_group.groupby(self.c.COLS.SCOPE)
+                for scope, scope_group in grouped_scopes:
+                    score_aggregation_scopes.__setattr__(scope.name, self._get_score_aggregation(scope_group, time_frame, scope))
+                score_aggregations.__setattr__(time_frame.value, score_aggregation_scopes)
 
         return score_aggregations
 

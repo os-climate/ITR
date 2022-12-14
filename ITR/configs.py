@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from dataclasses import dataclass
 
 class ColumnsConfig:
-    # Define a constant for each column used in the
+    # Define a constant for each column used in the dataframe
     COMPANY_ID = "company_id"
     COMPANY_LEI = "company_lei"
     COMPANY_ISIN = "company_isin"
@@ -34,6 +34,8 @@ class ColumnsConfig:
     SECTOR = 'sector'
     TEMPLATE_EXPOSURE = 'exposure'
     TEMPLATE_CURRENCY = 'currency'
+    TEMPLATE_FX_QUOTE = 'fx_quote'
+    TEMPLATE_FX_RATE = 'fx_rate'
     TEMPLATE_REPORT_DATE = 'report_date'
     EMISSIONS_METRIC = 'emissions_metric'
     PRODUCTION_METRIC = 'production_metric'    # The unit of production (i.e., power generated, tons of steel produced, vehicles manufactured, etc.)

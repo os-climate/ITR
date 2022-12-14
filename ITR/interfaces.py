@@ -192,7 +192,7 @@ class IBenchmark(BaseModel):
                 # Check if we've already seen/processed these exact projections
                 changed_projections = [p for p in self.projections if not any([n for n in self.projections_nounits if n.year==p.year and n.value==p.value.m])]
                 if changed_projections:
-                    breakpoint()
+                    raise ValueError
                 return
             self.projections = [IProjection(year=p.year, value=BenchmarkQuantity(Q_(p.value, benchmark_metric))) for p in self.projections_nounits
                                 if p.year in range(ProjectionControls.BASE_YEAR,

@@ -28,5 +28,5 @@ except (ImportError, ModuleNotFoundError):
     def uarray(nom_vals, std_devs):
         return nom_vals
 
-    def umean(quantified_data):
-        return mean(map(lambda x: x.m, quantified_data))
+    def umean(unquantified_data):
+        return mean(unquantified_data)

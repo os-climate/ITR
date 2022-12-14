@@ -17,6 +17,9 @@ from ITR.interfaces import ICompanyData, EScope, IHistoricEmissionsScopes, IProd
 from ITR.utils import get_project_root
 from ITR.logger import logger
 
+# The starting year of annual data for the template (may run through 2021, 2022, or later)
+TEMPLATE_START_YEAR = 2016
+
 pkg_root = get_project_root()
 df_country_regions = pd.read_csv(f"{pkg_root}/data/input/country_region_info.csv")
 
@@ -64,14 +67,14 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
             # Something went wrong with the GroupBy operation and we got a pd.DataFrame
             # insted of being called column-by-column.
             logger.error("Cannot estimate value of whole DataFrame; Something went wrong with GroupBy operation")
-            breakpoint()
             raise ValueError
         # This relies on the fact that we can now see Quantity(np.nan, ...) for both float and ufloat magnitudes
         # remove NaNs, which mess with mean estimation
         x = y[~ITR.isnan(PA_._from_sequence(y).quantity.m)]
     except TypeError:
+        # FIXME: can get here if we have garbage units in one row (such as 't/MWh') that don't match another ('t CO2e/MWh')
+        # Need to deal with that...
         logger.error(f"type_error({y}), so returning {y.values}[0]")
-        breakpoint()
         return y.iloc[0]
     if len(x) == 0:
         # If all inputs are NaN, return the first NaN
@@ -98,28 +101,48 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
     Parameters
     ----------
     x : pd.Series
-        The first column of the pd.Series is the list of submetrics in priority order
-        All subsequent columns are observations to be selected from.
+        The index of the series is (SECTOR, COMPANY_ID, SCOPE)
+        The first element of the pd.Series is the list of submetrics in priority order; it is a categorical type
+        All subsequent elements are observations to be selected from.
 
     Returns
     -------
     y : The first non-NaN quantity using the given priority order.
     """
-    if isinstance(x.iloc[0], str):
+    if isinstance(x.submetric, float) or isinstance(x.submetric, str):
         # Nothing to prioritize
         return x
     y = x.copy()
+    if x.name[0] == 'Electricity Utiltiies':
+        for p in range(0, len(x.submetric)):
+            if x.submetric[p] == '3':
+                pinned_priority = p
+                break
+    elif x.name[0] in ['Autos', 'Oil & Gas']:
+        for p in range(0, len(x.submetric)):
+            if x.submetric[p] == '11':
+                pinned_priority = p
+                break
+    else: 
+        pinned_priority = None
+
     for c in range(1,len(x)):
         if not isinstance(x.iloc[c], np.ndarray):
             # If we don't have a list to prioritize, don't try
             continue
-        for p in range(0, len(x.iloc[0])):
-            if not ITR.isnan(x.iloc[c][p]):
+        if pinned_priority:
+            if not ITR.isnan(x.iloc[c][pinned_priority].m):
+                # Replace array to be prioritized with pinned choice as best
+                y.iloc[c] = x.iloc[c][pinned_priority]
+                continue
+        for p in range(0, len(x.submetric)):
+            if not ITR.isnan(x.iloc[c][p].m):
                 # Replace array to be prioritized with best choice
                 y.iloc[c] = x.iloc[c][p]
                 break
         if isinstance(y.iloc[c], np.ndarray):
-            # If we made it to the end without replacing, arbitrarily pick the first value
+            # If we made it to the end without replacing, arbitrarily pick the first (nan) value
+            assert ITR.isnan(y.iloc[c][0].m)
             y.iloc[c] = y.iloc[c][0]
     return y
 
@@ -167,6 +190,60 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self._companies = self._convert_from_template_company_data(excel_path)
         super().__init__(self._companies, column_config, tempscore_config, projection_controls)
 
+    # When rows of data are expressed in terms of scope intensities, solve for the implied production 
+    def _solve_intensities(self, df_fundamentals: pd.DataFrame, df_esg: pd.DataFrame) -> pd.DataFrame:
+        # We have organized all emissions and productions data given, and inferred intensities from that.
+        # But we may yet have been giving emissions and emissions intensities without production numbers,
+        # or emissions intensities and production numbers without absolute emissions numbers.
+        # We calculate those and append to the result.
+        df_esg_has_intensity = df_esg[df_esg.metric.str.contains('intensity')]
+        df_esg_has_intensity = df_esg_has_intensity.assign(scope=lambda x: list(map(lambda y: y[0], x['metric'].str.split(' '))))
+        missing_production_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.eq('production')].company_id.unique())
+        df_esg_missing_production = df_esg[df_esg['company_id'].isin(missing_production_idx)]
+        start_year_loc = df_esg.columns.get_loc(TEMPLATE_START_YEAR)
+        if len(df_esg_missing_production):
+            df_intensities = df_esg_has_intensity.rename(columns={'metric':'intensity_metric', 'scope':'metric'})
+            df_intensities = df_intensities.reset_index(drop=False).set_index(['company_id', 'metric'])
+            df_emissions = df_esg_missing_production.set_index(['company_id', 'metric'])
+            common_idx = df_emissions.index.intersection(df_intensities.index)
+            df_emissions = df_emissions.loc[common_idx]
+            df_intensities = df_intensities.loc[common_idx]
+            df_emissions.loc[:, 'index'] = df_intensities.loc[:, 'index']
+            df_intensities = df_intensities.set_index('index', append=True).iloc[:, (start_year_loc-1):]
+            df_emissions = df_emissions.set_index('index', append=True).iloc[:, (start_year_loc-2):]
+            df_intensities = df_intensities.T.apply(lambda x: x.astype(f"pint[{x.iloc[0].u}]"))
+            df_emissions = df_emissions.T.apply(lambda x: x.astype(f"pint[{x.iloc[0].u}]"))
+            df_productions = df_emissions.divide(df_intensities, axis=1)
+            # FIXME: need to reconcile what happens if multiple scopes all yield the same production metrics
+            df_productions = df_productions.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype)[5:-1]).to_reduced_units().u}]")).dropna(axis=1, how='all')
+            df_productions = df_productions.T.droplevel(['company_id', 'metric'])
+            production_idx = df_productions.index
+            df_esg.loc[production_idx] = pd.concat([df_esg.loc[production_idx].iloc[:, 0:start_year_loc], df_productions], axis=1)
+            df_esg.loc[production_idx, 'metric'] = 'production'
+            # Set production metrics we just derived (if necessary)
+            for idx in production_idx:
+                if pd.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.PRODUCTION_METRIC]):
+                    df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.PRODUCTION_METRIC] = str(df_esg.loc[idx].iloc[-1].u)
+        df_esg_has_intensity = df_esg[df_esg.metric.str.contains('intensity')]
+        df_esg_has_intensity = df_esg_has_intensity.assign(scope=lambda x: list(map(lambda y: y[0], x['metric'].str.split(' '))))
+        if len(df_esg_has_intensity):
+            # Convert EI to Emissions using production
+            # Save index...we'll need it later to bring values back to df_esg
+            # Hide all our values except those we need to use/join with later
+            df1 = df_esg_has_intensity.reset_index().set_index(['company_id', 'report_date', 'scope', 'index']).iloc[:, (start_year_loc-2):]
+            df2 = df_esg[df_esg.metric.eq('production')].set_index(['company_id', 'report_date'])
+            df3 = df1.multiply(df2.iloc[:,(start_year_loc-2):].loc[df1.index.droplevel(['scope', 'index'])])
+            df4 = df3.astype('pint[t CO2e]').drop_duplicates()
+            df5 = df4.droplevel(['company_id', 'report_date']).swaplevel().sort_index()
+            df_esg.loc[df5.index.get_level_values('index'), 'metric'] = df5.index.get_level_values('scope')
+            df5.index = df5.index.droplevel('scope')
+            df_esg.loc[df5.index, df_esg.columns[start_year_loc:].to_list()] = df5[df_esg.columns[start_year_loc:].to_list()]
+            # Set emissions metrics we just derived (if necessary)
+            for idx in df5.index:
+                if pd.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC]):
+                    df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC] = str(df_esg.loc[idx].iloc[-1].u)
+        return df_esg
+
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
         """
         Converts the Excel template to list of ICompanyData objects. All dataprovider features will be inhereted from
@@ -200,13 +277,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             esg_data_sheet = TabsConfig.TEMPLATE_ESG_DATA_V2
             try:
                 df_esg = df_company_data[esg_data_sheet].drop(columns='company_lei').copy() # .iloc[0:45]
-                df_esg.loc[df_esg.submetric.map(lambda x: type(x)!=str), 'submetric'] = ''
             except KeyError as e:
                 logger.error(f"Tab {esg_data_sheet} is required in input Excel file.")
                 raise KeyError
-            df_esg.loc[:, [ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID]] = (
-                df_esg.loc[:, [ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID]].fillna(method='ffill')
-                )
+            # In the V2 template, the COMPANY_NAME and COMPANY_ID are merged cells and need to be filled forward
+            # For convenience, we also fill forward Report Date, which is often expressed in the first row of a fresh report,
+            # but sometimes omitted in subsequent rows (because it's "redundant information")
+            # COMPANY_LEI has been dropped for now...may make a comeback later...
+            df_esg.loc[:, [ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]] = (
+                df_esg[[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]].fillna(method='ffill')
+            )
 
         df['exposure'].fillna('presumed_equity', inplace=True)
         # TODO: Fix market_cap column naming inconsistency
@@ -217,14 +297,31 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df.loc[df.region.isnull(), 'region'] = df.apply(lambda x: ITR_country_to_region(x.country), axis=1)
 
         df_fundamentals = df.set_index(ColumnsConfig.COMPANY_ID, drop=False).convert_dtypes()
-        # GH https://github.com/pandas-dev/pandas/issues/46044
-        df_fundamentals.company_id = df_fundamentals.company_id.astype('object')
 
         # testing if all data is in the same currency
-        if len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) != 1:
-            error_message = f"All data should be in the same currency."
-            logger.error(error_message)
-            raise ValueError(error_message)
+        if ColumnsConfig.TEMPLATE_FX_QUOTE in df_fundamentals.columns:
+            fx_quote = df_fundamentals[ColumnsConfig.TEMPLATE_FX_QUOTE].notna()
+            if len(df_fundamentals.loc[~fx_quote, ColumnsConfig.TEMPLATE_CURRENCY].unique()) > 1 \
+               or len(df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].unique()) > 1 \
+               or (fx_quote.any() and (~fx_quote).any and \
+                   df_fundamentals.loc[~fx_quote, ColumnsConfig.TEMPLATE_CURRENCY].iloc[0] != \
+                   df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0]):
+                error_message = f"All data should be in the same currency."
+                logger.error(error_message)
+                raise ValueError(error_message)
+            elif fx_quote.any():
+                fundamental_metrics = ['company_market_cap', 'company_revenue', 'company_enterprise_value', 'company_ev_plus_cash', 'company_total_assets']
+                col_num = df_fundamentals.columns.get_loc('report_date')
+                if set(df_fundamentals.columns[col_num+1:]) != set(fundamental_metrics):
+                    raise KeyError(f"Expected fundamental metrics columns are exactly {fundamental_metrics}")
+                for col in fundamental_metrics:
+                    df_fundamentals[f"{col}_base"] = df_fundamentals[col]
+                    df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'] * df_fundamentals.loc[fx_quote, f"{col}_base"]
+        else:
+            if len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) != 1:
+                error_message = f"All data should be in the same currency."
+                logger.error(error_message)
+                raise ValueError(error_message)
 
         # are there empty sectors?
         comp_with_missing_sectors = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.SECTOR].isnull()].to_list()
@@ -249,20 +346,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             logger.error(error_message)
             raise ValueError(error_message)
 
-        # ignore company data that does not come with emissions and/or production metrics
-        if template_version==1:
-            missing_esg_metrics_df = df_fundamentals[ColumnsConfig.COMPANY_ID][
-                df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
-        else:
-            missing_production_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.eq('production')].company_id.unique())
-            missing_esg_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.str.upper().isin(['S1', 'S1S2', 'S3', 'S1S2S3'])].company_id.unique())
-            missing_esg_metrics_df = df_fundamentals.loc[missing_production_idx.union(missing_esg_idx)]
-            
-        if len(missing_esg_metrics_df)>0:
-            logger.warning(f"Missing ESG metrics for companies with ID (will be ignored): "
-                           f"{missing_esg_metrics_df.index}.")
-            df_fundamentals = df_fundamentals[~df_fundamentals.index.isin(missing_esg_metrics_df.index)]
-
         # Checking if there are not many missing market cap
         missing_cap_ids = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].isnull()].to_list()
         # For the missing Market Cap we should use the ratio below to get dummy market cap:
@@ -273,13 +356,22 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals['AVG_MCap_to_Assets'] = df_fundamentals.groupby(ColumnsConfig.SECTOR)['MCap_to_Assets'].transform('mean')
         # FIXME: Add uncertainty here!
         df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP] = df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP].fillna(0.5*(df_fundamentals[ColumnsConfig.COMPANY_REVENUE] * df_fundamentals['AVG_MCap_to_Reven']+df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS] * df_fundamentals['AVG_MCap_to_Assets']))
-        df_fundamentals.drop(['MCap_to_Reven','MCap_to_Assets','AVG_MCap_to_Reven','AVG_MCap_to_Assets'], axis=1, inplace=True) # deleting temporary columns
+        df_fundamentals.drop(columns=['MCap_to_Reven','MCap_to_Assets','AVG_MCap_to_Reven','AVG_MCap_to_Assets'], inplace=True) # deleting temporary columns
         
         if missing_cap_ids:
             logger.warning(f"Missing market capitalisation values are estimated for companies with ID: "
                            f"{missing_cap_ids}.")
 
         if template_version==1:
+            # ignore company data that does not come with emissions and/or production metrics
+            missing_esg_metrics_df = df_fundamentals[ColumnsConfig.COMPANY_ID][
+                df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
+            if len(missing_esg_metrics_df)>0:
+                logger.warning(f"Missing ESG metrics for companies with ID (will be ignored): "
+                               f"{missing_esg_metrics_df.index}.")
+                df_fundamentals = df_fundamentals[~df_fundamentals.index.isin(missing_esg_metrics_df.index)]
+                df_esg = df_esg[~df_esg.company_id.isin(missing_esg_metrics_df.index)]
+
             # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
             historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
             historic_scopes = ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3', 'production']
@@ -290,7 +382,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             df_historic = df_historic.rename(columns={col: _fixup_name(col) for col in historic_columns})
             df = pd.wide_to_long(df_historic, historic_scopes, i='company_id', j='year', sep='-',
-                                 suffix='\d+').reset_index()
+                                 suffix=r'\d+').reset_index()
             df2 = (df.pivot(index='company_id', columns='year', values=historic_scopes)
                    .stack(level=0, dropna=False)
                    .reset_index()
@@ -317,11 +409,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_historic_data = df5
         else:
             # df_esg = df_esg.iloc[0:45]
+
+            # Disable rows we do not yet handle
+            df_esg = df_esg[~ df_esg.metric.isin(['generation', 'consumption'])]
+            if ColumnsConfig.BASE_YEAR in df_esg.columns:
+                df_esg = df_esg[df_esg.base_year.ne('X')]
+
             # We are already much tidier, so don't need the wide_to_long conversion.
             df_esg_hasunits = df_esg.unit.notna()
             df_esg_nounits = df_esg[~df_esg_hasunits]
             df_esg = df_esg[df_esg_hasunits]
-            esg_year_columns = df_esg.columns[df_esg.columns.get_loc(2016):]
+            esg_year_columns = df_esg.columns[df_esg.columns.get_loc(TEMPLATE_START_YEAR):]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 for col in esg_year_columns:
@@ -331,7 +429,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             prod_mask = df_esg.metric == 'production'
             prod_metrics = df_esg[prod_mask].groupby(by=['company_id'])['unit'].agg(lambda x: x.values[0])
             df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics
-            em_metrics = df_esg[~prod_mask]
+            em_metrics = df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S3', 'S1S2', 'S1S3', 'S1S2S3'])]
             em_unit_ambig = em_metrics.groupby(by=['company_id', 'metric']).count()
             em_unit_ambig = em_unit_ambig[em_unit_ambig.unit>1]
             if len(em_unit_ambig)>0:
@@ -351,12 +449,31 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             em_units = em_metrics.groupby(by=['company_id'], group_keys=True).first()
             df_fundamentals.loc[em_units.index, ColumnsConfig.EMISSIONS_METRIC] = em_units.unit
+            # We don't need units here anymore--they've been translated/transported everywhere we need them
+            df_esg.drop(columns='unit', inplace=True)
+
+            # We solve while we still have valid report_date data.  After we group reports together to find the "best"
+            # the report_date becomes meaningless (and is dropped by _solve_intensities)
+            df_esg = self._solve_intensities(df_fundamentals, df_esg)
+
+            # After this point we can gripe if missing emissions and/or production metrics
+            missing_esg_metrics_df = df_fundamentals[ColumnsConfig.COMPANY_ID][
+                df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
+            if len(missing_esg_metrics_df)>0:
+                logger.warning(f"Missing ESG metrics for companies with ID (will be ignored): "
+                               f"{missing_esg_metrics_df.index}.")
+                df_fundamentals = df_fundamentals[~df_fundamentals.index.isin(missing_esg_metrics_df.index)]
+                df_esg = df_esg[~df_esg.company_id.isin(missing_esg_metrics_df.index)]
+
+            # Recalculate if any of the above dropped rows from df_esg
+            em_metrics = df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S3', 'S1S2', 'S1S3', 'S1S2S3'])]
 
             grouped_prod = (
-                df_esg[df_esg.metric.isin(['production'])].drop(columns=['unit', 'report_date'])
+                df_esg[df_esg.metric.isin(['production'])]
+                .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
-                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
+                .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
                          dropna=False)[esg_year_columns]
                 # then estimate values for each submetric (many/most of which will be NaN)
                 .agg(_estimated_value)
@@ -364,24 +481,32 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 )
 
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
-            grouped_prod.submetric = pd.Categorical(grouped_prod['submetric'], ordered=True, categories=['equity', '', 'gross', 'net', 'full'])
+            # For categoricals, fisrt listed is least and sorts to first in ascending order
+            grouped_prod.submetric = pd.Categorical(grouped_prod['submetric'], ordered=True, categories=['operated', 'own', 'generation', 'equity', '', 'gross', 'net', 'full'])
             best_prod = (
                 grouped_prod.sort_values('submetric')
-                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric'])
+                .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
             )
             best_prod = best_prod.drop(columns='submetric')
             best_prod[ColumnsConfig.VARIABLE] = VariablesConfig.PRODUCTIONS
 
-            s3_lookup_index = df_esg[df_esg.metric.str.lower().eq('s3') & df_esg.submetric.str.lower().isin(s3_category_dict)].index
-            df_esg.loc[s3_lookup_index, 'submetric'] = df_esg.loc[s3_lookup_index].submetric.str.lower().map(s3_category_dict)
+            # convert "nice" word descriptions of S3 emissions to category numbers
+            s3_idx = df_esg.metric.str.upper().eq('S3')
+            s3_dict_matches = df_esg[s3_idx].submetric.str.lower().isin(s3_category_dict)
+            s3_dict_idx = s3_dict_matches[s3_dict_matches].index
+            df_esg.loc[s3_dict_idx, 'submetric'] = df_esg.loc[s3_dict_idx].submetric.str.lower().map(s3_category_dict)
+
+            # We group, in order to prioritize, emissions according to boundary-like and/or category submetrics.
             grouped_em = (
-                df_esg.loc[em_metrics.index].drop(columns=['unit', 'report_date'])
-                .assign(metric=df_esg.metric.str.upper())
+                df_esg.loc[em_metrics.index]
+                .assign(metric=df_esg.loc[em_metrics.index].metric.str.upper())
+                .assign(submetric=df_esg.loc[em_metrics.index].submetric.map(lambda x: '' if pd.isna(x) else str(x)))
+                .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
-                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
+                .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
                          dropna=False)[esg_year_columns]
                 # then estimate values for each submetric (many/most of which will be NaN)
                 .agg(_estimated_value)
@@ -389,10 +514,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 )
 
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
-            grouped_em.submetric = pd.Categorical(grouped_em['submetric'], ordered=True, categories=['', 'all', 'combined', 'total', 'location', 'market'])
+            grouped_non_s3 = grouped_em.loc[grouped_em.index.get_level_values('metric') != 'S3'].copy()
+            grouped_non_s3.submetric = pd.Categorical(grouped_non_s3['submetric'], ordered=True,
+                                                      categories=['generation', '', 'all', 'combined', 'total', 'location', 'market'])
             best_em = (
-                grouped_em.sort_values('submetric')
-                .groupby(by=[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, 'metric'])
+                grouped_non_s3.sort_values('submetric')
+                .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
                 .drop(columns='submetric')
@@ -403,50 +530,70 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 logger.warning(f"Emissions data missing for {missing_em.index}") 
                 best_em = best_em[~em_all_nan].copy()
             best_em[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
-            df3 = pd.concat([best_prod, best_em]).reset_index(level='metric').rename(columns={'metric':'scope'}).set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)
-            # XS is how we match labels in indexes.  Here 'variable' is level=2, (company_name=0, company_id=1)
+
+            # We still need to group and prioritize S3 emissions, according to the benchmark requirements
+            grouped_s3 = grouped_em.loc[grouped_em.index.get_level_values('metric') == 'S3'].copy()
+            grouped_s3.submetric = pd.Categorical(grouped_s3['submetric'], ordered=True,
+                                                  categories=['', 'all', 'combined', 'total', '3', '11'])
+            best_s3 = (
+                grouped_s3.sort_values('submetric')
+                .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
+                .agg(lambda x:x)
+                .apply(prioritize_submetric, axis=1)
+                .drop(columns='submetric')
+            )
+            s3_all_nan = best_s3.apply(lambda x: x.map(lambda y: ITR.isnan(y.m)).all(), axis=1)
+            missing_s3 = best_s3[s3_all_nan]
+            if len(missing_s3):
+                logger.warning(f"Emissions data missing for {missing_s3.index}") 
+                best_s3 = best_s3[~s3_all_nan].copy()
+            best_s3[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
+            df3 = (pd.concat([best_prod, best_em, best_s3])
+                   .reset_index(level='metric')
+                   .rename(columns={'metric':'scope'})
+                   .set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)
+                   .droplevel('sector'))
+            # XS is how we match labels in indexes.  Here 'variable' is level=1, (company_id=0, scope/production=2)
             # By knocking out 'production', we don't get production / production in the calculations, only emissions (all scopes in data) / production
-            df4 = df3.xs(VariablesConfig.EMISSIONS, level=2) / df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[2,3])
+            df4 = df3.xs(VariablesConfig.EMISSIONS, level=1) / df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[1,2])
             df4['variable'] = VariablesConfig.EMISSIONS_INTENSITIES
-            df4 = df4.reset_index().set_index(['company_name', 'company_id', 'variable', 'scope'])
-            df5 = pd.concat([df3, df4]).droplevel(level='company_name')
+            df4 = df4.reset_index().set_index(['company_id', 'variable', 'scope'])
+            df5 = pd.concat([df3, df4])
+
             df_historic_data = df5
             
         # df_historic now ready for conversion to model for each company
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
-        def get_scoped_df(df, mask, names=None):
+        def get_scoped_df(df, mask, names):
             return df.loc[mask[mask].index].set_index(names)
+
+        def fill_blank_or_missing_rows(df, scope_a, scope_b, scope_ab, index_names, historic_years):
+            mask_a = df.scope.eq(scope_a)
+            mask_b = df.scope.eq(scope_b)
+            mask_ab = df.scope.eq(scope_ab)
+            
+            # This finds rows of SCOPE_AB data that were left blank in the template and fills them in
+            null_ab = df.loc[mask_ab, historic_years].apply(lambda x: all([np.isnan(y.m) for y in x]), axis=1)
+            null_ab_idx = df.loc[null_ab[null_ab].index].index
+            midx_ab = pd.MultiIndex.from_tuples(zip(df.loc[null_ab_idx].company_id, df.loc[null_ab_idx].variable),
+                                                names=index_names)
+            df_a = get_scoped_df(df, mask_a, index_names)
+            df_b = get_scoped_df(df, mask_b, index_names)
+            df.loc[null_ab_idx, historic_years] = (df_a.loc[midx_ab, historic_years]
+                                                   .add(df_b.loc[midx_ab, historic_years])
+                                                   .set_axis(null_ab_idx))
+            df_ab = get_scoped_df(df, df.scope.eq(scope_ab), index_names)
+            # This adds rows of SCOPE_AB data that could be created by adding SCOPE_A and SCOPE_B rows
+            new_ab = df_a.loc[df_a.index.difference(df_ab.index), historic_years]+df_b.loc[df_b.index.difference(df_ab.index), historic_years]
+            new_ab.insert(0, 'scope', scope_ab)
+            df = pd.concat([df, new_ab.reset_index()]).reset_index(drop=True)
+            return df
 
         df = df_historic_data.reset_index()
         index_names = ['company_id', 'variable']
-        mask_nonprod = df.variable.ne('Productions')
-        mask_s1 = df[mask_nonprod].scope.eq('S1')
-        mask_s2 = df[mask_nonprod].scope.eq('S2')
-        mask_s1s2 = df[mask_nonprod].scope.eq('S1S2')
-        mask_s3 = df[mask_nonprod].scope.eq('S3')
-        mask_s1s2s3 = df[mask_nonprod].scope.eq('S1S2S3')
-
-        tmp_s1s2 = df.loc[mask_s1s2[mask_s1s2].index, (df.columns[3:])].apply(lambda x: all([np.isnan(y.m) for y in x]), axis=1)
-        idx_s1s2 = df.loc[tmp_s1s2[tmp_s1s2].index].index
-        df_s1 = get_scoped_df(df, mask_s1, index_names)
-        df_s2 = get_scoped_df(df, mask_s2, index_names)
-        midx_s1s2 = pd.MultiIndex.from_tuples(zip(df.loc[idx_s1s2].company_id, df.loc[idx_s1s2].variable),
-                                              names=index_names)
-        df.loc[idx_s1s2, self.historic_years] = (df_s1.loc[midx_s1s2, self.historic_years]
-                                                 .add(df_s2.loc[midx_s1s2, self.historic_years])
-                                                 .set_axis(idx_s1s2))
-        
-        tmp_s1s2s3 = df.loc[mask_s1s2s3[mask_s1s2s3].index, (df.columns[3:])].apply(lambda x: all([np.isnan(y.m) for y in x]), axis=1)
-        idx_s1s2s3 = df.loc[tmp_s1s2s3[tmp_s1s2s3].index].index
-        df_s1s2 = get_scoped_df(df, mask_s1s2, index_names)
-        df_s3 = get_scoped_df(df, mask_s3, index_names)
-        midx_s1s2s3 = pd.MultiIndex.from_tuples(zip(df.loc[idx_s1s2s3].company_id, df.loc[idx_s1s2s3].variable),
-                                                names=index_names)
-        df.loc[idx_s1s2s3, self.historic_years] = (df_s1s2.loc[midx_s1s2s3, self.historic_years]
-                                                   .add(df_s3.loc[midx_s1s2s3, self.historic_years])
-                                                   .set_axis(idx_s1s2s3))
-
+        df = fill_blank_or_missing_rows(df, 'S1', 'S2', 'S1S2', index_names, self.historic_years)
+        df = fill_blank_or_missing_rows(df, 'S1S2', 'S3', 'S1S2S3', index_names, self.historic_years)
         df_historic_data = df.set_index(['company_id', 'variable', 'scope'])
         
         test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
@@ -525,17 +672,33 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                             company_data[ColumnsConfig.COMPANY_ID], 'Productions', 'production'][
                                 TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
                     if not ColumnsConfig.GHG_SCOPE12 in company_data:
-                        company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                            company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1S2'][
-                                TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-                    try:
-                        if not ColumnsConfig.GHG_SCOPE3 in company_data:
+                        try:
+                            company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1S2'][
+                                    TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                        except KeyError:
+                            if (company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S2') not in df_historic_data.index:
+                                logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                    company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1'][
+                                        TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                            else:
+                                # FIXME: This should not reach here because we should have calculated
+                                # S1S2 as an emissions total upstream from S1+S2.
+                                assert False
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                    company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1'][
+                                        TemperatureScoreConfig.CONTROLS_CONFIG.base_year] + df_historic_data.loc[
+                                    company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S2'][
+                                        TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                    if not ColumnsConfig.GHG_SCOPE3 in company_data:
+                        try:
                             company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
                                 company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S3'][
                                     TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
-                    except KeyError:
-                        # If there was no relevant historic data, don't try to use it
-                        pass
+                        except KeyError:
+                            # If there was no relevant historic data, don't try to use it
+                            pass
                     company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
                         df_historic_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index()).dict()
                 else:

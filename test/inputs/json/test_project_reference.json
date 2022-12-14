@@ -5,7 +5,19 @@
         "region": "North America",
         "sector": "Electricity Utilities",
         "target_probability": 0.428571428571428,
-        "target_data": null,
+        "target_data": [
+          {
+            "netzero_year": 2050,
+            "target_type": "intensity",
+            "target_scope": "S1+S2",
+            "target_start_year": 2020,
+            "target_base_year": 2019,
+            "target_end_year": 2030,
+            "target_base_year_qty": 0.131037611,
+            "target_base_year_unit": "t CO2/GJ",
+            "target_reduction_pct": 0.5
+          }
+        ],
         "historic_data": {
             "productions": [
                 {

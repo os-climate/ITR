@@ -133,7 +133,7 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta
 
 
 # https://stackoverflow.com/a/74137209/1291237
-def umean(quantified_data):
+def umean(unquantified_data):
     """
     Assuming Gaussian statistics, uncertainties stem from Gaussian parent distributions. In such a case,
     it is standard to weight the measurements (nominal values) by the inverse variance.
@@ -142,7 +142,7 @@ def umean(quantified_data):
     :param: A set of uncertainty values
     :return: The weighted mean of the values, with a freshly calculated error term
     """
-    values = np.array(list(map(lambda v: v.m if isinstance(v.m, ITR.UFloat) else ITR.ufloat(v.m, 0), quantified_data)))
+    values = np.array(list(map(lambda v: v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0), unquantified_data)))
     epsilon = 1e-7
     wavg = ITR.ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
                       np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))

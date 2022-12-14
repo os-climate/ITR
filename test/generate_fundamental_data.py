@@ -20,7 +20,7 @@ from pint import Quantity
 from ITR.data.osc_units import ureg, Q_, PA_
 
 from utils import gen_company_data, DequantifyQuantity
-# from utils import QuantityEncoder
+# from utils import ITR_Encoder
 
 # For this test case, we prime the pump with known-aligned emissions intensities.
 # We can then construct companies that have some passing resemplemnce to these, and then verify alignment/non-alignment
