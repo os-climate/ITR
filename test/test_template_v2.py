@@ -29,6 +29,7 @@ class TestTemplateProvider(unittest.TestCase):
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_data_path = os.path.join(self.root, "inputs", "20220927 ITR V2 Sample Data.xlsx")
+        # self.company_data_path = os.path.join(self.root, "inputs", "20221025 ITR V2 AES Data.xlsx")
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         # load production benchmarks
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
@@ -46,17 +47,7 @@ class TestTemplateProvider(unittest.TestCase):
 
         self.data_warehouse = DataWarehouse(self.template_company_data, self.base_production_bm, self.base_EI_bm)
         self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
-        self.company_info_at_base_year = pd.DataFrame(
-            [['Electricity Utilities', 'North America', EScope.S1S2,
-              Q_(408.8060718270887, ureg('t CO2/GWh')), Q_(120964.446, 'GWh'), 'GWh'],
-             ['Electricity Utilities', 'North America', EScope.S1S2,
-              Q_(0.38594178905100457 , ureg('Mt CO2/TWh')), Q_(216.60189565, 'TWh'), 'TWh'],
-             ['Steel', 'Asia', EScope.S1S2,
-              Q_(2.1951083625828733, ureg('t CO2/(t Steel)')), Q_(35.898, 'Mt Steel'), 'Mt Steel']],
-            index=pd.Index(self.company_ids, name='company_id'),
-            columns=[ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE,
-                     ColumnsConfig.BASE_EI, ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.PRODUCTION_METRIC])
-        self.company_info_at_base_year['ghg_s1s2'] = self.company_info_at_base_year.base_year_production.mul(self.company_info_at_base_year.ei_at_base_year)
+        self.company_info_at_base_year = self.template_company_data.get_company_intensity_and_production_at_base_year(self.company_ids)
 
 
     def test_target_projections(self):
@@ -83,14 +74,41 @@ class TestTemplateProvider(unittest.TestCase):
             field : [ getattr(c, field) for c in company_data ]
             for field in [ ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR, ColumnsConfig.REGION ]
         }
-        company_dict[ColumnsConfig.SCOPE] = [ EScope.S1S2 ] * len(company_data)
+        company_dict[ColumnsConfig.SCOPE] = [ EScope.AnyScope ] * len(company_data)
         company_index = [ c.company_id for c in company_data ]
         company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name='company_id'))
         bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
         # FIXME: We should pre-compute some of these target projections and make them reference data
+
+        # AES won't converge because S1S2 is netzero in 2040 and S3 data netzero in 2050, then merged together.
+        # When we try to re-create, the merged S1S2+S3 historic data is projected against a 2040-only target.
+
+        selected_company_ids = [ 'US00130H1059', 'US26441C2044', 'KR7005490008' ]
+
+        expected_projections = {
+            selected_company_ids[0]: ('S1S2', [ 0.602, 0.5385, 0.4816, 0.4307, 0.3852, 0.3445, 0.3081, 0.2754,
+            0.2462, 0.1972, 0.1578, 0.1258, 0.0998, 0.0786, 0.061, 0.0464, 0.0342, 0.0238,
+            0.015, 0.013, 0.0111, 0.0094, 0.0078, 0.0063, 0.0049, 0.0035, 0.0023, 0.0011,
+                                   0.0 ]),
+            selected_company_ids[1]: ('S1', [ 0.2987, 0.2744, 0.2519, 0.2311, 0.2118, 0.1939, 0.1774, 0.162,
+            0.1477, 0.1344, 0.1221, 0.1106, 0.1, 0.0901, 0.0808, 0.0722, 0.0642, 0.0567,
+            0.0497, 0.0432, 0.0371, 0.0314,  0.026,  0.021, 0.0163, 0.0118, 0.0077, 0.0037,
+                                   -0.0 ]),
+            selected_company_ids[2]: ('S1S2', [2.0046, 1.9561, 1.9088, 1.8626, 1.8176, 1.7736, 1.7307, 1.6888,
+            1.648, 1.5723, 1.5001, 1.4313, 1.3656, 1.3029, 1.243, 1.186, 1.1315, 1.0796,
+            1.03, 0.8003, 0.6178, 0.4724, 0.3561, 0.2627, 0.1873, 0.126, 0.0759, 0.0345,
+                                   -0.0])
+        }
+
         for c in company_data:
-            assert c.projected_targets == EITargetProjector(self.template_company_data.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)])
-        
+            if c.company_id not in selected_company_ids:
+                continue
+            scope, expected_projection = expected_projections[c.company_id]
+            c_proj_targets = c.projected_targets[scope].projections
+            while c_proj_targets[0].year < 2022:
+                c_proj_targets = c_proj_targets[1:]
+            assert [round(x.value.m,4) for x in c_proj_targets] == expected_projection
+            
 
     def test_temp_score(self):
         df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
@@ -106,7 +124,7 @@ class TestTemplateProvider(unittest.TestCase):
         try:
             portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)
         except RuntimeWarning:
-            breakpoint()
+            assert False
 
         amended_portfolio = temperature_score.calculate(data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio)
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
@@ -114,19 +132,18 @@ class TestTemplateProvider(unittest.TestCase):
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
         expected_data = pd.DataFrame([pd.Series(
-            [ 767.94244, 670.69456, 673.13922, 674.53048, 676.01775, 677.60375,
-              679.29129, 681.08327, 682.98265, 684.9925, 687.11599, 689.35637, 691.71699,
-              694.20131, 696.81288, 699.55537, 702.43256, 705.44834, 708.60671, 711.9118,
-              715.36786, 718.97928, 722.75056, 726.68634, 730.79143, 735.07074, 739.52936,
-              744.17252, 749.00561, 754.03418, 759.26395, 764.70081 ],
+            [767.9424440147617,
+             670.6945556381868, 673.1392212423145, 674.5304806701733, 676.0177499692604, 677.6037527866383, 679.2912949309276, 681.083266835849, 682.9826460976751, 684.9925000888088, 687.1159886497745,
+             689.3563668619705, 691.7169879036096, 694.2013059913407, 696.8128794101235, 699.5553736340013, 702.4325645405033, 705.4483417214807, 708.606711893272, 711.9118024091774, 715.3678648773108,
+             718.9792788869904, 722.7505558469256, 726.6863429385525, 730.791427187973, 735.0707396600562, 739.5293597783664, 744.172519774691, 749.0056092720603, 754.0341800052599, 759.2639506829616,
+             764.7008119957226],
             name='US0079031078', dtype='pint[t CO2/GWh]'),
                                       pd.Series(
-            [ 2.45751809, 2.43775934, 2.455838, 2.47407191, 2.49246241, 2.51101084,
-              2.52971856, 2.54858693, 2.56761734, 2.58681117, 2.60616984,
-              2.62569475, 2.64538734, 2.66524904, 2.6852813, 2.7054856, 2.7258634,
-              2.7464162, 2.7671455, 2.78805282, 2.80913969, 2.83040764, 2.85185823,
-              2.87349303, 2.89531363, 2.91732161, 2.9395186, 2.9619062, 2.98448606,
-              3.00725983, 3.03022917, 3.05339576, ],
+            [2.4575180887731207,
+             2.4377593432586617, 2.46092577581102, 2.4843590497760357, 2.5080621555037244, 2.53203811697784, 2.5562899921939826, 2.580820873541958, 2.605633888192434, 2.6307321984879453, 2.6561190023382943,
+             2.6817975336203976, 2.707771062582624, 2.7340428962536856, 2.7606163788561187, 2.7874948922244167, 2.8146818562278657, 2.8421807291981303, 2.869995008361647, 2.898128230276882, 2.926583971276502,
+             2.955365847914516, 2.9844775174184477, 3.013922678146586, 3.043705070050382, 3.073828475142039, 3.1042967179673644, 3.135113666083935, 3.1662832305446384, 3.1978093663866503, 3.2296960731259103,
+             3.2619473952571574],
             name='KR7005490008',
             dtype='pint[t CO2/(t Steel)]')],
                                      index=company_ids)
@@ -140,49 +157,35 @@ class TestTemplateProvider(unittest.TestCase):
         # benchmarks are sector/region specific, and guide temperature scores, but we wouldn't expect
         # an exact match between the two except when the company's data was generated from the benchmark
         # (as test.utils.gen_company_data does).
-        return
-        expected_data = pd.DataFrame([pd.Series([1.69824743475, 1.58143621150, 1.38535794886, 1.18927968623,
-                                                 0.99320142359, 0.79712316095, 0.78093368518, 0.67570482719,
-                                                 0.57047596921, 0.46524711122, 0.36001825324, 0.25478939526,
-                                                 0.23054387704, 0.20629835882, 0.18205284060, 0.15780732238,
-                                                 0.13356180417, 0.12137027360, 0.10917874304, 0.09698721248,
-                                                 0.08479568191, 0.07260415135, 0.05854790312, 0.04449165489,
-                                                 0.03043540666, 0.01637915843, 0.00232291020, 0.00214312236,
-                                                 0.00196333452, 0.00178354668, 0.00160375884, 0.00142397100
-                                                 ], name='US0079031078', dtype='pint[t CO2/GJ]'),
-                                      pd.Series([0.47658693158, 0.44387618243, 0.38896821483, 0.33406024722,
-                                                 0.27915227962, 0.22424431201, 0.21971075893, 0.19024342967,
-                                                 0.16077610042, 0.13130877116, 0.10184144190, 0.07237411264,
-                                                 0.06558461894, 0.05879512524, 0.05200563154, 0.04521613784,
-                                                 0.03842664414, 0.03501263916, 0.03159863418, 0.02818462920,
-                                                 0.02477062422, 0.02135661924, 0.01742043574, 0.01348425224,
-                                                 0.00954806873, 0.00561188523, 0.00167570173, 0.00162535558,
-                                                 0.00157500944, 0.00152466329, 0.00147431715, 0.00142397100
-                                                 ], name='US00724F1012', dtype='pint[t CO2/GJ]'),
-                                      pd.Series([0.22457393169, 0.17895857242, 0.16267932465, 0.14640007689,
-                                                 0.13012082912, 0.11384158136, 0.09756233359, 0.08824475611,
-                                                 0.07892717862, 0.06960960113, 0.06029202364, 0.05097444616,
-                                                 0.04698485296, 0.04299525976, 0.03900566657, 0.03501607337,
-                                                 0.03102648017, 0.02766139400, 0.02429630784, 0.02093122167,
-                                                 0.01756613550, 0.01420104933, 0.01244674461, 0.01069243990,
-                                                 0.00893813518, 0.00718383046, 0.00542952574, 0.00464364090,
-                                                 0.00385775605, 0.00307187120, 0.00228598636, 0.00150010151],
-                                                name='FR0000125338', dtype='pint[t CO2/GJ]')
+        expected_data = pd.DataFrame([pd.Series([0.392,
+                                                 0.347, 0.307, 0.272, 0.24, 0.213, 0.188, 0.149, 0.114, 0.0827, 0.0551,
+                                                 0.030800000000000004, 0.030400000000000003, 0.03, 0.0296, 0.0293, 0.0289, 0.025, 0.0211, 0.0174, 0.0137,
+                                                 0.0101, 0.0094, 0.00875, 0.00815, 0.00758, 0.00706, 0.00678, 0.00651, 0.00626, 0.00601,
+                                                 0.00577], name='US00130H1059', dtype='pint[t CO2e/MWh]'),
+                                      pd.Series([0.392,
+                                                 0.347, 0.307, 0.272, 0.24, 0.213, 0.188, 0.149, 0.114, 0.0827, 0.0551,
+                                                 0.030800000000000004, 0.030400000000000003, 0.03, 0.0296, 0.0293, 0.0289, 0.025, 0.0211, 0.0174, 0.0137,
+                                                 0.0101, 0.0094, 0.00875, 0.00815, 0.00758, 0.00706, 0.00678, 0.00651, 0.00626, 0.00601,
+                                                 0.00577], name='US26441C2044', dtype='pint[t CO2e/MWh]'),
+                                      pd.Series([1.653,
+                                                 1.571, 1.494, 1.421, 1.351, 1.284, 1.221, 1.098, 0.988, 0.889, 0.799,
+                                                 0.719, 0.647, 0.583, 0.525, 0.472, 0.42499999999999993, 0.377, 0.33399999999999996, 0.29699999999999993, 0.263,
+                                                 0.233, 0.206, 0.182, 0.16, 0.141, 0.125, 0.107, 0.09, 0.0734, 0.0573,
+                                                 0.0416], name='KR7005490008', dtype='pint[t CO2e/(t Steel)]')
                                      ],
                                      index=self.company_ids)
         expected_data.columns = list(range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                            TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1))
-        benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
-        assert_pint_frame_equal(self, benchmarks, expected_data)
+        benchmarks = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
+        assert_pint_frame_equal(self, benchmarks.loc[:, EScope.S1S2, :], expected_data)
 
     def test_get_projected_production(self):
-        expected_data_2025 = pd.Series([Q_(141849.126, ureg('GWh')), Q_(253.998514, ureg('TWh')), Q_(36.562113000000025, ureg('Mt Steel'))],
+        expected_data_2025 = pd.Series([Q_(88056.533643, ureg('GWh')), Q_(241.762219, ureg('TWh')), Q_(38.710168585224, ureg('Mt Steel'))],
                                        index=self.company_ids,
                                        name=2025)
         production = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
         # FIXME: this test is broken until we fix data for POSCO
-        return
-        assert_pint_series_equal(self, production, expected_data_2025, places=4)
+        assert_pint_series_equal(self, production[:, EScope.S1S2], expected_data_2025, places=4)
 
     def test_get_cumulative_value(self):
         projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype='pint[t CO2/GJ]')
@@ -195,22 +198,20 @@ class TestTemplateProvider(unittest.TestCase):
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities
         companies = self.data_warehouse.get_preprocessed_company_data(self.company_ids)
-        # FIXME: this test is broken until we fix data for POSCO
-        return
-        company_1 = companies[0]
-        company_2 = companies[2]
+        company_1 = companies[1]
+        company_2 = companies[4]
         self.assertEqual(company_1.company_name, "AES Corp.")
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        self.assertAlmostEqual(ITR.nominal_values(company_1.ghg_s1s2.to('t CO2')), 43215000.0+7269200, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.ghg_s1s2.to('t CO2')), 68874000., places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_budget.to('t CO2')), 247960692.1, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_budget.to('t CO2')), 1773407672.95, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_target.to('t CO2')), 287877763.61957714, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_target.to('t CO2')), 1316305990.5630153, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_trajectory.to('t CO2')), 1441933181.74423, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_trajectory.to('t CO2')), 2809084095.106841, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.ghg_s1s2.m_as('Mt CO2')), 57.666199999999996, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.ghg_s1s2.m_as('Mt CO2')), 93.40289000000001, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_budget.m_as('Mt CO2')), 247.35955561917217, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_budget.m_as('Mt CO2')), 803.7544915984661, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_target.m_as('Mt CO2')), 628.4206195499177, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_target.m_as('Mt CO2')), 1593.4748965778333, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_trajectory.m_as('Mt CO2')), 2980.565984113794, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_trajectory.m_as('Mt CO2')), 4047.919645058194, places=7)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,

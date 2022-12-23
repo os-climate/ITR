@@ -73,7 +73,6 @@ class TemperatureScore(PortfolioAggregation):
             score = trajectory_temperature_score
             return score, trajectory_temperature_score, trajectory_overshoot_ratio, \
                 target_temperature_score, target_overshoot_ratio, EScoreResultType.TRAJECTORY_ONLY
-
         else:
             target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
                 self.c.COLS.CUMULATIVE_BUDGET]
@@ -86,11 +85,18 @@ class TemperatureScore(PortfolioAggregation):
             trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                 (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
                     self.c.CONTROLS_CONFIG.tcre_multiplier)
-            score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
-                trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
 
-            return score, trajectory_temperature_score, trajectory_overshoot_ratio, target_temperature_score, \
-                target_overshoot_ratio, EScoreResultType.COMPLETE
+            # If trajectory data has run away (because trajectory projections are positive, not negative, use only target results
+            if trajectory_overshoot_ratio > 10.0:
+                score = target_temperature_score
+                score_result_type = EScoreResultType.TARGET_ONLY
+            else:
+                score = target_temperature_score * scorable_row[self.c.COLS.TARGET_PROBABILITY] + \
+                    trajectory_temperature_score * (1 - scorable_row[self.c.COLS.TARGET_PROBABILITY])
+                score_result_type = EScoreResultType.COMPLETE
+
+            return score, trajectory_temperature_score, trajectory_overshoot_ratio, \
+                target_temperature_score, target_overshoot_ratio, score_result_type
 
     def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> quantity('delta_degC'):
         """

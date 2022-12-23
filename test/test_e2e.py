@@ -39,7 +39,7 @@ class EndToEndTest(unittest.TestCase):
     def setUp(self):
         # base_year is 2019
         company_id = "BaseCompany"
-        self.BASE_COMP_SCORE = Q_(3.85, ureg.delta_degC)
+        self.BASE_COMP_SCORE = Q_(3.857, ureg.delta_degC)
         self.company_base = ICompanyAggregates(
             company_name=company_id,
             company_id=company_id,

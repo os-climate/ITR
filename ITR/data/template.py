@@ -6,7 +6,7 @@ import numpy as np
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity
+from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintDataFrame
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
@@ -180,15 +180,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
     :param excel_path: A path to the Excel file with the company data
     :param column_config: An optional ColumnsConfig object containing relevant variable names
-    :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
     """
 
     def __init__(self, excel_path: str,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
+        self.projection_controls = projection_controls
         self._companies = self._convert_from_template_company_data(excel_path)
-        super().__init__(self._companies, column_config, tempscore_config, projection_controls)
+        super().__init__(self._companies, column_config, projection_controls)
 
     # When rows of data are expressed in terms of scope intensities, solve for the implied production 
     def _solve_intensities(self, df_fundamentals: pd.DataFrame, df_esg: pd.DataFrame) -> pd.DataFrame:
@@ -234,7 +233,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df2 = df_esg[df_esg.metric.eq('production')].set_index(['company_id', 'report_date'])
             df3 = df1.multiply(df2.iloc[:,(start_year_loc-2):].loc[df1.index.droplevel(['scope', 'index'])])
             df4 = df3.astype('pint[t CO2e]').drop_duplicates()
-            df5 = df4.droplevel(['company_id', 'report_date']).swaplevel().sort_index()
+            df5 = df4.droplevel(['company_id', 'report_date']).swaplevel() # .sort_index()
             df_esg.loc[df5.index.get_level_values('index'), 'metric'] = df5.index.get_level_values('scope')
             df5.index = df5.index.droplevel('scope')
             df_esg.loc[df5.index, df_esg.columns[start_year_loc:].to_list()] = df5[df_esg.columns[start_year_loc:].to_list()]
@@ -416,10 +415,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg = df_esg[df_esg.base_year.ne('X')]
 
             # We are already much tidier, so don't need the wide_to_long conversion.
-            df_esg_hasunits = df_esg.unit.notna()
-            df_esg_nounits = df_esg[~df_esg_hasunits]
-            df_esg = df_esg[df_esg_hasunits]
             esg_year_columns = df_esg.columns[df_esg.columns.get_loc(TEMPLATE_START_YEAR):]
+            df_esg_hasunits = df_esg.unit.notna()
+            df_esg = df_esg[df_esg_hasunits]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 for col in esg_year_columns:
@@ -565,29 +563,28 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # df_historic now ready for conversion to model for each company
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
-        def get_scoped_df(df, mask, names):
+        def get_scoped_df(df, scope, names):
+            mask = df.scope.eq(scope)
             return df.loc[mask[mask].index].set_index(names)
 
         def fill_blank_or_missing_rows(df, scope_a, scope_b, scope_ab, index_names, historic_years):
-            mask_a = df.scope.eq(scope_a)
-            mask_b = df.scope.eq(scope_b)
-            mask_ab = df.scope.eq(scope_ab)
-            
-            # This finds rows of SCOPE_AB data that were left blank in the template and fills them in
-            null_ab = df.loc[mask_ab, historic_years].apply(lambda x: all([np.isnan(y.m) for y in x]), axis=1)
-            null_ab_idx = df.loc[null_ab[null_ab].index].index
-            midx_ab = pd.MultiIndex.from_tuples(zip(df.loc[null_ab_idx].company_id, df.loc[null_ab_idx].variable),
-                                                names=index_names)
-            df_a = get_scoped_df(df, mask_a, index_names)
-            df_b = get_scoped_df(df, mask_b, index_names)
-            df.loc[null_ab_idx, historic_years] = (df_a.loc[midx_ab, historic_years]
-                                                   .add(df_b.loc[midx_ab, historic_years])
-                                                   .set_axis(null_ab_idx))
-            df_ab = get_scoped_df(df, df.scope.eq(scope_ab), index_names)
+            # Translate from long format, where each scope is on its own line, to common index
+            df_a = get_scoped_df(df, scope_a, index_names)
+            df_b = get_scoped_df(df, scope_b, index_names)
+            df_ab = get_scoped_df(df, scope_ab, index_names).set_index('scope', append=True)
             # This adds rows of SCOPE_AB data that could be created by adding SCOPE_A and SCOPE_B rows
-            new_ab = df_a.loc[df_a.index.difference(df_ab.index), historic_years]+df_b.loc[df_b.index.difference(df_ab.index), historic_years]
+            new_ab_idx = df_a.index.intersection(df_b.index)
+            new_ab = df_a.loc[new_ab_idx, historic_years]+df_b.loc[new_ab_idx, historic_years]
             new_ab.insert(0, 'scope', scope_ab)
-            df = pd.concat([df, new_ab.reset_index()]).reset_index(drop=True)
+            new_ab.set_index('scope', append=True, inplace=True)
+            df_ab[df_ab.applymap(lambda x: ITR.isnan(x.m))] = new_ab
+            # DF_AB has gaps filled, but not whole new rows that did not exist before
+            # Drop rows in NEW_AB already covered by DF_AB and consolidate
+            new_ab.drop(index=df_ab.index, inplace=True, errors='ignore')
+            # Now update original dataframe with our new data
+            df.set_index(index_names+['scope'], inplace=True)
+            df.update(df_ab)
+            df = pd.concat([df, new_ab]).reset_index()
             return df
 
         df = df_historic_data.reset_index()
@@ -670,32 +667,32 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     if not ColumnsConfig.BASE_YEAR_PRODUCTION in company_data:
                         company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = df_historic_data.loc[
                             company_data[ColumnsConfig.COMPANY_ID], 'Productions', 'production'][
-                                TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                                self.projection_controls.BASE_YEAR]
                     if not ColumnsConfig.GHG_SCOPE12 in company_data:
                         try:
                             company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
                                 company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1S2'][
-                                    TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                                    self.projection_controls.BASE_YEAR]
                         except KeyError:
                             if (company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S2') not in df_historic_data.index:
                                 logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
                                 company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
                                     company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1'][
-                                        TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                                        self.projection_controls.BASE_YEAR]
                             else:
                                 # FIXME: This should not reach here because we should have calculated
                                 # S1S2 as an emissions total upstream from S1+S2.
                                 assert False
                                 company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
                                     company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1'][
-                                        TemperatureScoreConfig.CONTROLS_CONFIG.base_year] + df_historic_data.loc[
+                                        self.projection_controls.BASE_YEAR] + df_historic_data.loc[
                                     company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S2'][
-                                        TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                                        self.projection_controls.BASE_YEAR]
                     if not ColumnsConfig.GHG_SCOPE3 in company_data:
                         try:
                             company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
                                 company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S3'][
-                                    TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                                    self.projection_controls.BASE_YEAR]
                         except KeyError:
                             # If there was no relevant historic data, don't try to use it
                             pass
@@ -756,13 +753,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param historic: historic production, emission and emission intensity data for a company (already unitized)
         :return: IHistoricData Pydantic object
         """
-        historic.set_index('variable', drop=False, inplace=True)
-        productions = historic.loc[[VariablesConfig.PRODUCTIONS]]
-        emissions = historic.loc[[VariablesConfig.EMISSIONS]]
-        emissions_intensities = historic.loc[[VariablesConfig.EMISSIONS_INTENSITIES]]
+        historic_t = asPintDataFrame(historic.set_index(['variable', 'company_id', 'scope']).T)
+        # Historic data may well have ragged left and right columns
+        # all_na = historic.apply(lambda x: all([ITR.isnan(y.m) for y in x]), axis=1)
+        # historic = historic[~all_na]
+        productions = historic_t[VariablesConfig.PRODUCTIONS].T
+        emissions = historic_t[VariablesConfig.EMISSIONS].T
+        emissions_intensities = historic_t[VariablesConfig.EMISSIONS_INTENSITIES].T
         hd = IHistoricData(productions=self._convert_to_historic_productions(productions),
-                           emissions=self._convert_to_historic_emissions(emissions),
-                           emissions_intensities=self._convert_to_historic_ei(emissions_intensities))
+                           emissions=self._convert_to_historic_emissions(emissions.reset_index('scope')),
+                           emissions_intensities=self._convert_to_historic_ei(emissions_intensities.reset_index('scope')))
         return hd
 
     # Note that for the three following functions, we pd.Series.squeeze() the results because it's just one year / one company

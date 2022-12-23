@@ -1,6 +1,7 @@
 import unittest
 import json
 import os
+import re
 import pandas as pd
 from numpy.testing import assert_array_equal
 
@@ -10,7 +11,7 @@ from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEI
 from ITR.interfaces import IProductionBenchmarkScopes, IEIBenchmarkScopes, PortfolioCompany, ITargetData
 
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
-    BaseProviderIntensityBenchmark, EITargetProjector
+    BaseProviderIntensityBenchmark, EITargetProjector, EITrajectoryProjector
 
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.temperature_score import TemperatureScore
@@ -35,6 +36,27 @@ def print_expected(target_df, company_data):
                                 index=range(2019,2051))
 """)
 
+
+# https://stackoverflow.com/a/62853540/1291237
+from plotly.subplots import make_subplots
+
+subfig = make_subplots(specs=[[{"secondary_y": True}]])
+
+# # create two independent figures with px.line each containing data from multiple columns
+# fig = px.line(df, y=df.filter(regex="Linear").columns, render_mode="webgl",)
+# fig2 = px.line(df, y=df.filter(regex="Log").columns, render_mode="webgl",)
+#
+# fig2.update_traces(yaxis="y2")
+#
+# subfig.add_traces(fig.data + fig2.data)
+# subfig.layout.xaxis.title="Time"
+# subfig.layout.yaxis.title="Linear Y"
+# subfig.layout.yaxis2.type="log"
+# subfig.layout.yaxis2.title="Log Y"
+# # recoloring is necessary otherwise lines from fig und fig2 would share each color
+# # e.g. Linear-, Log- = blue; Linear+, Log+ = red... we don't want this
+# subfig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
+# subfig.show()
 
 
 # For this test case, we prime the pump with known-aligned emissions intensities.
@@ -581,7 +603,7 @@ class TestTargets(unittest.TestCase):
                       labels={'index':'Year', 'value':f"{intensity.u:~P}", 'variable':'test_target_overlaps'})
         # fig.show()
 
-        # print_expected(target_df, [company_ag, company_ah, company_ai, company_aj])
+        # print_expected(target_df, company_data)
         expected_ag = pd.Series(PA_([0.596,
                                      0.559, 0.525, 0.493, 0.463, 0.435, 0.408, 0.383, 0.36, 0.338, 0.317,
                                      0.298, 0.278, 0.259, 0.242, 0.226, 0.211, 0.196, 0.183, 0.171, 0.16,
@@ -612,6 +634,295 @@ class TestTargets(unittest.TestCase):
         assert_pint_series_equal(self, self.base_company_data._convert_projections_to_series(company_ai, 'projected_targets'), expected_ai, places=3)
         assert_pint_series_equal(self, self.base_company_data._convert_projections_to_series(company_aj, 'projected_targets'), expected_aj, places=3)
 
+    def test_different_starting_dates_intensity(self):
+        # For a company with specific targets, test the effects of under- or over-acheiving those targets
+        # durig the first few years of the start-date of the target
+
+        def compute_scope_targets(c, projection_type, projection_years):
+            result = self.base_company_data._convert_projections_to_series(c, projection_type, EScope.S1S2).loc[projection_years].add(
+                self.base_company_data._convert_projections_to_series(c, projection_type, EScope.S3).loc[projection_years])
+            return result
+        
+        company_oecm = self.gen_company_variation('OECM Aligned', 'NA-EU-OECM-ALIGNED', 'North America', 'Electricity Utilities',
+                                                Q_(10, "TWh"),
+                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(0, 'g CO2/kWh'),
+                                                ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
+        company_oecm.projected_targets = company_oecm.projected_intensities
+
+        base_production = Q_('10 TWh')
+        base_emissions_s1s2 = Q_('1 Mt CO2e')
+        base_emissions_s3 = Q_('4 Mt CO2e')
+        company_dict_ag = {
+            'company_name': 'Company AG',
+            'company_id': 'US0079031078',
+            'region': 'North America',
+            'sector': 'Electricity Utilities',
+            'base_year_production': base_production,
+            'ghg_s1s2': base_emissions_s1s2,
+            'ghg_s3': base_emissions_s3,
+        }
+            
+        historic_productions_ag = [
+            { 'year': year, 'value': base_production+(year-2015)*Q_('0 GWh') }
+            for year in range(2015, 2021)
+        ]
+        historic_emissions_s1s2_ag = [
+            { 'year': year, 'value': base_emissions_s1s2-(year-2015)*Q_('50 kt CO2e') }
+            for year in range(2015, 2021)
+        ]
+        historic_emissions_s3_ag = [
+            { 'year': year, 'value': base_emissions_s3-(year-2015)*Q_('100 kt CO2e') }
+            for year in range(2015, 2021)
+        ]
+        company_dict_ag['historic_data'] = {
+            'productions': historic_productions_ag,
+            'emissions': { 'S1': [], 'S2': [], 'S1S2': historic_emissions_s1s2_ag,
+                           'S3': historic_emissions_s3_ag, 'S1S2S3': [] },
+            'emissions_intensities': {
+                'S1': [], 'S2': [],
+                'S1S2': [ { 'year': em_dict['year'], 'value': em_dict['value'] / prod_dict['value'] }
+                          for em_dict, prod_dict in zip(historic_emissions_s1s2_ag, historic_productions_ag) ],
+                'S3': [ { 'year': em_dict['year'], 'value': em_dict['value'] / prod_dict['value'] }
+                        for em_dict, prod_dict in zip(historic_emissions_s3_ag, historic_productions_ag) ],
+                'S1S2S3': []
+            }
+        }
+        company_ag = ICompanyData.parse_obj(company_dict_ag)
+        
+        company_dict_ah = company_dict_ag.copy()
+        company_dict_ah['company_name'] = 'Company AH'
+        company_dict_ah['company_id'] = 'US00724F1012'
+        historic_productions_ah = [
+            { 'year': year, 'value': base_production+(year-2015)*Q_('0 GWh') }
+            for year in range(2015, 2025)
+        ]
+        historic_emissions_s1s2_ah = [
+            { 'year': year, 'value': base_emissions_s1s2-(year-2015)*Q_('50 kt CO2e') }
+            for year in range(2015, 2025)
+        ]
+        historic_emissions_s3_ah = [
+            { 'year': year, 'value': base_emissions_s3-(year-2015)*Q_('100 kt CO2e') }
+            for year in range(2015, 2025)
+        ]
+        company_dict_ah['historic_data'] = {
+            'productions': historic_productions_ah,
+            'emissions': { 'S1': [], 'S2': [], 'S1S2': historic_emissions_s1s2_ah,
+                           'S3': historic_emissions_s3_ah, 'S1S2S3': [] },
+            'emissions_intensities': {
+                'S1': [], 'S2': [],
+                'S1S2': [ { 'year': em_dict['year'], 'value': em_dict['value'] / prod_dict['value'] }
+                          for em_dict, prod_dict in zip(historic_emissions_s1s2_ah, historic_productions_ah) ],
+                'S3': [ { 'year': em_dict['year'], 'value': em_dict['value'] / prod_dict['value'] }
+                        for em_dict, prod_dict in zip(historic_emissions_s3_ah, historic_productions_ah) ],
+                'S1S2S3': []
+            }
+        }
+        company_ah = ICompanyData.parse_obj(company_dict_ah)
+        
+        company_dict_ai = company_dict_ag.copy()
+        company_dict_ai['company_name'] = 'Company AI'
+        company_dict_ai['company_id'] = 'US00130H1059'
+        historic_productions_ai = [
+            { 'year': year, 'value': base_production+(year-2015)*Q_('0 GWh') }
+            for year in range(2015, 2025)
+        ]
+        historic_emissions_s1s2_ai = [
+            { 'year': year, 'value': base_emissions_s1s2-(year-2015)*Q_('100 kt CO2e') }
+            for year in range(2015, 2025)
+        ]
+        historic_emissions_s3_ai = [
+            { 'year': year, 'value': base_emissions_s3-(year-2015)*Q_('200 kt CO2e') }
+            for year in range(2015, 2025)
+        ]
+        company_dict_ai['historic_data'] = {
+            'productions': historic_productions_ai,
+            'emissions': { 'S1': [], 'S2': [], 'S1S2': historic_emissions_s1s2_ai,
+                           'S3': historic_emissions_s3_ai, 'S1S2S3': [] },
+            'emissions_intensities': {
+                'S1': [], 'S2': [],
+                'S1S2': [ { 'year': em_dict['year'], 'value': em_dict['value'] / prod_dict['value'] }
+                          for em_dict, prod_dict in zip(historic_emissions_s1s2_ai, historic_productions_ai) ],
+                'S3': [ { 'year': em_dict['year'], 'value': em_dict['value'] / prod_dict['value'] }
+                        for em_dict, prod_dict in zip(historic_emissions_s3_ai, historic_productions_ai) ],
+                'S1S2S3': []
+            }
+        }
+        company_ai = ICompanyData.parse_obj(company_dict_ai)
+        
+        company_data = [ company_ag, company_ah, company_ai, company_oecm ]
+        company_dict = {
+            field : [ getattr(c, field) for c in company_data ]
+            for field in [ ColumnsConfig.BASE_YEAR_PRODUCTION, ColumnsConfig.GHG_SCOPE12, ColumnsConfig.GHG_SCOPE3, ColumnsConfig.SECTOR, ColumnsConfig.REGION ]
+        }
+        company_index = [ c.company_id for c in company_data ]
+        company_sector_region = pd.DataFrame(company_dict, pd.Index(company_index, name='company_id'))
+        company_sector_region[ColumnsConfig.SCOPE] = [ EScope.AnyScope ] * len(company_sector_region)
+        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region)
+
+        intensity_s1s2 = company_ag.ghg_s1s2 / company_ag.base_year_production
+        intensity_s3 = company_ag.ghg_s3 / company_ag.base_year_production
+
+        target_ag_0 = ITargetData(**{
+            'netzero_year': 2050,
+            'target_type': 'intensity',
+            'target_scope': EScope.S1S2,
+            'target_start_year': 2020,
+            'target_base_year': 2015,
+            'target_end_year': 2030,
+            'target_base_year_qty': intensity_s1s2.m,
+            'target_base_year_unit': f"{intensity_s1s2.u:~P}",
+            'target_reduction_pct': 0.5,
+        })
+        target_ag_1 = ITargetData(**{
+            'netzero_year': 2050,
+            'target_type': 'intensity',
+            'target_scope': EScope.S3,
+            'target_start_year': 2020,
+            'target_base_year': 2015,
+            'target_end_year': 2030,
+            'target_base_year_qty': intensity_s3.m,
+            'target_base_year_unit': f"{intensity_s3.u:~P}",
+            'target_reduction_pct': 0.5,
+        })
+        company_ag.target_data = [ target_ag_0, target_ag_1 ]
+        company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.AnyScope)])
+
+        # Same, since copied from company_ag...
+        # intensity_s1s2 = company_ah.ghg_s1s2 / company_ah.base_year_production
+        # intensity_s3 = company_ah.ghg_s3 / company_ah.base_year_production
+
+        target_ah_0 = ITargetData(**{
+            'netzero_year': 2050,
+            'target_type': 'intensity',
+            'target_scope': EScope.S1S2,
+            'target_start_year': 2020,
+            'target_base_year': 2015,
+            'target_end_year': 2030,
+            'target_base_year_qty': intensity_s1s2.m,
+            'target_base_year_unit': f"{intensity_s1s2.u:~P}",
+            'target_reduction_pct': 0.5,
+        })
+        target_ah_1 = ITargetData(**{
+            'netzero_year': 2050,
+            'target_type': 'intensity',
+            'target_scope': EScope.S3,
+            'target_start_year': 2020,
+            'target_base_year': 2015,
+            'target_end_year': 2030,
+            'target_base_year_qty': intensity_s3.m,
+            'target_base_year_unit': f"{intensity_s3.u:~P}",
+            'target_reduction_pct': 0.5,
+        })
+        company_ah.target_data = [ target_ah_0, target_ah_1 ]
+        company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.AnyScope)])
+
+        target_ai_0 = ITargetData(**{
+            'netzero_year': 2050,
+            'target_type': 'intensity',
+            'target_scope': EScope.S1S2,
+            'target_start_year': 2020,
+            'target_base_year': 2015,
+            'target_end_year': 2030,
+            'target_base_year_qty': intensity_s1s2.m,
+            'target_base_year_unit': f"{intensity_s1s2.u:~P}",
+            'target_reduction_pct': 0.5,
+        })
+        target_ai_1 = ITargetData(**{
+            'netzero_year': 2050,
+            'target_type': 'intensity',
+            'target_scope': EScope.S3,
+            'target_start_year': 2020,
+            'target_base_year': 2015,
+            'target_end_year': 2030,
+            'target_base_year_qty': intensity_s3.m,
+            'target_base_year_unit': f"{intensity_s3.u:~P}",
+            'target_reduction_pct': 0.5,
+        })
+        company_ai.target_data = [ target_ai_0, target_ai_1 ]
+        company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)])
+        # Magically project intensities
+        self.base_company_data = BaseCompanyDataProvider (company_data)
+
+        co_pp = bm_production_data.droplevel('scope')
+
+        # fig = px.line(df, x='id', y='value', color='variable')
+        target_dict = {
+            f"Target: {c.company_id} - {c.company_name}": compute_scope_targets (c, 'projected_targets', co_pp.columns)
+            for c in company_data
+        }
+        target_cumulative = {
+            f"TargetCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id].mul(
+                target_dict[f"Target: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).cumsum() for c in company_data
+        }
+        trajectory_dict = {
+            f"Trajectory: {c.company_id} - {c.company_name}": compute_scope_targets (c, 'projected_intensities', co_pp.columns)
+            for c in company_data
+        }
+        trajectory_cumulative = {
+            f"TrajectoryCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id].mul(
+                trajectory_dict[f"Trajectory: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).cumsum() for c in company_data
+        }
+        target_df = asPintDataFrame(pd.concat([pd.DataFrame(target_dict), pd.DataFrame(target_cumulative).astype('pint[Mt CO2e]'),
+                                               pd.DataFrame(trajectory_dict), pd.DataFrame(trajectory_cumulative).astype('pint[Mt CO2e]')], axis=1))
+        dequantified_df = target_df.pint.dequantify().droplevel(1, axis=1)
+        fig_target = px.line(dequantified_df, y=dequantified_df.filter(regex="Target:").columns)
+        fig_trajectory = px.line(dequantified_df, y=dequantified_df.filter(regex="Trajectory:").columns)
+        fig_trajectory.update_traces(line={'dash':'dash'})
+        fig_target_cumulative = px.line(dequantified_df, y=dequantified_df.filter(regex="TargetCumulative:").columns)
+        fig_target_cumulative.update_traces(yaxis="y2")
+        fig_trajectory_cumulative = px.line(dequantified_df, y=dequantified_df.filter(regex="TrajectoryCumulative:").columns)
+        fig_trajectory_cumulative.update_traces(yaxis="y2", line={'dash':'dash'})
+        subfig = make_subplots(specs=[[{"secondary_y": True}]])
+        subfig.add_traces(fig_target.data + fig_trajectory.data + fig_target_cumulative.data + fig_trajectory_cumulative.data)
+        # subfig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
+        # subfig.show()
+
+        # fig = px.line(target_df.pint.dequantify().droplevel(1, axis=1), y=[k for k in plot_dict.keys()],
+        # labels={'index':'Year', 'value':f"{intensity_s1s2.u:~P}", 'variable':'test_different_starting_dates_intensity'})
+        # fig.show()
+
+        self.data_warehouse = DataWarehouse(self.base_company_data,
+                                            self.base_production_bm, self.OECM_EI_S3_bm)
+        companies = self.data_warehouse.get_preprocessed_company_data(company_index)
+
+        print_expected(target_df.filter(regex="Target:").rename(columns=lambda x: re.sub('Target: ','',x)), company_data)
+        expected_ag = pd.Series(PA_([0.44,
+                                     0.425, 0.403, 0.382, 0.362, 0.344, 0.326, 0.309, 0.293, 0.278, 0.264,
+                                     0.25, 0.221, 0.194, 0.171, 0.15, 0.131, 0.115, 0.1, 0.086, 0.074,
+                                     0.064, 0.054, 0.045, 0.038, 0.031, 0.024, 0.018, 0.013, 0.008, 0.004,
+                                     -0.0], dtype='pint[CO2 * metric_ton / megawatt_hour]'),
+                                index=range(2019,2051))
+
+        expected_ah = pd.Series(PA_([0.44,
+                                     0.425, 0.41, 0.395, 0.38, 0.365, 0.342, 0.321, 0.301, 0.283, 0.266,
+                                     0.25, 0.221, 0.194, 0.171, 0.15, 0.131, 0.115, 0.1, 0.086, 0.074,
+                                     0.064, 0.054, 0.045, 0.038, 0.031, 0.024, 0.018, 0.013, 0.008, 0.004,
+                                     -0.0], dtype='pint[CO2 * metric_ton / megawatt_hour]'),
+                                index=range(2019,2051))
+
+        expected_ai = pd.Series(PA_([0.38,
+                                     0.35, 0.32, 0.29, 0.26, 0.23, 0.226, 0.221, 0.217, 0.213, 0.209,
+                                     0.206, 0.181, 0.16, 0.141, 0.124, 0.108, 0.095, 0.082, 0.071, 0.062,
+                                     0.053, 0.045, 0.038, 0.031, 0.025, 0.02, 0.015, 0.011, 0.007, 0.003,
+                                     -0.0], dtype='pint[CO2 * metric_ton / megawatt_hour]'),
+                                index=range(2019,2051))
+
+        expected_aligned = pd.Series(PA_([0.396,
+                                          0.361, 0.327, 0.293, 0.258, 0.224, 0.19, 0.158, 0.126, 0.095, 0.063,
+                                          0.031, 0.031, 0.03, 0.03, 0.03, 0.029, 0.025, 0.022, 0.018, 0.014,
+                                          0.01, 0.01, 0.009, 0.008, 0.008, 0.007, 0.007, 0.007, 0.006, 0.006,
+                                          0.0], dtype='pint[CO2 * metric_ton / megawatt_hour]'),
+                                index=range(2019,2051))
+
+        assert_pint_series_equal(self, compute_scope_targets(company_ag, 'projected_targets', range(2019,2051)), expected_ag, places=3)
+        assert_pint_series_equal(self, compute_scope_targets(company_ah, 'projected_targets', range(2019,2051)), expected_ah, places=3)
+        assert_pint_series_equal(self, compute_scope_targets(company_ai, 'projected_targets', range(2019,2051)), expected_ai, places=3)
+        assert_pint_series_equal(self, compute_scope_targets(company_oecm, 'projected_targets', range(2019,2051)), expected_aligned, places=3)
+
+        
 if __name__ == "__main__":
     test = TestTargets()
     test.setUp()

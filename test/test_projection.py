@@ -74,14 +74,13 @@ class TestProjector(unittest.TestCase):
         self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
         self.projector = EITrajectoryProjector()
 
-    def test_project(self):
+    def test_trajectories(self):
         projections = self.projector.project_ei_trajectories(self.companies)
         with open(self.json_reference_path, 'r') as file:
             reference_projections = json.load(file)
 
         projections_dict = [projection.dict() for projection in projections]
         test_successful = is_pint_dict_equal(projections_dict, reference_projections)
-
         self.assertEqual(test_successful, True)
 
     def test_targets(self):

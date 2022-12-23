@@ -530,23 +530,25 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
             raise ValueError ("Series '{series.name}' not dtype('O')")
         else:
             raise ValueError ("Series not dtype('O')")
+    # NA_VALUEs are true NaNs, missing units
     na_values = series.isna()
     units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)
     unit_first_idx = units.first_valid_index()
-    if unit_first_idx is not None and len(set(units.values.tolist()))==1:
-        first_unit = units[unit_first_idx]
-        if inplace:
-            new_series = series
-        else:
-            new_series = series.copy()
-        if name:
-            new_series.name = name
-        na_index = na_values[na_values].index
-        new_series.loc[na_index] = pd.Series(Q_(np.nan, first_unit), index=na_index)
-        return new_series.astype(f"pint[{first_unit}]")
-    if errors != 'ignore':
-        raise ValueError(f"Element types not homogeneously ({first_unit}): {series}")
-    return series
+    if unit_first_idx is None:
+        if errors != 'ignore':
+            raise ValueError(f"No value units in series: {series}")
+        return series
+    # Arbitrarily pick first of the most popular units, as promised
+    unit = units.mode()[0]
+    if inplace:
+        new_series = series
+    else:
+        new_series = series.copy()
+    if name:
+        new_series.name = name
+    na_index = na_values[na_values].index
+    new_series.loc[na_index] = pd.Series(Q_(np.nan, unit), index=na_index)
+    return new_series.astype(f"pint[{unit}]")
 
 def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.DataFrame:
     """

@@ -163,8 +163,9 @@ class ProjectionControls:
     LOWER_PERCENTILE: float = 0.1
     UPPER_PERCENTILE: float = 0.9
 
-    LOWER_DELTA: float = -0.10
-    UPPER_DELTA: float = +0.03
+    LOWER_DELTA: float = -0.10 # -0.15
+    # We clamp projections to a very small positive number, lest we create nonsense
+    UPPER_DELTA: float = +0.03 # +1e-3
 
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050

@@ -681,6 +681,10 @@ def update_graph(
         agg_score = agg_zero
         if aggregated_scores.long.S1S2:
             agg_score = aggregated_scores.long.S1S2.all.score
+        elif aggregated_scores.long.S1:
+            agg_score = aggregated_scores.long.S1.all.score
+        if aggregated_scores.long.S1S2S3:
+            agg_score = agg_score + aggregated_scores.long.S1S2S3.all.score
         if aggregated_scores.long.S3:
             agg_score = agg_score + aggregated_scores.long.S3.all.score
         elif agg_score == agg_zero:
@@ -764,6 +768,10 @@ def update_graph(
 
     if aggregated_scores.long.S1S2:
         scores = aggregated_scores.long.S1S2.all.score.m
+    elif aggregated_scores.long.S1:
+        scores = aggregated_scores.long.S1.all.score.m
+    elif aggregated_scores.long.S1S2S3:
+        scores = aggregated_scores.long.S1S2S3.all.score.m
     elif aggregated_scores.long.S3:
         scores = aggregated_scores.long.S3.all.score.m
     else:

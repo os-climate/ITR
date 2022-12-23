@@ -11,7 +11,8 @@ from pydantic import BaseModel, parse_obj_as, validator, root_validator
 
 import ITR
 from ITR.logger import logger
-from ITR.data.osc_units import ureg, Q_, M_, BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, quantity
+from ITR.data.osc_units import ureg, Q_, M_, PA_, \
+    BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, quantity
 from ITR.configs import ProjectionControls
 
 import pint
@@ -91,6 +92,7 @@ class ECarbonBudgetScenario(Enum):
 class EScoreResultType(Enum):
     DEFAULT = "Default"
     TRAJECTORY_ONLY = "Trajectory only"
+    TARGET_ONLY = "Target only"
     COMPLETE = "Complete"
 
     @classmethod
@@ -99,7 +101,7 @@ class EScoreResultType(Enum):
         Get a list of all result types, ordered by priority (first << last priority).
         :return: A list of the EScoreResultType values
         """
-        return [EScoreResultType.DEFAULT, EScoreResultType.TRAJECTORY_ONLY, EScoreResultType.COMPLETE]
+        return [EScoreResultType.DEFAULT, EScoreResultType.TRAJECTORY_ONLY, EScoreResultType.TARGET_ONLY, EScoreResultType.COMPLETE]
 
 
 class AggregationContribution(BaseModel):
@@ -239,9 +241,11 @@ class ICompanyEIProjection(BaseModel):
     value: Optional[EI_Quantity]
 
     def add(self, o):
+        if self.year != o.year:
+            breakpoint()
         assert self.year==o.year
-        return IEIRealization(year=self.year,
-                              value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
+        return ICompanyEIProjection(year=self.year,
+                                    value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
 class ICompanyEIProjections(BaseModel):
@@ -250,6 +254,11 @@ class ICompanyEIProjections(BaseModel):
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+    def __str__(self):
+        series = (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{self.ei_metric}]"), index=idx))[-1]) \
+                 (list(zip(*[(x.year, round(x.value.m, 4)) for x in self.projections])))
+        return str(series)
 
 
 class ICompanyEIProjectionsScopes(BaseModel):
@@ -261,6 +270,13 @@ class ICompanyEIProjectionsScopes(BaseModel):
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+    def __str__(self):
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{getattr(self, scope).ei_metric}]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as(getattr(self, scope).ei_metric), 4)) for x in getattr(self, scope).projections])))
+                      for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      if getattr(self, scope) is not None}
+        return str(pd.DataFrame.from_dict(dict_items))
 
 
 class IProductionRealization(BaseModel):
@@ -285,6 +301,12 @@ class IHistoricEmissionsScopes(BaseModel):
     S3: List[IEmissionRealization]
     S1S2S3: List[IEmissionRealization]
 
+    def __str__(self):
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{getattr(self, scope).ei_metric}]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as(getattr(self, scope).ei_metric), 4)) for x in getattr(self, scope).projections])))
+                      for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      if getattr(self, scope) is not None}
+        return str(pd.DataFrame.from_dict(dict_items))
 
 class IEIRealization(BaseModel):
     year: int
@@ -303,6 +325,12 @@ class IHistoricEIScopes(BaseModel):
     S3: List[IEIRealization]
     S1S2S3: List[IEIRealization]
 
+    def __str__(self):
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{getattr(self, scope).ei_metric}]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as(getattr(self, scope).ei_metric), 4)) for x in getattr(self, scope).projections])))
+                      for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      if getattr(self, scope) is not None}
+        return str(pd.DataFrame.from_dict(dict_items))
 
 class IHistoricData(BaseModel):
     productions: Optional[List[IProductionRealization]]

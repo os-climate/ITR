@@ -82,13 +82,11 @@ def convert_benchmarks_ei_excel_to_model(df_excel: pd.DataFrame, sheetname: str,
 
 
 class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
-    def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+    def __init__(self, excel_path: str, column_config: Type[ColumnsConfig] = ColumnsConfig):
         """
         Overrices BaseProvider and provides an interfaces for excel the excel template
         :param excel_path: file path to excel
         :param column_config: An optional ColumnsConfig object containing relevant variable names
-        :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         for sheetname, df in self.benchmark_excel.items():
@@ -97,8 +95,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         production_bms = self._convert_excel_to_model(self.benchmark_excel, TabsConfig.PROJECTED_PRODUCTION,
                                                       column_config.SECTOR, column_config.REGION)
         super().__init__(
-            IProductionBenchmarkScopes(S1S2=production_bms), column_config,
-            tempscore_config)
+            IProductionBenchmarkScopes(AnyScope=production_bms), column_config)
 
     def _get_projected_production(self, scope: EScope = EScope.S1S2) -> pd.DataFrame:
         """
@@ -106,16 +103,17 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         :param scope:
         :return:
         """
-        df = self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].drop(columns='benchmark_metric')
-        df.loc[:, 'scope'] = df.scope.map(lambda x: EScope[x])
-        df.set_index([self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE], inplace=True)
-        return df
+        # df = self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].drop(columns='benchmark_metric')
+        # df.loc[:, 'scope'] = df.scope.map(lambda x: EScope[x])
+        # df.set_index([self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE], inplace=True)
+        # df_partial_pp = df.add(1).cumprod(axis=1).astype('pint[]')
+        # return df_partial_pp
+        return self._prod_df
 
 class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
     def __init__(self, excel_path: str, benchmark_temperature: quantity('delta_degC'),
                  benchmark_global_budget: EmissionsQuantity, is_AFOLU_included: bool,
-                 column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+                 column_config: Type[ColumnsConfig] = ColumnsConfig):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         for sheetname, df in self.benchmark_excel.items():
             self.benchmark_excel[sheetname] = df.fillna(method='ffill')
@@ -124,8 +122,7 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
                                                     column_config.SECTOR, column_config.REGION,
                                                     benchmark_temperature, benchmark_global_budget, is_AFOLU_included)
         super().__init__(ei_bm_scopes,
-                         column_config,
-                         tempscore_config)
+                         column_config)
 
 
 # FIXME: Should we merge with TemplateProviderCompany and just use a different excel input method
@@ -136,16 +133,15 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
     :param excel_path: A path to the Excel file with the company data
     :param column_config: An optional ColumnsConfig object containing relevant variable names
-    :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
     """
 
     def __init__(self, excel_path: str,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig,
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
+        self.projection_controls = projection_controls
         self._companies = self._convert_from_excel_data(excel_path)
         self.historic_years = None
-        super().__init__(self._companies, column_config, tempscore_config, projection_controls)
+        super().__init__(self._companies, column_config, projection_controls)
 
     def _check_company_data(self, company_tabs: dict) -> None:
         """
@@ -228,7 +224,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE12].squeeze()
                 company_data[ColumnsConfig.GHG_SCOPE12] = Q_(np.nan if v is None else v, 't CO2')
                 company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = \
-                    company_data[ColumnsConfig.GHG_SCOPE12] / df_ei.loc[company_id, :][TemperatureScoreConfig.CONTROLS_CONFIG.base_year]
+                    company_data[ColumnsConfig.GHG_SCOPE12] / df_ei.loc[company_id, :][self.projection_controls.BASE_YEAR]
                 v = df_fundamentals[df_fundamentals[ColumnsConfig.COMPANY_ID]==company_id][ColumnsConfig.GHG_SCOPE3].squeeze()
                 company_data[ColumnsConfig.GHG_SCOPE3] = Q_(np.nan if v is None else v, 't CO2')
                 company_data[ColumnsConfig.PROJECTED_TARGETS] = {'S1S2': {
@@ -273,8 +269,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             logger.error(error_message)
             raise ValueError(error_message)
 
-        projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                         TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
+        projections = projections.loc[company_ids, range(self.projection_controls.BASE_YEAR,
+                                                         self.projection_controls.TARGET_YEAR + 1)]
         # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
         projected_emissions_s1s2 = projections.groupby(level=0, sort=False).agg(ExcelProviderCompany._np_sum)  # add scope 1 and 2
         with warnings.catch_warnings():
