@@ -83,10 +83,14 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     :param portfolio: A list of PortfolioCompany models
     :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
     """
-    df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio])
+    df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio
+                                              if c.company_id not in data_warehouse.company_data.missing_ids])
+
+    if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
+        raise ValueError(f"Portfolio contains no company_id data")
 
     company_data = data_warehouse.get_preprocessed_company_data(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
-
+    
     if len(company_data) == 0:
         raise ValueError("None of the companies in your portfolio could be found by the data providers")
 

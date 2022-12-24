@@ -242,8 +242,7 @@ class ICompanyEIProjection(BaseModel):
 
     def add(self, o):
         if self.year != o.year:
-            breakpoint()
-        assert self.year==o.year
+            raise ValueError(f"EI Projection years not aligned: {self.year} vs. {o.year}")
         return ICompanyEIProjection(year=self.year,
                                     value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 

@@ -294,6 +294,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         super().__init__()
         self.column_config = column_config
         self.projection_controls = projection_controls
+        self.missing_ids = set([])
         self._companies = self._validate_projected_trajectories(companies)
 
     def _validate_projected_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
@@ -380,7 +381,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 except KeyError:
                     # FIXME: Should we fix region info upstream when setting up comopany data?
                     co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.AnyScope] * base_year_production
-                c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(c, co_cumprod)
+                try:
+                    c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(c, co_cumprod)
+                except Exception as err:
+                    logger.error(f"Exception {err} raised while calculating target projections for {c.company_id}")
+
     
     # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
@@ -403,9 +408,9 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         company_data = [company for company in self._companies if company.company_id in company_ids]
 
         if len(company_data) is not len(company_ids):
-            missing_ids = [c_id for c_id in company_ids if c_id not in [c.company_id for c in company_data]]
+            self.missing_ids.update(set([c_id for c_id in company_ids if c_id not in [c.company_id for c in company_data]]))
             logger.warning(f"Companies not found in fundamental data and excluded from further computations: "
-                           f"{missing_ids}")
+                           f"{self.missing_ids}")
 
         return company_data
 
@@ -493,7 +498,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS, scope)
                        for c in self.get_company_data(company_ids)
                        for scope in EScope.get_result_scopes()
-                       if getattr(c.projected_targets, scope.name)]
+                       if c.projected_targets and getattr(c.projected_targets, scope.name)]
         if target_list:
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
@@ -964,8 +969,6 @@ class EITargetProjector(EIProjector):
                 last_ei_year = None
                 last_ei_value = None
 
-                if company.company_id=='US00130H1059' and scope_name=='S1':
-                    breakpoint()
                 # Solve for intensity and absolute
                 model_ei_projections = None
                 if target.target_type == "intensity":

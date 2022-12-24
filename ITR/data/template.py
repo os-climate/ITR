@@ -25,15 +25,21 @@ df_country_regions = pd.read_csv(f"{pkg_root}/data/input/country_region_info.csv
 
 
 def ITR_country_to_region(country:str) -> str:
+    if not isinstance(country, str):
+        if np.isnan(country):
+            return 'Global'
+        raise ValueError(f"ITR_country_to_region received invalid valud {country}")
     if len(country)==2:
         regions = df_country_regions[df_country_regions.alpha_2==country].region_ar6_10
     elif len(country)==3:
         regions = df_country_regions[df_country_regions.alpha_3==country].region_ar6_10
     else:
-        if country in df_country_regions.name:
+        if country in df_country_regions.name.values:
             regions = df_country_regions[df_country_regions.name==country].region_ar6_10
-        elif country in df_country_regions.common_name:
+        elif country in df_country_regions.common_name.values:
             regions = df_country_regions[df_country_regions.common_name==country].region_ar6_10
+        elif country == 'Great Britain':
+            return 'Europe'
         else:
             raise ValueError(f"country {country} not found")
     region = regions.squeeze()
@@ -293,7 +299,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             columns={'revenue': 'company_revenue', 'market_cap': 'company_market_cap',
                      'ev': 'company_enterprise_value', 'evic': 'company_ev_plus_cash',
                      'assets': 'company_total_assets'}, inplace=True)
-        df.loc[df.region.isnull(), 'region'] = df.apply(lambda x: ITR_country_to_region(x.country), axis=1)
+        df.loc[df.region.isnull(), 'region'] = df.country.map(ITR_country_to_region)
 
         df_fundamentals = df.set_index(ColumnsConfig.COMPANY_ID, drop=False).convert_dtypes()
 
@@ -302,20 +308,42 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             fx_quote = df_fundamentals[ColumnsConfig.TEMPLATE_FX_QUOTE].notna()
             if len(df_fundamentals.loc[~fx_quote, ColumnsConfig.TEMPLATE_CURRENCY].unique()) > 1 \
                or len(df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].unique()) > 1 \
-               or (fx_quote.any() and (~fx_quote).any and \
-                   df_fundamentals.loc[~fx_quote, ColumnsConfig.TEMPLATE_CURRENCY].iloc[0] != \
-                   df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0]):
+               or (fx_quote.any() and (~fx_quote).any() and not \
+                   (df_fundamentals.loc[~fx_quote, ColumnsConfig.TEMPLATE_CURRENCY].iloc[0] == \
+                    df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0])):
                 error_message = f"All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
             elif fx_quote.any():
                 fundamental_metrics = ['company_market_cap', 'company_revenue', 'company_enterprise_value', 'company_ev_plus_cash', 'company_total_assets']
                 col_num = df_fundamentals.columns.get_loc('report_date')
-                if set(df_fundamentals.columns[col_num+1:]) != set(fundamental_metrics):
-                    raise KeyError(f"Expected fundamental metrics columns are exactly {fundamental_metrics}")
+                missing_fundamental_metrics = [fm for fm in fundamental_metrics if fm not in df_fundamentals.columns[col_num+1:]]
+                if len(missing_fundamental_metrics)>0:
+                    raise KeyError(f"Expected fundamental metrics {missing_fundamental_metrics}")
                 for col in fundamental_metrics:
+                    df_fundamentals[col] = df_fundamentals[col].astype('Float64')
                     df_fundamentals[f"{col}_base"] = df_fundamentals[col]
                     df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'] * df_fundamentals.loc[fx_quote, f"{col}_base"]
+                # create context for currency conversions
+                # df_fundamentals defines 'report_date', 'currency', 'fx_quote', and 'fx_rate'
+                # our base currency is USD, but european reports may be denominated in EUR.  We crosswalk from report_base to pint_base currency.
+
+                def convert_prefix_to_scalar(x):
+                    prefix, unit, suffix = ureg.parse_unit_name(x)[0]
+                    return unit, ureg._prefixes[prefix].value if prefix else 1.0
+
+                fx_df = df_fundamentals.loc[fx_quote, ['report_date', 'currency', 'fx_quote', 'fx_rate']].drop_duplicates().set_index('report_date')
+                fx_df = fx_df.assign(currency_tuple=lambda x: x['currency'].map(convert_prefix_to_scalar),
+                                     fx_quote_tuple=lambda x: x['fx_quote'].map(convert_prefix_to_scalar))
+                self.fx = pint.Context('FX')
+                # FIXME: These simple rules don't take into account different conversion rates at different time periods.
+                fx_df.apply(lambda x: self.fx.redefine(f"{x.currency_tuple[0]} = {x.fx_rate * x.fx_quote_tuple[1] / x.currency_tuple[1]} {x.fx_quote_tuple[0]}")
+                            if x.currency != 'USD' else self.fx.redefine(f"{x.fx_quote_tuple[0]} = {x.currency_tuple[1]/(x.fx_rate * x.fx_quote_tuple[1])} {x.currency_tuple[0]}"),
+                            axis=1)
+                ureg.add_context(self.fx)
+                ureg.enable_contexts('FX')
+            else:
+                self.fx = None
         else:
             if len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) != 1:
                 error_message = f"All data should be in the same currency."
@@ -633,6 +661,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             logger.error(error_message)
             raise ValueError(error_message)
 
+        target_data.loc[:, 'target_scope'] = (
+            target_data.target_scope.str.replace(r'\bs([123])', r'S\1', regex=True)
+            .str.strip()
+            .replace(r' ?\+ ?', '+', regex=True)
+        )
         return target_data
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame,

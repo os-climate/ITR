@@ -13,18 +13,27 @@ from ITR.interfaces import (
 
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import ICompanyAggregates, ICompanyEIProjectionsScopes, IProjection
 
 
-class TestDataWareHouse(DataWarehouse):
+class TestDataProvider: # if derived from CompanyDataProvider, we'd have to provide implementations for several methods we never use
     def __init__(
             self, companies: List[ICompanyAggregates]
     ):
         self.companies = companies
+        self.missing_ids = set([])
+
+class TestDataWarehouse(DataWarehouse):
+    def __init__(
+            self, company_data: TestDataProvider
+    ):
+        # super().__init__(company_data, ProductionBenchmarkDataProvider(), IntensityBenchmarkDataProvider())
+        self.company_data = company_data
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
-        return self.companies
+        return self.company_data.companies
 
 
 class EndToEndTest(unittest.TestCase):
@@ -118,7 +127,8 @@ class EndToEndTest(unittest.TestCase):
 
         # Setup test provider
         company = copy.deepcopy(self.company_base)
-        data_provider = TestDataWareHouse([company])
+        data_provider = TestDataProvider([company])
+        data_warehouse = TestDataWarehouse(data_provider)
 
         # Calculate Temp Scores
         temp_score = TemperatureScore(
@@ -129,7 +139,7 @@ class EndToEndTest(unittest.TestCase):
 
         # portfolio data
         pf_company = copy.deepcopy(self.pf_base)
-        portfolio_data = ITR.utils.get_data(data_provider, [pf_company])
+        portfolio_data = ITR.utils.get_data(data_warehouse, [pf_company])
 
         # Verify data
         scores = temp_score.calculate(portfolio_data)
@@ -147,7 +157,8 @@ class EndToEndTest(unittest.TestCase):
 
         companies, pf_companies = self.create_base_companies(["A", "B"])
 
-        data_provider = TestDataWareHouse(companies=companies)
+        data_provider = TestDataProvider(companies)
+        data_warehouse = TestDataWarehouse(company_data=data_provider)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -156,7 +167,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
-        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
+        portfolio_data = ITR.utils.get_data(data_warehouse, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -189,7 +200,8 @@ class EndToEndTest(unittest.TestCase):
             )
             pf_companies.append(pf_company)
 
-        data_provider = TestDataWareHouse(companies=companies)
+        data_provider = TestDataProvider(companies)
+        data_warehouse = TestDataWarehouse(company_data=data_provider)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -198,7 +210,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS,
         )
 
-        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
+        portfolio_data = ITR.utils.get_data(data_warehouse, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -225,7 +237,8 @@ class EndToEndTest(unittest.TestCase):
             companies_all.extend(companies)
             pf_companies_all.extend(pf_companies)
 
-        data_provider = TestDataWareHouse(companies=companies_all)
+        data_provider = TestDataProvider(companies_all)
+        data_warehouse = TestDataWarehouse(company_data=data_provider)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -234,7 +247,7 @@ class EndToEndTest(unittest.TestCase):
             grouping=["industry_level_1"]
         )
 
-        portfolio_data = ITR.utils.get_data(data_provider, pf_companies_all)
+        portfolio_data = ITR.utils.get_data(data_warehouse, pf_companies_all)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
@@ -244,7 +257,8 @@ class EndToEndTest(unittest.TestCase):
     def test_score_cap(self):
 
         companies, pf_companies = self.create_base_companies(["A"])
-        data_provider = TestDataWareHouse(companies=companies)
+        data_provider = TestDataProvider(companies)
+        data_warehouse = TestDataWarehouse(company_data=data_provider)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -252,7 +266,7 @@ class EndToEndTest(unittest.TestCase):
             aggregation_method=PortfolioAggregationMethod.WATS
         )
 
-        portfolio_data = ITR.utils.get_data(data_provider, pf_companies)
+        portfolio_data = ITR.utils.get_data(data_warehouse, pf_companies)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 

@@ -86,13 +86,13 @@ class DataWarehouse(ABC):
                             list( map(IEIRealization.add, c.historic_data.emissions_intensities.S1S2, c.historic_data.emissions_intensities.S3) )
                         c.historic_data.emissions_intensities.S3 = []
                         c.historic_data.emissions_intensities.S1S2S3 = []
-                if c.projected_intensities.S3:
+                if c.projected_intensities and c.projected_intensities.S3:
                     if c.projected_intensities.S1:
                         c.projected_intensities.S1.projections = list( map(ICompanyEIProjection.add, c.projected_intensities.S1.projections, c.projected_intensities.S3.projections) )
                     c.projected_intensities.S1S2.projections = list( map(ICompanyEIProjection.add, c.projected_intensities.S1S2.projections, c.projected_intensities.S3.projections) )
                     c.projected_intensities.S3 = None
                     c.projected_intensities.S1S2S3 = None
-                if c.projected_targets.S3:
+                if c.projected_targets and c.projected_targets.S3:
                     if c.projected_targets.S1:
                         c.projected_targets.S1.projections = _align_and_sum_projected_targets(c.projected_targets.S1.projections, c.projected_targets.S3.projections)
                     try:
@@ -111,6 +111,8 @@ class DataWarehouse(ABC):
                             c.projected_targets.S1S2.projections = _align_and_sum_projected_targets(c.projected_targets.S1S2.projections, c.projected_targets.S3.projections)
                         else:
                             logger.warning(f"Scope 3 target projections missing from company with ID {c.company_id}; treating as zero")
+                    except ValueError:
+                        logger.error(f"S1+S2 targets not aligned with S3 targets for company with ID {c.company_id}; ignoring S3 data")
                     c.projected_targets.S3 = None
                     c.projected_targets.S1S2S3 = None
 
@@ -153,10 +155,13 @@ class DataWarehouse(ABC):
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data and additional precalculated fields
         """
+
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
+        valid_company_ids = df_company_data.index.to_list()
 
-        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(company_ids)
+        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year(valid_company_ids)
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/128
@@ -165,12 +170,12 @@ class DataWarehouse(ABC):
 
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
         # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?
-        projected_trajectories = self.company_data.get_company_projected_trajectories(company_ids)
+        projected_trajectories = self.company_data.get_company_projected_trajectories(valid_company_ids)
         df_trajectory = self._get_cumulative_emissions(
             projected_ei=projected_trajectories,
             projected_production=projected_production).rename(self.column_config.CUMULATIVE_TRAJECTORY)
 
-        projected_targets = self.company_data.get_company_projected_targets(company_ids)
+        projected_targets = self.company_data.get_company_projected_targets(valid_company_ids)
         # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
         for col, year_data in projected_targets.items():
             mask = year_data.apply(lambda x: ITR.isnan(x.m))
