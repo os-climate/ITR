@@ -5,6 +5,7 @@ This module handles initialization of pint functionality
 import numpy as np
 import pandas as pd
 from pint import get_application_registry, Quantity, DimensionalityError
+import ITR
 
 ureg = get_application_registry()
 
@@ -44,14 +45,13 @@ ureg.define('fraction = [] = frac')
 ureg.define('percent = 1e-2 frac = pct = percentage')
 ureg.define('ppm = 1e-6 fraction')
 
-ureg.define("USD = [currency]")
-ureg.define("EUR = nan USD")
-ureg.define("GBP = nan USD")
+# USD are the reserve currency of the ITR tool
+ureg.define("USD = [currency] = $")
+for currency_symbol, currency_abbrev in ITR.data.currency_dict.items():
+    ureg.define(f"{currency_abbrev} = nan USD = {currency_symbol}")
+# Currencies that don't have symbols are added one by one
 ureg.define("CHF = nan USD")
-ureg.define("NOK = nan USD")
-ureg.define("SEK = nan USD")
-ureg.define("JPY = nan USD")
-ureg.define("KRW = nan USD")
+ureg.define("MXN = nan USD") # $ abbreviation is ambiguous
 
 ureg.define("bcm = 38.2 PJ = 17 Mt CO2e")
 ureg.define("btu = Btu")

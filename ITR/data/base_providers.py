@@ -11,7 +11,7 @@ from operator import add
 from typing import List, Type, Dict
 
 import ITR
-from ITR.data.osc_units import Q_, PA_, asPintSeries, PintType
+from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, PintType
 
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
@@ -94,6 +94,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :return: pd.Series
         """
         units = str(benchmark.benchmark_metric)
+        # Benchmarks don't need work-around for https://github.com/hgrecco/pint/issues/1687, but if they did:
+        # units = ureg.parse_units(benchmark.benchmark_metric)
         years, values = list(map(list, zip(*{r.year: r.value.to(units).m for r in benchmark.projections}.items())))
         return pd.Series(PA_(values, dtype=units),
                          index = years, name=(benchmark.sector, benchmark.region, scope))
@@ -964,6 +966,8 @@ class EITargetProjector(EIProjector):
 
                 target = scope_targets.pop(0)
                 base_year = target.target_base_year
+                # Work-around for https://github.com/hgrecco/pint/issues/1687
+                target_base_year_unit = ureg.parse_units(target.target_base_year_unit)
 
                 # Put these variables into scope
                 last_ei_year = None
@@ -976,7 +980,7 @@ class EITargetProjector(EIProjector):
                     # If target is not the first one for this scope, we continue from last year of the previous target
                     if ei_projection_scopes[scope_name]:
                         (_, last_ei_year), (_, last_ei_value) = ei_projection_scopes[scope_name].projections[-1]
-                        last_ei_value = last_ei_value.to(target.target_base_year_unit)
+                        last_ei_value = last_ei_value.to(target_base_year_unit)
                         skip_first_year = 1
                     else:
                         # When starting from scratch, use recent historic data if available.
@@ -988,7 +992,7 @@ class EITargetProjector(EIProjector):
                         if ei_realizations == []:
                             # Alas, we have no data to align with constituent or containing scope
                             last_ei_year = target.target_base_year
-                            last_ei_value = Q_(target.target_base_year_qty, target.target_base_year_unit)
+                            last_ei_value = Q_(target.target_base_year_qty, target_base_year_unit)
                         else:
                             for i in range(len(ei_realizations)-1, -1, -1):
                                 last_ei_year, last_ei_value = ei_realizations[i].year, ei_realizations[i].value
@@ -1008,7 +1012,7 @@ class EITargetProjector(EIProjector):
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                     target_ei_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
-                                         target.target_base_year_unit)
+                                         target_base_year_unit)
                     if target_ei_value >= last_ei_value:
                         # We've already achieved target, so aim for the next one
                         target_year = last_ei_year
@@ -1028,7 +1032,7 @@ class EITargetProjector(EIProjector):
                         (_, last_ei_year), (_, last_ei_value) = ei_projection_scopes[scope_name].projections[-1]
                         last_prod_value = production_proj.loc[last_ei_year]
                         last_em_value = last_ei_value * last_prod_value
-                        last_em_value = last_em_value.to(target.target_base_year_unit)
+                        last_em_value = last_em_value.to(target_base_year_unit)
                         skip_first_year = 1
                     else:
                         if not company.historic_data:
@@ -1038,7 +1042,7 @@ class EITargetProjector(EIProjector):
                         skip_first_year = 0
                         if em_realizations == []:
                             last_ei_year = target.target_base_year
-                            last_em_value = Q_(target.target_base_year_qty, target.target_base_year_unit)
+                            last_em_value = Q_(target.target_base_year_qty, target_base_year_unit)
                             # FIXME: should be target.base_year_production !!
                             last_prod_value = company.base_year_production
                         else:
@@ -1064,7 +1068,7 @@ class EITargetProjector(EIProjector):
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
                     target_em_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
-                                      target.target_base_year_unit)
+                                         target_base_year_unit)
                     if target_em_value >= last_em_value:
                         # We've already achieved target, so aim for the next one
                         target_year = last_ei_year
@@ -1073,7 +1077,7 @@ class EITargetProjector(EIProjector):
                     CAGR = self._compute_CAGR(last_ei_year, last_em_value, target_year, target_em_value)
 
                     model_emissions_projections = CAGR.loc[(last_ei_year+skip_first_year):target_year]
-                    emissions_projections = model_emissions_projections.astype(f'pint[{target.target_base_year_unit}]')
+                    emissions_projections = model_emissions_projections.astype(f'pint[{target_base_year_unit}]')
                     idx = production_proj.index.intersection(emissions_projections.index)
                     ei_projections = emissions_projections.loc[idx] / production_proj.loc[idx]
 

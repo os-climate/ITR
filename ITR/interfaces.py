@@ -442,6 +442,7 @@ class ICompanyData(BaseModel):
     def _normalize_historic_data(self, historic_data: IHistoricData, production_metric: ProductionMetric, emissions_metric: EmissionsMetric) -> IHistoricData:
         def _normalize(value, metric):
             if value is not None:
+                # We've pre-conditioned metric so don't need to work around https://github.com/hgrecco/pint/issues/1687
                 return value.to(metric)
             return Q_(np.nan, metric)
         
@@ -449,9 +450,12 @@ class ICompanyData(BaseModel):
             return None
 
         if historic_data.productions:
+            # Work-around for https://github.com/hgrecco/pint/issues/1687
+            production_metric = ureg.parse_units(production_metric)
             historic_data.productions = [IProductionRealization(year=p.year, value=_normalize (p.value, production_metric))
                                          for p in historic_data.productions]
-        ei_metric = f"{emissions_metric} / ({production_metric})"
+        # Work-around for https://github.com/hgrecco/pint/issues/1687
+        ei_metric = ureg.parse_units(f"{emissions_metric} / ({production_metric})")
         for scope_name in EScope.get_scopes():
             if historic_data.emissions:
                 setattr(historic_data.emissions, scope_name, [IEmissionRealization(year=p.year, value=_normalize(p.value, emissions_metric))
