@@ -11,7 +11,7 @@ from operator import add
 from typing import List, Type, Dict
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, PintType
+from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType
 
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
@@ -78,7 +78,10 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         self.column_config = column_config
         self._productions_benchmarks = production_benchmarks
         try:
-            self._prod_delta_df = pd.DataFrame([self._convert_benchmark_to_series(bm, EScope.AnyScope) for bm in getattr(self._productions_benchmarks, EScope.AnyScope.name).benchmarks])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # TODO: sort out why this trips up pint
+                self._prod_delta_df = pd.DataFrame([self._convert_benchmark_to_series(bm, EScope.AnyScope) for bm in getattr(self._productions_benchmarks, EScope.AnyScope.name).benchmarks])
         except AttributeError:
             breakpoint()
         self._prod_delta_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
@@ -226,10 +229,10 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :param: A Series with a company's intensity benchmarks per calendar year per row
         :return: A pd.Series with a company's decarbonisation paths per calendar year per row
         """
-        first_ei = intensity_benchmark_row[self.projection_controls.BASE_YEAR]
         last_ei = intensity_benchmark_row[self.projection_controls.TARGET_YEAR]
+        ei_diff = intensity_benchmark_row[self.projection_controls.BASE_YEAR] - last_ei
         # TODO: does this still throw a warning when processing a NaN?  convert to base units before accessing .magnitude
-        return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
+        return (intensity_benchmark_row - last_ei) / ei_diff
 
     def _convert_benchmark_to_series(self, benchmark: IBenchmark, scope: EScope) -> pd.Series:
         """
@@ -479,7 +482,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             if year is not None:
                 company_ids, scopes, values = list(map(list, zip(*[(pt[0], pt[1], [yvp.value for yvp in pt[2] if yvp.year==year][0]) for pt in projected_trajectories])))
                 index=pd.MultiIndex.from_tuples(zip(company_ids, scopes), names=["company_id", "scope"])
-                return pd.Series(data=values, index=index)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    # pint units don't like columns of heterogeneous data...tough!
+                    return pd.Series(data=values, index=index)
             else:
                 company_ids, scopes, yvp_dicts = list(map(list, zip(*[(pt[0], pt[1], {yvp.year:yvp.value for yvp in pt[2]}) for pt in projected_trajectories])))
                 index=pd.MultiIndex.from_tuples(zip(company_ids, scopes), names=["company_id", "scope"])
@@ -573,8 +579,17 @@ class EITrajectoryProjector(EIProjector):
         if not data:
             logger.error(f"No historic data for companies: {[c.company_id for c in companies]}")
             raise ValueError("No historic data anywhere")
-        return pd.DataFrame.from_records(data).set_index(
+        df = pd.DataFrame.from_records(data).set_index(
             [ColumnsConfig.COMPANY_ID, ColumnsConfig.VARIABLE, ColumnsConfig.SCOPE])
+        # Note that the first valid index may well be Quantity with a NaN value--that's fine
+        # We just need to fill in the pure NaNs that arise from very ragged data
+        
+        with warnings.catch_warnings():
+            # TODO: need to investigate whether there is a more sane way to avoid unit warnings
+            warnings.simplefilter("ignore")
+            df_first_valid = df.apply(lambda x: x[x.first_valid_index()], axis=1)
+        df_filled = df.fillna(df.apply(lambda x: df_first_valid.map(lambda y: Q_(np.nan, y.u))))
+        return df_filled
 
     def _historic_productions_to_dict(self, id: str, productions: List[IProductionRealization]) -> Dict[str, str]:
         prods = {prod.year: prod.value for prod in productions}
@@ -674,9 +689,14 @@ class EITrajectoryProjector(EIProjector):
                 results = asPintSeries(results)
                 if not isinstance(results.dtype, PintType):
                     if results.isna().all():
+                        # Pure NaN results (not Quantity(nan)) likely constructed from degenerate test case
                         scope_projections[scope_name] = None
                         continue
                     assert False
+                # FIXME: is it OK to discard purely NAN results (and change the testsuite accordingly)?
+                # if results.isna().all():
+                #     scope_projections[scope_name] = None
+                #     continue
                 units = f"{results.dtype.units:~P}"
                 scope_dfs[scope_name] = results
                 scope_projections[scope_name] = ICompanyEIProjections(ei_metric=units,
@@ -698,7 +718,11 @@ class EITrajectoryProjector(EIProjector):
     def _standardize(self, intensities: pd.DataFrame) -> pd.DataFrame:
         # When columns are years and rows are all different intensity types, we cannot winsorize
         # Transpose the dataframe, winsorize the columns (which are all coherent because they belong to a single variable/company), then transpose again
-        intensities = intensities.T
+        with warnings.catch_warnings():
+            # TODO: find a better way to pint-ify this data
+            warnings.simplefilter("ignore")
+            intensities = asPintDataFrame(intensities.T)
+
         if ITR.HAS_UNCERTAINTIES:
             for col in intensities.columns:
                 pa = PA_._from_sequence(intensities[col])
@@ -714,8 +738,6 @@ class EITrajectoryProjector(EIProjector):
         # At the starting point, we expect that if we have S1, S2, and S1S2 intensities, that S1+S2 = S1S2
         # After winsorization, this is no longer true, because S1 and S2 will be clipped differently than S1S2.
         winsorized_intensities: pd.DataFrame = self._winsorize(intensities)
-        for col in winsorized_intensities.columns:
-            winsorized_intensities[col] = winsorized_intensities[col].astype(intensities[col].dtype)
         standardized_intensities: pd.DataFrame = self._interpolate(winsorized_intensities)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
@@ -727,13 +749,15 @@ class EITrajectoryProjector(EIProjector):
 
         # Turns out we have to dequantify here: https://github.com/pandas-dev/pandas/issues/45968
         # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
-        units = historic_intensities.apply(lambda x: x[x.first_valid_index()].u
-                                           if x.first_valid_index() and isinstance(x[x.first_valid_index()], pint.Quantity) else None)
+        historic_intensities = historic_intensities.pint.dequantify()
         if ITR.HAS_UNCERTAINTIES:
-            nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan)))
-            uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else 0)))
+            # nominal_intensities = historic_intensities.apply(lambda x: ITR.nominal_values(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan)))
+            # uncertain_intensities = historic_intensities.apply(lambda x: ITR.std_devs(x.map(lambda y: y.m if isinstance(y, pint.Quantity) else 0)))
+            nominal_intensities = ITR.nominal_values(historic_intensities)
+            uncertain_intensities = ITR.std_devs(historic_intensities)
         else:
-            nominal_intensities = historic_intensities.apply(lambda x: x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan))
+            # nominal_intensities = historic_intensities.apply(lambda x: x.map(lambda y: y.m if isinstance(y, pint.Quantity) else np.nan))
+            nominal_intensities = historic_intensities
         # See https://github.com/hgrecco/pint-pandas/issues/114
         lower=nominal_intensities.quantile(q=self.projection_controls.LOWER_PERCENTILE, axis='index', numeric_only=False)
         upper=nominal_intensities.quantile(q=self.projection_controls.UPPER_PERCENTILE, axis='index', numeric_only=False)
@@ -750,14 +774,14 @@ class EITrajectoryProjector(EIProjector):
                 return uwinsorized
         # FIXME: If we have S1, S2, and S1S2 intensities, should we treat winsorized(S1)+winsorized(S2) as winsorized(S1S2)?
         # FIXME: If we have S1S2 (or S1 and S2) and S3 and S1S23 intensities, should we treat winsorized(S1S2)+winsorized(S3) as winsorized(S1S2S3)?
-        winsorized_and_unitized = winsorized.apply(lambda x: PA_(x.values.data, dtype=units[x.name]))
+        winsorized_and_unitized = winsorized.pint.quantify()
         return winsorized_and_unitized
 
     def _interpolate(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
         # Interpolate NaNs surrounded by values, but don't extrapolate NaNs with last known value
         df = historic_intensities.copy()
         for col in df.columns:
-            pa = PA_._from_sequence(df[col])
+            pa = df[col].values
             if ITR.isnan(pa.data).all():
                 continue
             # pd.Series.interpolate only works on numeric data, so push down into PintArray
@@ -813,7 +837,10 @@ class EITrajectoryProjector(EIProjector):
         # Clean up rows by converting NaN/None into Quantity(np.nan, unit_type)
         columnwise_intensities = ITR.data.osc_units.asPintDataFrame(projected_intensities.T)
         # Restore row-wise shape of DataFrame
-        projected_intensities =  columnwise_intensities.T
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # pint units don't like being twisted from columns to rows, but it's ok
+            projected_intensities =  columnwise_intensities.T
         return projected_intensities
 
     # Might return a float, might return a ufloat
@@ -1124,6 +1151,7 @@ class EITargetProjector(EIProjector):
                      for y, year in enumerate(range(1 + target_year, 1 + ProjectionControls.TARGET_YEAR))]
                 )
 
+        # If we are production-centric, S3 and S1S2S3 targets will make their way into S1 and S1S2
         return ICompanyEIProjectionsScopes(**ei_projection_scopes)
 
     def _compute_CAGR(self, first_year: int, first_value: pint.Quantity, last_year: int, last_value: pint.Quantity) -> pd.Series:

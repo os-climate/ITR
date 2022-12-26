@@ -193,7 +193,7 @@ class TestTemplateProvider(unittest.TestCase):
         expected_data = pd.Series([10.0, 50.0], dtype='pint[t CO2]')
         emissions = self.data_warehouse._get_cumulative_emissions(projected_ei=projected_emission,
                                                                   projected_production=projected_production)
-        assert_pint_series_equal(self, emissions, expected_data)
+        assert_pint_series_equal(self, emissions.iloc[:, -1], expected_data)
 
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities
@@ -207,11 +207,11 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertAlmostEqual(ITR.nominal_values(company_1.ghg_s1s2.m_as('Mt CO2')), 57.666199999999996, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_2.ghg_s1s2.m_as('Mt CO2')), 93.40289000000001, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_budget.m_as('Mt CO2')), 247.35955561917217, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_budget.m_as('Mt CO2')), 803.7544915984661, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_budget.m_as('Mt CO2')), 671.322874458741, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_target.m_as('Mt CO2')), 628.4206195499177, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_target.m_as('Mt CO2')), 1593.4748965778333, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_target.m_as('Mt CO2')), 996.1789789968686, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_trajectory.m_as('Mt CO2')), 2980.565984113794, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_trajectory.m_as('Mt CO2')), 4047.919645058194, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_trajectory.m_as('Mt CO2')), 4182.135839585814, places=7)
 
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,

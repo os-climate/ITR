@@ -180,7 +180,7 @@ class TestExcelProvider(unittest.TestCase):
         expected_data = pd.Series([10.0, 50.0], dtype='pint[t CO2]')
         emissions = self.excel_provider._get_cumulative_emissions(projected_ei=projected_emission,
                                                                   projected_production=projected_production)
-        assert_pint_series_equal(self, emissions, expected_data)
+        assert_pint_series_equal(self, emissions.iloc[:, -1], expected_data)
 
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities

@@ -216,8 +216,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_emissions.loc[:, 'index'] = df_intensities.loc[:, 'index']
             df_intensities = df_intensities.set_index('index', append=True).iloc[:, (start_year_loc-1):]
             df_emissions = df_emissions.set_index('index', append=True).iloc[:, (start_year_loc-2):]
-            df_intensities = df_intensities.T.apply(lambda x: x.astype(f"pint[{x.iloc[0].u}]"))
-            df_emissions = df_emissions.T.apply(lambda x: x.astype(f"pint[{x.iloc[0].u}]"))
+            df_intensities = asPintDataFrame(df_intensities.T)
+            df_emissions = asPintDataFrame(df_emissions.T)
             df_productions = df_emissions.divide(df_intensities, axis=1)
             # FIXME: need to reconcile what happens if multiple scopes all yield the same production metrics
             df_productions = df_productions.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype)[5:-1]).to_reduced_units().u}]")).dropna(axis=1, how='all')
@@ -242,7 +242,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df5 = df4.droplevel(['company_id', 'report_date']).swaplevel() # .sort_index()
             df_esg.loc[df5.index.get_level_values('index'), 'metric'] = df5.index.get_level_values('scope')
             df5.index = df5.index.droplevel('scope')
-            df_esg.loc[df5.index, df_esg.columns[start_year_loc:].to_list()] = df5[df_esg.columns[start_year_loc:].to_list()]
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Change from emissions intensity metrics to emissinos metrics; we know this will trigger a warning
+                df_esg.loc[df5.index, df_esg.columns[start_year_loc:].to_list()] = df5[df_esg.columns[start_year_loc:].to_list()]
             # Set emissions metrics we just derived (if necessary)
             for idx in df5.index:
                 if pd.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC]):
@@ -289,9 +292,24 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # For convenience, we also fill forward Report Date, which is often expressed in the first row of a fresh report,
             # but sometimes omitted in subsequent rows (because it's "redundant information")
             # COMPANY_LEI has been dropped for now...may make a comeback later...
-            df_esg.loc[:, [ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]] = (
-                df_esg[[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]].fillna(method='ffill')
-            )
+
+            # https://stackoverflow.com/a/74193599/1291237
+            with warnings.catch_warnings():
+                # Setting values in-place is fine, ignore the warning in Pandas >= 1.5.0
+                # This can be removed, if Pandas 1.5.0 does not need to be supported any longer.
+                # See also: https://stackoverflow.com/q/74057367/859591
+                warnings.filterwarnings(
+                    "ignore",
+                    category=FutureWarning,
+                    message=(
+                        ".*will attempt to set the values inplace instead of always setting a new array. "
+                        "To retain the old behavior, use either.*"
+                    ),
+                )
+
+                df_esg.loc[:, [ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]] = (
+                    df_esg[[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]].fillna(method='ffill')
+                )
 
         df['exposure'].fillna('presumed_equity', inplace=True)
         # TODO: Fix market_cap column naming inconsistency
@@ -661,11 +679,26 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             logger.error(error_message)
             raise ValueError(error_message)
 
-        target_data.loc[:, 'target_scope'] = (
-            target_data.target_scope.str.replace(r'\bs([123])', r'S\1', regex=True)
-            .str.strip()
-            .replace(r' ?\+ ?', '+', regex=True)
-        )
+        # https://stackoverflow.com/a/74193599/1291237
+        with warnings.catch_warnings():
+            # Setting values in-place is fine, ignore the warning in Pandas >= 1.5.0
+            # This can be removed, if Pandas 1.5.0 does not need to be supported any longer.
+            # See also: https://stackoverflow.com/q/74057367/859591
+            warnings.filterwarnings(
+                "ignore",
+                category=FutureWarning,
+                message=(
+                    ".*will attempt to set the values inplace instead of always setting a new array. "
+                    "To retain the old behavior, use either.*"
+                ),
+            )
+
+            target_data.loc[:, 'target_scope'] = (
+                target_data.target_scope.str.replace(r'\bs([123])', r'S\1', regex=True)
+                .str.strip()
+                .replace(r' ?\+ ?', '+', regex=True)
+            )
+
         return target_data
 
     def _company_df_to_model(self, df_fundamentals: pd.DataFrame,
@@ -790,9 +823,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # Historic data may well have ragged left and right columns
         # all_na = historic.apply(lambda x: all([ITR.isnan(y.m) for y in x]), axis=1)
         # historic = historic[~all_na]
-        productions = historic_t[VariablesConfig.PRODUCTIONS].T
-        emissions = historic_t[VariablesConfig.EMISSIONS].T
-        emissions_intensities = historic_t[VariablesConfig.EMISSIONS_INTENSITIES].T
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # pint units don't like being twisted from columns to rows, but it's ok
+            productions = historic_t[VariablesConfig.PRODUCTIONS].T
+            emissions = historic_t[VariablesConfig.EMISSIONS].T
+            emissions_intensities = historic_t[VariablesConfig.EMISSIONS_INTENSITIES].T
+
         hd = IHistoricData(productions=self._convert_to_historic_productions(productions),
                            emissions=self._convert_to_historic_emissions(emissions.reset_index('scope')),
                            emissions_intensities=self._convert_to_historic_ei(emissions_intensities.reset_index('scope')))

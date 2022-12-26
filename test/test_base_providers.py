@@ -199,7 +199,7 @@ class TestBaseProvider(unittest.TestCase):
                                   dtype='pint[Mt CO2]')
         cumulative_emissions = self.base_warehouse._get_cumulative_emissions(projected_ei=projected_ei,
                                                                              projected_production=projected_production)
-        assert_pint_series_equal(self, cumulative_emissions, expected_data)
+        assert_pint_series_equal(self, cumulative_emissions.iloc[:, -1], expected_data)
 
     def test_get_company_data(self):
         #                    cumulative_trajectory   cumulative_target   cumulative_budget

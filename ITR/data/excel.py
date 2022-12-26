@@ -182,7 +182,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
             df_historic = df_historic.merge(df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].rename('units'), left_index=True, right_index=True)
             df_historic.loc[df_historic.variable == 'Emissions', 'units'] = 't CO2'
             # If you think the following line of code is ugly, please answer https://stackoverflow.com/q/74555323/1291237
-            df_historic.loc[df_historic.variable == 'Emissions Intensities', 'units'] = df_historic.loc[df_historic.variable == 'Emissions Intensities'].apply(lambda x: f"t CO2/({x.units})", axis=1)
+            df_historic.loc[df_historic.variable == 'Emissions Intensities', 'units'] = df_historic.loc[df_historic.variable == 'Emissions Intensities'].units.map(lambda x: f"t CO2/({x})")
             df_historic = self._get_historic_data(company_ids, df_historic)
         else:
             df_historic = None

@@ -96,18 +96,6 @@ class TestTemplateProvider(unittest.TestCase):
         print(amended_portfolio[['company_name', 'time_frame', 'scope', 'temperature_score']])
 
     def test_temp_score_from_excel_data(self):
-        """
-        When running all tests in the /test directory, this test fails. When running all tests in
-        test_template_provider.py, it passes. Indicates a state is saved somewhere(?). TODO: fix test.
-        To enable test again, remove the leading '_' of the function name.  
-        """
-        excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
-        excel_EI_bm = ExcelProviderIntensityBenchmark(excel_path=self.sector_data_path,
-                                                      benchmark_temperature=Q_(1.5, ureg.delta_degC),
-                                                      benchmark_global_budget=Q_(396, ureg('Gt CO2')),
-                                                      is_AFOLU_included=False)
-        template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
-        data_warehouse = DataWarehouse(template_company_data, excel_production_bm, excel_EI_bm)
         comids = ['US00130H1059', 'US0185223007', 'US0188021085', 'US0236081024', 'US0255371017']
 
         # Calculate Temp Scores
@@ -126,17 +114,17 @@ class TestTemplateProvider(unittest.TestCase):
                 company_isin=company,
             ))
         # portfolio data
-        portfolio_data = ITR.utils.get_data(data_warehouse, portfolio)
+        portfolio_data = ITR.utils.get_data(self.data_warehouse, portfolio)
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = pd.Series([2.282152261331467, 2.1493519311051412, 2.6501140675249824, 2.6668124335887886
-                              # 2.1509743549550446 -- AEP (American Electric Power, US0255371017 only has S1 target data, so does not produce a valid S1S2 result)
+        expected = pd.Series([2.282152261331467, 2.1493519311051412, 2.6501140675249824, 2.6668124335887886,
+                              3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
                               ], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.43710767, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.57032266, ureg.delta_degC), places=2)
 
         # Calculate Temp Scores
         temp_score_s1 = TemperatureScore(
@@ -148,11 +136,11 @@ class TestTemplateProvider(unittest.TestCase):
         scores_s1 = temp_score_s1.calculate(portfolio_data)
         agg_scores_s1 = temp_score_s1.aggregate_scores(scores_s1)
 
-        # verify company scores:
-        expected_s1 = pd.Series([2.2842705319208187, 2.05035998, 2.1509743549550446], dtype='pint[delta_degC]')
+        # verify company scores; ALLETE, Inc. (US0185223007) and Ameren Corp. (US0236081024) have no S1 data
+        expected_s1 = pd.Series([2.2842705319208187, 3.2, 2.05035998, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores_s1.temperature_score.values, expected_s1, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.16186829, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.57712097, ureg.delta_degC), places=2)
         
 
     def test_get_projected_value(self):
@@ -234,13 +222,13 @@ class TestTemplateProvider(unittest.TestCase):
         expected_data = pd.Series([10.0, 50.0], dtype='pint[t CO2]')
         emissions = self.data_warehouse._get_cumulative_emissions(projected_ei=projected_emission,
                                                                   projected_production=projected_production)
-        assert_pint_series_equal(self, emissions, expected_data)
+        assert_pint_series_equal(self, emissions.iloc[:, -1], expected_data)
 
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities
         companies = [c for c in self.data_warehouse.get_preprocessed_company_data(self.company_ids) if c.scope==EScope.S1S2]
         company_1 = companies[0]
-        company_2 = companies[1]
+        company_2 = companies[2]
         self.assertEqual(company_1.company_name, "AES Corp.")
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")

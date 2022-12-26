@@ -63,6 +63,8 @@ class ColumnsConfig:
     CUMULATIVE_BUDGET = 'cumulative_budget'
     CUMULATIVE_TRAJECTORY = 'cumulative_trajectory'
     CUMULATIVE_TARGET = 'cumulative_target'
+    TRAJECTORY_EXCEEDANCE_YEAR = 'trajectory_exceedance_year'
+    TARGET_EXCEEDANCE_YEAR = 'target_exceedance_year'
     TARGET_PROBABILITY = 'target_probability'
     BENCHMARK_TEMP = 'benchmark_temperature'
     BENCHMARK_GLOBAL_BUDGET = 'benchmark_global_budget'

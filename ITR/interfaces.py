@@ -240,12 +240,23 @@ class ICompanyEIProjection(BaseModel):
     year: int
     value: Optional[EI_Quantity]
 
+    def __eq__(self, o):
+        if self.year != o.year:
+            raise ValueError(f"EI Projection years not aligned: {self.year} vs. {o.year}")
+        if ITR.isnan(self.value.m) and ITR.isnan(o.value.m):
+            return True
+        return self.value == o.value
+
     def add(self, o):
         if self.year != o.year:
             raise ValueError(f"EI Projection years not aligned: {self.year} vs. {o.year}")
         return ICompanyEIProjection(year=self.year,
                                     value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
+    def min(self, o):
+        if self.year != o.year:
+            raise ValueError(f"EI Projection years not aligned: {self.year} vs. {o.year}")
+        return ICompanyEIProjection(year=self.year, value = min(self.value, o.value))
 
 class ICompanyEIProjections(BaseModel):
     ei_metric: EI_Metric
@@ -287,6 +298,12 @@ class IEmissionRealization(BaseModel):
     year: int
     value: Optional[EmissionsQuantity]
 
+    def __eq__(self, o):
+        assert self.year==o.year
+        if ITR.isnan(self.value.m) and ITR.isnan(o.value.m):
+            return True
+        return self.value == o.value
+
     def add(self, o):
         assert self.year==o.year
         return IEmissionRealization(year=self.year,
@@ -310,6 +327,12 @@ class IHistoricEmissionsScopes(BaseModel):
 class IEIRealization(BaseModel):
     year: int
     value: Optional[EI_Quantity]
+
+    def __eq__(self, o):
+        assert self.year==o.year
+        if ITR.isnan(self.value.m) and ITR.isnan(o.value.m):
+            return True
+        return self.value == o.value
 
     def add(self, o):
         assert self.year==o.year
@@ -541,13 +564,27 @@ class ICompanyData(BaseModel):
 # These aggregate terms are all derived from the benchmark being used
 class ICompanyAggregates(ICompanyData):
     cumulative_budget: EmissionsQuantity
-    cumulative_trajectory: EmissionsQuantity
-    cumulative_target: EmissionsQuantity
+    cumulative_trajectory: Optional[EmissionsQuantity]
+    cumulative_target: Optional[EmissionsQuantity]
     benchmark_temperature: quantity('delta_degC')
     benchmark_global_budget: EmissionsQuantity
     scope: EScope
 
+    # The first year that cumulative_projections exceeds cumulative_budget
+    trajectory_exceedance_year: Optional[int]
+    target_exceedance_year: Optional[int]
+
     # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
     # projected_targets: Optional[ICompanyEIProjectionsScopes]
     # projected_intensities: Optional[ICompanyEIProjectionsScopes]
+
+    # Custom validator here
+    @validator('trajectory_exceedance_year', 'target_exceedance_year', pre=True)
+    def allow_NA(cls, v):
+        if pd.isna(v):
+            return None
+        elif isinstance(v, int):
+            return v
+        breakpoint()
+        raise ValueError(f"{v} is not compatible with Int64 dtype")
 

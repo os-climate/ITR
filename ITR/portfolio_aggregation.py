@@ -5,12 +5,13 @@ import warnings # needed until apply behaves better with Pint quantities in arra
 from typing import Type
 
 from pint import Quantity
-from pint_pandas import PintArray
+from pint_pandas import PintType
 
 import pandas as pd
 import pint
 import pint_pandas
 
+from .data.osc_units import asPintSeries
 from .configs import PortfolioAggregationConfig, ColumnsConfig
 from .interfaces import EScope
 from .logger import logger
@@ -97,15 +98,16 @@ class PortfolioAggregation(ABC):
         :param portfolio_aggregation_method: The method to use
         :return: The aggregates score as a pd.Series
         """
+        assert data[input_column].dtype.kind in ['f', 'i'] or isinstance(data[input_column].dtype, PintType)
         if portfolio_aggregation_method == PortfolioAggregationMethod.WATS:
+            # If ever we push currency datatypes into this column, we must ensure it is a PintArray, lest nan quantities spoil the sum.
+            assert data[self.c.COLS.INVESTMENT_VALUE].dtype.kind in ['f', 'i']
             total_investment_weight = data[self.c.COLS.INVESTMENT_VALUE].sum()
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     # See https://github.com/hgrecco/pint-pandas/issues/114
-                    weights_series = pd.Series(data.apply(
-                        lambda row: row[self.c.COLS.INVESTMENT_VALUE] * row[input_column] / total_investment_weight,
-                        axis=1))
+                    weights_series = data[input_column] * data[self.c.COLS.INVESTMENT_VALUE] / total_investment_weight
                     return weights_series
             except ZeroDivisionError:
                 raise ValueError("The portfolio weight is not allowed to be zero")
@@ -122,7 +124,7 @@ class PortfolioAggregation(ABC):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     # Calculate the total emissions of all companies
-                    emissions = data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12].sum() + data.loc[use_S3, self.c.COLS.GHG_SCOPE3].sum()
+                    emissions = asPintSeries(data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12]).sum() + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).sum()
                     # See https://github.com/hgrecco/pint-pandas/issues/130
                     weights_dtype = f"pint[{emissions.u}]"
                     weights_series = ((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0)
@@ -136,6 +138,7 @@ class PortfolioAggregation(ABC):
         elif PortfolioAggregationMethod.is_emissions_based(portfolio_aggregation_method):
             # These four methods only differ in the way the company is valued.
             value_column = PortfolioAggregationMethod.get_value_column(portfolio_aggregation_method, self.c.COLS)
+            assert data[value_column].dtype.kind in ['f', 'i'] or isinstance(data[value_column].dtype, PintType)
 
             # Calculate the total owned emissions of all companies
             try:
@@ -158,10 +161,9 @@ class PortfolioAggregation(ABC):
                 # Calculate the MOTS value per company
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    owned_emissions = data[self.c.COLS.OWNED_EMISSIONS].sum()
-                    result = data.apply(
-                        lambda row: (row[self.c.COLS.OWNED_EMISSIONS] / owned_emissions) * row[input_column],
-                        axis=1)
+                    owned_emissions = asPintSeries(data[self.c.COLS.OWNED_EMISSIONS])
+                    total_emissions = owned_emissions.sum()
+                    result = data[input_column] * owned_emissions / total_emissions
                 return result
             except ZeroDivisionError:
                 raise ValueError("The total owned emissions can not be zero")

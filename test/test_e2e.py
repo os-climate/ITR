@@ -18,16 +18,16 @@ from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import ICompanyAggregates, ICompanyEIProjectionsScopes, IProjection
 
 
-class TestDataProvider: # if derived from CompanyDataProvider, we'd have to provide implementations for several methods we never use
+class e2e_DataProvider: # if derived from CompanyDataProvider, we'd have to provide implementations for several methods we never use
     def __init__(
             self, companies: List[ICompanyAggregates]
     ):
         self.companies = companies
         self.missing_ids = set([])
 
-class TestDataWarehouse(DataWarehouse):
+class e2e_DataWarehouse(DataWarehouse):
     def __init__(
-            self, company_data: TestDataProvider
+            self, company_data: e2e_DataProvider
     ):
         # super().__init__(company_data, ProductionBenchmarkDataProvider(), IntensityBenchmarkDataProvider())
         self.company_data = company_data
@@ -127,8 +127,8 @@ class EndToEndTest(unittest.TestCase):
 
         # Setup test provider
         company = copy.deepcopy(self.company_base)
-        data_provider = TestDataProvider([company])
-        data_warehouse = TestDataWarehouse(data_provider)
+        data_provider = e2e_DataProvider([company])
+        data_warehouse = e2e_DataWarehouse(data_provider)
 
         # Calculate Temp Scores
         temp_score = TemperatureScore(
@@ -157,8 +157,8 @@ class EndToEndTest(unittest.TestCase):
 
         companies, pf_companies = self.create_base_companies(["A", "B"])
 
-        data_provider = TestDataProvider(companies)
-        data_warehouse = TestDataWarehouse(company_data=data_provider)
+        data_provider = e2e_DataProvider(companies)
+        data_warehouse = e2e_DataWarehouse(company_data=data_provider)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -200,8 +200,8 @@ class EndToEndTest(unittest.TestCase):
             )
             pf_companies.append(pf_company)
 
-        data_provider = TestDataProvider(companies)
-        data_warehouse = TestDataWarehouse(company_data=data_provider)
+        data_provider = e2e_DataProvider(companies)
+        data_warehouse = e2e_DataWarehouse(company_data=data_provider)
 
         # Calculate scores & Aggregated values
         temp_score = TemperatureScore(
@@ -237,8 +237,8 @@ class EndToEndTest(unittest.TestCase):
             companies_all.extend(companies)
             pf_companies_all.extend(pf_companies)
 
-        data_provider = TestDataProvider(companies_all)
-        data_warehouse = TestDataWarehouse(company_data=data_provider)
+        data_provider = e2e_DataProvider(companies_all)
+        data_warehouse = e2e_DataWarehouse(company_data=data_provider)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],
@@ -257,8 +257,8 @@ class EndToEndTest(unittest.TestCase):
     def test_score_cap(self):
 
         companies, pf_companies = self.create_base_companies(["A"])
-        data_provider = TestDataProvider(companies)
-        data_warehouse = TestDataWarehouse(company_data=data_provider)
+        data_provider = e2e_DataProvider(companies)
+        data_warehouse = e2e_DataWarehouse(company_data=data_provider)
 
         temp_score = TemperatureScore(
             time_frames=[ETimeFrames.LONG],

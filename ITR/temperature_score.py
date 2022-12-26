@@ -7,7 +7,7 @@ import numpy as np
 import itertools
 
 import ITR
-from .data.osc_units import ureg, Q_, PA_
+from .data.osc_units import ureg, Q_, PA_, PintType
 from .interfaces import quantity
 
 from .interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, AggregationContribution, \
@@ -263,7 +263,8 @@ class TemperatureScore(PortfolioAggregation):
         """
         data = data.copy()
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
-                                                          self.aggregation_method).astype('pint[delta_degC]')
+                                                          self.aggregation_method) # .astype('pint[delta_degC]')
+        assert isinstance(weighted_scores.dtype, PintType)
         data[self.c.COLS.CONTRIBUTION_RELATIVE] = (weighted_scores / weighted_scores.sum()).astype('pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         with warnings.catch_warnings():
@@ -318,12 +319,17 @@ class TemperatureScore(PortfolioAggregation):
                 influence_percentage=influence_percentage)
 
             # If there are grouping column(s) we'll group in pandas and pass the results to the aggregation
-            if len(self.grouping) > 0:
-                grouped_data = filtered_data.groupby(self.grouping)
-                for group_names, group in grouped_data:
-                    group_name_joined = group_names if type(group_names) == str else "-".join(
-                        [str(group_name) for group_name in group_names])
-                    score_aggregation.grouped[group_name_joined], _, _ = self._get_aggregations(group.copy(),
+            if len(self.grouping)==0:
+                return score_aggregation
+            elif len(self.grouping)==1:
+                # Silence deprecation warning issuing from this change: https://github.com/pandas-dev/pandas/issues/42795
+                self.grouping = self.grouping[0]
+
+            grouped_data = filtered_data.groupby(self.grouping)
+            for group_names, group in grouped_data:
+                group_name_joined = group_names if type(group_names) == str else "-".join(
+                    [str(group_name) for group_name in group_names])
+                score_aggregation.grouped[group_name_joined], _, _ = self._get_aggregations(group.copy(),
                                                                                                 total_companies)
             return score_aggregation
         else:
