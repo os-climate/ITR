@@ -573,13 +573,22 @@ class ICompanyAggregates(ICompanyData):
     # The first year that cumulative_projections exceeds cumulative_budget
     trajectory_exceedance_year: Optional[int]
     target_exceedance_year: Optional[int]
+    # The first year that cumulative_projections exceeds the 2030 cumulative_budget
+    trajectory_exceedance_year_2030: Optional[int]
+    target_exceedance_year_2030: Optional[int]
+    # The first year that cumulative_projections exceeds the 2050 cumulative_budget
+    trajectory_exceedance_year_2050: Optional[int]
+    target_exceedance_year_2050: Optional[int]
 
     # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
     # projected_targets: Optional[ICompanyEIProjectionsScopes]
     # projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
     # Custom validator here
-    @validator('trajectory_exceedance_year', 'target_exceedance_year', pre=True)
+    @validator('trajectory_exceedance_year', 'target_exceedance_year',
+               'trajectory_exceedance_year_2030', 'target_exceedance_year_2030', 
+               'trajectory_exceedance_year_2050', 'target_exceedance_year_2050', 
+               pre=True)
     def allow_NA(cls, v):
         if pd.isna(v):
             return None

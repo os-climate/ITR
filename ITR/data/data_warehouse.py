@@ -212,13 +212,21 @@ class DataWarehouse(ABC):
         df_budget = self._get_cumulative_emissions(
             projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production)
-        df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR)
-        df_target_exceedance = self._get_exceedance_year(df_target, df_budget, self.company_data.projection_controls.TARGET_YEAR)
+        df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, None)
+        df_target_exceedance = self._get_exceedance_year(df_target, df_budget, None)
+        df_trajectory_exceedance_2030 = self._get_exceedance_year(df_trajectory, df_budget, 2030)
+        df_target_exceedance_2030 = self._get_exceedance_year(df_target, df_budget, 2030)
+        df_trajectory_exceedance_2050 = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR)
+        df_target_exceedance_2050 = self._get_exceedance_year(df_target, df_budget, self.company_data.projection_controls.TARGET_YEAR)
         df_scope_data = pd.concat([df_trajectory.iloc[:, -1].rename(self.column_config.CUMULATIVE_TRAJECTORY),
                                    df_target.iloc[:, -1].rename(self.column_config.CUMULATIVE_TARGET),
                                    df_budget.iloc[:, -1].rename(self.column_config.CUMULATIVE_BUDGET),
                                    df_trajectory_exceedance.rename(self.column_config.TRAJECTORY_EXCEEDANCE_YEAR),
-                                   df_target_exceedance.rename(self.column_config.TARGET_EXCEEDANCE_YEAR)],
+                                   df_target_exceedance.rename(self.column_config.TARGET_EXCEEDANCE_YEAR),
+                                   df_trajectory_exceedance_2030.rename(f"{self.column_config.TRAJECTORY_EXCEEDANCE_YEAR}_2030"),
+                                   df_target_exceedance_2030.rename(f"{self.column_config.TARGET_EXCEEDANCE_YEAR}_2030"),
+                                   df_trajectory_exceedance_2050.rename(f"{self.column_config.TRAJECTORY_EXCEEDANCE_YEAR}_2050"),
+                                   df_target_exceedance_2050.rename(f"{self.column_config.TARGET_EXCEEDANCE_YEAR}_2050")],
                                   axis=1)
         df_company_data = df_company_data.join(df_scope_data).reset_index('scope')
         na_company_mask = df_company_data.scope.isna()
@@ -275,11 +283,11 @@ class DataWarehouse(ABC):
         cumulative_emissions = projected_emissions_t.T.cumsum(axis=1).astype('pint[Mt CO2]')
         return cumulative_emissions
 
-    def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, target_year: int=None) -> pd.Series:
+    def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, budget_year: int=None) -> pd.Series:
         """
         :param df_subject: DataFrame of cumulative emissions values over time
         :param df_budget: DataFrame of cumulative emissions budget allowed over time
-        :param target_year: if not None, set the exceedence budget to that year; otherwise budget starts low and grows year-by-year
+        :param budget_year: if not None, set the exceedence budget to that year; otherwise budget starts low and grows year-by-year
         :return: The furthest-out year where df_subject < df_budget, or np.nan if none
         Where the (df_subject-aligned) budget defines a value but df_subject doesn't have a value, return pd.NA
         Where the benchmark (df_budget) fails to provide a metric for the subject scope, return no rows
@@ -290,15 +298,15 @@ class DataWarehouse(ABC):
         # Reversing the columns, the maximum remains the maximum, but the "first" is the furthest-out year
 
         df_subject = df_subject.loc[aligned_rows, ::-1].pint.dequantify()
-        if target_year is None:
-            df_budget = df_budget.loc[aligned_rows, ::-1].pint.dequantify()
-            # units are embedded in the column multi-index, so this check validates dequantify operation post-hoc
-            assert (df_subject.columns == df_budget.columns).all()
-            # pd.where operation requires DataFrames to be aligned
-            df_aligned = df_subject.where(df_subject <= df_budget)
-        else:
-            df_budget = df_budget.loc[aligned_rows, target_year].pint.m
-            df_aligned = df_subject.apply(lambda col: col.where(col <= df_budget))
+        df_budget = df_budget.loc[aligned_rows, ::-1].pint.dequantify()
+        # units are embedded in the column multi-index, so this check validates dequantify operation post-hoc
+        assert (df_subject.columns == df_budget.columns).all()
+        if budget_year:
+            df_exceedance_budget = pd.DataFrame({(year, units): df_budget[(budget_year, units)]
+                                                 for year, units in df_budget.columns if year < budget_year })
+            df_budget.update(df_exceedance_budget)
+        # pd.where operation requires DataFrames to be aligned
+        df_aligned = df_subject.where(df_subject <= df_budget)
         # Drop the embedded units from the multi-index and find the first (meaning furthest-out) date of alignment
         df_aligned = df_aligned.droplevel(1, axis=1).apply(lambda x: x.first_valid_index(), axis=1)
 
