@@ -8,14 +8,18 @@ from pydantic import BaseModel, ValidationError
 from ITR.data.osc_units import ureg, Q_, BenchmarkMetric, EmissionsQuantity, EI_Quantity, quantity
 import pint
 
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, ProjectionControls
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, ProjectionControls, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 from ITR.data.base_providers import BaseCompanyDataProvider, BaseProviderProductionBenchmark, \
     BaseProviderIntensityBenchmark
 from ITR.interfaces import ICompanyData, ICompanyEIProjection, EScope, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes, IBenchmark, IBenchmarks, IHistoricEmissionsScopes, \
     IProductionRealization, ProductionQuantity, IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
     UProjection, IProjection
-from ITR.logger import logger
 
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units

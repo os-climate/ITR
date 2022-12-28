@@ -13,7 +13,12 @@ from typing import List, Type, Dict
 import ITR
 from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType
 
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
@@ -21,7 +26,7 @@ from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEI
     IHistoricEmissionsScopes, IProductionRealization, ITargetData, IHistoricData, ICompanyEIProjection, \
     IEmissionRealization
 from ITR.interfaces import EI_Quantity
-from ITR.logger import logger
+
 
 # TODO handling of scopes in benchmarks
 
@@ -200,39 +205,43 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
-        intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year,
-                                                              scope_to_calc)
-        decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
-        last_ei = intensity_benchmarks[self.projection_controls.TARGET_YEAR]
-        ei_base = intensity_benchmarks[self.projection_controls.BASE_YEAR]
-        df = decarbonization_paths.mul((ei_base - last_ei), axis=0)
-        df = df.add(last_ei, axis=0)
-        idx = pd.Index.intersection(df.index,
+        # To make pint happier, we do our math in columns that can be represented by PintArrays
+        intensity_benchmarks_t = self._get_intensity_benchmarks(company_info_at_base_year,
+                                                                scope_to_calc)
+        decarbonization_paths_t = self._get_decarbonizations_paths(intensity_benchmarks_t)
+        last_ei = intensity_benchmarks_t.loc[self.projection_controls.TARGET_YEAR]
+        ei_base = intensity_benchmarks_t.loc[self.projection_controls.BASE_YEAR]
+        df_t = decarbonization_paths_t.mul((ei_base - last_ei), axis=1)
+        df_t = df_t.add(last_ei, axis=1)
+        idx = pd.Index.intersection(df_t.columns,
                                     pd.MultiIndex.from_arrays([company_info_at_base_year.index,
                                                                company_info_at_base_year.scope]))
-        df = df.loc[idx]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # pint units don't like being twisted from columns to rows, but it's ok
+            df = df_t[idx].T
         return df
 
-    def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
+    def _get_decarbonizations_paths(self, intensity_benchmarks_t: pd.DataFrame) -> pd.DataFrame:
         """
         Overrides subclass method
         Returns a DataFrame with the projected decarbonization paths for the supplied companies in intensity_benchmarks.
         :param: A DataFrame with company and intensity benchmarks per calendar year per row
         :return: A pd.DataFrame with company and decarbonisation path s per calendar year per row
         """
-        return intensity_benchmarks.apply(lambda row: self._get_decarbonization(row), axis=1)
+        return intensity_benchmarks_t.apply(lambda col: self._get_decarbonization(col))
 
-    def _get_decarbonization(self, intensity_benchmark_row: pd.Series) -> pd.Series:
+    def _get_decarbonization(self, intensity_benchmark_ser: pd.Series) -> pd.Series:
         """
         Overrides subclass method
         returns a Series with the decarbonization path for a benchmark.
         :param: A Series with a company's intensity benchmarks per calendar year per row
         :return: A pd.Series with a company's decarbonisation paths per calendar year per row
         """
-        last_ei = intensity_benchmark_row[self.projection_controls.TARGET_YEAR]
-        ei_diff = intensity_benchmark_row[self.projection_controls.BASE_YEAR] - last_ei
+        last_ei = intensity_benchmark_ser[self.projection_controls.TARGET_YEAR]
+        ei_diff = intensity_benchmark_ser[self.projection_controls.BASE_YEAR] - last_ei
         # TODO: does this still throw a warning when processing a NaN?  convert to base units before accessing .magnitude
-        return (intensity_benchmark_row - last_ei) / ei_diff
+        return (intensity_benchmark_ser - last_ei) / ei_diff
 
     def _convert_benchmark_to_series(self, benchmark: IBenchmark, scope: EScope) -> pd.Series:
         """
@@ -250,7 +259,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
         with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
-        :return: A DataFrame with company and intensity benchmarks per calendar year per row
+        :return: A DataFrame with company and intensity benchmarks; rows are calendar years, columns are company data
         """
         benchmark_projections = self._EI_df
         df = company_sector_region_scope[['sector', 'region', 'scope']]
@@ -279,7 +288,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
             company_benchmark_projections = df
         company_benchmark_projections.set_index('scope', append=True, inplace=True)
         # Drop SECTOR and REGION as the result will be used by math functions operating across the whole DataFrame
-        return company_benchmark_projections.drop(['sector', 'region'], axis=1)
+        return asPintDataFrame(company_benchmark_projections.drop(['sector', 'region'], axis=1).T)
 
 
 class BaseCompanyDataProvider(CompanyDataProvider):
@@ -620,6 +629,7 @@ class EITrajectoryProjector(EIProjector):
     # The purpose of this function is not to infer scope data that might be interesting,
     # but rather to impute the scope data that is actually required, no more, no less.
     def _compute_missing_historic_ei(self, companies: List[ICompanyData], historic_data: pd.DataFrame):
+        # breakpoint()
         scopes = EScope.get_result_scopes()
         missing_data = []
         for company in companies:

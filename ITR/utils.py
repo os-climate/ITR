@@ -10,11 +10,15 @@ from ITR.data.osc_units import ureg
 import pint
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
-from .configs import ColumnsConfig, TemperatureScoreControls, TemperatureScoreConfig
+from .configs import ColumnsConfig, TemperatureScoreControls, TemperatureScoreConfig, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
-from .logger import logger
 
 # If this file is moved, the computation of get_project_root may also need to change
 def get_project_root() -> Path:

@@ -12,9 +12,13 @@ import pint
 import pint_pandas
 
 from .data.osc_units import asPintSeries
-from .configs import PortfolioAggregationConfig, ColumnsConfig
+from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 from .interfaces import EScope
-from .logger import logger
 
 class PortfolioAggregationMethod(Enum):
     """
@@ -76,7 +80,8 @@ class PortfolioAggregation(ABC):
 
     def _check_column(self, data: pd.DataFrame, column: str):
         """
-        Check if a certain column is filled for all companies. If not throw an error.
+        Check if a certain column is filled for all companies. If not log an error.
+        The aggregation treats missing values as zeroes.
 
         :param data: The data to check
         :param column: The column to check
@@ -84,9 +89,7 @@ class PortfolioAggregation(ABC):
         """
         missing_data = data[pd.isnull(data[column])][self.c.COLS.COMPANY_NAME].unique()
         if len(missing_data):
-            raise ValueError("The value for {} is missing for the following companies: {}".format(
-                column, ", ".join(missing_data)
-            ))
+            logger.error(f"The value for {column} is missing for the following companies: {', '.join(missing_data)}")
 
     def _calculate_aggregate_score(self, data: pd.DataFrame, input_column: str,
                                    portfolio_aggregation_method: PortfolioAggregationMethod) -> pd.Series:

@@ -4,6 +4,7 @@ the module, extend the respective config class and pass it to the class as the "
 """
 from __future__ import annotations
 
+import logging
 import pandas as pd
 import pint
 from ITR.data.osc_units import ureg, Q_, quantity, EmissionsQuantity
@@ -199,3 +200,20 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         carbon_conversion='3664.0 Gt CO2',
         scenario_target_temperature='1.5 delta_degC'
     )
+
+class LoggingConfig:
+    FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+    @classmethod
+    def add_config_to_logger(cls, logger: logging.Logger):
+        logger.setLevel(logging.INFO)
+        formatter = logging.Formatter(cls.FORMAT)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
+
+# Add these lines to any file that uses logging
+# from ITR.configs import LoggingConfig
+# import logging
+# logger = logging.getLogger(__name__)
+# LoggingConfig.add_config_to_logger(logger)

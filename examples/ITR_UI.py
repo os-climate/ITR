@@ -123,7 +123,7 @@ def recalculate_individual_itr(eibm):
     with open(benchmark_EI) as json_file:
         parsed_json = json.load(json_file)
     EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
-    Warehouse = DataWarehouse(template_company_data, base_production_bm, EI_bm)
+    Warehouse = DataWarehouse(template_company_data, base_production_bm, EI_bm, estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
     temperature_score = TemperatureScore(
                             time_frames = [ETimeFrames.LONG],
                             scopes=None, # None means "use the appropriate scopes for the benchmark
@@ -611,7 +611,7 @@ def update_graph(
         raise PreventUpdate
     aggregated_scores = temperature_score.aggregate_scores(filt_df)  # calc temp score for companies left in pf
 
-    logger.warning(f"ready to plot!  {filt_df}")
+    logger.info(f"ready to plot!  {filt_df}")
 
     # Scatter plot
     fig1 = dequantify_plotly(px.scatter, filt_df, x="cumulative_target", y="cumulative_budget",

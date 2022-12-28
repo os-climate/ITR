@@ -1,5 +1,4 @@
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-import logging
 import pandas as pd
 import numpy as np
 
@@ -9,14 +8,18 @@ from pydantic import ValidationError
 
 import ITR
 from ITR.data.osc_units import ureg, Q_, asPintSeries
-from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections
+from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.logger import logger
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
 
 import pint
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class DataWarehouse(ABC):
@@ -27,6 +30,7 @@ class DataWarehouse(ABC):
     def __init__(self, company_data: CompanyDataProvider,
                  benchmark_projected_production: ProductionBenchmarkDataProvider,
                  benchmarks_projected_ei: IntensityBenchmarkDataProvider,
+                 estimate_missing_data=None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig):
         """
         Create a new data warehouse instance.
@@ -42,6 +46,11 @@ class DataWarehouse(ABC):
         # multiplying these two gives aligned emissions data for the company, in case we want to add missing data based on sector averages
         self.column_config = column_config
         self.company_data = company_data
+        # If we are missing S3 (or other) data, fill in before projecting targets
+        # Because we have already filled in historic_data and projected_intensities, we have to recompute some of those
+        if estimate_missing_data is not None:
+            for c in self.company_data._companies:
+                estimate_missing_data(self, c)
         self.company_data._calculate_target_projections(benchmark_projected_production)
         self.company_scope = {}
 
@@ -62,7 +71,17 @@ class DataWarehouse(ABC):
                 if c.historic_data:
                     def _adjust_historic_data(data, primary_scope_attr, data_adder):
                         if getattr (data, primary_scope_attr):
-                            setattr (data, primary_scope_attr, list( map(data_adder, getattr (data, primary_scope_attr), data.S3)))
+                            pre_s3_data = [p for p in getattr (data, primary_scope_attr) if p.year <= data.S3[0].year]
+                            if len(pre_s3_data)==0:
+                                # Could not adjust
+                                breakpoint()
+                                return
+                            if len(pre_s3_data)>1:
+                                pre_s3_data = list( map(lambda x: type(x)(year=x.year, value=data.S3[0].value * x.value / pre_s3_data[-1].value), pre_s3_data[:-1]) )
+                                s3_data = pre_s3_data + data.S3
+                            else:
+                                s3_data = data.S3
+                            setattr (data, primary_scope_attr, list( map(data_adder, getattr (data, primary_scope_attr), s3_data)))
                         else:
                             setattr (data, primary_scope_attr, data.S3)
                             
@@ -160,6 +179,70 @@ class DataWarehouse(ABC):
             logger.warning(
                 f"The following companies do not disclose scope data required by benchmark and will be removed: {missing_company_scopes}"
             )
+
+
+    def estimate_missing_s3_data(self, company: ICompanyData) -> None:
+        if not self.benchmarks_projected_ei._EI_benchmarks.S3 or company.historic_data.emissions.S3:
+            return
+
+        # best_prod.loc[s3_all_nan.index.set_levels(['production'], level='metric')]
+        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year([company.company_id])
+        row0 = company_info_at_base_year.iloc[0]
+        sector = row0.sector
+        region = row0.region
+        if (sector, region) in self.benchmarks_projected_ei._EI_df.index:
+            pass
+        elif (sector, "Global") in self.benchmarks_projected_ei._EI_df.index:
+            region = "Global"
+            company_info_at_base_year.loc[:, 'region'] = "Global"
+        else:
+            return
+        if EScope.S3 not in self.benchmarks_projected_ei._EI_df.loc[(sector, region)].index:
+            # Construction Buildings don't have an S3 scope defined
+            return
+        projected_production = self.benchmark_projected_production.get_company_projected_production(company_info_at_base_year)
+        bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S3)])
+        s3_emissions = projected_production.iloc[0].mul(bm_ei_s3)
+        try:
+            s3_emissions = s3_emissions.astype('pint[Mt CO2]')
+        except pint.errors.DimensionalityError:
+            # Don't know how to deal with this funky intensity value
+            logger.error(f"Production type {projected_production.iloc[0].dtype.units:~P} and intensity type {bm_ei_s3.dtype.units} don't multiply to t CO2e")
+            return
+        base_year = self.company_data.projection_controls.BASE_YEAR
+        company.ghg_s3 = s3_emissions[base_year]
+        assert company.ghg_s3 is not None
+        company.historic_data.emissions.S3 = [IEmissionRealization(year=er.year, value=s3_emissions[er.year])
+                                              for er in company.historic_data.emissions.S1S2
+                                              if er.year>=base_year]
+        company.historic_data.emissions.S1S2S3 = list( map(IEmissionRealization.add,
+                                                           [em_s1s2 for em_s1s2 in company.historic_data.emissions.S1S2
+                                                            if em_s1s2.year >= base_year],
+                                                           [em_s3 for em_s3 in company.historic_data.emissions.S3
+                                                            if em_s3.year >= company.historic_data.emissions.S1S2[0].year]) )
+        company.historic_data.emissions_intensities.S3 = [IEIRealization(year=ei_r.year, value=bm_ei_s3[ei_r.year])
+                                              for ei_r in company.historic_data.emissions_intensities.S1S2
+                                              if ei_r.year>=base_year]
+        company.historic_data.emissions_intensities.S1S2S3 = list( map(IEIRealization.add,
+                                                                       [ei_s1s2 for ei_s1s2 in company.historic_data.emissions_intensities.S1S2
+                                                                        if ei_s1s2.year >= base_year],
+                                                                       [ei_s3 for ei_s3 in company.historic_data.emissions_intensities.S3
+                                                                        if ei_s3.year >= company.historic_data.emissions_intensities.S1S2[0].year]) )
+        try:
+            company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
+                                                                     projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
+                                                                                  for eip in company.projected_intensities.S1S2.projections])
+            assert company.projected_intensities.S1S2.projections[0].year == company.projected_intensities.S3.projections[0].year
+            company.projected_intensities.S1S2S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
+                                                                         projections=list( map(ICompanyEIProjection.add,
+                                                                                               company.projected_intensities.S1S2.projections,
+                                                                                               company.projected_intensities.S3.projections) ))
+        except AttributeError:
+            company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1.ei_metric,
+                                                                     projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
+                                                                                  for eip in company.projected_intensities.S1.projections])
+            # Without valid S2 data, we don't have S1S2S3
+        logger.info(f"Added S3 estimates for {company.company_id} (sector = {sector}, region = {region})")
 
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:

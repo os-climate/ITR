@@ -10,10 +10,14 @@ from typing import TYPE_CHECKING, Callable
 from pydantic import BaseModel, parse_obj_as, validator, root_validator
 
 import ITR
-from ITR.logger import logger
+
 from ITR.data.osc_units import ureg, Q_, M_, PA_, \
     BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, quantity
-from ITR.configs import ProjectionControls
+from ITR.configs import ProjectionControls, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
 
 import pint
 from pint.errors import DimensionalityError

@@ -10,12 +10,16 @@ from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuant
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, ProjectionControls
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, SectorsConfig, ProjectionControls, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 from ITR.interfaces import ICompanyData, EScope, IHistoricEmissionsScopes, IProductionRealization, \
     IHistoricEIScopes, IHistoricData, ITargetData, IEmissionRealization, IEIRealization, \
     IProjection
 from ITR.utils import get_project_root
-from ITR.logger import logger
 
 # The starting year of annual data for the template (may run through 2021, 2022, or later)
 TEMPLATE_START_YEAR = 2016
@@ -221,7 +225,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_productions = df_emissions.divide(df_intensities, axis=1)
             # FIXME: need to reconcile what happens if multiple scopes all yield the same production metrics
             df_productions = df_productions.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype)[5:-1]).to_reduced_units().u}]")).dropna(axis=1, how='all')
-            df_productions = df_productions.T.droplevel(['company_id', 'metric'])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # pint units don't like being twisted from columns to rows, but it's ok
+                df_productions = df_productions.T.droplevel(['company_id', 'metric'])
             production_idx = df_productions.index
             df_esg.loc[production_idx] = pd.concat([df_esg.loc[production_idx].iloc[:, 0:start_year_loc], df_productions], axis=1)
             df_esg.loc[production_idx, 'metric'] = 'production'
@@ -589,7 +596,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             s3_all_nan = best_s3.apply(lambda x: x.map(lambda y: ITR.isnan(y.m)).all(), axis=1)
             missing_s3 = best_s3[s3_all_nan]
             if len(missing_s3):
-                logger.warning(f"Emissions data missing for {missing_s3.index}") 
+                logger.warning(f"Scope 3 Emissions data missing for {missing_s3.index}")
+                # We cannot fill in missing data here, because we don't yet know what benchmark(s) will in use
                 best_s3 = best_s3[~s3_all_nan].copy()
             best_s3[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
             df3 = (pd.concat([best_prod, best_em, best_s3])
@@ -606,6 +614,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             df_historic_data = df5
             
+        test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
+        try:
+            df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
+        except KeyError:
+            logger.error(f"Tab {test_target_sheet} is required in input Excel file.")
+            raise
+
+        # df_target_data now ready for conversion to model for each company
+        df_target_data = self._validate_target_data(df_target_data)
+
         # df_historic now ready for conversion to model for each company
         self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
 
@@ -638,18 +656,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df = fill_blank_or_missing_rows(df, 'S1', 'S2', 'S1S2', index_names, self.historic_years)
         df = fill_blank_or_missing_rows(df, 'S1S2', 'S3', 'S1S2S3', index_names, self.historic_years)
         df_historic_data = df.set_index(['company_id', 'variable', 'scope'])
+        # We might run `fill_blank_or_missing_rows` again if we get newly estimated S3 data from an as-yet unknown benchmark
         
-        test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
-        try:
-            df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
-        except KeyError:
-            logger.error(f"Tab {test_target_sheet} is required in input Excel file.")
-            raise
-
-        df_target_data = self._validate_target_data(df_target_data)
-
         # company_id, netzero_year, target_type, target_scope, target_start_year, target_base_year, target_base_year_qty, target_base_year_unit, target_year, target_reduction_ambition
-        # df_target_data now ready for conversion to model for each company
         return self._company_df_to_model(df_fundamentals, df_target_data, df_historic_data)
 
     def _validate_target_data(self, target_data: pd.DataFrame) -> pd.DataFrame:
@@ -716,6 +725,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         companies_data_dict = df_fundamentals.to_dict(orient="records")
         model_companies: List[ICompanyData] = []
+        base_year = self.projection_controls.BASE_YEAR
 
         for company_data in companies_data_dict:
             # company_data is a dict, not a dataframe
@@ -730,46 +740,41 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 if df_historic_data is not None:
                     # FIXME: Is this the best place to finalize base_year_production, ghg_s1s2, and ghg_s3 data?
                     # Something tells me these parameters should be removed in favor of querying historical data directly
-                    if not ColumnsConfig.BASE_YEAR_PRODUCTION in company_data:
-                        company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = df_historic_data.loc[
-                            company_data[ColumnsConfig.COMPANY_ID], 'Productions', 'production'][
-                                self.projection_controls.BASE_YEAR]
-                    if not ColumnsConfig.GHG_SCOPE12 in company_data:
-                        try:
+                    assert ColumnsConfig.BASE_YEAR_PRODUCTION not in company_data
+                    company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = (
+                        df_historic_data.loc[company_id, 'Productions', 'production'][base_year])
+                    assert ColumnsConfig.GHG_SCOPE12 not in company_data
+                    try:
+                        company_data[ColumnsConfig.GHG_SCOPE12] = (
+                            df_historic_data.loc[company_id, 'Emissions', 'S1S2'][base_year])
+                    except KeyError:
+                        if (company_id, 'Emissions', 'S2') not in df_historic_data.index:
+                            logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
                             company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1S2'][
-                                    self.projection_controls.BASE_YEAR]
-                        except KeyError:
-                            if (company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S2') not in df_historic_data.index:
-                                logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
-                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                    company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1'][
-                                        self.projection_controls.BASE_YEAR]
-                            else:
-                                # FIXME: This should not reach here because we should have calculated
-                                # S1S2 as an emissions total upstream from S1+S2.
-                                assert False
-                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                    company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S1'][
-                                        self.projection_controls.BASE_YEAR] + df_historic_data.loc[
-                                    company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S2'][
-                                        self.projection_controls.BASE_YEAR]
-                    if not ColumnsConfig.GHG_SCOPE3 in company_data:
-                        try:
-                            company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
-                                company_data[ColumnsConfig.COMPANY_ID], 'Emissions', 'S3'][
-                                    self.projection_controls.BASE_YEAR]
-                        except KeyError:
-                            # If there was no relevant historic data, don't try to use it
-                            pass
+                                company_id, 'Emissions', 'S1'][base_year]
+                        else:
+                            # FIXME: This should not reach here because we should have calculated
+                            # S1S2 as an emissions total upstream from S1+S2.
+                            assert False
+                            company_data[ColumnsConfig.GHG_SCOPE12] = (
+                                df_historic_data.loc[company_id, 'Emissions', 'S1'][base_year]
+                                + df_historic_data.loc[company_id, 'Emissions', 'S2'][base_year])
+                    assert ColumnsConfig.GHG_SCOPE3 not in company_data
+                    try:
+                        company_data[ColumnsConfig.GHG_SCOPE3] = (
+                            df_historic_data.loc[company_id, 'Emissions', 'S3'][base_year])
+                    except KeyError:
+                        # If there was no relevant historic data, don't try to use it
+                        pass
                     company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
-                        df_historic_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index()).dict()
+                        df_historic_data.loc[[company_id]].reset_index()).dict()
                 else:
                     company_data[ColumnsConfig.HISTORIC_DATA] = None
 
                 if df_target_data is not None and company_id in df_target_data.index:
                     company_data[ColumnsConfig.TARGET_DATA] = [td.dict() for td in self._convert_target_data(
-                        df_target_data.loc[[company_data[ColumnsConfig.COMPANY_ID]]].reset_index())]
+                        # don't let a single row of df_target_data become a pd.Series
+                        df_target_data.loc[[company_id]].reset_index())]
                 else:
                     company_data[ColumnsConfig.TARGET_DATA] = None
 

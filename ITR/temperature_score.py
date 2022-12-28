@@ -14,10 +14,14 @@ from .interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, Aggr
     ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-from .configs import TemperatureScoreConfig
+from .configs import TemperatureScoreConfig, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 from . import utils
 from .data.data_warehouse import DataWarehouse
-from .logger import logger
 
 class TemperatureScore(PortfolioAggregation):
     """
@@ -107,23 +111,26 @@ class TemperatureScore(PortfolioAggregation):
         :return: The aggregated temperature score for a company
         """
         # TODO: Notify user when S1+S2+S3 is built up from S1+S2 and S3 score of different ScoreResultTypes
+        # FIXME: the weighted average is achored on base_year weighting, not cumulative weighting
 
         # row.name is the MultiIndex tuple (company_id, scope)
         row_company_id = row.name
         if row[self.c.COLS.SCOPE] != EScope.S1S2S3:
             return row[self.c.COLS.TEMPERATURE_SCORE]
-        df = company_data.loc[row_company_id]
+        df = company_data.loc[[row_company_id]]
         if df[df[self.c.COLS.SCOPE].eq(EScope.S1S2S3) & df[self.c.COLS.TIME_FRAME].eq(row[self.c.COLS.TIME_FRAME])].size:
             return row[self.c.COLS.TEMPERATURE_SCORE]
         s1s2 = df[df[self.c.COLS.SCOPE].eq(EScope.S1S2) & df[self.c.COLS.TIME_FRAME].eq(row[self.c.COLS.TIME_FRAME])]
         s3 = df[df[self.c.COLS.SCOPE].eq(EScope.S3) & df[self.c.COLS.TIME_FRAME].eq(row[self.c.COLS.TIME_FRAME])]
+        if s3.empty:
+            # FIXME: should we return a DEFAULT temperature score if there's no S3 data?
+            return s1s2[self.c.COLS.TEMPERATURE_SCORE]
 
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
-            if s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4:
+            if (s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4).all():
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE]
             else:
-                company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
                 return ((s1s2[self.c.COLS.TEMPERATURE_SCORE] * s1s2[self.c.COLS.GHG_SCOPE12] +
                          s3[self.c.COLS.TEMPERATURE_SCORE] * s3[self.c.COLS.GHG_SCOPE3]) / company_emissions)
 
@@ -196,22 +203,22 @@ class TemperatureScore(PortfolioAggregation):
         data[self.c.SCORE_RESULT_TYPE] = pd.Categorical(data[self.c.SCORE_RESULT_TYPE], ordered=True,
                                                         categories=EScoreResultType.get_result_types())
 
-        idx = data[
-            [self.c.COLS.TIME_FRAME, self.c.COLS.GHG_SCOPE12, self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
-        ].groupby([self.c.COLS.TIME_FRAME])[self.c.SCORE_RESULT_TYPE].transform(max) == data[self.c.SCORE_RESULT_TYPE]
+        if False:
+            # FIXME: Either we need to iterate across all the data, weighting S3 data when appropriate,
+            # Or we can restrict to only "best" scores, returning a restricted set of data (and dropping
+            # data for scopes whose results are not as good as those from other scopes).  What we cannot
+            # do is to try to fill in the scores of the whole dataset from the restricted dataset.
+            idx = data[
+                [self.c.COLS.TIME_FRAME, self.c.COLS.GHG_SCOPE12, self.c.COLS.GHG_SCOPE3, self.c.COLS.TEMPERATURE_SCORE, self.c.SCORE_RESULT_TYPE]
+            ].groupby([self.c.COLS.TIME_FRAME])[self.c.SCORE_RESULT_TYPE].transform(max) == data[self.c.SCORE_RESULT_TYPE]
 
-        # FIXME: This goes to a lot of work to get the "best" SCORE_RESULT_TYPE
-        # and it's used as the reference for combing through "all" the data
-        # in get_ghc_temperature_score, but then we compute temperature scores
-        # for truly ALL rows.  Why waste time scoring "bad" SCORE_RESULT_TYPEs?
-        # We should be able to return company_timeframe_data and call it a day, no?
-        company_timeframe_data = data[idx]
+            company_timeframe_data = data[idx]
 
         # FIXME: from here to the end of the function, why not replace `data` with `company_timeframe_data`?
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             data[self.c.COLS.TEMPERATURE_SCORE] = data.apply(
-                lambda row: self.get_ghc_temperature_score(row, company_timeframe_data), axis=1
+                lambda row: self.get_ghc_temperature_score(row, data), axis=1 # used to iterate over company_timeframe_data
             ).astype('pint[delta_degC]')
         return data
 
@@ -237,8 +244,9 @@ class TemperatureScore(PortfolioAggregation):
 
         if self.scopes:
             if EScope.S1S2S3 in self.scopes:
-                self._check_column(data, self.c.COLS.GHG_SCOPE12)
-                self._check_column(data, self.c.COLS.GHG_SCOPE3)
+                # _check_column is for portfolio aggregation, and reports missing data but does not raise exceptions
+                # self._check_column(data, self.c.COLS.GHG_SCOPE12)
+                # self._check_column(data, self.c.COLS.GHG_SCOPE3)
                 data = self._calculate_company_score(data)
 
             # We need to filter the scopes again, because we might have had to add a scope in the preparation step
