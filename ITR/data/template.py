@@ -245,7 +245,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df1 = df_esg_has_intensity.reset_index().set_index(['company_id', 'report_date', 'scope', 'index']).iloc[:, (start_year_loc-2):]
             df2 = df_esg[df_esg.metric.eq('production')].set_index(['company_id', 'report_date'])
             df3 = df1.multiply(df2.iloc[:,(start_year_loc-2):].loc[df1.index.droplevel(['scope', 'index'])])
-            df4 = df3.astype('pint[t CO2e]').drop_duplicates()
+            if ITR.HAS_UNCERTAINTIES:
+                df4 = df3.astype('pint[t CO2e]') # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
+                # Also https://github.com/pandas-dev/pandas/issues/12693
+            else:
+                df4 = df3.astype('pint[t CO2e]').drop_duplicates()
             df5 = df4.droplevel(['company_id', 'report_date']).swaplevel() # .sort_index()
             df_esg.loc[df5.index.get_level_values('index'), 'metric'] = df5.index.get_level_values('scope')
             df5.index = df5.index.droplevel('scope')

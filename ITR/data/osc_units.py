@@ -263,7 +263,8 @@ def quantity(dimensionality: str) -> type:
             try:
                 q = Q_(value)
             except ValueError:
-                raise ValueError(f"cannot convert '{quantity}' to quantity")
+                breakpoint()
+                raise ValueError(f"cannot convert '{value}' to quantity")
             quantity = q
         elif isinstance(value, Quantity):
             quantity = value

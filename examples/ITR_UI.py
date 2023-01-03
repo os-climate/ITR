@@ -694,7 +694,7 @@ def update_graph(
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
     if ITR.HAS_UNCERTAINTIES:
-        scores_n, scores_s = [*map(list, zip(*map(lambda x: (x.m.n, x.m.s) if isinstance(x.m, UFloat) else (x.m, 0.0), scores)))]
+        scores_n, scores_s = [*map(list, zip(*map(lambda x: (x.m.n, x.m.s) if isinstance(x.m, ITR.UFloat) else (x.m, 0.0), scores)))]
         if sum(scores_s) == 0:
             df_temp_score = pd.DataFrame(
                 data={0: pd.Series(methods, dtype='string'),
@@ -785,7 +785,7 @@ def update_graph(
         scores = aggregated_scores.long.S3.all.score.m
     else:
         raise ValueError("No aggregated scores")
-    if ITR.HAS_UNCERTAINTIES and isinstance(scores, UFloat):
+    if ITR.HAS_UNCERTAINTIES and isinstance(scores, ITR.UFloat):
         scores = scores.n
 
     return (

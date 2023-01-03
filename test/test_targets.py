@@ -868,6 +868,8 @@ class TestTargets(unittest.TestCase):
         target_df = asPintDataFrame(pd.concat([pd.DataFrame(target_dict), pd.DataFrame(target_cumulative).astype('pint[Mt CO2e]'),
                                                pd.DataFrame(trajectory_dict), pd.DataFrame(trajectory_cumulative).astype('pint[Mt CO2e]')], axis=1))
         dequantified_df = target_df.pint.dequantify().droplevel(1, axis=1)
+        # May have uncertainties...
+        dequantified_df = dequantified_df.apply(lambda col: col if col.dtype=='float64' else ITR.nominal_values(col))
         fig_target = px.line(dequantified_df, y=dequantified_df.filter(regex="Target:").columns)
         fig_trajectory = px.line(dequantified_df, y=dequantified_df.filter(regex="Trajectory:").columns)
         fig_trajectory.update_traces(line={'dash':'dash'})

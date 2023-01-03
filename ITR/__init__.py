@@ -14,6 +14,8 @@ try:
     from .utils import umean
     HAS_UNCERTAINTIES = True
     _ufloat_nan = ufloat(np.nan, 0.0)
+    import pint
+    pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
 except (ImportError, ModuleNotFoundError):
     HAS_UNCERTAINTIES = False
     from numpy import isnan

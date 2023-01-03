@@ -163,3 +163,16 @@ def umean(unquantified_data):
 
     return wavg
 
+
+def uround(u, ndigits):
+    """
+    Round an uncertainty to ndigits.
+    """
+    if ITR.isnan(u.n):
+        return ITR._ufloat_nan
+    if ITR.isnan(u.s):
+        return ITR.ufloat(round(u.n, ndigits), u.s)
+    return ITR.ufloat(round(u.n, ndigits), round(u.s, ndigits))
+
+import uncertainties as un
+un.UFloat.__round__ = uround

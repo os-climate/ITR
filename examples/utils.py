@@ -5,6 +5,8 @@ import random
 
 from collections import ChainMap
 
+import ITR
+
 def print_aggregations(aggregations):
     aggregations = aggregations.dict()
     print("{:<10s} {:<10s} {}".format('Timeframe', 'Scope', 'Temp score'))
@@ -67,9 +69,9 @@ def plot_grouped_statistics(aggregated_portfolio, company_contributions, analysi
     timeframe = str(timeframe[0]).lower()
 
     sector_investments = company_contributions.groupby(grouping).investment_value.sum().values
-    sector_contributions = [v.m for v in company_contributions.groupby(grouping).contribution.sum().values]
+    sector_contributions = [ITR.nominal_values(v.m) for v in company_contributions.groupby(grouping).contribution.sum().values]
     sector_names = company_contributions.groupby(grouping).contribution.sum().keys()
-    sector_temp_scores = [v.m for scope in scopes for v in [aggregation.score for aggregation in aggregated_portfolio[timeframe][str(scope)]['grouped'].values()]]
+    sector_temp_scores = [ITR.nominal_values(v.m) for scope in scopes for v in [aggregation.score for aggregation in aggregated_portfolio[timeframe][str(scope)]['grouped'].values()]]
 
     sector_temp_scores, sector_names, sector_contributions, sector_investments = \
         zip(*sorted(zip(sector_temp_scores, sector_names, sector_contributions, sector_investments), reverse=True))
@@ -147,7 +149,7 @@ def plot_grouped_heatmap(grouped_aggregations, analysis_parameters):
         for j, item_group_1 in enumerate(groups[group_1]):
             key = item_group_1+'-'+item_group_2
             if key in combinations:
-                grid[i, j] = aggregations[item_group_1+'-'+item_group_2].score.m
+                grid[i, j] = ITR.nominal_values(aggregations[item_group_1+'-'+item_group_2].score.m)
             else:
                 grid[i, j] = np.nan
 
