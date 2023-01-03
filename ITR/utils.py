@@ -174,6 +174,8 @@ def uround(u, ndigits):
         return ITR.ufloat(round(u.n, ndigits), u.s)
     return ITR.ufloat(round(u.n, ndigits), round(u.s, ndigits))
 
-if ITR.HAS_UNCERTAINTIES:
+try:
     import uncertainties as un
     un.UFloat.__round__ = uround
+except (ImportError, ModuleNotFoundError):
+    pass
