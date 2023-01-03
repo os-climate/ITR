@@ -747,8 +747,8 @@ def update_graph(
     # input for the dash table
     df_for_output_table = filt_df.reset_index('company_id')[
         ['company_name', 'company_id', 'region', 'sector', 'cumulative_budget', 'investment_value',
-         'trajectory_score', 'trajectory_exceedance_year', 'trajectory_exceedance_year_2030', 'trajectory_exceedance_year_2050',
-         'target_score', 'target_exceedance_year', 'target_exceedance_year_2030', 'target_exceedance_year_2050',
+         'trajectory_score', 'trajectory_exceedance_year',
+         'target_score', 'target_exceedance_year',
          'temperature_score', 'scope']].copy()
     df_for_output_table['temperature_score'] = ITR.nominal_values(df_for_output_table['temperature_score'].astype(
         'pint[delta_degC]').values.quantity.m)  # f"{q:.2f~#P}"
@@ -765,13 +765,9 @@ def update_graph(
         columns={'company_name': 'Name', 'company_id': 'ISIN', 'region': 'Region', 'sector': 'Industry',
                  'cumulative_budget': 'Emissions budget', 'investment_value': 'Notional',
                  'trajectory_score': 'Historical emissions score',
-                 'trajectory_exceedance_year': 'Year historic emissions > budget',
-                 'trajectory_exceedance_year_2030': 'Year historic emissions > 2030 budget',
-                 'trajectory_exceedance_year_2050': 'Year historic emissions > 2050 budget',
+                 'trajectory_exceedance_year': 'Year historic emissions > 2050 budget',
                  'target_score': 'Target score',
-                 'target_exceedance_year': 'Year target emissions > budget',
-                 'target_exceedance_year_2030': 'Year target emissions > 2030 budget',
-                 'target_exceedance_year_2050': 'Year target emissions > 2050 budget',
+                 'target_exceedance_year': 'Year target emissions > 2050 budget',
                  'temperature_score': 'Weighted temperature score',
                  'scope': 'Scope'}, inplace=True)
 

@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 import ITR
 from ITR.data.osc_units import ureg, Q_, asPintSeries
-from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections
+from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, DF_ICompanyEIProjections
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
@@ -101,10 +101,15 @@ class DataWarehouse(ABC):
                         c.historic_data.emissions_intensities.S1S2S3 = []
                 if c.projected_intensities and c.projected_intensities.S3:
                     def _adjust_trajectories(trajectories, primary_scope_attr):
-                        if getattr (trajectories, primary_scope_attr):
-                            getattr (trajectories, primary_scope_attr).projections = list( map(ICompanyEIProjection.add, getattr (trajectories, primary_scope_attr).projections, trajectories.S3.projections))
-                        else:
+                        if not getattr (trajectories, primary_scope_attr):
                             setattr (trajectories, primary_scope_attr, trajectories.S3)
+                        else:
+                            if isinstance(trajectories.S3.projections, pd.Series):
+                                getattr (trajectories, primary_scope_attr).projections = (
+                                    getattr (trajectories, primary_scope_attr).projections + trajectories.S3.projections)
+                            else:
+                                breakpoint()
+                                getattr (trajectories, primary_scope_attr).projections = list( map(ICompanyEIProjection.add, getattr (trajectories, primary_scope_attr).projections, trajectories.S3.projections))
                             
                     _adjust_trajectories(c.projected_intensities, 'S1')
                     _adjust_trajectories(c.projected_intensities, 'S1S2')
@@ -117,13 +122,18 @@ class DataWarehouse(ABC):
                     def _align_and_sum_projected_targets(targets, primary_scope_attr):
                         primary_projections = getattr (targets, primary_scope_attr).projections
                         s3_projections = targets.S3.projections
-                        if primary_projections[0].year < s3_projections[0].year:
-                            while primary_projections[0].year < s3_projections[0].year:
-                                primary_projections = primary_projections[1:]
-                        elif primary_projections[0].year > s3_projections[0].year:
-                            while primary_projections[0].year > s3_projections[0].year:
-                                s3_projections = s3_projections[1:]
-                        getattr (targets, primary_scope_attr).projections = list( map(ICompanyEIProjection.add, primary_projections, s3_projections) )
+                        if isinstance(s3_projections, pd.Series):
+                            getattr (targets, primary_scope_attr).projections = (
+                                getattr (targets, primary_scope_attr).projections + s3_projections)
+                        else:
+                            breakpoint()
+                            if primary_projections[0].year < s3_projections[0].year:
+                                while primary_projections[0].year < s3_projections[0].year:
+                                    primary_projections = primary_projections[1:]
+                            elif primary_projections[0].year > s3_projections[0].year:
+                                while primary_projections[0].year > s3_projections[0].year:
+                                    s3_projections = s3_projections[1:]
+                            getattr (targets, primary_scope_attr).projections = list( map(ICompanyEIProjection.add, primary_projections, s3_projections) )
 
                     if c.projected_targets.S1:
                         _align_and_sum_projected_targets (c.projected_targets, 'S1')
@@ -221,26 +231,35 @@ class DataWarehouse(ABC):
                                                            [em_s3 for em_s3 in company.historic_data.emissions.S3
                                                             if em_s3.year >= company.historic_data.emissions.S1S2[0].year]) )
         company.historic_data.emissions_intensities.S3 = [IEIRealization(year=ei_r.year, value=bm_ei_s3[ei_r.year])
-                                              for ei_r in company.historic_data.emissions_intensities.S1S2
-                                              if ei_r.year>=base_year]
+                                                          for ei_r in company.historic_data.emissions_intensities.S1S2
+                                                          if ei_r.year>=base_year]
         company.historic_data.emissions_intensities.S1S2S3 = list( map(IEIRealization.add,
                                                                        [ei_s1s2 for ei_s1s2 in company.historic_data.emissions_intensities.S1S2
                                                                         if ei_s1s2.year >= base_year],
                                                                        [ei_s3 for ei_s3 in company.historic_data.emissions_intensities.S3
                                                                         if ei_s3.year >= company.historic_data.emissions_intensities.S1S2[0].year]) )
-        try:
-            company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
-                                                                     projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
-                                                                                  for eip in company.projected_intensities.S1S2.projections])
-            assert company.projected_intensities.S1S2.projections[0].year == company.projected_intensities.S3.projections[0].year
-            company.projected_intensities.S1S2S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
-                                                                         projections=list( map(ICompanyEIProjection.add,
-                                                                                               company.projected_intensities.S1S2.projections,
-                                                                                               company.projected_intensities.S3.projections) ))
-        except AttributeError:
-            company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1.ei_metric,
-                                                                     projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
-                                                                                  for eip in company.projected_intensities.S1.projections])
+        if isinstance(company.projected_intensities.S1S2, DF_ICompanyEIProjections):
+            company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
+                                                                        projections=bm_ei_s3[bm_ei_s3.index.intersection(company.projected_intensities.S1S2.projections.index)])
+            company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
+                                                                            projections=company.projected_intensities.S1S2.projections+company.projected_intensities.S3.projections)
+        elif isinstance(company.projected_intensities.S1, DF_ICompanyEIProjections):
+            company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=company.projected_intensities.S1.ei_metric,
+                                                                        projections=bm_ei_s3[bm_ei_s3.index.intersection(company.projected_intensities.S1.projections.index)])
+        else:
+            try:
+                company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
+                                                                         projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
+                                                                                      for eip in company.projected_intensities.S1S2.projections])
+                assert company.projected_intensities.S1S2.projections[0].year == company.projected_intensities.S3.projections[0].year
+                company.projected_intensities.S1S2S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
+                                                                             projections=list( map(ICompanyEIProjection.add,
+                                                                                                   company.projected_intensities.S1S2.projections,
+                                                                                                   company.projected_intensities.S3.projections) ))
+            except AttributeError:
+                company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1.ei_metric,
+                                                                         projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
+                                                                                      for eip in company.projected_intensities.S1.projections])
             # Without valid S2 data, we don't have S1S2S3
         logger.info(f"Added S3 estimates for {company.company_id} (sector = {sector}, region = {region})")
 
@@ -295,21 +314,15 @@ class DataWarehouse(ABC):
         df_budget = self._get_cumulative_emissions(
             projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
             projected_production=projected_production)
-        df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, None)
-        df_target_exceedance = self._get_exceedance_year(df_target, df_budget, None)
-        df_trajectory_exceedance_2030 = self._get_exceedance_year(df_trajectory, df_budget, 2030)
-        df_target_exceedance_2030 = self._get_exceedance_year(df_target, df_budget, 2030)
-        df_trajectory_exceedance_2050 = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR)
-        df_target_exceedance_2050 = self._get_exceedance_year(df_target, df_budget, self.company_data.projection_controls.TARGET_YEAR)
+        # df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, None)
+        # df_target_exceedance = self._get_exceedance_year(df_target, df_budget, None)
+        df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR)
+        df_target_exceedance = self._get_exceedance_year(df_target, df_budget, self.company_data.projection_controls.TARGET_YEAR)
         df_scope_data = pd.concat([df_trajectory.iloc[:, -1].rename(self.column_config.CUMULATIVE_TRAJECTORY),
                                    df_target.iloc[:, -1].rename(self.column_config.CUMULATIVE_TARGET),
                                    df_budget.iloc[:, -1].rename(self.column_config.CUMULATIVE_BUDGET),
-                                   df_trajectory_exceedance.rename(self.column_config.TRAJECTORY_EXCEEDANCE_YEAR),
-                                   df_target_exceedance.rename(self.column_config.TARGET_EXCEEDANCE_YEAR),
-                                   df_trajectory_exceedance_2030.rename(f"{self.column_config.TRAJECTORY_EXCEEDANCE_YEAR}_2030"),
-                                   df_target_exceedance_2030.rename(f"{self.column_config.TARGET_EXCEEDANCE_YEAR}_2030"),
-                                   df_trajectory_exceedance_2050.rename(f"{self.column_config.TRAJECTORY_EXCEEDANCE_YEAR}_2050"),
-                                   df_target_exceedance_2050.rename(f"{self.column_config.TARGET_EXCEEDANCE_YEAR}_2050")],
+                                   df_trajectory_exceedance.rename(f"{self.column_config.TRAJECTORY_EXCEEDANCE_YEAR}"),
+                                   df_target_exceedance.rename(f"{self.column_config.TARGET_EXCEEDANCE_YEAR}")],
                                   axis=1)
         df_company_data = df_company_data.join(df_scope_data).reset_index('scope')
         na_company_mask = df_company_data.scope.isna()

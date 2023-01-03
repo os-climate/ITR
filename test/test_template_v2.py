@@ -105,9 +105,13 @@ class TestTemplateProvider(unittest.TestCase):
                 continue
             scope, expected_projection = expected_projections[c.company_id]
             c_proj_targets = c.projected_targets[scope].projections
-            while c_proj_targets[0].year < 2022:
-                c_proj_targets = c_proj_targets[1:]
-            assert [round(x.value.m,4) for x in c_proj_targets] == expected_projection
+            if isinstance(c_proj_targets, pd.Series):
+                c_proj_targets = c_proj_targets[c_proj_targets.index>=2022]
+                assert [round(x, 4) for x in ITR.nominal_values(c_proj_targets.pint.m)] == expected_projection
+            else:
+                while c_proj_targets[0].year < 2022:
+                    c_proj_targets = c_proj_targets[1:]
+                    assert [ITR.nominal_values(round(x.value.m,4)) for x in c_proj_targets] == expected_projection
             
 
     def test_temp_score(self):
@@ -185,7 +189,8 @@ class TestTemplateProvider(unittest.TestCase):
                                        name=2025)
         production = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
         # FIXME: this test is broken until we fix data for POSCO
-        assert_pint_series_equal(self, production[:, EScope.S1S2], expected_data_2025, places=4)
+        # Tricky beacuse productions are all sorts of types, not a PintArray, and when filled with uncertainties...this is not technically a pint series array!
+        assert_pint_series_equal(self, production[:, EScope.S1S2].map(lambda x: Q_(ITR.nominal_values(x.m), x.u)), expected_data_2025, places=4)
 
     def test_get_cumulative_value(self):
         projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype='pint[t CO2/GJ]')

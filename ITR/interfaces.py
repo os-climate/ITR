@@ -7,7 +7,7 @@ from operator import add
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
 from typing import TYPE_CHECKING, Callable
-from pydantic import BaseModel, parse_obj_as, validator, root_validator
+from pydantic import BaseModel, parse_obj_as, validator, root_validator, ValidationError
 
 import ITR
 
@@ -21,6 +21,7 @@ LoggingConfig.add_config_to_logger(logger)
 
 import pint
 from pint.errors import DimensionalityError
+import pint_pandas
 
 class SortableEnum(Enum):
     def __str__(self):
@@ -218,6 +219,9 @@ class IBenchmarks(BaseModel):
         return getattr(self, item)
 
 
+# These IProductionBenchmarkScopes and IEIBenchmarkScopes are vessels for holding initialization data
+# The CompanyDataProvider methods create their own dataframes that are then used throughout
+
 class IProductionBenchmarkScopes(BaseModel):
     AnyScope: Optional[IBenchmarks]
     S1: Optional[IBenchmarks]
@@ -243,6 +247,9 @@ class IEIBenchmarkScopes(BaseModel):
 class ICompanyEIProjection(BaseModel):
     year: int
     value: Optional[EI_Quantity]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
 
     def __eq__(self, o):
         if self.year != o.year:
@@ -270,24 +277,77 @@ class ICompanyEIProjections(BaseModel):
         return getattr(self, item)
 
     def __str__(self):
-        series = (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{self.ei_metric}]"), index=idx))[-1]) \
-                 (list(zip(*[(x.year, round(x.value.m, 4)) for x in self.projections])))
+        # Work-around for https://github.com/hgrecco/pint/issues/1687
+        ei_metric = str(ureg.parse_units(self.ei_metric))
+        series = (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1]) \
+                 (list (zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in self.projections])) )
         return str(series)
+
+class DF_ICompanyEIProjections(BaseModel):
+    ei_metric: Optional[EI_Metric] = None
+    projections: pd.Series
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @validator('projections')
+    def allow_projections(cls, v):
+        if isinstance(v.pint, pint_pandas.pint_array.PintSeriesAccessor):
+            return v
+        raise ValidationError(f"{v} is not composed of a PintArray")
+
+    def __init__(self, icompany_ei_projections=None, *args, **kwargs):
+        projections = None
+        projections_gen = None
+        if icompany_ei_projections is not None:
+            ei_metric = icompany_ei_projections.ei_metric
+            projections_gen = icompany_ei_projections.projections
+        else:
+            ei_metric = kwargs['ei_metric']
+            if isinstance(projections, pd.Series):
+                projections = kwargs['projections']
+            else:
+                projections_gen = kwargs['projections']
+                if isinstance(projections_gen, pd.Series):
+                    projections = projections_gen
+                    projections_gen = None
+        if projections_gen is not None:
+            # Work-around for https://github.com/hgrecco/pint/issues/1687
+            ei_metric = str(ureg.parse_units(ei_metric))
+            years, values = list( map(list, zip(*[(x['year'], np.nan if x['value'] is None else pint.Quantity(x['value']).m_as(ei_metric))
+                                                  for x in projections_gen])) )
+            projections = pd.Series(PA_(values, dtype=ei_metric), index=pd.Index(years, name='year'), name='value')
+        super().__init__(ei_metric=ei_metric, projections=projections)
 
 
 class ICompanyEIProjectionsScopes(BaseModel):
-    S1: Optional[ICompanyEIProjections]
-    S2: Optional[ICompanyEIProjections]
-    S1S2: Optional[ICompanyEIProjections]
-    S3: Optional[ICompanyEIProjections]
-    S1S2S3: Optional[ICompanyEIProjections]
+    S1: Optional[DF_CompanyEIProjections] = None
+    S2: Optional[DF_CompanyEIProjections] = None
+    S1S2: Optional[DF_CompanyEIProjections] = None
+    S3: Optional[DF_CompanyEIProjections] = None
+    S1S2S3: Optional[DF_CompanyEIProjections] = None
+
+    def __init__(self, *args, **kwargs):
+        # We don't validate anything in the first step because incoming parameters are the wild west
+        # (dict, ICompanyEIProjections, pd.Series)
+        super().__init__()
+            
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                setattr(self, k, DF_ICompanyEIProjections(ei_metric=EI_Metric(v['ei_metric']), projections=v['projections']))
+            elif isinstance(v, ICompanyEIProjections):
+                setattr(self, k, DF_ICompanyEIProjections(icompany_ei_projections=v))
+            elif isinstance(v, pd.Series) or v is None:
+                setattr(self, k, v)
+            else:
+                assert False
+            # We could do a post-hoc validation here...
 
     def __getitem__(self, item):
         return getattr(self, item)
 
     def __str__(self):
-        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{getattr(self, scope).ei_metric}]"), index=idx))[-1])
-                             (list(zip(*[(x.year, round(x.value.m_as(getattr(self, scope).ei_metric), 4)) for x in getattr(self, scope).projections])))
+        dict_items = {scope: getattr(self, scope).projections
                       for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
                       if getattr(self, scope) is not None}
         return str(pd.DataFrame.from_dict(dict_items))
@@ -322,9 +382,11 @@ class IHistoricEmissionsScopes(BaseModel):
     S1S2S3: List[IEmissionRealization]
 
     def __str__(self):
-        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{getattr(self, scope).ei_metric}]"), index=idx))[-1])
-                             (list(zip(*[(x.year, round(x.value.m_as(getattr(self, scope).ei_metric), 4)) for x in getattr(self, scope).projections])))
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope).projections])))
                       for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      # Work-around for https://github.com/hgrecco/pint/issues/1687
+                      for ei_metric in [ str(ureg.parse_units(getattr(self, scope).ei_metric)) ]
                       if getattr(self, scope) is not None}
         return str(pd.DataFrame.from_dict(dict_items))
 
@@ -352,9 +414,11 @@ class IHistoricEIScopes(BaseModel):
     S1S2S3: List[IEIRealization]
 
     def __str__(self):
-        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{getattr(self, scope).ei_metric}]"), index=idx))[-1])
-                             (list(zip(*[(x.year, round(x.value.m_as(getattr(self, scope).ei_metric), 4)) for x in getattr(self, scope).projections])))
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope).projections])))
                       for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      # Work-around for https://github.com/hgrecco/pint/issues/1687
+                      for ei_metric in [ str(ureg.parse_units(getattr(self, scope).ei_metric)) ]
                       if getattr(self, scope) is not None}
         return str(pd.DataFrame.from_dict(dict_items))
 
@@ -478,11 +542,11 @@ class ICompanyData(BaseModel):
 
         if historic_data.productions:
             # Work-around for https://github.com/hgrecco/pint/issues/1687
-            production_metric = ureg.parse_units(production_metric)
+            production_metric = str(ureg.parse_units(production_metric))
             historic_data.productions = [IProductionRealization(year=p.year, value=_normalize (p.value, production_metric))
                                          for p in historic_data.productions]
         # Work-around for https://github.com/hgrecco/pint/issues/1687
-        ei_metric = ureg.parse_units(f"{emissions_metric} / ({production_metric})")
+        ei_metric = str(ureg.parse_units(f"{emissions_metric} / ({production_metric})"))
         for scope_name in EScope.get_scopes():
             if historic_data.emissions:
                 setattr(historic_data.emissions, scope_name, [IEmissionRealization(year=p.year, value=_normalize(p.value, emissions_metric))
@@ -594,10 +658,9 @@ class ICompanyAggregates(ICompanyData):
                'trajectory_exceedance_year_2050', 'target_exceedance_year_2050', 
                pre=True)
     def allow_NA(cls, v):
+        if isinstance(v, int):
+            return v
         if pd.isna(v):
             return None
-        elif isinstance(v, int):
-            return v
-        breakpoint()
         raise ValueError(f"{v} is not compatible with Int64 dtype")
 
