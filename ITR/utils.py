@@ -93,12 +93,23 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
         raise ValueError(f"Portfolio contains no company_id data")
 
+    # This transforms a dataframe of portfolio data into model data just so we can transform that back into a dataframe?!
+    # It does this for all scopes, not only the scopes of interest
     company_data = data_warehouse.get_preprocessed_company_data(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
     
     if len(company_data) == 0:
         raise ValueError("None of the companies in your portfolio could be found by the data providers")
 
     df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
+    # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
+    df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
+    s3_data_valid = df_company_data.ghg_s3.notna()
+    df_company_data.loc[s3_data_valid, 'ghg_s3'] = df_company_data.loc[s3_data_valid].ghg_s3.astype('pint[Mt CO2e]')
+    df_company_data.cumulative_budget = df_company_data.cumulative_budget.astype('pint[Mt CO2e]')
+    df_company_data.cumulative_target = df_company_data.cumulative_target.astype('pint[Mt CO2e]')
+    df_company_data.cumulative_trajectory = df_company_data.cumulative_trajectory.astype('pint[Mt CO2e]')
+    df_company_data.benchmark_temperature = df_company_data.benchmark_temperature.astype('pint[delta_degC]')
+    df_company_data.benchmark_global_budget = df_company_data.benchmark_global_budget.astype('pint[Gt CO2e]')
     portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop("company_name", axis=1), how="left",
                               on=["company_id"]).set_index(['company_id', 'scope'])
     return portfolio_data

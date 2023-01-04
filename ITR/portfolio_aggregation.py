@@ -126,8 +126,10 @@ class PortfolioAggregation(ABC):
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    # Calculate the total emissions of all companies
-                    emissions = asPintSeries(data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12]).sum() + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).sum()
+                    # Calculate the total emissions of all companies.
+                    # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
+                    emissions = (asPintSeries(data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12]).fillna(0).sum()
+                                 + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).fillna(0).sum())
                     # See https://github.com/hgrecco/pint-pandas/issues/130
                     weights_dtype = f"pint[{emissions.u}]"
                     weights_series = ((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0)
@@ -165,7 +167,8 @@ class PortfolioAggregation(ABC):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     owned_emissions = asPintSeries(data[self.c.COLS.OWNED_EMISSIONS])
-                    total_emissions = owned_emissions.sum()
+                    # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
+                    total_emissions = owned_emissions.fillna(0).sum()
                     result = data[input_column] * owned_emissions / total_emissions
                 return result
             except ZeroDivisionError:

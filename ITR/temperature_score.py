@@ -91,7 +91,7 @@ class TemperatureScore(PortfolioAggregation):
                     self.c.CONTROLS_CONFIG.tcre_multiplier)
 
             # If trajectory data has run away (because trajectory projections are positive, not negative, use only target results
-            if trajectory_overshoot_ratio > 10.0:
+            if trajectory_overshoot_ratio > 10.0 or ITR.isnan(trajectory_temperature_score):
                 score = target_temperature_score
                 score_result_type = EScoreResultType.TARGET_ONLY
             else:
@@ -128,6 +128,7 @@ class TemperatureScore(PortfolioAggregation):
 
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
+            # FIXME: These should use cumulative emissions, not the anachronistic ghg_s1s2 and ghg_s33!
             if (s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4).all():
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE]
             else:
@@ -273,7 +274,8 @@ class TemperatureScore(PortfolioAggregation):
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
                                                           self.aggregation_method) # .astype('pint[delta_degC]')
         assert isinstance(weighted_scores.dtype, PintType)
-        data[self.c.COLS.CONTRIBUTION_RELATIVE] = (weighted_scores / weighted_scores.sum()).astype('pint[percent]')
+        # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
+        data[self.c.COLS.CONTRIBUTION_RELATIVE] = (weighted_scores / weighted_scores.fillna(0).sum()).astype('pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -286,7 +288,8 @@ class TemperatureScore(PortfolioAggregation):
                                for k,v in contribution.items()}
                               for contribution in data_contributions]
         aggregations = (Aggregation(
-            score=weighted_scores.sum(),
+            # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
+            score=weighted_scores.fillna(0).sum(),
             # proportion is not declared by anything to be a percent, so we make it a number from 0..1
             proportion=len(weighted_scores) / total_companies,
             contributions=[AggregationContribution.parse_obj(contribution) for contribution in contribution_dicts]), \
@@ -319,8 +322,9 @@ class TemperatureScore(PortfolioAggregation):
             filtered_data[self.c.COLS.CONTRIBUTION] = self._get_aggregations(filtered_data, total_companies)
             mask = filtered_data['score_result_type'].eq(EScoreResultType.DEFAULT)
             filtered_data.loc[mask, self.c.COLS.TEMPERATURE_SCORE] = self.fallback_score
+            # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
             influence_percentage = self._calculate_aggregate_score(
-                filtered_data, self.c.COLS.CONTRIBUTION_RELATIVE, self.aggregation_method).sum()
+                filtered_data, self.c.COLS.CONTRIBUTION_RELATIVE, self.aggregation_method).fillna(0).sum()
             score_aggregation = ScoreAggregation(
                 grouped={},
                 all=score_aggregation_all,
@@ -338,7 +342,7 @@ class TemperatureScore(PortfolioAggregation):
                 group_name_joined = group_names if type(group_names) == str else "-".join(
                     [str(group_name) for group_name in group_names])
                 score_aggregation.grouped[group_name_joined], _, _ = self._get_aggregations(group.copy(),
-                                                                                                total_companies)
+                                                                                            total_companies)
             return score_aggregation
         else:
             return None

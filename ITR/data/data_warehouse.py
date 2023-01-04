@@ -212,9 +212,13 @@ class DataWarehouse(ABC):
             return
         projected_production = self.benchmark_projected_production.get_company_projected_production(company_info_at_base_year)
         bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S3)])
-        s3_emissions = projected_production.iloc[0].mul(bm_ei_s3)
+        # Penalize non-disclosure by assuming 2x aligned S3 emissions.  That's still likely undercounting, because
+        # most non-disclosing companies are nowhere near the reduction rates of the benchmarks.
+        s3_emissions = projected_production.iloc[0].mul(bm_ei_s3) * 2
         try:
             s3_emissions = s3_emissions.astype('pint[Mt CO2]')
+            if ITR.HAS_UNCERTAINTIES:
+                s3_emissions = s3_emissions.map(lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0) if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype('pint[Mt CO2e]')
         except pint.errors.DimensionalityError:
             # Don't know how to deal with this funky intensity value
             logger.error(f"Production type {projected_production.iloc[0].dtype.units:~P} and intensity type {bm_ei_s3.dtype.units} don't multiply to t CO2e")
@@ -240,17 +244,18 @@ class DataWarehouse(ABC):
                                                                         if ei_s3.year >= company.historic_data.emissions_intensities.S1S2[0].year]) )
         if isinstance(company.projected_intensities.S1S2, DF_ICompanyEIProjections):
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
-                                                                        projections=bm_ei_s3[bm_ei_s3.index.intersection(company.projected_intensities.S1S2.projections.index)])
+                                                                        projections=s3_emissions.div(projected_production.iloc[0]))
             company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
                                                                             projections=company.projected_intensities.S1S2.projections+company.projected_intensities.S3.projections)
         elif isinstance(company.projected_intensities.S1, DF_ICompanyEIProjections):
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=company.projected_intensities.S1.ei_metric,
-                                                                        projections=bm_ei_s3[bm_ei_s3.index.intersection(company.projected_intensities.S1.projections.index)])
+                                                                        projections=s3_emissions.div(projected_production.iloc[0]))
         else:
             try:
                 company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
-                                                                         projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
-                                                                                      for eip in company.projected_intensities.S1S2.projections])
+                                                                         projections=[ICompanyEIProjection(year=eip.year, value=s3_emissions[eip.year]/projected_production.iloc[0][eip.year])
+                                                                                      for eip in company.projected_intensities.S1S2.projections
+                                                                                      if eip.year in s3.index])
                 assert company.projected_intensities.S1S2.projections[0].year == company.projected_intensities.S3.projections[0].year
                 company.projected_intensities.S1S2S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
                                                                              projections=list( map(ICompanyEIProjection.add,
@@ -258,8 +263,9 @@ class DataWarehouse(ABC):
                                                                                                    company.projected_intensities.S3.projections) ))
             except AttributeError:
                 company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1.ei_metric,
-                                                                         projections=[ICompanyEIProjection(year=eip.year, value=bm_ei_s3[eip.year])
-                                                                                      for eip in company.projected_intensities.S1.projections])
+                                                                         projections=[ICompanyEIProjection(year=eip.year, value=s3_emissions[eip.year]/projected_production.iloc[0][eip.year])
+                                                                                      for eip in company.projected_intensities.S1.projections
+                                                                                      if eip.year in s3.index])
             # Without valid S2 data, we don't have S1S2S3
         logger.info(f"Added S3 estimates for {company.company_id} (sector = {sector}, region = {region})")
 

@@ -638,15 +638,9 @@ class ICompanyAggregates(ICompanyData):
     benchmark_global_budget: EmissionsQuantity
     scope: EScope
 
-    # The first year that cumulative_projections exceeds cumulative_budget
+    # The first year that cumulative_projections exceeds the 2050 cumulative_budget
     trajectory_exceedance_year: Optional[int]
     target_exceedance_year: Optional[int]
-    # The first year that cumulative_projections exceeds the 2030 cumulative_budget
-    trajectory_exceedance_year_2030: Optional[int]
-    target_exceedance_year_2030: Optional[int]
-    # The first year that cumulative_projections exceeds the 2050 cumulative_budget
-    trajectory_exceedance_year_2050: Optional[int]
-    target_exceedance_year_2050: Optional[int]
 
     # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
     # projected_targets: Optional[ICompanyEIProjectionsScopes]
@@ -654,8 +648,6 @@ class ICompanyAggregates(ICompanyData):
 
     # Custom validator here
     @validator('trajectory_exceedance_year', 'target_exceedance_year',
-               'trajectory_exceedance_year_2030', 'target_exceedance_year_2030', 
-               'trajectory_exceedance_year_2050', 'target_exceedance_year_2050', 
                pre=True)
     def allow_NA(cls, v):
         if isinstance(v, int):

@@ -124,13 +124,21 @@ class TestTemplateProvider(unittest.TestCase):
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
-        # verify company scores: uncertainties makes expected[2] = 2.630169813911337
-        expected = pd.Series([2.282152261331467, 2.1493519311051412, 1.92594402, 2.6668124335887886,
-                              3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
-                              ], dtype='pint[delta_degC]')
+        # verify company scores
+        if ITR.HAS_UNCERTAINTIES:
+            expected = pd.Series([2.282152261331467, 2.1493519311051412, 2.630169813911337, 2.6668124335887886,
+                                  3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
+                                  ], dtype='pint[delta_degC]')
+        else:
+            expected = pd.Series([2.282152261331467, 2.1493519311051412, 1.92594402, 2.6668124335887886,
+                                  3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
+                                  ], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, pd.Series(ITR.nominal_values(scores.temperature_score.pint.m), dtype='pint[delta_degC]'), expected, places=2)
-        # verify that results exist; uncertainties makes score = 2.56633381
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.42548865, ureg.delta_degC), places=2)
+        # verify that results exist
+        if ITR.HAS_UNCERTAINTIES:
+            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.56633381, ureg.delta_degC), places=2)
+        else:
+            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.42548865, ureg.delta_degC), places=2)
 
         # Calculate Temp Scores
         temp_score_s1 = TemperatureScore(
@@ -142,11 +150,17 @@ class TestTemplateProvider(unittest.TestCase):
         scores_s1 = temp_score_s1.calculate(portfolio_data)
         agg_scores_s1 = temp_score_s1.aggregate_scores(scores_s1)
 
-        # verify company scores; ALLETE, Inc. (US0185223007) and Ameren Corp. (US0236081024) have no S1 data; uncertainties makes expected[2] = 2.05035998
-        expected_s1 = pd.Series([2.2842705319208187, 3.2, 1.98174, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
+        # verify company scores; ALLETE, Inc. (US0185223007) and Ameren Corp. (US0236081024) have no S1 data
+        if ITR.HAS_UNCERTAINTIES:
+            expected_s1 = pd.Series([2.2842705319208187, 3.2, 2.05035998, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
+        else:
+            expected_s1 = pd.Series([2.2842705319208187, 3.2, 1.98174, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, pd.Series(ITR.nominal_values(scores_s1.temperature_score.pint.m), dtype='pint[delta_degC]'), expected_s1, places=2)
-        # verify that results exist; uncertainties make score = 2.57712097
-        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.56339852, ureg.delta_degC), places=2)
+        # verify that results exist
+        if ITR.HAS_UNCERTAINTIES:
+            self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.57712097, ureg.delta_degC), places=2)
+        else:
+            self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.56339852, ureg.delta_degC), places=2)
         
 
     def test_get_projected_value(self):

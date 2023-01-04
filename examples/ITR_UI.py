@@ -134,7 +134,7 @@ def recalculate_individual_itr(eibm):
     return df
 
 
-initial_portfolio = recalculate_individual_itr('OECM_PC')
+initial_portfolio = recalculate_individual_itr('OECM_S3')
 amended_portfolio_global = initial_portfolio.copy()
 filt_df = initial_portfolio.copy()
 
@@ -142,26 +142,39 @@ filt_df = initial_portfolio.copy()
 # But not so plotly.  This function attempts to dequantify all units and return the magnitudes in their natural base units.
 
 def dequantify_plotly(px_func, df, **kwargs):
+    # `df` arrives with columns like "plot_in_x" and "plot_in_y"
+    # `kwargs` arrives as a dict with things like 'x': 'plot_in_x' and 'y':'plot_in_y'
     new_df = df.copy()
+    new_kwargs = dict(kwargs)
     for col in ['x', 'y']:
         s = df[kwargs[col]]
         if isinstance(s.dtype, PintType):
-            new_df[kwargs[col]] = ITR.nominal_values(s.values.quantity.to_base_units().m)
+            pass
         elif s.map(lambda x: isinstance(x, Quantity)).any():
             item0 = s.values[0]
             s = s.astype(f"pint[{item0.u}]")
-            new_df[kwargs[col]] = ITR.nominal_values(s.values.quantity.m)
+        else:
+            assert kwargs[col] in df.columns
+            new_kwargs[col] = kwargs[col]
+            continue
+        new_kwargs[col] = f"{kwargs[col]} (units = {str(s.pint.u)})"
+        new_df[new_kwargs[col]] = ITR.nominal_values(s.pint.m)
+        if ITR.HAS_UNCERTAINTIES:
+            new_kwargs[f"error_{col}"] = f"error_{kwargs[col]}"
+            new_df[new_kwargs[f"error_{col}"]] = ITR.std_devs(s.pint.m)
     if 'hover_data' in kwargs:
+        # No error terms in hover data
         for col in kwargs['hover_data']:
             s = df[col]
             if isinstance(s.dtype, PintType):
-                new_df[col] = ITR.nominal_values(s.values.quantity.to_base_units().m)
+                new_df[col] = ITR.nominal_values(s.pint.m)
             elif s.map(lambda x: isinstance(x, Quantity)).any():
                 item0 = s.values[0]
                 s = s.astype(f"pint[{item0.u}]")
-                new_df[col] = ITR.nominal_values(s.values.quantity.m)
-
-    return px_func (new_df, **kwargs)
+                new_df[col] = ITR.nominal_values(s.pint.m)
+    # **kwargs typically {'x': 'cumulative_target', 'y': 'cumulative_budget', 'size': 'investment_value', 'color': 'sector', 'labels': {'color': 'Sector'}, 'hover_data': ['company_name', 'investment_value', 'temperature_score'], 'title': 'Overview of portfolio'}
+    
+    return px_func (new_df, **new_kwargs)
 
 
 # nice cheatsheet for managing layout via className attribute: https://hackerthemes.com/bootstrap-cheatsheet/
@@ -284,7 +297,7 @@ macro = dbc.Row(
                                  {'label': 'TPI 2 degrees', 'value': 'TPI_2_degrees'},
                                  {'label': 'TPI below 2 degrees', 'value': 'TPI_below_2_degrees'}
                              ],
-                             value='OECM_PC',
+                             value='OECM_S3',
                              clearable=False,
                              placeholder="Select Emissions Intensity benchmark"),
                 html.Div(id='hidden-div', style={'display': 'none'}),
@@ -570,6 +583,9 @@ app.layout = dbc.Container(  # always start with container
         Input("scenarios-cutting", "value"),  # winzorization slide
     ],
 )
+
+# FIXME: This update procedure has no concept of scopes, which means its behavior is ill-defined
+# when our analytics return multi-scope answers (which is now the norm).
 def update_graph(
         te_sc,
         sec, reg,
@@ -596,7 +612,7 @@ def update_graph(
     amended_portfolio_global = recalculate_individual_itr(eibm)
 
     temp_score_mask = (amended_portfolio_global.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
-                amended_portfolio_global.temperature_score <= Q_(te_sc[1], 'delta_degC'))
+        amended_portfolio_global.temperature_score <= Q_(te_sc[1], 'delta_degC'))
     # Dropdown filters
     if sec == 'all_values':
         sec_mask = (amended_portfolio_global.sector != 'dummy')  # select all
@@ -609,12 +625,14 @@ def update_graph(
     filt_df = amended_portfolio_global.loc[temp_score_mask & sec_mask & reg_mask]  # filtering
     if len(filt_df) == 0:  # if after filtering the dataframe is empty
         raise PreventUpdate
-    aggregated_scores = temperature_score.aggregate_scores(filt_df)  # calc temp score for companies left in pf
+    aggregated_scores = temperature_score.aggregate_scores(filt_df)  # calc temp score for companies left in portfolio
 
-    logger.info(f"ready to plot!  {filt_df}")
+    logger.info(f"ready to plot!\n{filt_df}")
 
     # Scatter plot
-    fig1 = dequantify_plotly(px.scatter, filt_df, x="cumulative_target", y="cumulative_budget",
+    filt_df.loc[:, 'cumulative_usage'] = (filt_df.cumulative_target.fillna(filt_df.cumulative_trajectory)
+                                          +filt_df.cumulative_trajectory.fillna(filt_df.cumulative_target))/2.0
+    fig1 = dequantify_plotly(px.scatter, filt_df, x="cumulative_usage", y="cumulative_budget",
                              size="investment_value",
                              color="sector", labels={"color": "Sector"},
                              hover_data=["company_name", "investment_value", "temperature_score"],
@@ -635,7 +653,7 @@ def update_graph(
                                                       "Covered by<Br>emissions and targets"))
     dfg = coverage.groupby('coverage_category').count().reset_index()
     dfg['portfolio']='Portfolio'
-    fig5 = dequantify_plotly (px.bar, dfg, x='portfolio',y="company_id", color="coverage_category",text='company_id',title="Coverage of companies in portfolio")
+    fig5 = dequantify_plotly (px.bar, dfg, x='portfolio',y="company_id", color="coverage_category",title="Coverage of companies in portfolio")
     fig5.update_xaxes(visible=False) # hide axis
     fig5.update_yaxes(visible=False) # hide axis
     fig5.update_layout({'legend_title_text': '','transition_duration':500, 'plot_bgcolor':'white'})
@@ -645,7 +663,7 @@ def update_graph(
     trace = go.Heatmap(
         x=filt_df.sector,
         y=filt_df.region,
-        z=ITR.nominal_values(filt_df.temperature_score.map(lambda x: x.m)),
+        z=ITR.nominal_values(filt_df.temperature_score.pint.m),
         type='heatmap',
         colorscale='Temps',
         zmin = 1.2, zmax = 2.5,
@@ -661,7 +679,7 @@ def update_graph(
         0]  # taking just 1st word for the bar chart
     high_score_fig = dequantify_plotly(px.bar, df_high_score,
                                        x="company_name",
-                                       y="temperature_score", text="temperature_score",
+                                       y="temperature_score",
                                        color="sector", title="Highest temperature scores by company")
     high_score_fig.update_traces(textposition='inside', textangle=0)
     high_score_fig.update_yaxes(title_text='Temperature score', range=[1, 8.5])
@@ -670,6 +688,7 @@ def update_graph(
                                  legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5))
 
     # Calculate different weighting methods
+    # FIXME: this is utter confusion with respect to scopes!
     def agg_score(agg_method):
         global EI_bm
 
@@ -685,7 +704,7 @@ def update_graph(
             agg_score = aggregated_scores.long.S1.all.score
         if aggregated_scores.long.S1S2S3:
             agg_score = agg_score + aggregated_scores.long.S1S2S3.all.score
-        if aggregated_scores.long.S3:
+        elif aggregated_scores.long.S3:
             agg_score = agg_score + aggregated_scores.long.S3.all.score
         elif agg_score == agg_zero:
             return []
@@ -750,14 +769,9 @@ def update_graph(
          'trajectory_score', 'trajectory_exceedance_year',
          'target_score', 'target_exceedance_year',
          'temperature_score', 'scope']].copy()
-    df_for_output_table['temperature_score'] = ITR.nominal_values(df_for_output_table['temperature_score'].astype(
-        'pint[delta_degC]').values.quantity.m)  # f"{q:.2f~#P}"
-    df_for_output_table['trajectory_score'] = pd.to_numeric(ITR.nominal_values(
-        df_for_output_table['trajectory_score'].astype('pint[delta_degC]').values.quantity.m)).round(2)
-    df_for_output_table['target_score'] = pd.to_numeric(ITR.nominal_values(
-        df_for_output_table['target_score'].astype('pint[delta_degC]').values.quantity.m)).round(2)
-    df_for_output_table['cumulative_budget'] = pd.to_numeric(ITR.nominal_values(
-        df_for_output_table['cumulative_budget'].astype('pint[Mt CO2]').values.quantity.m)).round(2)
+    for col in ['temperature_score', 'trajectory_score', 'target_score', 'cumulative_budget']:
+        df_for_output_table[col] = ITR.nominal_values(df_for_output_table[col].pint.m).round(2)  # f"{q:.2f~#P}"
+        # pd.to_numeric(...).round(2)
     df_for_output_table['investment_value'] = df_for_output_table['investment_value'].apply(
         lambda x: "${:,.1f} Mn".format((x / 1000000)))  # formating column
     df_for_output_table['scope'] = df_for_output_table['scope'].map(str)
@@ -771,6 +785,7 @@ def update_graph(
                  'temperature_score': 'Weighted temperature score',
                  'scope': 'Scope'}, inplace=True)
 
+    # FIXME: this is utter confusion with respect to scopes!
     if aggregated_scores.long.S1S2:
         scores = aggregated_scores.long.S1S2.all.score.m
     elif aggregated_scores.long.S1:

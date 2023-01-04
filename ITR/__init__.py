@@ -25,6 +25,8 @@ except (ImportError, ModuleNotFoundError):
         return x
 
     def std_devs(x):
+        if isinstance(x, float):
+            return 0
         return [0] * len(x)
 
     def uarray(nom_vals, std_devs):
