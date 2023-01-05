@@ -34,7 +34,7 @@ setup(
                       'pint-pandas>=0.2',
                       'pip>=22.0.3',
                       'pydantic>=1.8.2',
-                      'setuptools>=60.9.3',
+                      'setuptools>=65.5.1',
                       'wheel>=0.36.2',
                       'xlrd>=2.0.1',
                       ],
