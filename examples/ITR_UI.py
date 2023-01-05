@@ -160,6 +160,8 @@ def dequantify_plotly(px_func, df, **kwargs):
         new_kwargs[col] = f"{kwargs[col]} (units = {str(s.pint.u)})"
         new_df[new_kwargs[col]] = ITR.nominal_values(s.pint.m)
         if ITR.HAS_UNCERTAINTIES:
+            # uncertainties in production affect cumulative_budget
+            # uncertainties in emissinos affect cumulative_usage
             new_kwargs[f"error_{col}"] = f"error_{kwargs[col]}"
             new_df[new_kwargs[f"error_{col}"]] = ITR.std_devs(s.pint.m)
     if 'hover_data' in kwargs:

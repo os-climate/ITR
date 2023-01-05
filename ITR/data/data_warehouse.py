@@ -292,7 +292,12 @@ class DataWarehouse(ABC):
                 company_info_at_base_year) # .sort_index()
 
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
-        # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?
+        # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?  Answer: because the following is inscrutible
+        # (lambda xx: pd.DataFrame(data=list(xx.map(lambda x: { 'scope': x.name } | x.to_dict())), index=xx.index)) \
+        #     (df_company_data.projected_intensities
+        #      .map(lambda x: [pd.Series(x[scope]['projections'], name=getattr(EScope, scope))
+        #                      for scope in ['S1', 'S1S2', 'S3', 'S1S2S3']
+        #                      if x[scope] is not None]).explode()).set_index('scope', append=True)
         projected_trajectories = self.company_data.get_company_projected_trajectories(valid_company_ids)
         df_trajectory = self._get_cumulative_emissions(
             projected_ei=projected_trajectories,
