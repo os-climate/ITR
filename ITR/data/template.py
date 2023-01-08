@@ -6,7 +6,7 @@ import numpy as np
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintDataFrame
+from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintSeries, asPintDataFrame
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
@@ -21,12 +21,8 @@ from ITR.interfaces import ICompanyData, EScope, IHistoricEmissionsScopes, IProd
     IProjection
 from ITR.utils import get_project_root
 
-# The starting year of annual data for the template (may run through 2021, 2022, or later)
-TEMPLATE_START_YEAR = 2016
-
 pkg_root = get_project_root()
 df_country_regions = pd.read_csv(f"{pkg_root}/data/input/country_region_info.csv")
-
 
 def ITR_country_to_region(country:str) -> str:
     if not isinstance(country, str):
@@ -34,6 +30,8 @@ def ITR_country_to_region(country:str) -> str:
             return 'Global'
         raise ValueError(f"ITR_country_to_region received invalid valud {country}")
     if len(country)==2:
+        if country=='UK':
+            country='GB'
         regions = df_country_regions[df_country_regions.alpha_2==country].region_ar6_10
     elif len(country)==3:
         regions = df_country_regions[df_country_regions.alpha_3==country].region_ar6_10
@@ -195,6 +193,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
     def __init__(self, excel_path: str,
                  column_config: Type[ColumnsConfig] = ColumnsConfig,
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
+        self.template_v2_start_year = None
         self.projection_controls = projection_controls
         self._companies = self._convert_from_template_company_data(excel_path)
         super().__init__(self._companies, column_config, projection_controls)
@@ -209,26 +208,26 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_esg_has_intensity = df_esg_has_intensity.assign(scope=lambda x: list(map(lambda y: y[0], x['metric'].str.split(' '))))
         missing_production_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.eq('production')].company_id.unique())
         df_esg_missing_production = df_esg[df_esg['company_id'].isin(missing_production_idx)]
-        start_year_loc = df_esg.columns.get_loc(TEMPLATE_START_YEAR)
+        start_year_loc = df_esg.columns.get_loc(self.template_v2_start_year)
         if len(df_esg_missing_production):
             df_intensities = df_esg_has_intensity.rename(columns={'metric':'intensity_metric', 'scope':'metric'})
-            df_intensities = df_intensities.reset_index(drop=False).set_index(['company_id', 'metric'])
-            df_emissions = df_esg_missing_production.set_index(['company_id', 'metric'])
+            df_intensities = df_intensities.reset_index(drop=False).set_index(['company_id', 'metric', 'report_date'])
+            df_emissions = df_esg_missing_production.set_index(['company_id', 'metric', 'report_date'])
             common_idx = df_emissions.index.intersection(df_intensities.index)
             df_emissions = df_emissions.loc[common_idx]
             df_intensities = df_intensities.loc[common_idx]
             df_emissions.loc[:, 'index'] = df_intensities.loc[:, 'index']
-            df_intensities = df_intensities.set_index('index', append=True).iloc[:, (start_year_loc-1):]
-            df_emissions = df_emissions.set_index('index', append=True).iloc[:, (start_year_loc-2):]
-            df_intensities = asPintDataFrame(df_intensities.T)
-            df_emissions = asPintDataFrame(df_emissions.T)
-            df_productions = df_emissions.divide(df_intensities, axis=1)
+            df_intensities = df_intensities.set_index('index', append=True).iloc[:, (start_year_loc-2):]
+            df_emissions = df_emissions.set_index('index', append=True).iloc[:, (start_year_loc-3):]
+            df_intensities_t = asPintDataFrame(df_intensities.T)
+            df_emissions_t = asPintDataFrame(df_emissions.T)
+            df_productions_t = df_emissions_t.divide(df_intensities_t, axis=1)
             # FIXME: need to reconcile what happens if multiple scopes all yield the same production metrics
-            df_productions = df_productions.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype)[5:-1]).to_reduced_units().u}]")).dropna(axis=1, how='all')
+            df_productions_t = df_productions_t.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype)[5:-1]).to_reduced_units().u}]")).dropna(axis=1, how='all')
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # pint units don't like being twisted from columns to rows, but it's ok
-                df_productions = df_productions.T.droplevel(['company_id', 'metric'])
+                df_productions = df_productions_t.T.droplevel(['company_id', 'metric', 'report_date'])
             production_idx = df_productions.index
             df_esg.loc[production_idx] = pd.concat([df_esg.loc[production_idx].iloc[:, 0:start_year_loc], df_productions], axis=1)
             df_esg.loc[production_idx, 'metric'] = 'production'
@@ -255,12 +254,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df5.index = df5.index.droplevel('scope')
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                # Change from emissions intensity metrics to emissinos metrics; we know this will trigger a warning
+                # Change from emissions intensity metrics to emissions metrics; we know this will trigger a warning
                 df_esg.loc[df5.index, df_esg.columns[start_year_loc:].to_list()] = df5[df_esg.columns[start_year_loc:].to_list()]
-            # Set emissions metrics we just derived (if necessary)
+            # Set emissions metrics we just derived (if necessary), both in df_fundamentals (for targets, globally) and df_esg (for projections etc)
             for idx in df5.index:
                 if pd.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC]):
                     df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC] = str(df_esg.loc[idx].iloc[-1].u)
+                df_esg.loc[idx, 'unit'] = str(df_esg.loc[idx].iloc[-1].u)
         return df_esg
 
     def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
@@ -299,6 +299,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             except KeyError as e:
                 logger.error(f"Tab {esg_data_sheet} is required in input Excel file.")
                 raise KeyError
+            if 'base_year' in df_esg.columns:
+                self.template_v2_start_year = df_esg.columns[df_esg.columns.get_loc('base_year')+1]
+            else:
+                self.template_v2_start_year = df_esg.columns[df_esg.columns.map(lambda col: isinstance(col, int))][0]
             # In the V2 template, the COMPANY_NAME and COMPANY_ID are merged cells and need to be filled forward
             # For convenience, we also fill forward Report Date, which is often expressed in the first row of a fresh report,
             # but sometimes omitted in subsequent rows (because it's "redundant information")
@@ -358,7 +362,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # our base currency is USD, but european reports may be denominated in EUR.  We crosswalk from report_base to pint_base currency.
 
                 def convert_prefix_to_scalar(x):
-                    prefix, unit, suffix = ureg.parse_unit_name(x)[0]
+                    try:
+                        prefix, unit, suffix = ureg.parse_unit_name(x)[0]
+                    except IndexError:
+                        raise f"Currency {x} is not in the registry; please update registry or remove data row"
                     return unit, ureg._prefixes[prefix].value if prefix else 1.0
 
                 fx_df = df_fundamentals.loc[fx_quote, ['report_date', 'currency', 'fx_quote', 'fx_rate']].drop_duplicates().set_index('report_date')
@@ -469,11 +476,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Disable rows we do not yet handle
             df_esg = df_esg[~ df_esg.metric.isin(['generation', 'consumption'])]
             if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg.base_year.ne('X')]
+                df_esg = df_esg[df_esg.base_year.str.lower().ne('x')]
 
             # We are already much tidier, so don't need the wide_to_long conversion.
-            esg_year_columns = df_esg.columns[df_esg.columns.get_loc(TEMPLATE_START_YEAR):]
+            esg_year_columns = df_esg.columns[df_esg.columns.get_loc(self.template_v2_start_year):]
             df_esg_hasunits = df_esg.unit.notna()
+            df_esg_badunits = df_esg[df_esg_hasunits].unit.map(lambda x: x not in ureg)
+            badunits_idx = df_esg_badunits[df_esg_badunits].index
+            if df_esg_badunits.any():
+                logger.error(f"The following row of data contain units that are not in the registry and will be removed from analysis\n{df_esg.loc[badunits_idx]}")
+                df_esg_hasunits.loc[badunits_idx] = False
             df_esg = df_esg[df_esg_hasunits]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -504,8 +516,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             em_units = em_metrics.groupby(by=['company_id'], group_keys=True).first()
             df_fundamentals.loc[em_units.index, ColumnsConfig.EMISSIONS_METRIC] = em_units.unit
-            # We don't need units here anymore--they've been translated/transported everywhere we need them
-            df_esg.drop(columns='unit', inplace=True)
 
             # We solve while we still have valid report_date data.  After we group reports together to find the "best"
             # the report_date becomes meaningless (and is dropped by _solve_intensities)
@@ -522,6 +532,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             # Recalculate if any of the above dropped rows from df_esg
             em_metrics = df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S3', 'S1S2', 'S1S3', 'S1S2S3'])]
+
+            # Validate that all our em_metrics are, in fact, some kind of emissions quanity
+            em_invalid = df_esg.loc[em_metrics.index].unit.map(lambda x: not isinstance(x, str) or not ureg(x).is_compatible_with('t CO2'))
+            em_invalid_idx = em_invalid[em_invalid].index
+            if len(em_invalid_idx)>0:
+                logger.error(f"The following rows of data do not have proper emissions data (can be converted to t CO2e) and will be dropped from the analysis\n{df_esg.loc[em_invalid_idx]}")
+                df_esg = df_esg.loc[df_esg.index.difference(em_invalid_idx)]
+                em_metrics = em_metrics.loc[em_metrics.index.difference(em_invalid_idx)]
+
+            # We don't need units here anymore--they've been translated/transported everywhere we need them
+            df_esg.drop(columns='unit', inplace=True)
 
             grouped_prod = (
                 df_esg[df_esg.metric.isin(['production'])]
@@ -685,6 +706,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             raise ValueError(error_message)
         target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = ProjectionControls.TARGET_YEAR
 
+        c_ids_with_nonnumeric_target = list(target_data[target_data['target_reduction_ambition'].map(lambda x: isinstance(x, str))].index)
+        if c_ids_with_nonnumeric_target:
+            error_message = f"Non-numeric target reduction ambition is invalid; please fix companies with ID: " \
+                            f"{c_ids_with_nonnumeric_target}"
+            logger.error(error_message)
+            raise ValueError(error_message)
         c_ids_with_increase_target = list(target_data[target_data['target_reduction_ambition'] < 0].index)
         if c_ids_with_increase_target:
             error_message = f"Negative target reduction ambition is invalid and entered for companies with ID: " \
@@ -828,7 +855,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param historic: historic production, emission and emission intensity data for a company (already unitized)
         :return: IHistoricData Pydantic object
         """
-        historic_t = asPintDataFrame(historic.set_index(['variable', 'company_id', 'scope']).T)
+        try:
+            historic_t = asPintDataFrame(historic.set_index(['variable', 'company_id', 'scope']).T)
+        except pint.errors.DimensionalityError as err:
+            logger.error(f"Dimensionality error {err} in DataFrame\n{historic}")
+            breakpoint()
         # Historic data may well have ragged left and right columns
         # all_na = historic.apply(lambda x: all([ITR.isnan(y.m) for y in x]), axis=1)
         # historic = historic[~all_na]

@@ -29,7 +29,7 @@ class TestTemplateProvider(unittest.TestCase):
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_data_path = os.path.join(self.root, "inputs", "20220927 ITR V2 Sample Data.xlsx")
-        # self.company_data_path = os.path.join(self.root, "inputs", "20221025 ITR V2 AES Data.xlsx")
+        # self.company_data_path = os.path.join(self.root, "inputs", "20230106 ITR V2 Sample Data.xlsx")
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         # load production benchmarks
         self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")

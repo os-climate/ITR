@@ -36,7 +36,9 @@ currency_dict = {
     'د.إ':'AED',
     '₺':'TRY',
     '₴':'HRV',
-    '₦':'NGN'
+    '₦':'NGN',
+    'د.م.':'MAD',
+    'RM':'MYR',
 }
 
 currency_keep_regexp = re.compile(fr"({'|'.join([cur_abbrev for cur_abbrev in currency_dict.values()])})")
