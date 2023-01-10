@@ -6,7 +6,7 @@ import numpy as np
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintSeries, asPintDataFrame
+from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintSeries, asPintDataFrame, ProductionMetric, EmissionsMetric
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
@@ -195,8 +195,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                  projection_controls: Type[ProjectionControls] = ProjectionControls):
         self.template_v2_start_year = None
         self.projection_controls = projection_controls
-        self._companies = self._convert_from_template_company_data(excel_path)
+        # The initial population of companies' data
+        self._companies = self._init_from_template_company_data(excel_path)
         super().__init__(self._companies, column_config, projection_controls)
+        # The perfection of historic ESG data
+        self._companies = self._convert_from_template_company_data()
 
     # When rows of data are expressed in terms of scope intensities, solve for the implied production 
     def _solve_intensities(self, df_fundamentals: pd.DataFrame, df_esg: pd.DataFrame) -> pd.DataFrame:
@@ -263,27 +266,19 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg.loc[idx, 'unit'] = str(df_esg.loc[idx].iloc[-1].u)
         return df_esg
 
-    def _convert_from_template_company_data(self, excel_path: str) -> List[ICompanyData]:
+    def _init_from_template_company_data(self, excel_path: str):
         """
-        Converts the Excel template to list of ICompanyData objects. All dataprovider features will be inhereted from
-        Base
+        Converts first sheet of Excel template to list of minimal ICompanyData objects (fundamental data, but no ESG data).
+        All dataprovider features will be inhereted from Base.
         :param excel_path: file path to excel file
-        :return: List of ICompanyData objects
         """
 
-        template_version = 1
+        self.template_version = 1
 
-        def _fixup_name(x):
-            prefix, _, suffix = x.partition('_')
-            suffix = suffix.replace('ghg_', '')
-            if suffix != 'production':
-                suffix = suffix.upper()
-            return f"{suffix}-{prefix}"
-        
         df_company_data = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
 
         if TabsConfig.TEMPLATE_INPUT_DATA_V2 and TabsConfig.TEMPLATE_INPUT_DATA_V2 in df_company_data:
-            template_version = 2
+            self.template_version = 2
             input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA_V2
         else:
             input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA
@@ -292,7 +287,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         except KeyError as e:
             logger.error(f"Tab {input_data_sheet} is required in input Excel file.")
             raise KeyError
-        if template_version==2:
+        if self.template_version==2:
             esg_data_sheet = TabsConfig.TEMPLATE_ESG_DATA_V2
             try:
                 df_esg = df_company_data[esg_data_sheet].drop(columns='company_lei').copy() # .iloc[0:45]
@@ -326,7 +321,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     df_esg[[ColumnsConfig.COMPANY_NAME, ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]].fillna(method='ffill')
                 )
 
-        df['exposure'].fillna('presumed_equity', inplace=True)
+        # NA in exposure is how we drop rows we want to ignore
+        df = df[df.exposure.notna()]
+
         # TODO: Fix market_cap column naming inconsistency
         df.rename(
             columns={'revenue': 'company_revenue', 'market_cap': 'company_market_cap',
@@ -425,7 +422,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             logger.warning(f"Missing market capitalisation values are estimated for companies with ID: "
                            f"{missing_cap_ids}.")
 
-        if template_version==1:
+        test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
+        try:
+            self.df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
+        except KeyError:
+            logger.error(f"Tab {test_target_sheet} is required in input Excel file.")
+            raise
+
+        if self.template_version==1:
             # ignore company data that does not come with emissions and/or production metrics
             missing_esg_metrics_df = df_fundamentals[ColumnsConfig.COMPANY_ID][
                 df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
@@ -433,15 +437,44 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 logger.warning(f"Missing ESG metrics for companies with ID (will be ignored): "
                                f"{missing_esg_metrics_df.index}.")
                 df_fundamentals = df_fundamentals[~df_fundamentals.index.isin(missing_esg_metrics_df.index)]
-                df_esg = df_esg[~df_esg.company_id.isin(missing_esg_metrics_df.index)]
+            # Template V1 does not use df_esg
+            # self.df_esg = None
+        else:
+            # df_esg = df_esg.iloc[0:45]
 
+            # Disable rows we do not yet handle
+            df_esg = df_esg[~ df_esg.metric.isin(['generation', 'consumption'])]
+            if ColumnsConfig.BASE_YEAR in df_esg.columns:
+                df_esg = df_esg[df_esg.base_year.str.lower().ne('x')]
+            # FIXME: Should we move more df_esg work up here?
+            self.df_esg = df_esg
+        self.df_fundamentals = df_fundamentals
+        # We don't want to process historic and target data yet
+        return self._company_df_to_model(df_fundamentals, pd.DataFrame(), pd.DataFrame())
+
+    def _convert_from_template_company_data(self) -> List[ICompanyData]:
+        """
+        Converts ESG sheet of Excel template to flesh out ICompanyData objects.
+        :return: List of ICompanyData objects
+        """
+        df_fundamentals = self.df_fundamentals
+        df_target_data = self.df_target_data
+        if self.template_version > 1:
+            df_esg = self.df_esg
+
+        def _fixup_name(x):
+            prefix, _, suffix = x.partition('_')
+            suffix = suffix.replace('ghg_', '')
+            if suffix != 'production':
+                suffix = suffix.upper()
+            return f"{suffix}-{prefix}"
+        
+        if self.template_version==1:
             # The nightmare of naming columns 20xx_metric instead of metric_20xx...and potentially dealing with data from 1990s...
             historic_columns = [col for col in df_fundamentals.columns if col[:1].isdigit()]
             historic_scopes = ['S1', 'S2', 'S3', 'S1S2', 'S1S2S3', 'production']
             df_historic = df_fundamentals[['company_id'] + historic_columns].dropna(axis=1, how='all')
             df_fundamentals = df_fundamentals[df_fundamentals.columns.difference(historic_columns, sort=False)]
-
-            # df_fundamentals now ready for conversion to list of models
 
             df_historic = df_historic.rename(columns={col: _fixup_name(col) for col in historic_columns})
             df = pd.wide_to_long(df_historic, historic_scopes, i='company_id', j='year', sep='-',
@@ -471,13 +504,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df5 = pd.concat([df3, df4])
             df_historic_data = df5
         else:
-            # df_esg = df_esg.iloc[0:45]
-
-            # Disable rows we do not yet handle
-            df_esg = df_esg[~ df_esg.metric.isin(['generation', 'consumption'])]
-            if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg.base_year.str.lower().ne('x')]
-
             # We are already much tidier, so don't need the wide_to_long conversion.
             esg_year_columns = df_esg.columns[df_esg.columns.get_loc(self.template_v2_start_year):]
             df_esg_hasunits = df_esg.unit.notna()
@@ -489,12 +515,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_esg = df_esg[df_esg_hasunits]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
+                u_col = df_esg['unit']
                 for col in esg_year_columns:
-                    qty_col = df_esg.apply(lambda x: Q_(np.nan if pd.isna(x[col]) else float(x[col]), x['unit']), axis=1)
-                    df_esg[col] = df_esg[col].astype('object')
-                    df_esg.loc[df_esg.index, col] = qty_col
+                    m_col = df_esg[col].map(lambda x: np.nan if pd.isna(x) else float(x))
+                    df_esg[col] = m_col.combine(u_col, lambda m, u: Q_(m, u))
             prod_mask = df_esg.metric == 'production'
             prod_metrics = df_esg[prod_mask].groupby(by=['company_id'])['unit'].agg(lambda x: x.values[0])
+            # We update the metrics we were told with the metrics we are given
             df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics
             em_metrics = df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S3', 'S1S2', 'S1S3', 'S1S2S3'])]
             em_unit_ambig = em_metrics.groupby(by=['company_id', 'metric']).count()
@@ -515,6 +542,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     logger.warning(f"The ITR Tool will choose one and covert all to that")
 
             em_units = em_metrics.groupby(by=['company_id'], group_keys=True).first()
+            # We update the metrics we were told with the metrics we are given
             df_fundamentals.loc[em_units.index, ColumnsConfig.EMISSIONS_METRIC] = em_units.unit
 
             # We solve while we still have valid report_date data.  After we group reports together to find the "best"
@@ -639,13 +667,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             df_historic_data = df5
             
-        test_target_sheet = TabsConfig.TEMPLATE_TARGET_DATA
-        try:
-            df_target_data = df_company_data[test_target_sheet].set_index('company_id').convert_dtypes()
-        except KeyError:
-            logger.error(f"Tab {test_target_sheet} is required in input Excel file.")
-            raise
-
         # df_target_data now ready for conversion to model for each company
         df_target_data = self._validate_target_data(df_target_data)
 
@@ -683,8 +704,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_historic_data = df.set_index(['company_id', 'variable', 'scope'])
         # We might run `fill_blank_or_missing_rows` again if we get newly estimated S3 data from an as-yet unknown benchmark
         
+        # Drop from our companies list the companies dropped in df_fundamentals
+        self._companies = [c for c in self._companies if c.company_id in df_fundamentals.index]
+        for company in self._companies:
+            row = df_fundamentals.loc[company.company_id]
+            company.emissions_metric = EmissionsMetric(row[ColumnsConfig.EMISSIONS_METRIC])
+            company.production_metric = ProductionMetric(row[ColumnsConfig.PRODUCTION_METRIC])
+        # And keep df_fundamentals in sync
+        self.df_fundamentals = df_fundamentals
+
         # company_id, netzero_year, target_type, target_scope, target_start_year, target_base_year, target_base_year_qty, target_base_year_unit, target_year, target_reduction_ambition
-        return self._company_df_to_model(df_fundamentals, df_target_data, df_historic_data)
+        return self._company_df_to_model(None, df_target_data, df_historic_data)
 
     def _validate_target_data(self, target_data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -749,12 +779,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         transforms target Dataframe into list of ICompanyData instances.
         We don't necessarily have enough info to do target projections at this stage.
 
-        :param df_fundamentals: pandas Dataframe with fundamental data
-        :param df_target_data: pandas Dataframe with target data
-        :param df_historic_data: pandas Dataframe with historic emissions, intensity, and production information
+        :param df_fundamentals: pandas Dataframe with fundamental data; if None, use self._companies
+        :param df_target_data: pandas Dataframe with target data; could be empty if we are partially initialized
+        :param df_historic_data: pandas Dataframe with historic emissions, intensity, and production information; could be empty
         :return: A list containing the ICompanyData objects
         """
-        companies_data_dict = df_fundamentals.to_dict(orient="records")
+        if df_fundamentals is not None:
+            companies_data_dict = df_fundamentals.to_dict(orient="records")
+        else:
+            companies_data_dict = [c.dict() for c in self._companies]
         model_companies: List[ICompanyData] = []
         base_year = self.projection_controls.BASE_YEAR
 
@@ -768,13 +801,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # the ghg_s1s2 and ghg_s3 variables are values "as of" the financial data
                 # TODO pull ghg_s1s2 and ghg_s3 from historic data as appropriate
 
-                if df_historic_data is not None:
+                if not df_historic_data.empty:
                     # FIXME: Is this the best place to finalize base_year_production, ghg_s1s2, and ghg_s3 data?
                     # Something tells me these parameters should be removed in favor of querying historical data directly
-                    assert ColumnsConfig.BASE_YEAR_PRODUCTION not in company_data
                     company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = (
                         df_historic_data.loc[company_id, 'Productions', 'production'][base_year])
-                    assert ColumnsConfig.GHG_SCOPE12 not in company_data
                     try:
                         company_data[ColumnsConfig.GHG_SCOPE12] = (
                             df_historic_data.loc[company_id, 'Emissions', 'S1S2'][base_year])
@@ -790,7 +821,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                             company_data[ColumnsConfig.GHG_SCOPE12] = (
                                 df_historic_data.loc[company_id, 'Emissions', 'S1'][base_year]
                                 + df_historic_data.loc[company_id, 'Emissions', 'S2'][base_year])
-                    assert ColumnsConfig.GHG_SCOPE3 not in company_data
                     try:
                         company_data[ColumnsConfig.GHG_SCOPE3] = (
                             df_historic_data.loc[company_id, 'Emissions', 'S3'][base_year])
@@ -802,7 +832,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 else:
                     company_data[ColumnsConfig.HISTORIC_DATA] = None
 
-                if df_target_data is not None and company_id in df_target_data.index:
+                if company_id in df_target_data.index:
                     company_data[ColumnsConfig.TARGET_DATA] = [td.dict() for td in self._convert_target_data(
                         # don't let a single row of df_target_data become a pd.Series
                         df_target_data.loc[[company_id]].reset_index())]
@@ -816,6 +846,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 model_companies.append(ICompanyData.parse_obj(company_data))
             except ValidationError:
                 logger.error(f"(One of) the input(s) of company with ID {company_id} is invalid")
+                breakpoint()
                 raise
         return model_companies
 
@@ -918,3 +949,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 if results.empty \
                 else [IEIRealization(year=year, value=EI_Quantity(results[year].squeeze())) for year in self.historic_years]
         return IHistoricEIScopes(**intensity_scopes)
+
+    def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: A list of company IDs
+        :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
+        FIXME: Callers want non-fundamental data here: base_year_production, ghg_s1s2, ghg_s3
+        """
+        excluded_cols = ['projected_targets', 'projected_intensities', 'historic_data', 'target_data']
+        df = pd.DataFrame.from_records(
+            [ICompanyData.parse_obj({k:v for k, v in c.dict().items() if k not in excluded_cols}).dict()
+             for c in self.get_company_data(company_ids)]).set_index(self.column_config.COMPANY_ID)
+        # company_ids_idx = pd.Index(company_ids)
+        # df = self.df_fundamentals.loc[company_ids_idx]
+        return df
+

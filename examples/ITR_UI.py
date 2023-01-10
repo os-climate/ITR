@@ -80,7 +80,6 @@ prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
 base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file))
 
-
 # Emission intensities
 benchmark_EI_OECM_PC_file = "benchmark_EI_OECM_PC.json"
 benchmark_EI_OECM_S3_file = "benchmark_EI_OECM_S3.json"
@@ -89,6 +88,9 @@ benchmark_EI_TPI_15_file = "benchmark_EI_TPI_1_5_degrees.json"
 benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
 
+Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
+                          estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
+            
 # loading dummy portfolio
 df_portfolio = pd.read_excel(company_data_path, sheet_name="Portfolio")
 companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
@@ -123,10 +125,10 @@ def recalculate_individual_itr(eibm):
     with open(benchmark_EI) as json_file:
         parsed_json = json.load(json_file)
     EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
-    Warehouse = DataWarehouse(template_company_data, base_production_bm, EI_bm, estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
+    Warehouse.update_benchmarks(base_production_bm, EI_bm)
     temperature_score = TemperatureScore(
                             time_frames = [ETimeFrames.LONG],
-                            scopes=None, # None means "use the appropriate scopes for the benchmark
+                            scopes=[EScope.S1S2S3], # None means "use the appropriate scopes for the benchmark
                             # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
                             aggregation_method=PortfolioAggregationMethod.WATS
                             )
@@ -601,17 +603,19 @@ def update_graph(
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
 
-    if 'scenarios-cutting' or 'projection-method' in changed_id:  # if winzorization params were changed
+    if 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:  # if winzorization params were changed
         if proj_meth == 'median':
             template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.median)
         else:
             template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.mean)
         template_company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
         template_company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
-        template_company_data = TemplateProviderCompany(excel_path=company_data_path)
-
-    # we need to recalculate temperature score as we changed benchmark
-    amended_portfolio_global = recalculate_individual_itr(eibm)
+        Warehouse.update_trajectories()
+        # we need to recalculate temperature score as we changed trajectories (which influence temperature scores)
+        amended_portfolio_global = recalculate_individual_itr(eibm)
+    elif 'eibm-dropdown' in changed_id:
+        # we need to recalculate temperature score as we changed benchmark
+        amended_portfolio_global = recalculate_individual_itr(eibm)
 
     temp_score_mask = (amended_portfolio_global.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio_global.temperature_score <= Q_(te_sc[1], 'delta_degC'))
@@ -695,7 +699,7 @@ def update_graph(
         global EI_bm
 
         temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG],
-                                             scopes=None,
+                                             scopes=[EScope.S1S2S3],
                                              aggregation_method=agg_method)  # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
         agg_zero = Q_(0.0, 'delta_degC')
@@ -850,12 +854,17 @@ def reset_filters(n_clicks_reset, eibm):
     if n_clicks_reset is None and 'eibm-dropdown' not in changed_id:
         raise PreventUpdate
 
-    ProjectionControls.TREND_CALC_METHOD=staticmethod(pd.DataFrame.median)
-    ProjectionControls.LOWER_PERCENTILE = 0.1
-    ProjectionControls.UPPER_PERCENTILE = 0.9
-    template_company_data = TemplateProviderCompany(excel_path=company_data_path)
-    amended_portfolio_global = recalculate_individual_itr(eibm)
-    initial_portfolio = amended_portfolio_global
+    if (ProjectionControls.TREND_CALC_METHOD != staticmethod(pd.DataFrame.median)
+        or ProjectionControls.LOWER_PERCENTILE != 0.1
+        or ProjectionControls.UPPER_PERCENTILE != 0.9):
+        ProjectionControls.TREND_CALC_METHOD=staticmethod(pd.DataFrame.median)
+        ProjectionControls.LOWER_PERCENTILE = 0.1
+        ProjectionControls.UPPER_PERCENTILE = 0.9
+        Warehouse.update_trajectories()
+        amended_portfolio_global = recalculate_individual_itr(eibm)
+        initial_portfolio = amended_portfolio_global
+    # All the other things that are reset do not actually change the portfolio itself
+    # (thought they may change which parts of the portfolio are plotted next)
 
     return ( # if button is clicked, reset filters
         [0,4],
@@ -868,4 +877,4 @@ def reset_filters(n_clicks_reset, eibm):
     )
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(use_reloader=False)

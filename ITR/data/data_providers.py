@@ -48,7 +48,7 @@ class CompanyDataProvider(ABC):
     @abstractmethod
     def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
         """
-        Gets the value of a variable for a list of companies idss
+        Gets the value of a variable for a list of companies ids
         :param company_ids: list of company ids
         :param variable_name: variable name of the projected feature
         :return: series of values

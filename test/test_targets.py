@@ -843,8 +843,10 @@ class TestTargets(unittest.TestCase):
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
             company_ai, bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)])
-        # Magically project intensities
+
         self.base_company_data = BaseCompanyDataProvider (company_data)
+        # Since we are not using a Data Warehouse to compute our graphics, we have to do this projection manually
+        self.base_company_data._companies = self.base_company_data._validate_projected_trajectories(self.base_company_data._companies)
 
         co_pp = bm_production_data.droplevel('scope')
 

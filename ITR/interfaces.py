@@ -230,6 +230,9 @@ class IProductionBenchmarkScopes(BaseModel):
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
 
+    def __getitem__(self, item):
+        return getattr(self, item)
+
 
 class IEIBenchmarkScopes(BaseModel):
     S1: Optional[IBenchmarks]
@@ -381,6 +384,9 @@ class IHistoricEmissionsScopes(BaseModel):
     S3: List[IEmissionRealization]
     S1S2S3: List[IEmissionRealization]
 
+    def __getitem__(self, item):
+        return getattr(self, item)
+
     def __str__(self):
         dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
                              (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope).projections])))
@@ -412,6 +418,9 @@ class IHistoricEIScopes(BaseModel):
     S1S2: List[IEIRealization]
     S3: List[IEIRealization]
     S1S2S3: List[IEIRealization]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
 
     def __str__(self):
         dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
@@ -550,10 +559,10 @@ class ICompanyData(BaseModel):
         for scope_name in EScope.get_scopes():
             if historic_data.emissions:
                 setattr(historic_data.emissions, scope_name, [IEmissionRealization(year=p.year, value=_normalize(p.value, emissions_metric))
-                                                              for p in getattr(historic_data.emissions, scope_name)])
+                                                              for p in historic_data.emissions[scope_name]])
             if historic_data.emissions_intensities:
                 setattr(historic_data.emissions_intensities, scope_name, [IEIRealization(year=p.year, value=_normalize(p.value, ei_metric))
-                                                                          for p in getattr(historic_data.emissions_intensities, scope_name)])
+                                                                          for p in historic_data.emissions_intensities[scope_name]])
         return historic_data
 
     def __init__(self, emissions_metric=None, production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None,
@@ -577,12 +586,16 @@ class ICompanyData(BaseModel):
             else:
                 self.emissions_metric = EmissionsMetric('t CO2')
             # TODO: Should raise a warning here
+
+        # This is only a partial initialization
+        if self.historic_data is None:
+            return
         self.historic_data = self._normalize_historic_data(self.historic_data, self.production_metric, self.emissions_metric)
         base_year = None
         if self.base_year_production:
             pass
         # Right now historic_data comes in via template.py ESG data
-        elif self.historic_data and self.historic_data.productions:
+        elif self.historic_data.productions:
             # TODO: This is a hack to get things going.
             base_realization = self._get_base_realization_from_historic(self.historic_data.productions, str(self.production_metric), base_year)
             base_year = base_realization.year
@@ -590,7 +603,7 @@ class ICompanyData(BaseModel):
         else:
             logger.warning(f"missing historic data for base_year_production for {self.company_name}")
             self.base_year_production = Q_(np.nan, str(self.production_metric))
-        if self.ghg_s1s2 is None and self.historic_data and self.historic_data.emissions:
+        if self.ghg_s1s2 is None and self.historic_data.emissions:
             if self.historic_data.emissions.S1S2:
                 base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S1S2, str(self.emissions_metric), base_year)
                 base_year = base_year or base_realization.year
@@ -601,7 +614,7 @@ class ICompanyData(BaseModel):
                 base_year = base_year or base_realization_s1.year
                 if base_realization_s1.value is not None and base_realization_s2.value is not None:
                     self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
-        if self.ghg_s1s2 is None and self.historic_data and self.historic_data.emissions_intensities:
+        if self.ghg_s1s2 is None and self.historic_data.emissions_intensities:
             intensity_units = (Q_(self.emissions_metric) / Q_(self.production_metric)).units
             if self.historic_data.emissions_intensities.S1S2:
                 base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
@@ -618,10 +631,10 @@ class ICompanyData(BaseModel):
                 raise ValueError(f"missing S1S2 historic intensity data for {self.company_name}")
         if self.ghg_s1s2 is None:
             raise ValueError(f"missing historic emissions or intensity data to calculate ghg_s1s2 for {self.company_name}")
-        if self.ghg_s3 is None and self.historic_data and self.historic_data.emissions and self.historic_data.emissions.S3:
+        if self.ghg_s3 is None and self.historic_data.emissions and self.historic_data.emissions.S3:
             base_realization_s3 = self._get_base_realization_from_historic(self.historic_data.emissions.S3, str(self.emissions_metric), base_year)
             self.ghg_s3 = base_realization_s3.value
-        if self.ghg_s3 is None and self.historic_data and self.historic_data.emissions_intensities:
+        if self.ghg_s3 is None and self.historic_data.emissions_intensities:
             if self.historic_data.emissions_intensities.S3:
                 intensity_units = (Q_(self.emissions_metric) / Q_(self.production_metric)).units
                 base_realization_s3 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S3, intensity_units, base_year)

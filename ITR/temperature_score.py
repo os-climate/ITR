@@ -235,13 +235,17 @@ class TemperatureScore(PortfolioAggregation):
         :param portfolio: A list of PortfolioCompany models. Optional, only required if data is empty.
         :return: A data frame containing all relevant information for the targets and companies
         """
+        if portfolio is not None:
+            logger.info(f"calculating temperature score for {len(portfolio)} companies")
         if data is None:
             if data_warehouse is not None and portfolio is not None:
                 data = utils.get_data(data_warehouse, portfolio)
             else:
                 raise ValueError("You need to pass and either a data set or a datawarehouse and companies")
 
+        logger.info(f"temperature score preparing data")
         data = self._prepare_data(data)
+        logger.info(f"temperature score data prepared")
 
         if self.scopes:
             if EScope.S1S2S3 in self.scopes:

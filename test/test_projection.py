@@ -172,16 +172,16 @@ class TestProjector(unittest.TestCase):
         fillna_data = [ICompanyData(**company_dict) for company_dict in company_dicts]
 
         ei_projector = EITrajectoryProjector(ProjectionControls(UPPER_PERCENTILE=0.9, LOWER_PERCENTILE=0.1))
-        historic_data = ei_projector._extract_historic_data(fillna_data)
-        ei_projector._compute_missing_historic_ei(fillna_data, historic_data)
+        historic_df = ei_projector._extract_historic_df(fillna_data)
+        ei_projector._compute_missing_historic_ei(fillna_data, historic_df)
 
-        historic_years = [column for column in historic_data.columns if type(column) == int]
+        historic_years = [column for column in historic_df.columns if type(column) == int]
         projection_years = range(max(historic_years), ei_projector.projection_controls.TARGET_YEAR+1)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
             warnings.simplefilter("ignore")
             historic_intensities_t = asPintDataFrame(
-                historic_data[historic_years].query(f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'").T).pint.dequantify()
+                historic_df[historic_years].query(f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'").T).pint.dequantify()
         standardized_intensities_t = ei_projector._standardize(historic_intensities_t)
         intensity_trends_t = ei_projector._get_trends(standardized_intensities_t)
         extrapolated_t = ei_projector._extrapolate(intensity_trends_t, projection_years, historic_intensities_t)
