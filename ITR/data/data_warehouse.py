@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 import ITR
 from ITR.data.osc_units import ureg, Q_, asPintSeries
-from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, DF_ICompanyEIProjections
+from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, DF_ICompanyEIProjections, IHistoricData
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
@@ -47,6 +47,8 @@ class DataWarehouse(ABC):
         self.column_config = column_config
         self.company_data = company_data
         self.estimate_missing_data = estimate_missing_data
+        # Place to stash historic data before doing PC-conversion so it can be retreived when switching to non-PC benchmarks
+        self.orig_historic_data = {}
         self.company_scope = {}
 
         # Production benchmark data is needed to project trajectories
@@ -55,6 +57,38 @@ class DataWarehouse(ABC):
         # Production-centric manipulations must happen after targets have been projected
         if benchmark_projected_production is not None or benchmarks_projected_ei is not None:
             self.update_benchmarks(benchmark_projected_production, benchmarks_projected_ei)
+
+    def _preserve_historic_data(self):
+        for c in self.company_data._companies:
+            self.orig_historic_data[c.company_id] = {
+                'ghg_s1s2': c.ghg_s1s2,
+                'ghg_s3': c.ghg_s3,
+                'historic_data': IHistoricData(
+                    productions=c.historic_data.productions,
+                    emissions=c.historic_data.emissions.copy(),
+                    emissions_intensities=c.historic_data.emissions_intensities.copy() ),
+                'projected_intensities': c.projected_intensities.copy(),
+                'projected_targets': c.projected_targets.copy()
+            }
+            orig_historic_data = self.orig_historic_data[c.company_id]
+            for scope_name in EScope.get_scopes():
+                intensity_scope = getattr(orig_historic_data['projected_intensities'], scope_name)
+                if intensity_scope is not None:
+                    setattr(orig_historic_data['projected_intensities'], scope_name,
+                            (type(intensity_scope)(ei_metric=intensity_scope.ei_metric, projections=intensity_scope.projections.copy())))
+                target_scope = getattr(orig_historic_data['projected_targets'], scope_name)
+                if target_scope is not None:
+                    setattr(orig_historic_data['projected_targets'], scope_name,
+                            (type(target_scope)(ei_metric=target_scope.ei_metric, projections=target_scope.projections.copy())))
+
+    def _restore_historic_data(self):
+        for c in self.company_data._companies:
+            orig_data = self.orig_historic_data[c.company_id]
+            c.ghg_s1s2 = orig_data['ghg_s1s2']
+            c.ghg_s3 = orig_data['ghg_s3']
+            c.historic_data = orig_data['historic_data']
+            c.projected_intensities = orig_data['projected_intensities']
+            c.projected_targets = orig_data['projected_targets']
 
     def update_benchmarks(self, benchmark_projected_production: ProductionBenchmarkDataProvider,
                          benchmarks_projected_ei: IntensityBenchmarkDataProvider):
@@ -108,6 +142,10 @@ class DataWarehouse(ABC):
             logger.info(
                 f"Shifting S3 emissions data into S1 according to Production-Centric benchmark rules"
             )
+            if self.orig_historic_data != {}:
+                self._restore_historic_data()
+            else:
+                self._preserve_historic_data()
             for c in self.company_data._companies:
                 if c.ghg_s3:
                     # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
@@ -155,8 +193,7 @@ class DataWarehouse(ABC):
                                     trajectories[primary_scope_attr].projections + trajectories.S3.projections)
                             else:
                                 breakpoint()
-                                trajectories[primary_scope_attr].projections = list( map(ICompanyEIProjection.add, trajectories[primary_scope_attr].projections, trajectories.S3.projections))
-                            
+                                trajectories[primary_scope_attr].projections = list( map(ICompanyEIProjection.add, trajectories[primary_scope_attr].projections, trajectories.S3.projections) )
                     _adjust_trajectories(c.projected_intensities, 'S1')
                     _adjust_trajectories(c.projected_intensities, 'S1S2')
                     c.projected_intensities.S3 = None
@@ -180,7 +217,6 @@ class DataWarehouse(ABC):
                                 while primary_projections[0].year > s3_projections[0].year:
                                     s3_projections = s3_projections[1:]
                             targets[primary_scope_attr].projections = list( map(ICompanyEIProjection.add, primary_projections, s3_projections) )
-
                     if c.projected_targets.S1:
                         _align_and_sum_projected_targets (c.projected_targets, 'S1')
                     try:
@@ -205,10 +241,10 @@ class DataWarehouse(ABC):
                 if c.projected_targets and c.projected_targets.S1S2S3:
                     # assert c.projected_targets.S1S2 == c.projected_targets.S1S2S3
                     c.projected_targets.S1S2S3 = None
-        elif new_prod_centric:
-            # In this case we need to re-read all the template data to restore historic data!
-            breakpoint()            
-            
+        elif new_prod_centric and self.orig_historic_data != {}:
+            # Switch to non-product-centric benchmark of this version.
+            self._restore_historic_data()
+
         # Set scope information based on what company reports and what benchmark requres
         # benchmarks_projected_ei._EI_df makes life a bit easier...
         missing_company_scopes = []

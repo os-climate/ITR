@@ -128,7 +128,7 @@ def recalculate_individual_itr(eibm):
     Warehouse.update_benchmarks(base_production_bm, EI_bm)
     temperature_score = TemperatureScore(
                             time_frames = [ETimeFrames.LONG],
-                            scopes=[EScope.S1S2S3], # None means "use the appropriate scopes for the benchmark
+                            scopes=None, # None means "use the appropriate scopes for the benchmark
                             # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
                             aggregation_method=PortfolioAggregationMethod.WATS
                             )
@@ -699,7 +699,7 @@ def update_graph(
         global EI_bm
 
         temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG],
-                                             scopes=[EScope.S1S2S3],
+                                             scopes=None,
                                              aggregation_method=agg_method)  # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
         agg_zero = Q_(0.0, 'delta_degC')

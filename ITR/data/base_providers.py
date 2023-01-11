@@ -959,6 +959,7 @@ class EITargetProjector(EIProjector):
             target_ei_value = None
 
             scope_targets = [target for target in targets if target.target_scope.name == scope_name]
+            no_scope_targets = (scope_targets == [])
             # If we don't have an explicit scope target but we do have an implicit netzero target that applies to this scope,
             # prime the pump for projecting that netzero target, in case we ever need such a projection.  For example,
             # a netzero target for S1+S2 implies netzero targets for both S1 and S2.  The TPI benchmark needs an S1 target
@@ -1154,9 +1155,18 @@ class EITargetProjector(EIProjector):
             # TODO What if target is a 100% reduction.  Does it work whether or not netzero_year is set?
             if netzero_year and netzero_year > target_year:  # add in netzero target at the end
                 netzero_qty = Q_(0.0, target_ei_value.u)
-                CAGR = self._compute_CAGR(target_year, target_ei_value, netzero_year, netzero_qty)
-                ei_projections = [ICompanyEIProjection(year=year, value=CAGR[year])
-                                  for year in range(1 + target_year, 1 + netzero_year)]
+                if no_scope_targets and scope_name in ['S1S2S3'] and nz_target_years['S1S2'] <= netzero_year and nz_target_years['S3'] <= netzero_year:
+                    ei_projections = [ei_sum for ei_sum in list(
+                        map(ICompanyEIProjection.add, ei_projection_scopes['S1S2'].projections, ei_projection_scopes['S3'].projections) )
+                                      if ei_sum.year in range(1 + target_year, 1 + netzero_year)]
+                elif no_scope_targets and scope_name in ['S1S2'] and nz_target_years['S1'] <= netzero_year and nz_target_years['S2'] <= netzero_year:
+                    ei_projections = [ei_sum for ei_sum in list(
+                        map(ICompanyEIProjection.add, ei_projection_scopes['S1'].projections, ei_projection_scopes['S2'].projections) )
+                                      if ei_sum.year in range(1 + target_year, 1 + netzero_year)]
+                else:
+                    CAGR = self._compute_CAGR(target_year, target_ei_value, netzero_year, netzero_qty)
+                    ei_projections = [ICompanyEIProjection(year=year, value=CAGR[year])
+                                      for year in range(1 + target_year, 1 + netzero_year)]
                 if ei_projection_scopes[scope_name]:
                     ei_projection_scopes[scope_name].projections.extend(ei_projections)
                 else:

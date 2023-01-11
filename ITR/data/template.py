@@ -445,7 +445,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Disable rows we do not yet handle
             df_esg = df_esg[~ df_esg.metric.isin(['generation', 'consumption'])]
             if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg.base_year.str.lower().ne('x')]
+                df_esg = df_esg[df_esg.base_year.map(lambda x: type(x)!=str or x.lower() != 'x')]
             # FIXME: Should we move more df_esg work up here?
             self.df_esg = df_esg
         self.df_fundamentals = df_fundamentals
