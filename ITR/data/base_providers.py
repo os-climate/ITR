@@ -11,7 +11,7 @@ from operator import add
 from typing import List, Type, Dict
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType
+from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType, EI_Metric
 
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls, LoggingConfig
 
@@ -137,8 +137,12 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         # and use the valuable DataFrame it creates.
         company_benchmark_projections = self.get_benchmark_projections(company_sector_region_scope)
         company_production = company_sector_region_scope.set_index(self.column_config.SCOPE, append=True)[self.column_config.BASE_YEAR_PRODUCTION]
-        # If we don't have valid production data for base year, we get back a nan result that's a pain to debug
-        assert not ITR.isnan(company_production.values[0].m)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            nan_production = company_production.map(ITR.isnan)
+            if nan_production.any():
+                # If we don't have valid production data for base year, we get back a nan result that's a pain to debug, so nag here
+                logger.error(f"these companies are missing production data: {nan_production[nan_production].index.get_level_values(0).to_list()}")
         # We transpose the operation so that Pandas is happy to preserve the dtype integrity of the column
         company_projected_productions_t = company_benchmark_projections.T.mul(company_production, axis=1)
         return company_projected_productions_t.T
@@ -740,8 +744,13 @@ class EITrajectoryProjector(EIProjector):
                 #     continue
                 units = f"{results.dtype.units:~P}"
                 scope_dfs[scope_name] = results
-                scope_projections[scope_name] = ICompanyEIProjections(ei_metric=units,
-                                                                      projections=self._get_bounded_projections(results))
+                try:
+                    scope_projections[scope_name] = ICompanyEIProjections(ei_metric=units,
+                                                                          projections=self._get_bounded_projections(results))
+                except ValidationError:
+                    logger.error(f"invalid emissions intensity units {units} given for company {company.company_id} ({company.company_name})")
+                    breakpoint()
+                    raise
             if scope_projections['S1'] and scope_projections['S2'] and not scope_projections['S1S2']:
                 results = scope_dfs['S1'] + scope_dfs['S2']
                 units = f"{results.values[0].u:~P}"

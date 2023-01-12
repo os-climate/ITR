@@ -53,7 +53,7 @@ for currency_symbol, currency_abbrev in ITR.data.currency_dict.items():
 ureg.define("CHF = nan USD")
 ureg.define("MXN = nan USD") # $ abbreviation is ambiguous
 
-ureg.define("bcm = 38.2 PJ = 17 Mt CO2e")
+ureg.define("bcm = 38.2 PJ") # Also bcm = 17 Mt CO2e, but that wrecks CO2e emissions intensities (which would devolve to dimensionless numbers)
 ureg.define("btu = Btu")
 ureg.define("mmbtu = 1e6 btu")
 # ureg.define("boe = 5.712 GJ")

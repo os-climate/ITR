@@ -209,8 +209,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # We calculate those and append to the result.
         df_esg_has_intensity = df_esg[df_esg.metric.str.contains('intensity')]
         df_esg_has_intensity = df_esg_has_intensity.assign(scope=lambda x: list(map(lambda y: y[0], x['metric'].str.split(' '))))
-        missing_production_idx = df_fundamentals.index.difference(df_esg[df_esg.metric.eq('production')].company_id.unique())
-        df_esg_missing_production = df_esg[df_esg['company_id'].isin(missing_production_idx)]
+        # https://stackoverflow.com/a/61021228/1291237
+        compare_cols = ['company_id', 'report_date']
+        has_reported_production_mask = pd.Series(list(zip(*[df_esg[c] for c in compare_cols]))).isin(list(zip(*[df_esg[df_esg.metric.eq('production')][c] for c in compare_cols])))
+        df_esg_missing_production = df_esg[~has_reported_production_mask.values]
         start_year_loc = df_esg.columns.get_loc(self.template_v2_start_year)
         if len(df_esg_missing_production):
             df_intensities = df_esg_has_intensity.rename(columns={'metric':'intensity_metric', 'scope':'metric'})
@@ -333,6 +335,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         df_fundamentals = df.set_index(ColumnsConfig.COMPANY_ID, drop=False).convert_dtypes()
 
+        if self.template_version==2:
+            # Ensure our df_esg rows connect back to fundamental data
+            # the one single advantage of template_version==1 is that fundamental data and esg data are all part of the same rows so no need to do this integrity check/correction
+            esg_missing_fundamentals = ~df_esg.company_id.isin(df_fundamentals.index)
+            if esg_missing_fundamentals.any():
+                logger.error(f"The following companies have ESG data defined but no fundamental data and will be removed from further analysis:\n{df_esg[esg_missing_fundamentals].company_id.unique()}")
+                df_esg = df_esg[~esg_missing_fundamentals]
+
         # testing if all data is in the same currency
         if ColumnsConfig.TEMPLATE_FX_QUOTE in df_fundamentals.columns:
             fx_quote = df_fundamentals[ColumnsConfig.TEMPLATE_FX_QUOTE].notna()
@@ -353,6 +363,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 for col in fundamental_metrics:
                     df_fundamentals[col] = df_fundamentals[col].astype('Float64')
                     df_fundamentals[f"{col}_base"] = df_fundamentals[col]
+                with warnings.catch_warnings():
+                    # Setting values in-place is fine, ignore the warning in Pandas >= 1.5.0
+                    # This can be removed, if Pandas 1.5.0 does not need to be supported any longer.
+                    # See also: https://stackoverflow.com/q/74057367/859591
+                    warnings.filterwarnings(
+                        "ignore",
+                        category=FutureWarning,
+                        message=(
+                            ".*will attempt to set the values inplace instead of always setting a new array. "
+                            "To retain the old behavior, use either.*"
+                        ),
+                    )
                     df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'] * df_fundamentals.loc[fx_quote, f"{col}_base"]
                 # create context for currency conversions
                 # df_fundamentals defines 'report_date', 'currency', 'fx_quote', and 'fx_rate'
