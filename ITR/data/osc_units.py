@@ -4,7 +4,7 @@ This module handles initialization of pint functionality
 
 import numpy as np
 import pandas as pd
-from pint import get_application_registry, Quantity, DimensionalityError
+from pint import get_application_registry, Context, Quantity, DimensionalityError
 import ITR
 
 ureg = get_application_registry()
@@ -53,17 +53,34 @@ for currency_symbol, currency_abbrev in ITR.data.currency_dict.items():
 ureg.define("CHF = nan USD")
 ureg.define("MXN = nan USD") # $ abbreviation is ambiguous
 
-ureg.define("bcm = 38.2 PJ") # Also bcm = 17 Mt CO2e, but that wrecks CO2e emissions intensities (which would devolve to dimensionless numbers)
 ureg.define("btu = Btu")
 ureg.define("mmbtu = 1e6 btu")
 # ureg.define("boe = 5.712 GJ")
-ureg.define("boe = 6.1178632 GJ")
+ureg.define("boe = 6.1178632 GJ = BoE")
 ureg.define("mboe = 1e3 boe")
 ureg.define("mmboe = 1e6 boe")
-ureg.define("scf = [scf] = 1 ft**3")
+
+ureg.define("scf = ft**3")
 ureg.define("mscf = 1000 scf = Mscf")
 ureg.define("mmscf = 1000000 scf = MMscf")
 ureg.define("bscf = 1000000000 scf")
+ureg.define("bcm = 1000000000 m**3")
+# ureg.define("bcm = 38.2 PJ") # Also bcm = 17 Mt CO2e, but that wrecks CO2e emissions intensities (which would devolve to dimensionless numbers)
+
+NG_DENS = 0.657 * ureg('kg CH4/(m**3 CH4)')              # density
+NG_SE = 52.5 * ureg('MJ/(kg CH4)')                  # specific energy (energy per mass); range is 50-55
+ng = Context('ngas')
+ng.add_transformation('[volume]', '[mass]', lambda ureg, x: x * NG_DENS)
+ng.add_transformation('[mass] CH4', '[energy]', lambda ureg, x: x * NG_SE)
+# ng.add_transformation('[energy]', '[mass] * CH4', lambda ureg, x: x / NG_SE)
+# ng.add_transformation('[volume] CH4 ', '[energy]', lambda ureg, x: x * NG_DENS * NG_SE)
+# ng.add_transformation('[energy]', '[volume] CH4', lambda ureg, x: x / (NG_DENS * NG_SE))
+ng.add_transformation('[length] * [methane] * [time]**2 / [mass]', '[]', lambda ureg, x: x * NG_DENS * NG_SE)
+ng.add_transformation('[carbon] * [length] * [methane] * [time] ** 2', '[carbon] * [mass]', lambda ureg, x: x * NG_DENS * NG_SE)
+ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2') / ureg('Mscf CH4'))
+ng.add_transformation('g CH4', 'g CO2e', lambda ureg, x: x * ureg('44 g CO2e') / ureg('16 g CH4'))
+ureg.add_context(ng)
+ureg.enable_contexts('ngas')
 
 # Transportation activity
 
@@ -93,7 +110,7 @@ ureg.define("Fe_ton = t Steel")
 # ureg.define("PM10 = [ PM10_emissions ]")
 
 # List of all the production units we know
-_production_units = [ "Wh", "pkm", "tkm", "bcm", "boe", 't Alloys', "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
+_production_units = [ "Wh", "pkm", "tkm", "bcm CH4", "boe", 't Alloys', "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
 _ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
 
 class ProductionMetric(str):
@@ -124,7 +141,7 @@ class ProductionMetric(str):
         for pu in _production_units:
             if qty.is_compatible_with(pu):
                 return cls(units)
-        raise ValueError(f"{v} not relateable to {_production_units}")
+        raise ValueError(f"{qty} not relateable to {_production_units}")
 
     def __repr__(self):
         return f"ProductionMetric({super().__repr__()})"

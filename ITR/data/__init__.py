@@ -69,8 +69,7 @@ def translate_currency_symbols(text):
 # openscm_units doesn't make it easy to set preprocessors.  This is one way to do it.
 unit_registry.preprocessors=[
     lambda s1: re.sub(r'passenger.km', 'pkm', s1),
-    lambda s2: s2.replace('BoE', 'boe'),
-    lambda s3: translate_currency_symbols(s3)
+    lambda s2: translate_currency_symbols(s2)
 ]
 
 ureg = unit_registry
