@@ -256,20 +256,21 @@ class ICompanyEIProjection(BaseModel):
 
     def __eq__(self, o):
         if self.year != o.year:
-            raise ValueError(f"EI Projection years not aligned: {self.year} vs. {o.year}")
+            raise ValueError(f"EI Projection years not aligned for __eq__(): {self.year} vs. {o.year}")
         if ITR.isnan(self.value.m) and ITR.isnan(o.value.m):
             return True
         return self.value == o.value
 
     def add(self, o):
         if self.year != o.year:
-            raise ValueError(f"EI Projection years not aligned: {self.year} vs. {o.year}")
+            breakpoint()
+            raise ValueError(f"EI Projection years not aligned for add(): {self.year} vs. {o.year}")
         return ICompanyEIProjection(year=self.year,
                                     value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
     def min(self, o):
         if self.year != o.year:
-            raise ValueError(f"EI Projection years not aligned: {self.year} vs. {o.year}")
+            raise ValueError(f"EI Projection years not aligned for min(): {self.year} vs. {o.year}")
         return ICompanyEIProjection(year=self.year, value = min(self.value, o.value))
 
 class ICompanyEIProjections(BaseModel):
@@ -388,11 +389,9 @@ class IHistoricEmissionsScopes(BaseModel):
         return getattr(self, item)
 
     def __str__(self):
-        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
-                             (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope).projections])))
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[Mt CO2e]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as('Mt CO2e'), 4)) for x in getattr(self, scope)])))
                       for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
-                      # Work-around for https://github.com/hgrecco/pint/issues/1687
-                      for ei_metric in [ str(ureg.parse_units(getattr(self, scope).ei_metric)) ]
                       if getattr(self, scope) is not None}
         return str(pd.DataFrame.from_dict(dict_items))
 
@@ -424,7 +423,7 @@ class IHistoricEIScopes(BaseModel):
 
     def __str__(self):
         dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
-                             (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope).projections])))
+                             (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope)])))
                       for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
                       # Work-around for https://github.com/hgrecco/pint/issues/1687
                       for ei_metric in [ str(ureg.parse_units(getattr(self, scope).ei_metric)) ]

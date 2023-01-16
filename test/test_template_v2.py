@@ -214,7 +214,7 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_budget.m_as('Mt CO2')), 247.35955561917217, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_budget.m_as('Mt CO2')), 671.322874458741, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_target.m_as('Mt CO2')), 628.4206195499177, places=7)
-        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_target.m_as('Mt CO2')), 996.1789789968686, places=7)
+        self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_target.m_as('Mt CO2')), 970.361209683652496, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_1.cumulative_trajectory.m_as('Mt CO2')), 2980.565984113794, places=7)
         self.assertAlmostEqual(ITR.nominal_values(company_2.cumulative_trajectory.m_as('Mt CO2')), 4182.135839585814, places=7)
 

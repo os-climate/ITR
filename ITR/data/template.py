@@ -121,6 +121,7 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
         # Nothing to prioritize
         return x
     y = x.copy()
+    pinned_priority = None
     if x.name[0] == 'Electricity Utiltiies':
         for p in range(0, len(x.submetric)):
             if x.submetric[p] == '3':
@@ -131,8 +132,6 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
             if x.submetric[p] == '11':
                 pinned_priority = p
                 break
-    else: 
-        pinned_priority = None
 
     for c in range(1,len(x)):
         if not isinstance(x.iloc[c], np.ndarray):
@@ -198,7 +197,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # The initial population of companies' data
         self._companies = self._init_from_template_company_data(excel_path)
         super().__init__(self._companies, column_config, projection_controls)
-        # The perfection of historic ESG data
+        # The perfection of historic ESG data (adding synthethic company sectors, dropping those with missing data)
         self._companies = self._convert_from_template_company_data()
 
     # When rows of data are expressed in terms of scope intensities, solve for the implied production 
@@ -207,7 +206,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # But we may yet have been giving emissions and emissions intensities without production numbers,
         # or emissions intensities and production numbers without absolute emissions numbers.
         # We calculate those and append to the result.
-        df_esg_has_intensity = df_esg[df_esg.metric.str.contains('intensity')]
+        df_esg_has_intensity = df_esg[df_esg.metric.str.contains('intensity', regex=False)]
         df_esg_has_intensity = df_esg_has_intensity.assign(scope=lambda x: list(map(lambda y: y[0], x['metric'].str.split(' '))))
         # https://stackoverflow.com/a/61021228/1291237
         compare_cols = ['company_id', 'report_date']
@@ -236,11 +235,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             production_idx = df_productions.index
             df_esg.loc[production_idx] = pd.concat([df_esg.loc[production_idx].iloc[:, 0:start_year_loc], df_productions], axis=1)
             df_esg.loc[production_idx, 'metric'] = 'production'
-            # Set production metrics we just derived (if necessary)
-            for idx in production_idx:
-                if pd.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.PRODUCTION_METRIC]):
-                    df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.PRODUCTION_METRIC] = str(df_esg.loc[idx].iloc[-1].u)
-        df_esg_has_intensity = df_esg[df_esg.metric.str.contains('intensity')]
+        df_esg_has_intensity = df_esg[df_esg.metric.str.contains('intensity', regex=False)]
         df_esg_has_intensity = df_esg_has_intensity.assign(scope=lambda x: list(map(lambda y: y[0], x['metric'].str.split(' '))))
         if len(df_esg_has_intensity):
             # Convert EI to Emissions using production
@@ -541,10 +536,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 for col in esg_year_columns:
                     m_col = df_esg[col].map(lambda x: np.nan if pd.isna(x) else float(x))
                     df_esg[col] = m_col.combine(u_col, lambda m, u: Q_(m, u))
-            prod_mask = df_esg.metric == 'production'
-            prod_metrics = df_esg[prod_mask].groupby(by=['company_id'])['unit'].agg(lambda x: x.values[0])
-            # We update the metrics we were told with the metrics we are given
-            df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics
+            # All emissions metrics across multiple sectors should all resolve to some form of [mass] CO2
             em_metrics = df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S3', 'S1S2', 'S1S3', 'S1S2S3'])]
             em_unit_ambig = em_metrics.groupby(by=['company_id', 'metric']).count()
             em_unit_ambig = em_unit_ambig[em_unit_ambig.unit>1]
@@ -569,21 +561,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             # We solve while we still have valid report_date data.  After we group reports together to find the "best"
             # the report_date becomes meaningless (and is dropped by _solve_intensities)
+            # FIXME: Check use of PRODUCTION_METRIC in _solve_intensities for multi-sector companies
             df_esg = self._solve_intensities(df_fundamentals, df_esg)
-
-            # After this point we can gripe if missing emissions and/or production metrics
-            missing_esg_metrics_df = df_fundamentals[ColumnsConfig.COMPANY_ID][
-                df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
-            if len(missing_esg_metrics_df)>0:
-                logger.warning(f"Missing ESG metrics for companies with ID (will be ignored): "
-                               f"{missing_esg_metrics_df.index}.")
-                df_fundamentals = df_fundamentals[~df_fundamentals.index.isin(missing_esg_metrics_df.index)]
-                df_esg = df_esg[~df_esg.company_id.isin(missing_esg_metrics_df.index)]
 
             # Recalculate if any of the above dropped rows from df_esg
             em_metrics = df_esg[df_esg.metric.str.upper().isin(['S1', 'S2', 'S3', 'S1S2', 'S1S3', 'S1S2S3'])]
 
-            # Validate that all our em_metrics are, in fact, some kind of emissions quanity
+            # Validate that all our em_metrics are, in fact, some kind of emissions quantity
             em_invalid = df_esg.loc[em_metrics.index].unit.map(lambda x: not isinstance(x, str) or not ureg(x).is_compatible_with('t CO2'))
             em_invalid_idx = em_invalid[em_invalid].index
             if len(em_invalid_idx)>0:
@@ -594,9 +578,21 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # We don't need units here anymore--they've been translated/transported everywhere we need them
             df_esg.drop(columns='unit', inplace=True)
 
+            submetric_sector_map = {
+                'cement': 'Cement',
+                'clinker': 'Cement',
+                'electricity': 'Electricity Utilities',
+                # 'generation': 'Electricity Utilities',
+                'gas': 'Gas Utilities',
+                'distribution': 'Gas Utilities',
+                'oil': 'Oil & Gas'
+            }
+
             grouped_prod = (
                 df_esg[df_esg.metric.isin(['production'])]
-                .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
+                # .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
+                .assign(sector=lambda x: x[['company_id', 'submetric']].apply(
+                    lambda y: submetric_sector_map.get(y.submetric, df_fundamentals.loc[y.company_id].sector), axis=1))
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
@@ -608,14 +604,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
             # For categoricals, fisrt listed is least and sorts to first in ascending order
-            grouped_prod.submetric = pd.Categorical(grouped_prod['submetric'], ordered=True, categories=['operated', 'own', 'generation', 'equity', '', 'gross', 'net', 'full'])
+            grouped_prod.submetric = pd.Categorical(grouped_prod['submetric'], ordered=True,
+                                                    categories=['operated', 'own', 'generation', 'equity', '', 'gross', 'net', 'full']+list(submetric_sector_map.keys()))
             best_prod = (
                 grouped_prod.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
             )
-            best_prod = best_prod.drop(columns='submetric')
+            # Comb out submetric field that we'll need later when sorting out sector data
+            best_prod.submetric = best_prod.submetric.map(lambda x: x[0] if hasattr(x, 'ndim') else x)
             best_prod[ColumnsConfig.VARIABLE] = VariablesConfig.PRODUCTIONS
 
             # convert "nice" word descriptions of S3 emissions to category numbers
@@ -675,13 +673,72 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # We cannot fill in missing data here, because we don't yet know what benchmark(s) will in use
                 best_s3 = best_s3[~s3_all_nan].copy()
             best_s3[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
-            df3 = (pd.concat([best_prod, best_em, best_s3])
+
+            company_sector_count = best_prod.groupby('company_id')['variable'].transform('count')
+            company_sector_idx = best_prod[company_sector_count>1].droplevel('metric').index
+            new_prod = None
+            new_esg_em = None
+            best_esg_em = pd.concat([best_em, best_s3]).sort_index()
+            if company_sector_idx.empty:
+                best_prod = best_prod.droplevel('sector').drop(columns='submetric')
+                best_esg_em = best_esg_em.droplevel('sector')
+            else:
+                company_em_sector = pd.MultiIndex.from_tuples(
+                    [idx for idx in company_sector_idx if idx in best_esg_em.index], names=['sector', 'company_id'])
+
+                # Add new multi-sector companies, giving us choice of company_id, sector, company_id+sector (aka new_company_id)
+                new_company_ids = company_sector_idx.to_frame().assign(new_company_id=lambda x: x.company_id + '+' + x.sector).reset_index(drop=True)
+
+                # Get completely new rows of data to add to df_fundamentals using new_company_id across each newly assigned sector
+                new_fundamentals = df_fundamentals.loc[new_company_ids.company_id].reset_index(drop=True).assign(
+                    sector=new_company_ids.sector, company_id=new_company_ids.new_company_id).set_index('company_id', drop=False)
+                # Get rid of old rows that will become unattached to EMISSIONS_METRIC and PRODUCTION_METRIC
+                df_fundamentals = pd.concat([df_fundamentals[~df_fundamentals.company_id.isin(new_company_ids.company_id)],
+                                             new_fundamentals])
+
+                prod_to_drop = best_prod.index.get_level_values('company_id').isin(new_company_ids.company_id)
+                new_prod = (best_prod.reset_index()[prod_to_drop]
+                            .assign(sector=lambda x: x.submetric.map(submetric_sector_map)).merge(new_company_ids, on=['company_id', 'sector'])
+                            .drop(columns=['sector', 'company_id', 'submetric']).rename(columns={'new_company_id':'company_id'})
+                            .set_index(['company_id', 'metric']))
+                best_prod = best_prod[~prod_to_drop].droplevel('sector').drop(columns=['submetric'])
+
+                em_to_drop = best_esg_em.index.get_level_values('company_id').isin(new_company_ids.company_id)
+                new_esg_em = (best_esg_em.reset_index()[em_to_drop]
+                              # This gives us combinatorial product of common scope emissions across all types of production
+                              # We'll use benchmark data to compute what fraction each type of production should get
+                              .drop(columns='sector').merge(new_company_ids, on='company_id')
+                              .drop(columns=['sector', 'company_id']).rename(columns={'new_company_id':'company_id'})
+                              .set_index(['company_id', 'metric']))
+                best_esg_em = best_esg_em[~em_to_drop].droplevel('sector')
+
+            prod_metrics = pd.concat([best_prod, new_prod]).groupby(by=['company_id'])[self.projection_controls.BASE_YEAR].agg(lambda x: f"{x.values[0].u:~P}")
+            # We update the metrics we were told with the metrics we are given
+            df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics
+
+            # After this point we can gripe if missing emissions and/or production metrics
+            missing_esg_metrics_df = df_fundamentals[ColumnsConfig.COMPANY_ID][
+                df_fundamentals[ColumnsConfig.EMISSIONS_METRIC].isnull() | df_fundamentals[ColumnsConfig.PRODUCTION_METRIC].isnull()]
+            if len(missing_esg_metrics_df)>0:
+                logger.warning(f"Missing ESG metrics for companies with ID (will be ignored): "
+                               f"{missing_esg_metrics_df.index}.")
+                df_fundamentals = df_fundamentals[~df_fundamentals.index.isin(missing_esg_metrics_df.index)]
+                df_esg = df_esg[~df_esg.company_id.isin(missing_esg_metrics_df.index)]
+
+            # We don't yet know our benchmark, so we cannot yet Use benchmark data to align their respective weights
+
+            df3 = (pd.concat([best_prod, new_prod, best_esg_em, new_esg_em])
                    .reset_index(level='metric')
                    .rename(columns={'metric':'scope'})
-                   .set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)
-                   .droplevel('sector'))
+                   .set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)).sort_index()
+
             # XS is how we match labels in indexes.  Here 'variable' is level=1, (company_id=0, scope/production=2)
             # By knocking out 'production', we don't get production / production in the calculations, only emissions (all scopes in data) / production
+
+            assert 'sector' not in df3.columns and 'submetric' not in df3.columns
+            if len(df3.index):
+                assert 'sector' not in df3.index.names and 'submetric' not in df3.index.names
+
             df4 = df3.xs(VariablesConfig.EMISSIONS, level=1) / df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[1,2])
             df4['variable'] = VariablesConfig.EMISSIONS_INTENSITIES
             df4 = df4.reset_index().set_index(['company_id', 'variable', 'scope'])
@@ -728,6 +785,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         
         # Drop from our companies list the companies dropped in df_fundamentals
         self._companies = [c for c in self._companies if c.company_id in df_fundamentals.index]
+        # Add to our companies list the companies added in df_fundamentals
+        self._companies.extend(self._company_df_to_model(df_fundamentals[df_fundamentals.company_id.str.contains('+', regex=False)], pd.DataFrame(), pd.DataFrame()))
         for company in self._companies:
             row = df_fundamentals.loc[company.company_id]
             company.emissions_metric = EmissionsMetric(row[ColumnsConfig.EMISSIONS_METRIC])

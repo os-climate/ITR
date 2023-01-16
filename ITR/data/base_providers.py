@@ -986,6 +986,13 @@ class EITargetProjector(EIProjector):
                     # If there's a proper target for this scope, historic values will be replaced by target values
                     for i in range(len(ei_realizations)-1, -1, -1):
                         target_ei_value = ei_realizations[i].value
+                        if ITR.isnan(target_ei_value.m):
+                            continue
+                        model_ei_projections = [ICompanyEIProjection(year=ei_realizations[j].year, value=ei_realizations[j].value)
+                                                for j in range(0,i+1)
+                                                if not ITR.isnan(ei_realizations[j].value.m)]
+                        ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
+                                                                                 projections=self._get_bounded_projections(model_ei_projections))
                         if not ITR.isnan(target_ei_value.m):
                             target_year = ei_realizations[i].year
                             break
@@ -1165,10 +1172,18 @@ class EITargetProjector(EIProjector):
             if netzero_year and netzero_year > target_year:  # add in netzero target at the end
                 netzero_qty = Q_(0.0, target_ei_value.u)
                 if no_scope_targets and scope_name in ['S1S2S3'] and nz_target_years['S1S2'] <= netzero_year and nz_target_years['S3'] <= netzero_year:
+                    if ei_projection_scopes['S1S2'] is None:
+                        raise ValueError(f"{company.company_id} is missing S1+S2 historic data for S1+S2 target")
+                    if ei_projection_scopes['S3'] is None:
+                        raise ValueError(f"{company.company_id} is missing S3 historic data for S3 target")
                     ei_projections = [ei_sum for ei_sum in list(
                         map(ICompanyEIProjection.add, ei_projection_scopes['S1S2'].projections, ei_projection_scopes['S3'].projections) )
                                       if ei_sum.year in range(1 + target_year, 1 + netzero_year)]
                 elif no_scope_targets and scope_name in ['S1S2'] and nz_target_years['S1'] <= netzero_year and nz_target_years['S2'] <= netzero_year:
+                    if ei_projection_scopes['S1'] is None:
+                        raise ValueError(f"{company.company_id} is missing S1 historic data for S1 target")
+                    if ei_projection_scopes['S2'] is None:
+                        raise ValueError(f"{company.company_id} is missing S2 historic data for S2 target")
                     ei_projections = [ei_sum for ei_sum in list(
                         map(ICompanyEIProjection.add, ei_projection_scopes['S1'].projections, ei_projection_scopes['S2'].projections) )
                                       if ei_sum.year in range(1 + target_year, 1 + netzero_year)]

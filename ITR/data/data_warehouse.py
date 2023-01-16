@@ -123,6 +123,64 @@ class DataWarehouse(ABC):
             logger.info(f"calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
             self.company_data._validate_projected_trajectories(self.company_data._companies)
 
+        if new_ei_bm and (new_companies := [c for c in self.company_data._companies if '+' in c.company_id]):
+            logger.info("Allocating emissions to align with benchmark data")
+            bm_prod_df = benchmark_projected_production._prod_df
+            bm_ei_df = benchmarks_projected_ei._EI_df
+            base_year = self.company_data.projection_controls.BASE_YEAR
+
+            from collections import defaultdict
+            work_dict = defaultdict(list)
+            region_dict = {}
+            historic_dict = {}
+
+            for c in new_companies:
+                orig_id, sector = c.company_id.split('+')
+                work_dict[orig_id].append(sector)
+                region_dict[orig_id] = c.region
+                historic_dict[c.company_id] = c.historic_data
+
+            for orig_id, sectors in work_dict.items():
+                region = region_dict[orig_id]
+                sector_ei = [(sector, scope,
+                              # bm_prod_df.loc[(sector, region, EScope.AnyScope)][base_year] is '1.0 dimensionless'
+                              bm_ei_df.loc[(sector, region, scope)][base_year])
+                             for scope in EScope.get_result_scopes()
+                             for sector in sectors
+                             if (sector, region, scope) in bm_ei_df.index and historic_dict['+'.join([orig_id, sector])].emissions[scope.name]]
+                sector_ei_df = pd.DataFrame(sector_ei, columns=['sector', 'scope', 'ei']).set_index(['sector'])
+                sector_prod_df = pd.DataFrame([(sector, prod.value)
+                                               for sector in sectors
+                                               for prod in historic_dict['+'.join([orig_id, sector])].productions
+                                               if prod.year==base_year], columns=['sector', 'prod']).set_index('sector')
+                sector_em_df = (sector_ei_df.join(sector_prod_df)
+                                .assign(em=lambda x: x['ei']*x['prod'])
+                                .set_index('scope', append=True)
+                                .drop(columns=['ei', 'prod']))
+                sector_em_df = sector_em_df.astype('pint[Mt CO2e]')
+                em_tot = sector_em_df.groupby('scope')['em'].sum()
+                # The alignment calculation: Company Scope-Sector emissions = Total Company Scope emissions * (BM Scope Sector / SUM(All Scope Sectors of Company))
+                aligned_em = [(sector, [(scope, list(map(lambda em: (em[0], em[1] * sector_em_df.loc[(sector, scope)].squeeze() / em_tot.loc[scope].squeeze()),
+                                                         [(em.year, em.value) for em in historic_dict['+'.join([orig_id, sector])].emissions[scope.name]])))
+                                        for scope in em_tot.index])
+                              for sector in sectors]
+
+                # Having done all scopes and sectors for this company above, replace historic Em and EI data below
+                for sector_aligned in aligned_em:
+                    sector, scopes = sector_aligned
+                    historic_sector = historic_dict['+'.join([orig_id, sector])]
+                    # print(f"Historic {sector} initially\n{historic_sector.emissions}")
+                    for scope_tuple in scopes:
+                        scope, em_list = scope_tuple
+                        setattr(historic_sector.emissions, scope.name,
+                                list(map(lambda em: IEmissionRealization(year=em[0], value=em[1].to('Mt CO2e')), em_list)))
+                        prod_list = historic_sector.productions
+                        ei_list = list(map(lambda em_p: IEIRealization(year=em_p[0].year, value=em_p[0].value/em_p[1].value),
+                                           zip(historic_sector.emissions[scope.name], prod_list)))
+                        setattr(historic_sector.emissions_intensities, scope.name, ei_list)
+                    # print(f"Historic {sector} adjusted\n{historic_dict['+'.join([orig_id, sector])].emissions}")
+            logger.info("Sector alignment complete")
+
         # If we are missing S3 (or other) data, fill in before projecting targets
         if new_ei_bm and self.estimate_missing_data is not None:
             logger.info(f"estimating missing data")
