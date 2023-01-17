@@ -893,8 +893,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     except KeyError:
                         if (company_id, 'Emissions', 'S2') not in df_historic_data.index:
                             logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
-                            company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                company_id, 'Emissions', 'S1'][base_year]
+                            try:
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                    company_id, 'Emissions', 'S1'][base_year]
+                            except KeyError:
+                                try:
+                                    company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                        company_id, 'Emissions', 'S1S2S3'][base_year]
+                                    logger.warning(f"Using S1+S2+S3 as GHG_SCOPE12 because no Scopee 1 or Scope 2 available for company with ID {company_id}")
+                                except KeyError:
+                                    logger.error(f"Company {company_id} snuck into finalization without any useable S1, S2, S1+S2, or S1+S2+S3 data")
+                                    company_data[ColumnsConfig.GHG_SCOPE12] = Q_(np.nan, 'Mt CO2e')
                         else:
                             # FIXME: This should not reach here because we should have calculated
                             # S1S2 as an emissions total upstream from S1+S2.

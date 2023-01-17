@@ -345,7 +345,10 @@ class DataWarehouse(ABC):
 
 
     def estimate_missing_s3_data(self, company: ICompanyData) -> None:
+        # This is an estimation function, not a mathematical processing function.
+        # It won't solve S3 = S1S2S3 - S1S2 (which should be done elsewhere)
         if (company.historic_data.emissions.S3
+            or company.historic_data.emissions.S1S2S3
             or not self.benchmarks_projected_ei
             or not self.benchmarks_projected_ei._EI_benchmarks.S3):
             return

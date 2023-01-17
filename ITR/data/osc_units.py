@@ -67,20 +67,58 @@ ureg.define("bscf = 1000000000 scf")
 ureg.define("bcm = 1000000000 m**3")
 # ureg.define("bcm = 38.2 PJ") # Also bcm = 17 Mt CO2e, but that wrecks CO2e emissions intensities (which would devolve to dimensionless numbers)
 
+# A reminder for those who come looking for transformation rules: by default,
+# Pint's normal behavior is to do all manner of conversions...when units have the same dimensionality
+# i.e., m/s, feet/minute, furlongs/fortnight.  But when dimensionality is different
+# (such as converting a volume of CH4 to a mass equivalent of CO2), it is the
+# caller's responsibility to do the conversion (so `src OP dst` is coded as `src.to(dst_units) OP dst`).
+
 NG_DENS = 0.657 * ureg('kg CH4/(m**3 CH4)')              # density
 NG_SE = 52.5 * ureg('MJ/(kg CH4)')                  # specific energy (energy per mass); range is 50-55
 ng = Context('ngas')
-ng.add_transformation('[volume]', '[mass]', lambda ureg, x: x * NG_DENS)
-ng.add_transformation('[mass] CH4', '[energy]', lambda ureg, x: x * NG_SE)
+ng.add_transformation('[volume]', '[mass]', lambda ureg, x: (breakpoint(), x * NG_DENS))
+# ng.add_transformation('[volume] * [methane]', '[mass] * [methane]', lambda ureg, x: x * NG_DENS)
+ng.add_transformation('[mass] CH4', '[energy]', lambda ureg, x: (breakpoint(), x * NG_SE))
 # ng.add_transformation('[energy]', '[mass] * CH4', lambda ureg, x: x / NG_SE)
-# ng.add_transformation('[volume] CH4 ', '[energy]', lambda ureg, x: x * NG_DENS * NG_SE)
+ng.add_transformation('[volume] CH4 ', '[energy]', lambda ureg, x: x * NG_DENS * NG_SE)
+ng.add_transformation('1 / [volume] / CH4 ', '1 / [energy]', lambda ureg, x: (breakpoint(), x / (NG_DENS * NG_SE)))
+ng.add_transformation('1 / [energy]', '1 / [volume] / CH4 ', lambda ureg, x: (breakpoint(), x * (NG_DENS * NG_SE)))
 # ng.add_transformation('[energy]', '[volume] CH4', lambda ureg, x: x / (NG_DENS * NG_SE))
-ng.add_transformation('[length] * [methane] * [time]**2 / [mass]', '[]', lambda ureg, x: x * NG_DENS * NG_SE)
+ng.add_transformation('[length] * [methane] * [time]**2 / [mass]', '[]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
 ng.add_transformation('[carbon] * [length] * [methane] * [time] ** 2', '[carbon] * [mass]', lambda ureg, x: x * NG_DENS * NG_SE)
+ng.add_transformation('[carbon] * [mass] / [energy]', '[carbon] * [mass] / [volume] / [methane]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
+ng.add_transformation('[carbon] * [mass] / [volume] / [methane]', '[carbon] * [mass] / [energy]', lambda ureg, x: x / (NG_DENS * NG_SE))
 ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2') / ureg('Mscf CH4'))
 ng.add_transformation('g CH4', 'g CO2e', lambda ureg, x: x * ureg('44 g CO2e') / ureg('16 g CH4'))
 ureg.add_context(ng)
 ureg.enable_contexts('ngas')
+
+def time_dimension(unit, exp):
+    return ureg(unit).is_compatible_with("s") # and exp == -1
+
+def convert_to_annual(x):
+    import pint
+    unit_ct = pint.util.to_units_container(x)
+    # print(unit_ct)
+    # <UnitsContainer({'day': -1, 'kilogram': 1})>
+    time_unit, exp = next((pint.Unit(unit), exp) for unit, exp in unit_ct.items() if time_dimension(unit, exp))
+    if exp == -1:
+        x_implied_annual = Q_(x * ureg('a').to(time_unit), unit_ct.remove([str(time_unit)]))
+    elif exp == 1:
+        x_implied_annual = Q_(x / ureg(str(time_unit)).to('a'), unit_ct.remove([str(time_unit)]))
+    else:
+        breakpoint()
+    # x_implied_annual = Q_(x * ureg('a').to(time_unit), unit_ct.remove([str(time_unit)]).add(str(time_unit), exp-1))
+    return x_implied_annual
+
+
+oil = Context('oil')
+ng.add_transformation('[carbon] * [mass] / [time]', '[carbon] * [mass]', lambda ureg, x: convert_to_annual(x))
+ng.add_transformation('[length] ** 2 * [mass] / [time] ** 3', '[length] ** 2 * [mass] / [time] ** 2', lambda ureg, x: convert_to_annual(x))
+ng.add_transformation('[carbon] * [time] ** 3 / [length] ** 2', '[carbon] * [time] ** 2 / [length] ** 2', lambda ureg, x: convert_to_annual(x))
+# ng.add_transformation('[volume] / [time]', '[volume]', lambda ureg, x: (breakpoint(), x))
+ureg.add_context(oil)
+ureg.enable_contexts('oil')
 
 # Transportation activity
 
@@ -110,7 +148,7 @@ ureg.define("Fe_ton = t Steel")
 # ureg.define("PM10 = [ PM10_emissions ]")
 
 # List of all the production units we know
-_production_units = [ "Wh", "pkm", "tkm", "bcm CH4", "boe", 't Alloys', "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
+_production_units = [ "Wh", "pkm", "tkm", "bcm CH4", "boe", 't Alloys', "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "EUR", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
 _ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
 
 class ProductionMetric(str):

@@ -11,7 +11,7 @@ import pandas as pd
 import pint
 import pint_pandas
 
-from .data.osc_units import asPintSeries
+from .data.osc_units import asPintSeries, Q_, PA_
 from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
 
 import logging
@@ -121,8 +121,10 @@ class PortfolioAggregation(ABC):
             use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
             if use_S3.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE3)
+                use_S3 = use_S3 & pd.notna(data[self.c.COLS.GHG_SCOPE3])
             if use_S1S2.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE12)
+                use_S1S2 = use_S1S2 & pd.notna(data[self.c.COLS.GHG_SCOPE12])
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
@@ -132,9 +134,11 @@ class PortfolioAggregation(ABC):
                                  + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).fillna(0).sum())
                     # See https://github.com/hgrecco/pint-pandas/issues/130
                     weights_dtype = f"pint[{emissions.u}]"
-                    weights_series = ((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2,0)
-                                       + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0)).astype(weights_dtype) \
-                                      / emissions * data[input_column])
+                    # df_z works around not-yet-reported pint problem using df.where with extension arrays
+                    df_z = pd.Series(PA_([0] * len(data.index), dtype='Mt CO2e'), index=data.index)
+                    weights_series = ((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, df_z)
+                                       + data[self.c.COLS.GHG_SCOPE3].where(use_S3, df_z))
+                                      .astype(weights_dtype) / emissions * data[input_column])
                     return weights_series
 
             except ZeroDivisionError:
@@ -153,12 +157,16 @@ class PortfolioAggregation(ABC):
                 use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
                 if use_S1S2.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE12)
+                    use_S1S2 = use_S1S2 & pd.notna(data[self.c.COLS.GHG_SCOPE12])
                 if use_S3.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE3)
+                    use_S3 = use_S3 & pd.notna(data[self.c.COLS.GHG_SCOPE3])
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
+                    df_z = pd.Series(PA_([0] * len(data.index), dtype='Mt CO2e'), index=data.index)
                     data[self.c.COLS.OWNED_EMISSIONS] = (data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]) * (
-                        data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, 0) + data[self.c.COLS.GHG_SCOPE3].where(use_S3, 0))
+                        data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, df_z)
+                        + data[self.c.COLS.GHG_SCOPE3].where(use_S3, df_z)).astype('pint[Mt CO2e]')
             except ZeroDivisionError:
                 raise ValueError("To calculate the aggregation, the {} column may not be zero".format(value_column))
 
