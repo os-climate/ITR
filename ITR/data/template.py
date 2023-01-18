@@ -127,7 +127,7 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
             if x.submetric[p] == '3':
                 pinned_priority = p
                 break
-    elif x.name[0] in ['Autos', 'Oil & Gas']:
+    elif x.name[0] in ['Autos', 'Oil & Gas', 'Coal', 'Oil', 'Gas']:
         for p in range(0, len(x.submetric)):
             if x.submetric[p] == '11':
                 pinned_priority = p
@@ -581,11 +581,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             submetric_sector_map = {
                 'cement': 'Cement',
                 'clinker': 'Cement',
+                'chemicals': 'Chemicals',
                 'electricity': 'Electricity Utilities',
                 # 'generation': 'Electricity Utilities',
                 'gas': 'Gas Utilities',
-                'distribution': 'Gas Utilities',
-                'oil': 'Oil & Gas'
+                # 'distribution': 'Gas Utilities',
+                'coal': 'Coal',
+                'lng': 'Gas',
+                'oil': 'Oil',
             }
 
             grouped_prod = (
@@ -900,7 +903,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                 try:
                                     company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
                                         company_id, 'Emissions', 'S1S2S3'][base_year]
-                                    logger.warning(f"Using S1+S2+S3 as GHG_SCOPE12 because no Scopee 1 or Scope 2 available for company with ID {company_id}")
+                                    logger.warning(f"Using S1+S2+S3 as GHG_SCOPE12 because no Scope 1 or Scope 2 available for company with ID {company_id}")
                                 except KeyError:
                                     logger.error(f"Company {company_id} snuck into finalization without any useable S1, S2, S1+S2, or S1+S2+S3 data")
                                     company_data[ColumnsConfig.GHG_SCOPE12] = Q_(np.nan, 'Mt CO2e')

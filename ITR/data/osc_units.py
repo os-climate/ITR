@@ -25,17 +25,16 @@ ureg.define("LNG = 3.44 / 2.75 CH4")
 
 ureg.define("Alloys = [alloys]")
 ureg.define("Al = [aluminum] = Aluminum")
-ureg.define("Biofuel = [biofuel]")
 ureg.define("aluminium = Al")
+ureg.define("Biofuel = [biofuel]")
 ureg.define("Cement = [cement]")
-ureg.define("cement = Cement")
+ureg.define("Coal = [coal]")
 ureg.define("Cu = [copper] = Copper")
 ureg.define("Paper = [paper] = Pulp")
 ureg.define("Paperboard = Paper")
 ureg.define("Petrochemicals = [petrochemicals]")
 ureg.define("Petroleum = [petroleum]")
 ureg.define("Fe = [iron] = Steel")
-ureg.define("iron = Fe")
 
 # For reports that use 10,000 t instead of 1e3 or 1e6
 ureg.define('myria- = 10000')
@@ -59,6 +58,7 @@ ureg.define("mmbtu = 1e6 btu")
 ureg.define("boe = 6.1178632 GJ = BoE")
 ureg.define("mboe = 1e3 boe")
 ureg.define("mmboe = 1e6 boe")
+ureg.define("MMbbl = 1e6 bbl")
 
 ureg.define("scf = ft**3")
 ureg.define("mscf = 1000 scf = Mscf")
@@ -76,20 +76,20 @@ ureg.define("bcm = 1000000000 m**3")
 NG_DENS = 0.657 * ureg('kg CH4/(m**3 CH4)')              # density
 NG_SE = 52.5 * ureg('MJ/(kg CH4)')                  # specific energy (energy per mass); range is 50-55
 ng = Context('ngas')
-ng.add_transformation('[volume]', '[mass]', lambda ureg, x: (breakpoint(), x * NG_DENS))
+# ng.add_transformation('[volume]', '[mass]', lambda ureg, x: (breakpoint(), x * NG_DENS))
 # ng.add_transformation('[volume] * [methane]', '[mass] * [methane]', lambda ureg, x: x * NG_DENS)
-ng.add_transformation('[mass] CH4', '[energy]', lambda ureg, x: (breakpoint(), x * NG_SE))
+# ng.add_transformation('[mass] CH4', '[energy]', lambda ureg, x: (breakpoint(), x * NG_SE))
 # ng.add_transformation('[energy]', '[mass] * CH4', lambda ureg, x: x / NG_SE)
 ng.add_transformation('[volume] CH4 ', '[energy]', lambda ureg, x: x * NG_DENS * NG_SE)
-ng.add_transformation('1 / [volume] / CH4 ', '1 / [energy]', lambda ureg, x: (breakpoint(), x / (NG_DENS * NG_SE)))
-ng.add_transformation('1 / [energy]', '1 / [volume] / CH4 ', lambda ureg, x: (breakpoint(), x * (NG_DENS * NG_SE)))
+# ng.add_transformation('1 / [volume] / CH4 ', '1 / [energy]', lambda ureg, x: (breakpoint(), x / (NG_DENS * NG_SE)))
+# ng.add_transformation('1 / [energy]', '1 / [volume] / CH4 ', lambda ureg, x: (breakpoint(), x * (NG_DENS * NG_SE)))
 # ng.add_transformation('[energy]', '[volume] CH4', lambda ureg, x: x / (NG_DENS * NG_SE))
-ng.add_transformation('[length] * [methane] * [time]**2 / [mass]', '[]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
+# ng.add_transformation('[length] * [methane] * [time]**2 / [mass]', '[]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
 ng.add_transformation('[carbon] * [length] * [methane] * [time] ** 2', '[carbon] * [mass]', lambda ureg, x: x * NG_DENS * NG_SE)
-ng.add_transformation('[carbon] * [mass] / [energy]', '[carbon] * [mass] / [volume] / [methane]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
+# ng.add_transformation('[carbon] * [mass] / [energy]', '[carbon] * [mass] / [volume] / [methane]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
 ng.add_transformation('[carbon] * [mass] / [volume] / [methane]', '[carbon] * [mass] / [energy]', lambda ureg, x: x / (NG_DENS * NG_SE))
-ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2') / ureg('Mscf CH4'))
-ng.add_transformation('g CH4', 'g CO2e', lambda ureg, x: x * ureg('44 g CO2e') / ureg('16 g CH4'))
+ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2 / (Mscf CH4)'))
+ng.add_transformation('g CH4', 'g CO2e', lambda ureg, x: x * ureg('44 g CO2e / (16 g CH4)'))
 ureg.add_context(ng)
 ureg.enable_contexts('ngas')
 
@@ -107,16 +107,22 @@ def convert_to_annual(x):
     elif exp == 1:
         x_implied_annual = Q_(x / ureg(str(time_unit)).to('a'), unit_ct.remove([str(time_unit)]))
     else:
+        assert False
         breakpoint()
     # x_implied_annual = Q_(x * ureg('a').to(time_unit), unit_ct.remove([str(time_unit)]).add(str(time_unit), exp-1))
     return x_implied_annual
 
 
 oil = Context('oil')
+ng.add_transformation('[carbon] * [mass] ** 2 / [length] / [time] ** 3', '[carbon] * [mass]',
+                      lambda ureg, x: convert_to_annual(x) * ureg('bbl/boe').to_reduced_units())
+# ng.add_transformation('boe', 'kg CO2e', lambda ureg, x: x * ureg('431.87 kg CO2e / boe')
+# ng.add_transformation('[length] ** 2 * [mass] / [time] ** 2', '[carbon] * [mass]', lambda ureg, x: (breakpoint(), x 
+# ng.add_transformation('bbl', 'boe', lambda ureg, x: x * ureg('boe') / ureg('bbl'))
+# ng.add_transformation('boe', 'bbl', lambda ureg, x: x * ureg('bbl') / ureg('boe'))
 ng.add_transformation('[carbon] * [mass] / [time]', '[carbon] * [mass]', lambda ureg, x: convert_to_annual(x))
 ng.add_transformation('[length] ** 2 * [mass] / [time] ** 3', '[length] ** 2 * [mass] / [time] ** 2', lambda ureg, x: convert_to_annual(x))
 ng.add_transformation('[carbon] * [time] ** 3 / [length] ** 2', '[carbon] * [time] ** 2 / [length] ** 2', lambda ureg, x: convert_to_annual(x))
-# ng.add_transformation('[volume] / [time]', '[volume]', lambda ureg, x: (breakpoint(), x))
 ureg.add_context(oil)
 ureg.enable_contexts('oil')
 
@@ -148,7 +154,8 @@ ureg.define("Fe_ton = t Steel")
 # ureg.define("PM10 = [ PM10_emissions ]")
 
 # List of all the production units we know
-_production_units = [ "Wh", "pkm", "tkm", "bcm CH4", "boe", 't Alloys', "t Aluminum", "t Cement", "t Copper", "t Paper", "t Steel", "USD", "EUR", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
+_production_units = [ "Wh", "pkm", "tkm", "bcm CH4", "bbl", "boe", 't Alloys', "t Aluminum", "t Cement", "t Coal", "t Copper",
+                      "t Paper", "t Steel", "USD", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
 _ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
 
 class ProductionMetric(str):
@@ -318,7 +325,7 @@ def quantity(dimensionality: str) -> type:
             try:
                 q = Q_(value)
             except ValueError:
-                breakpoint()
+                # breakpoint()
                 raise ValueError(f"cannot convert '{value}' to quantity")
             quantity = q
         elif isinstance(value, Quantity):

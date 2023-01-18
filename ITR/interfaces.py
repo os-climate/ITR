@@ -502,7 +502,11 @@ class ICompanyData(BaseModel):
             'Utilities': { 'Global': 'PJ' },
             'Steel': { 'Global': 't Steel' },
             'Aluminum': { 'Global': 't Aluminum' },
-            'Oil & Gas': { 'Global': 'mmboe' },
+            'Energy': { 'Global': 'PJ' },
+            'Coal': { 'Global': 't Coal' },
+            'Oil': { 'Global': 'bbl/d' },
+            'Gas': { 'Global': 'bcm' },
+            # 'Oil & Gas': { 'Global': 'mmboe' },
             'Autos': { 'Global': 'pkm' },
             'Trucking': { 'Global': 'tkm' },
             'Cement': { 'Global': 't Cement' },
@@ -511,6 +515,12 @@ class ICompanyData(BaseModel):
             'Commercial Buildings': { 'Global': 'billion m**2' }, # Should it be 'built m**2' ?
             'Textiles': { 'Global': 'billion USD' },
             'Chemicals': { 'Global': 'billion USD' },
+            'Chemicals': { 'Global': 'billion USD' },
+            'Pharmaceuticals': { 'Global': 'billion USD' },
+            'Ag Chem': { 'Global': 'billion USD' },
+            'Consumer Products': { 'Global': 'billion USD' },
+            'Fiber & Rubber': { 'Global': 'billion USD' },
+            'Petrochem & Plastics': { 'Global': 'billion USD' },
         }
         units = None
         if sector_unit_dict.get(sector):

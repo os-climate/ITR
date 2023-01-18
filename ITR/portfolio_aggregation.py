@@ -87,7 +87,7 @@ class PortfolioAggregation(ABC):
         :param column: The column to check
         :return:
         """
-        missing_data = data[pd.isnull(data[column])][self.c.COLS.COMPANY_NAME].unique()
+        missing_data = data[pd.isna(data[column])][self.c.COLS.COMPANY_NAME].unique()
         if len(missing_data):
             logger.error(f"The value for {column} is missing for the following companies: {', '.join(missing_data)}")
 
@@ -134,7 +134,7 @@ class PortfolioAggregation(ABC):
                                  + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).fillna(0).sum())
                     # See https://github.com/hgrecco/pint-pandas/issues/130
                     weights_dtype = f"pint[{emissions.u}]"
-                    # df_z works around not-yet-reported pint problem using df.where with extension arrays
+                    # df_z works around fact that we cannot just insert quantities willy-nilly using Pandas where function
                     df_z = pd.Series(PA_([0] * len(data.index), dtype='Mt CO2e'), index=data.index)
                     weights_series = ((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, df_z)
                                        + data[self.c.COLS.GHG_SCOPE3].where(use_S3, df_z))

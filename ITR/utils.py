@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import ITR
-from ITR.data.osc_units import ureg
+from ITR.data.osc_units import ureg, Q_
 import pint
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
@@ -103,8 +103,9 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
     df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
-    s3_data_valid = df_company_data.ghg_s3.notna()
-    df_company_data.loc[s3_data_valid, 'ghg_s3'] = df_company_data.loc[s3_data_valid].ghg_s3.astype('pint[Mt CO2e]')
+    s3_data_invalid = df_company_data.ghg_s3.isna()
+    df_company_data.loc[s3_data_invalid, 'ghg_s3'] = Q_(np.nan, 'Mt CO2e')
+    df_company_data.ghg_s3 = df_company_data.ghg_s3.astype('pint[Mt CO2e]')
     df_company_data.cumulative_budget = df_company_data.cumulative_budget.astype('pint[Mt CO2e]')
     df_company_data.cumulative_target = df_company_data.cumulative_target.astype('pint[Mt CO2e]')
     df_company_data.cumulative_trajectory = df_company_data.cumulative_trajectory.astype('pint[Mt CO2e]')

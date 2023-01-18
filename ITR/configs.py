@@ -93,7 +93,11 @@ class SectorsConfig:
     UTILITY = "Utilities"
     STEEL = "Steel"
     ALUMINUM = "Aluminum"
-    OIL_AND_GAS = "Oil & Gas"
+    ENERGY = "Energy"
+    # OIL_AND_GAS = "Oil & Gas"
+    COAL = "Coal"
+    OIL = "Oil"
+    GAS = "Gas"
     AUTOMOBILE = "Autos"
     TRUCKING = "Trucking"
     CEMENT = "Cement"
@@ -102,6 +106,11 @@ class SectorsConfig:
     BUILDINGS_COMMERCIAL = "Commercial Buildings"
     TEXTILES = "Textiles"
     CHEMICALS = "Chemicals"
+    PLASTICS = 'Petrochem & Plastics'
+    AG_CHEM = 'Ag Chem'
+    CONSUMER_PRODUCTS = 'Consumer Products'
+    PHARMACEUTICALS = 'Pharmaceuticals'
+    FIBERS_AND_RUBBER = 'Fiber & Rubber'
     INFORMATION_TECHNOLOGY = "Information Technology"
     INDUSTRIALS = "Industrials"
     FINANCIALS = "Financials"
@@ -115,11 +124,13 @@ class SectorsConfig:
         """
         return [SectorsConfig.POWER_UTILITY, SectorsConfig.GAS_UTILITY, SectorsConfig.UTILITY,
                 SectorsConfig.STEEL, SectorsConfig.ALUMINUM,
-                SectorsConfig.OIL_AND_GAS,
+                SectorsConfig.ENERGY, SectorsConfig.COAL, SectorsConfig.OIL, SectorsConfig.GAS,
+                # SectorsConfig.OIL_AND_GAS,
                 SectorsConfig.AUTOMOBILE, SectorsConfig.TRUCKING,
                 SectorsConfig.CEMENT,
                 SectorsConfig.BUILDINGS_CONSTRUCTION, SectorsConfig.BUILDINGS_RESIDENTIAL, SectorsConfig.BUILDINGS_COMMERCIAL,
                 SectorsConfig.TEXTILES, SectorsConfig.CHEMICALS,
+                SectorsConfig.PLASTICS, SectorsConfig.AG_CHEM, SectorsConfig.CONSUMER_PRODUCTS, SectorsConfig.PHARMACEUTICALS, SectorsConfig.FIBERS_AND_RUBBER,
                 ]
 
 
