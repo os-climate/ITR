@@ -437,7 +437,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 try:
                     c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(c, co_cumprod)
                 except Exception as err:
-                    logger.error(f"Exception {err} raised while calculating target projections for {c.company_id}")
+                    logger.error(f"While calculating target projections for {c.company_id}, raised {err} (possible intensity vs. absolute unit mis-match?)")
 
     
     # ??? Why prefer TRAJECTORY over TARGET?
@@ -991,6 +991,9 @@ class EITargetProjector(EIProjector):
                         model_ei_projections = [ICompanyEIProjection(year=ei_realizations[j].year, value=ei_realizations[j].value)
                                                 for j in range(0,i+1)
                                                 if not ITR.isnan(ei_realizations[j].value.m)]
+                        # Backfill data to BASE_YEAR if need be
+                        while model_ei_projections[0].year > self.projection_controls.BASE_YEAR:
+                            model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
                         ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
                                                                                  projections=self._get_bounded_projections(model_ei_projections))
                         if not ITR.isnan(target_ei_value.m):
@@ -1065,6 +1068,8 @@ class EITargetProjector(EIProjector):
                                 model_ei_projections = [ICompanyEIProjection(year=ei_realizations[j].year, value=ei_realizations[j].value)
                                                         for j in range(0,i+1)
                                                         if not ITR.isnan(ei_realizations[j].value.m)]
+                                while model_ei_projections[0].year > self.projection_controls.BASE_YEAR:
+                                    model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
                                 ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{last_ei_value.u:~P}"),
                                                                                          projections=self._get_bounded_projections(model_ei_projections))
                                 skip_first_year = 1
@@ -1117,6 +1122,8 @@ class EITargetProjector(EIProjector):
                                 model_ei_projections = [ICompanyEIProjection(year=em_realizations[j].year, value=em_realizations[j].value / production_proj.loc[em_realizations[j].year])
                                                         for j in range(0,i+1)
                                                         if em_realizations[j].year in production_proj.index and not ITR.isnan(em_realizations[j].value.m)]
+                                while model_ei_projections[0].year > self.projection_controls.BASE_YEAR:
+                                    model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
                                 last_prod_value = production_proj.loc[last_ei_year]
                                 ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{(last_em_value/last_prod_value).u:~P}"),
                                                                                          projections=self._get_bounded_projections(model_ei_projections))

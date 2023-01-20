@@ -7,7 +7,7 @@ from typing import List, Type
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, asPintSeries
+from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, DF_ICompanyEIProjections, IHistoricData
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
@@ -345,13 +345,30 @@ class DataWarehouse(ABC):
 
 
     def estimate_missing_s3_data(self, company: ICompanyData) -> None:
-        # This is an estimation function, not a mathematical processing function.
-        # It won't solve S3 = S1S2S3 - S1S2 (which should be done elsewhere)
-        if (company.historic_data.emissions.S3
-            or company.historic_data.emissions.S1S2S3
-            or not self.benchmarks_projected_ei
+        # We need benchmark data to estimate S3
+        if (not self.benchmarks_projected_ei
             or not self.benchmarks_projected_ei._EI_benchmarks.S3):
             return
+
+        # This is an estimation function, not a mathematical processing function.
+        # It won't solve S3 = S1S2S3 - S1S2 (which should be done elsewhere)
+        df_historic_s3 = pd.DataFrame()
+        if (company.historic_data.emissions.S3
+            or company.historic_data.emissions.S1S2S3):
+            historic_em_s3 = getattr(company.historic_data.emissions, 'S3',
+                                     company.historic_data.emissions.S1S2S3)
+            for em in historic_em_s3:
+                if em.year == self.company_data.projection_controls.BASE_YEAR and not ITR.isnan(em.value.m):
+                    # We have a good BASE_YEAR, so no estimation needed
+                    return
+            # Create a dataframe with those s3 values we do have
+            s3_index, s3_data = tuple(map(list, zip(*[(em.year, em.value) for em in historic_em_s3 if not ITR.isnan(em.value.m)]))) or ((), ())
+            if s3_data:
+                s3_data = [s3_data[0]] * (s3_index[0]-self.company_data.projection_controls.BASE_YEAR) + s3_data
+                s3_index = [year for year in range(self.company_data.projection_controls.BASE_YEAR, s3_index[0])] + s3_index
+                # We can make a PintArray from a Quantity array, but not an array of Quantities
+                df_historic_s3 = pd.Series(PA_(Q_(list(map(lambda x: x.m, s3_data)), s3_data[0].u)), index=s3_index, name='s3_estimated')
+                df_historic_s3.index.name='year'
 
         # best_prod.loc[s3_all_nan.index.set_levels(['production'], level='metric')]
         company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year([company.company_id])
@@ -366,10 +383,27 @@ class DataWarehouse(ABC):
         else:
             return
         if EScope.S3 not in self.benchmarks_projected_ei._EI_df.loc[(sector, region)].index:
-            # Construction Buildings don't have an S3 scope defined
-            return
+            if sector=='Construction Buildings':
+                # Construction Buildings don't have an S3 scope defined
+                return
+            elif sector in ['Pharmaceuticals', 'Ag Chem', 'Consumer Products',
+                            'Fibre & Rubber', 'Petrochem & Plastics']:
+                # This is a work-around for missing S3 data in OECM benchmark
+                s3_chemical_weighting = {
+                    'Pharmaceuticals':0.01,
+                    'Ag Chem':0.06,
+                    'Consumer Products':0.08,
+                    'Fibre & Rubber':0.15,
+                    'Petrochem & Plastics':0.70,
+                }
+                bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[("Chemicals", region, EScope.S3)]) * s3_chemical_weighting[sector]
+                bm_ei_s3.name = (sector, region, EScope.S3)
+            else:
+                raise ValueError(f"Sector {sector} is missing S3 values")
+        else:
+            bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S3)])
         projected_production = self.benchmark_projected_production.get_company_projected_production(company_info_at_base_year)
-        bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S3)])
+
         # Penalize non-disclosure by assuming 2x aligned S3 emissions.  That's still likely undercounting, because
         # most non-disclosing companies are nowhere near the reduction rates of the benchmarks.
         s3_emissions = projected_production.iloc[0].mul(bm_ei_s3) * 2
@@ -381,16 +415,25 @@ class DataWarehouse(ABC):
             # Don't know how to deal with this funky intensity value
             logger.error(f"Production type {projected_production.iloc[0].dtype.units:~P} and intensity type {bm_ei_s3.dtype.units} don't multiply to t CO2e")
             return
+        # Bring back historic data if we have such, and average down to the final numbers
+        if not df_historic_s3.empty:
+            start_year = df_historic_s3.index[-1]
+            end_year = s3_emissions.index[-1]
+            df_future_s3 = pd.Series([np.nan] * (end_year - start_year), dtype=object)
+            df_future_s3.index += start_year
+            for i, year in enumerate(df_future_s3.index):
+                df_future_s3.iloc[i] = df_historic_s3[start_year]*float(end_year-year)/(end_year-start_year) + s3_emissions[year]*float(i)/(end_year-start_year)
+            s3_emissions = pd.concat([df_historic_s3.iloc[0:-1], df_future_s3]).astype('pint[Mt CO2]')
         base_year = self.company_data.projection_controls.BASE_YEAR
         company.ghg_s3 = s3_emissions[base_year]
         assert company.ghg_s3 is not None
         if company.historic_data.emissions.S1S2:
-            historic_em_ref = company.historic_data.emissions.S1S2
-            historic_ei_ref = company.historic_data.emissions_intensities.S1S2
+            # historic_em_ref = company.historic_data.emissions.S1S2
+            # historic_ei_ref = company.historic_data.emissions_intensities.S1S2
             projected_ei_ref = company.projected_intensities.S1S2
         else:
-            historic_em_ref = company.historic_data.emissions.S1
-            historic_ei_ref = company.historic_data.emissions_intensities.S1
+            # historic_em_ref = company.historic_data.emissions.S1
+            # historic_ei_ref = company.historic_data.emissions_intensities.S1
             projected_ei_ref = company.projected_intensities.S1
         # DON'T update historic_data
         if False:
