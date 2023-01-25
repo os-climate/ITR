@@ -759,7 +759,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             mask = df.scope.eq(scope)
             return df.loc[mask[mask].index].set_index(names)
 
-        def fill_blank_or_missing_rows(df, scope_a, scope_b, scope_ab, index_names, historic_years):
+        def fill_blank_or_missing_scopes(df, scope_a, scope_b, scope_ab, index_names, historic_years):
             # Translate from long format, where each scope is on its own line, to common index
             df_a = get_scoped_df(df, scope_a, index_names)
             df_b = get_scoped_df(df, scope_b, index_names)
@@ -781,10 +781,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         df = df_historic_data.reset_index()
         index_names = ['company_id', 'variable']
-        df = fill_blank_or_missing_rows(df, 'S1', 'S2', 'S1S2', index_names, self.historic_years)
-        df = fill_blank_or_missing_rows(df, 'S1S2', 'S3', 'S1S2S3', index_names, self.historic_years)
+        df = fill_blank_or_missing_scopes(df, 'S1', 'S2', 'S1S2', index_names, self.historic_years)
+        df = fill_blank_or_missing_scopes(df, 'S1S2', 'S3', 'S1S2S3', index_names, self.historic_years)
         df_historic_data = df.set_index(['company_id', 'variable', 'scope'])
-        # We might run `fill_blank_or_missing_rows` again if we get newly estimated S3 data from an as-yet unknown benchmark
+        # We might run `fill_blank_or_missing_scopes` again if we get newly estimated S3 data from an as-yet unknown benchmark
         
         # Drop from our companies list the companies dropped in df_fundamentals
         self._companies = [c for c in self._companies if c.company_id in df_fundamentals.index]
@@ -937,9 +937,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
 
                 model_companies.append(ICompanyData.parse_obj(company_data))
-            except ValidationError:
-                logger.error(f"(One of) the input(s) of company with ID {company_id} is invalid")
-                breakpoint()
+            except ValidationError as err:
+                logger.error(f"{err}: (One of) the input(s) of company with ID {company_id} is invalid")
+                # breakpoint()
                 raise
         return model_companies
 
@@ -982,8 +982,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         try:
             historic_t = asPintDataFrame(historic.set_index(['variable', 'company_id', 'scope']).T)
         except pint.errors.DimensionalityError as err:
-            logger.error(f"Dimensionality error {err} in DataFrame\n{historic}")
-            breakpoint()
+            logger.error(f"Dimensionality error {err} in 'historic'  DataFrame:\n{historic}")
+            # breakpoint()
+            raise
         # Historic data may well have ragged left and right columns
         # all_na = historic.apply(lambda x: all([ITR.isnan(y.m) for y in x]), axis=1)
         # historic = historic[~all_na]

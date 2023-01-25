@@ -845,8 +845,8 @@ class TestTargets(unittest.TestCase):
             company_ai, bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)])
 
         self.base_company_data = BaseCompanyDataProvider (company_data)
-        # Since we are not using a Data Warehouse to compute our graphics, we have to do this projection manually
-        self.base_company_data._companies = self.base_company_data._validate_projected_trajectories(self.base_company_data._companies)
+        # Since we are not using a Data Warehouse to compute our graphics, we have to do this projection manually, with the benchmark's internal dataframe.
+        self.base_company_data._companies = self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, self.OECM_EI_S3_bm._EI_df)
 
         co_pp = bm_production_data.droplevel('scope')
 

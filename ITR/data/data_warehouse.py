@@ -7,7 +7,7 @@ from typing import List, Type
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries
+from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, DF_ICompanyEIProjections, IHistoricData
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
 import pint
+from pint import DimensionalityError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -121,7 +122,7 @@ class DataWarehouse(ABC):
         if new_production_bm:
             # Note that _validate_projected_trajectories overwrites fields of companies, so no need to use return value
             logger.info(f"calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
-            self.company_data._validate_projected_trajectories(self.company_data._companies)
+            self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
 
         if new_ei_bm and (new_companies := [c for c in self.company_data._companies if '+' in c.company_id]):
             logger.info("Allocating emissions to align with benchmark data")
@@ -216,7 +217,8 @@ class DataWarehouse(ABC):
                             pre_s3_data = [p for p in data[primary_scope_attr] if p.year <= data.S3[0].year]
                             if len(pre_s3_data)==0:
                                 # Could not adjust
-                                breakpoint()
+                                # breakpoint()
+                                assert False
                                 return
                             if len(pre_s3_data)>1:
                                 pre_s3_data = list( map(lambda x: type(x)(year=x.year, value=data.S3[0].value * x.value / pre_s3_data[-1].value), pre_s3_data[:-1]) )
@@ -250,7 +252,9 @@ class DataWarehouse(ABC):
                                 trajectories[primary_scope_attr].projections = (
                                     trajectories[primary_scope_attr].projections + trajectories.S3.projections)
                             else:
-                                breakpoint()
+                                # Should not be reached as we are using DF_ICompanyEIProjections consistently now
+                                # breakpoint()
+                                assert False
                                 trajectories[primary_scope_attr].projections = list( map(ICompanyEIProjection.add, trajectories[primary_scope_attr].projections, trajectories.S3.projections) )
                     _adjust_trajectories(c.projected_intensities, 'S1')
                     _adjust_trajectories(c.projected_intensities, 'S1S2')
@@ -267,7 +271,9 @@ class DataWarehouse(ABC):
                             targets[primary_scope_attr].projections = (
                                 targets[primary_scope_attr].projections + s3_projections)
                         else:
-                            breakpoint()
+                            # Should not be reached as we are using DF_ICompanyEIProjections consistently now
+                            # breakpoint()
+                            assert False
                             if primary_projections[0].year < s3_projections[0].year:
                                 while primary_projections[0].year < s3_projections[0].year:
                                     primary_projections = primary_projections[1:]
@@ -341,45 +347,25 @@ class DataWarehouse(ABC):
         logger.info(f"re-calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
         for company in self.company_data._companies:
             company.projected_intensities = None
-        self.company_data._validate_projected_trajectories(self.company_data._companies)
+        self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
 
 
     def estimate_missing_s3_data(self, company: ICompanyData) -> None:
-        # We need benchmark data to estimate S3
-        if (not self.benchmarks_projected_ei
+        # We need benchmark data to estimate S3 from projected_intensities (which go back in time to BASE_YEAR).
+        # We don't need to estimate further back than that, as we don't rewrite values stored in historic_data.
+        if (company.projected_intensities.S3
+            or not self.benchmarks_projected_ei
             or not self.benchmarks_projected_ei._EI_benchmarks.S3):
             return
 
         # This is an estimation function, not a mathematical processing function.
         # It won't solve S3 = S1S2S3 - S1S2 (which should be done elsewhere)
-        df_historic_s3 = pd.DataFrame()
-        if (company.historic_data.emissions.S3
-            or company.historic_data.emissions.S1S2S3):
-            historic_em_s3 = getattr(company.historic_data.emissions, 'S3',
-                                     company.historic_data.emissions.S1S2S3)
-            for em in historic_em_s3:
-                if em.year == self.company_data.projection_controls.BASE_YEAR and not ITR.isnan(em.value.m):
-                    # We have a good BASE_YEAR, so no estimation needed
-                    return
-            # Create a dataframe with those s3 values we do have
-            s3_index, s3_data = tuple(map(list, zip(*[(em.year, em.value) for em in historic_em_s3 if not ITR.isnan(em.value.m)]))) or ((), ())
-            if s3_data:
-                s3_data = [s3_data[0]] * (s3_index[0]-self.company_data.projection_controls.BASE_YEAR) + s3_data
-                s3_index = [year for year in range(self.company_data.projection_controls.BASE_YEAR, s3_index[0])] + s3_index
-                # We can make a PintArray from a Quantity array, but not an array of Quantities
-                df_historic_s3 = pd.Series(PA_(Q_(list(map(lambda x: x.m, s3_data)), s3_data[0].u)), index=s3_index, name='s3_estimated')
-                df_historic_s3.index.name='year'
-
-        # best_prod.loc[s3_all_nan.index.set_levels(['production'], level='metric')]
-        company_info_at_base_year = self.company_data.get_company_intensity_and_production_at_base_year([company.company_id])
-        row0 = company_info_at_base_year.iloc[0]
-        sector = row0.sector
-        region = row0.region
+        sector = company.sector
+        region = company.region
         if (sector, region) in self.benchmarks_projected_ei._EI_df.index:
             pass
         elif (sector, "Global") in self.benchmarks_projected_ei._EI_df.index:
             region = "Global"
-            company_info_at_base_year.loc[:, 'region'] = "Global"
         else:
             return
         if EScope.S3 not in self.benchmarks_projected_ei._EI_df.loc[(sector, region)].index:
@@ -402,80 +388,50 @@ class DataWarehouse(ABC):
                 raise ValueError(f"Sector {sector} is missing S3 values")
         else:
             bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S3)])
-        projected_production = self.benchmark_projected_production.get_company_projected_production(company_info_at_base_year)
+        if (sector, region, EScope.S1S2) in self.benchmarks_projected_ei._EI_df.index:
+            # If we have only S1S2S3 emissions, we can "allocate" them according to the benchmark's allocation
+            bm_ei_s1s2 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S1S2)])
+        else:
+            bm_ei_s1s2 = None
 
-        # Penalize non-disclosure by assuming 2x aligned S3 emissions.  That's still likely undercounting, because
-        # most non-disclosing companies are nowhere near the reduction rates of the benchmarks.
-        s3_emissions = projected_production.iloc[0].mul(bm_ei_s3) * 2
-        try:
-            s3_emissions = s3_emissions.astype('pint[Mt CO2]')
+        if company.projected_intensities.S1S2S3:
+            assert company.projected_intensities.S1S2 == None
+            assert company.projected_intensities.S1 == None
+            ei_metric = company.projected_intensities.S1S2S3.ei_metric
+            s1s2_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s1s2/(bm_ei_s1s2+bm_ei_s3)
+            s3_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s3/(bm_ei_s1s2+bm_ei_s3)
             if ITR.HAS_UNCERTAINTIES:
-                s3_emissions = s3_emissions.map(lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0) if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype('pint[Mt CO2e]')
-        except pint.errors.DimensionalityError:
-            # Don't know how to deal with this funky intensity value
-            logger.error(f"Production type {projected_production.iloc[0].dtype.units:~P} and intensity type {bm_ei_s3.dtype.units} don't multiply to t CO2e")
-            return
-        # Bring back historic data if we have such, and average down to the final numbers
-        if not df_historic_s3.empty:
-            start_year = df_historic_s3.index[-1]
-            end_year = s3_emissions.index[-1]
-            df_future_s3 = pd.Series([np.nan] * (end_year - start_year), dtype=object)
-            df_future_s3.index += start_year
-            for i, year in enumerate(df_future_s3.index):
-                df_future_s3.iloc[i] = df_historic_s3[start_year]*float(end_year-year)/(end_year-start_year) + s3_emissions[year]*float(i)/(end_year-start_year)
-            s3_emissions = pd.concat([df_historic_s3.iloc[0:-1], df_future_s3]).astype('pint[Mt CO2]')
-        base_year = self.company_data.projection_controls.BASE_YEAR
-        company.ghg_s3 = s3_emissions[base_year]
-        assert company.ghg_s3 is not None
-        if company.historic_data.emissions.S1S2:
-            # historic_em_ref = company.historic_data.emissions.S1S2
-            # historic_ei_ref = company.historic_data.emissions_intensities.S1S2
-            projected_ei_ref = company.projected_intensities.S1S2
+                s1s2_projections = s1s2_projections.map(
+                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
+                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+                s3_projections = s3_projections.map(
+                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
+                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+            company.projected_intensities.S1S2 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s1s2_projections)
+            company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s3_projections)
+            company.ghg_s1s2 = s1s2_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production
         else:
-            # historic_em_ref = company.historic_data.emissions.S1
-            # historic_ei_ref = company.historic_data.emissions_intensities.S1
-            projected_ei_ref = company.projected_intensities.S1
-        # DON'T update historic_data
-        if False:
-            company.historic_data.emissions.S3 = [IEmissionRealization(year=er.year, value=s3_emissions[er.year])
-                                                  for er in historic_em_ref
-                                                  if er.year>=base_year]
-            # If we have only S1, not S1S2, there is no S1S2S3 data...
-            if company.historic_data.emissions.S1S2:
-                company.historic_data.emissions.S1S2S3 = list( map(IEmissionRealization.add,
-                                                                   [em_s1s2 for em_s1s2 in company.historic_data.emissions.S1S2
-                                                                    if em_s1s2.year >= base_year],
-                                                                   [em_s3 for em_s3 in company.historic_data.emissions.S3
-                                                                    if em_s3.year >= company.historic_data.emissions.S1S2[0].year]) )
-            company.historic_data.emissions_intensities.S3 = [IEIRealization(year=ei_r.year, value=bm_ei_s3[ei_r.year])
-                                                              for ei_r in historic_ei_ref
-                                                              if ei_r.year>=base_year]
-            # If we have only S1, not S1S2, there is no S1S2S3 data...
-            if company.historic_data.emissions_intensities.S1S2:
-                company.historic_data.emissions_intensities.S1S2S3 = list( map(IEIRealization.add,
-                                                                               [ei_s1s2 for ei_s1s2 in company.historic_data.emissions_intensities.S1S2
-                                                                                if ei_s1s2.year >= base_year],
-                                                                               [ei_s3 for ei_s3 in company.historic_data.emissions_intensities.S3
-                                                                                if ei_s3.year >= company.historic_data.emissions_intensities.S1S2[0].year]) )
-        if isinstance(projected_ei_ref, DF_ICompanyEIProjections):
-            company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=projected_ei_ref.ei_metric,
-                                                                        projections=s3_emissions.div(projected_production.iloc[0]))
-            if company.projected_intensities.S1S2:
-                company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
-                                                                                projections=(company.projected_intensities.S1S2.projections
-                                                                                             +company.projected_intensities.S3.projections))
-        else:
-            company.projected_intensities.S3 = ICompanyEIProjections(ei_metric=projected_ei_ref.ei_metric,
-                                                                     projections=[ICompanyEIProjection(year=eip.year, value=s3_emissions[eip.year]/projected_production.iloc[0][eip.year])
-                                                                                  for eip in projected_ei_ref.projections
-                                                                                  if eip.year in s3.index])
-            if company.projected_intensities.S1S2:
-                assert company.projected_intensities.S1S2.projections[0].year == company.projected_intensities.S3.projections[0].year
-                company.projected_intensities.S1S2S3 = ICompanyEIProjections(ei_metric=company.projected_intensities.S1S2.ei_metric,
-                                                                             projections=list( map(ICompanyEIProjection.add,
-                                                                                                   company.projected_intensities.S1S2.projections,
-                                                                                                   company.projected_intensities.S3.projections) ))
-            # Without valid S2 data, we don't have S1S2S3
+            # Penalize non-disclosure by assuming 2x aligned S3 emissions.  That's still likely undercounting, because
+            # most non-disclosing companies are nowhere near the reduction rates of the benchmarks.
+            # It would be lovely to use S1S2 or S1 data to inform S3, but that likely adds error on top of error
+            assert company.projected_intensities.S1S2S3 == None
+            s3_projections = bm_ei_s3 * 2.0
+            ei_metric = str(bm_ei_s3.dtype.units)
+            if ITR.HAS_UNCERTAINTIES:
+                s3_projections = s3_projections.map(
+                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
+                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(bm_ei_s3.dtype)
+            company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric,
+                                                                        projections=s3_projections)
+            if company.projected_intensities.S1S2 is not None:
+                try:
+                    company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(ei_metric=ei_metric,
+                                                                                    # Mismatched dimensionalities are not automatically converted
+                                                                                    projections=s3_projections+company.projected_intensities.S1S2.projections.astype(f"pint[{ei_metric}]"))
+                except DimensionalityError:
+                    logger.error(f"Company {company.company_id}'s S1+S2 intensity units ({company.projected_intensities.S1S2.projections.dtype} )are not compatible with benchmark units ({ei_metric})")
+
+        company.ghg_s3 = s3_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production
         logger.info(f"Added S3 estimates for {company.company_id} (sector = {sector}, region = {region})")
 
 
@@ -596,11 +552,12 @@ class DataWarehouse(ABC):
         try:
             projected_ei.T.mul(projected_production.T[projected_ei.T.columns])
         except KeyError:
-            breakpoint()
-        projected_emissions_t = projected_ei.T.mul(projected_production.T[projected_ei.T.columns])
-        # If ever there were null values here, it would mess up cumsum.  The fix would be to
-        # apply cumsum(axis=0) to asPintDataFrame(projected_emissions_t) and then return the transposed, normalized result
-        assert projected_emissions_t.isna().any().any() == False
+            logger.error("KeyError raised in _get_cumulative_emissions")
+            # breakpoint()
+            assert False
+        projected_ei_t = asPintDataFrame(projected_ei.T)
+        projected_prod_t = asPintDataFrame(projected_production.T)
+        projected_emissions_t = projected_ei_t.mul(projected_prod_t[projected_ei.T.columns])
         cumulative_emissions = projected_emissions_t.T.cumsum(axis=1).astype('pint[Mt CO2]')
         return cumulative_emissions
 

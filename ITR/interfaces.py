@@ -263,7 +263,7 @@ class ICompanyEIProjection(BaseModel):
 
     def add(self, o):
         if self.year != o.year:
-            breakpoint()
+            # breakpoint()
             raise ValueError(f"EI Projection years not aligned for add(): {self.year} vs. {o.year}")
         return ICompanyEIProjection(year=self.year,
                                     value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
@@ -308,13 +308,10 @@ class DF_ICompanyEIProjections(BaseModel):
             projections_gen = icompany_ei_projections.projections
         else:
             ei_metric = kwargs['ei_metric']
-            if isinstance(projections, pd.Series):
-                projections = kwargs['projections']
-            else:
-                projections_gen = kwargs['projections']
-                if isinstance(projections_gen, pd.Series):
-                    projections = projections_gen
-                    projections_gen = None
+            projections = kwargs['projections']
+            if not isinstance(projections, pd.Series):
+                projections_gen = projections
+                projections = None
         if projections_gen is not None:
             # Work-around for https://github.com/hgrecco/pint/issues/1687
             ei_metric = str(ureg.parse_units(ei_metric))
@@ -341,9 +338,12 @@ class ICompanyEIProjectionsScopes(BaseModel):
                 setattr(self, k, DF_ICompanyEIProjections(ei_metric=EI_Metric(v['ei_metric']), projections=v['projections']))
             elif isinstance(v, ICompanyEIProjections):
                 setattr(self, k, DF_ICompanyEIProjections(icompany_ei_projections=v))
-            elif isinstance(v, pd.Series) or v is None:
+            elif isinstance(v, pd.Series):
+                setattr(self, k, DF_ICompanyEIProjections(ei_metric=EI_Metric(str(v.dtype)), projections=v))
+            elif isinstance(v, DF_ICompanyEIProjections) or v is None:
                 setattr(self, k, v)
             else:
+                # breakpoint()
                 assert False
             # We could do a post-hoc validation here...
 
@@ -365,6 +365,9 @@ class IProductionRealization(BaseModel):
 class IEmissionRealization(BaseModel):
     year: int
     value: Optional[EmissionsQuantity]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
 
     def __eq__(self, o):
         assert self.year==o.year
@@ -398,6 +401,9 @@ class IHistoricEmissionsScopes(BaseModel):
 class IEIRealization(BaseModel):
     year: int
     value: Optional[EI_Quantity]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
 
     def __eq__(self, o):
         assert self.year==o.year

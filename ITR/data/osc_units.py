@@ -73,22 +73,28 @@ ureg.define("bcm = 1000000000 m**3")
 # (such as converting a volume of CH4 to a mass equivalent of CO2), it is the
 # caller's responsibility to do the conversion (so `src OP dst` is coded as `src.to(dst_units) OP dst`).
 
-NG_DENS = 0.657 * ureg('kg CH4/(m**3 CH4)')              # density
-NG_SE = 52.5 * ureg('MJ/(kg CH4)')                  # specific energy (energy per mass); range is 50-55
+# Source: https://www.epa.gov/energy/greenhouse-gases-equivalencies-calculator-calculations-and-references
+# 0.1 mmbtu equals one therm (EIA 2019).
+# The average carbon coefficient of pipeline natural gas burned in 2018 is 14.43 kg carbon per mmbtu (EPA 2021).
+# The fraction oxidized to CO2 is assumed to be 100 percent (IPCC 2006).
+# 0.1 mmbtu/1 therm × 14.43 kg C/mmbtu × 44 kg CO2/12 kg C × 1 metric ton/1,000 kg = 0.005291 metric tons CO2/therm
+# 0.1 mmbtu/1 therm × 14.43 kg C/mmbtu × 16 kg CH4/12 kg C × 1 metric ton/1,000 kg = 0.001924 metric tons CO2/therm
+# 0.005291 metric tons CO2/therm x 10.37 therms/Mcf = 0.05487 metric tons CO2/Mcf
+# 0.001924 metric tons CH4/therm x 10.37 therms/Mcf = 0.01995 metric tons CH4/Mcf
+
+# One thousand cubic feet (Mcf) of natural gas equals 1.037 MMBtu, or 10.37 therms (EIA: https://www.eia.gov/tools/faqs/faq.php?id=45&t=8)
+# Note that natural gas has a higher specific energy than CH4, which we use as the name for natural gas.  
+
+NG_DENS = 0.7046 * ureg('kg CH4/(m**3 CH4)') # 0.657 
+NG_SE = 54.84 * ureg('MJ/(kg CH4)')                  # specific energy (energy per mass); range is 50-55
 ng = Context('ngas')
-# ng.add_transformation('[volume]', '[mass]', lambda ureg, x: (breakpoint(), x * NG_DENS))
-# ng.add_transformation('[volume] * [methane]', '[mass] * [methane]', lambda ureg, x: x * NG_DENS)
-# ng.add_transformation('[mass] CH4', '[energy]', lambda ureg, x: (breakpoint(), x * NG_SE))
-# ng.add_transformation('[energy]', '[mass] * CH4', lambda ureg, x: x / NG_SE)
+ng.add_transformation('[volume] CH4', '[mass] CH4', lambda ureg, x: x * NG_DENS)
+ng.add_transformation('[mass] CH4', '[volume] CH4', lambda ureg, x: x / NG_DENS)
 ng.add_transformation('[volume] CH4 ', '[energy]', lambda ureg, x: x * NG_DENS * NG_SE)
-# ng.add_transformation('1 / [volume] / CH4 ', '1 / [energy]', lambda ureg, x: (breakpoint(), x / (NG_DENS * NG_SE)))
-# ng.add_transformation('1 / [energy]', '1 / [volume] / CH4 ', lambda ureg, x: (breakpoint(), x * (NG_DENS * NG_SE)))
-# ng.add_transformation('[energy]', '[volume] CH4', lambda ureg, x: x / (NG_DENS * NG_SE))
-# ng.add_transformation('[length] * [methane] * [time]**2 / [mass]', '[]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
+ng.add_transformation('[energy]', '[volume] CH4', lambda ureg, x: x / (NG_DENS * NG_SE))
 ng.add_transformation('[carbon] * [length] * [methane] * [time] ** 2', '[carbon] * [mass]', lambda ureg, x: x * NG_DENS * NG_SE)
-# ng.add_transformation('[carbon] * [mass] / [energy]', '[carbon] * [mass] / [volume] / [methane]', lambda ureg, x: (breakpoint(), x * NG_DENS * NG_SE))
 ng.add_transformation('[carbon] * [mass] / [volume] / [methane]', '[carbon] * [mass] / [energy]', lambda ureg, x: x / (NG_DENS * NG_SE))
-ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2 / (Mscf CH4)'))
+ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2e / (Mscf CH4)'))
 ng.add_transformation('g CH4', 'g CO2e', lambda ureg, x: x * ureg('44 g CO2e / (16 g CH4)'))
 ureg.add_context(ng)
 ureg.enable_contexts('ngas')
@@ -96,33 +102,62 @@ ureg.enable_contexts('ngas')
 def time_dimension(unit, exp):
     return ureg(unit).is_compatible_with("s") # and exp == -1
 
-def convert_to_annual(x):
+
+def convert_to_annual(x, errors='ignore'):
+    """
+    For a quantity X that has units of [time], reduce the time dimension, leaving an "implictly annual" metric.
+    If X has no time dimension, or if it cannot be reduced to zero in a single step, raise a DimensionalityError.
+    If ERRORS=='ignore', allow time dimension to be reduced one step towards zero rather than only to zero.
+    Returns the reduced quantity, or the original quantity if reduction would result in an error being raised.
+    """
     import pint
     unit_ct = pint.util.to_units_container(x)
     # print(unit_ct)
     # <UnitsContainer({'day': -1, 'kilogram': 1})>
-    time_unit, exp = next((pint.Unit(unit), exp) for unit, exp in unit_ct.items() if time_dimension(unit, exp))
-    if exp == -1:
-        x_implied_annual = Q_(x * ureg('a').to(time_unit), unit_ct.remove([str(time_unit)]))
-    elif exp == 1:
-        x_implied_annual = Q_(x / ureg(str(time_unit)).to('a'), unit_ct.remove([str(time_unit)]))
-    else:
-        assert False
-        breakpoint()
-    # x_implied_annual = Q_(x * ureg('a').to(time_unit), unit_ct.remove([str(time_unit)]).add(str(time_unit), exp-1))
+    x_implied_annual = x
+    try:
+        time_unit, exp = next((pint.Unit(unit), exp) for unit, exp in unit_ct.items() if time_dimension(unit, exp))
+        time_unit_str = str(time_unit)
+        if exp == -1:
+            x_implied_annual = Q_(x * ureg('a').to(time_unit), unit_ct.remove([time_unit_str]))
+        elif exp == 1:
+            x_implied_annual = Q_(x / ureg(time_unit_str).to('a'), unit_ct.remove([time_unit_str]))
+        else:
+            if errors=='ignore':
+                if exp < 0:
+                    x_implied_annual = Q_(x * ureg('a').to(time_unit), unit_ct.remove([time_unit_str]).add(time_unit_str, exp+1))
+                else:
+                    x_implied_annual = Q_(x / ureg(time_unit_str).to('a'), unit_ct.remove([time_unit_str]).add(time_unit_str, exp-1))
+            raise DimensionalityError (x, '', extra_msg=f"; dimensionality must contain [time] or 1/[time], not [time]**{exp}")
+    except StopIteration:
+        if errors!='ignore':
+            raise DimensionalityError (x, '', extra_msg=f"; dimensionality must contain [time] or 1/[time]")
     return x_implied_annual
 
+def dimension_as(x, dim_unit):
+    import pint
+    unit_ct = pint.util.to_units_container(x)
+    # print(unit_ct)
+    # <UnitsContainer({'day': -1, 'kilogram': 1})>
+    try:
+        unit, exp = next((pint.Unit(unit), exp) for unit, exp in unit_ct.items() if ureg(unit).is_compatible_with(dim_unit))
+        orig_dim_unit = ureg(str(unit))
+        return (x * orig_dim_unit.to(dim_unit) / orig_dim_unit).to_reduced_units()
+    except StopIteration:
+        raise DimensionalityError (x, dim_unit, extra_msg=f"; no compatible dimension not found")
 
 oil = Context('oil')
-ng.add_transformation('[carbon] * [mass] ** 2 / [length] / [time] ** 3', '[carbon] * [mass]',
+oil.add_transformation('[carbon] * [mass] ** 2 / [length] / [time] ** 2', '[carbon] * [mass]',
+                      lambda ureg, x: x * ureg('bbl/boe').to_reduced_units())
+oil.add_transformation('[carbon] * [mass] ** 2 / [length] / [time] ** 3', '[carbon] * [mass]',
                       lambda ureg, x: convert_to_annual(x) * ureg('bbl/boe').to_reduced_units())
-# ng.add_transformation('boe', 'kg CO2e', lambda ureg, x: x * ureg('431.87 kg CO2e / boe')
-# ng.add_transformation('[length] ** 2 * [mass] / [time] ** 2', '[carbon] * [mass]', lambda ureg, x: (breakpoint(), x 
-# ng.add_transformation('bbl', 'boe', lambda ureg, x: x * ureg('boe') / ureg('bbl'))
-# ng.add_transformation('boe', 'bbl', lambda ureg, x: x * ureg('bbl') / ureg('boe'))
-ng.add_transformation('[carbon] * [mass] / [time]', '[carbon] * [mass]', lambda ureg, x: convert_to_annual(x))
-ng.add_transformation('[length] ** 2 * [mass] / [time] ** 3', '[length] ** 2 * [mass] / [time] ** 2', lambda ureg, x: convert_to_annual(x))
-ng.add_transformation('[carbon] * [time] ** 3 / [length] ** 2', '[carbon] * [time] ** 2 / [length] ** 2', lambda ureg, x: convert_to_annual(x))
+# oil.add_transformation('boe', 'kg CO2e', lambda ureg, x: x * ureg('431.87 kg CO2e / boe')
+oil.add_transformation('bbl', 'boe', lambda ureg, x: x * ureg('boe') / ureg('bbl'))
+oil.add_transformation('boe', 'bbl', lambda ureg, x: x * ureg('bbl') / ureg('boe'))
+oil.add_transformation('[carbon] * [mass] / [time]', '[carbon] * [mass]', lambda ureg, x: convert_to_annual(x))
+# Converting intensity t CO2/bbl -> t CO2/boe
+oil.add_transformation('[carbon] * [mass] / [length] ** 3', '[carbon] * [time] ** 2 / [length] ** 2', lambda ureg, x: (x * ureg('bbl/boe')).to_reduced_units())
+oil.add_transformation('[carbon] * [time] ** 2 / [length] ** 2', '[carbon] * [mass] / [length] ** 3', lambda ureg, x: (x * ureg('boe/bbl')).to_reduced_units())
 ureg.add_context(oil)
 ureg.enable_contexts('oil')
 
@@ -186,6 +221,9 @@ class ProductionMetric(str):
         for pu in _production_units:
             if qty.is_compatible_with(pu):
                 return cls(units)
+            qty_as_annual = convert_to_annual(qty, errors='ignore')
+            if qty_as_annual.is_compatible_with(pu):
+                return cls(str(qty_as_annual.u))
         raise ValueError(f"{qty} not relateable to {_production_units}")
 
     def __repr__(self):
@@ -450,6 +488,9 @@ class ProductionQuantity(str):
         for pu in _production_units:
             if quantity.is_compatible_with(pu):
                 return quantity
+            quantity_as_annual = convert_to_annual(quantity, errors='ignore')
+            if quantity_as_annual.is_compatible_with(pu):
+                return quantity_as_annual
         raise DimensionalityError (quantity, str(_production_units), dim1='', dim2='', extra_msg=f"Dimensionality must be compatible with [{_production_units}]")
 
     def __repr__(self):
@@ -504,6 +545,9 @@ class EI_Quantity(str):
         for ei_u in _ei_units:
             if quantity.is_compatible_with(ei_u):
                 return quantity
+            quantity_as_annual = convert_to_annual(quantity, errors='ignore')
+            if quantity_as_annual.is_compatible_with(ei_u):
+                return quantity_as_annual
         raise DimensionalityError (quantity, str(_ei_units), dim1='', dim2='', extra_msg=f"Dimensionality must be compatible with [{_ei_units}]")
 
     def __repr__(self):
