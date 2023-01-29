@@ -127,7 +127,7 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
             if x.submetric[p] == '3':
                 pinned_priority = p
                 break
-    elif x.name[0] in ['Autos', 'Oil & Gas', 'Coal', 'Oil', 'Gas']:
+    elif x.name[0] in ['Autos', 'Oil & Gas', 'Coal', 'Oil', 'Gas', 'Gas Utilities']:
         for p in range(0, len(x.submetric)):
             if x.submetric[p] == '11':
                 pinned_priority = p
@@ -588,8 +588,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # 'distribution': 'Gas Utilities',
                 'coal': 'Coal',
                 'lng': 'Gas',
+                'ng': 'Gas',
                 'oil': 'Oil',
             }
+            sector_submetric_keys = list(submetric_sector_map.keys())
 
             grouped_prod = (
                 df_esg[df_esg.metric.isin(['production'])]
@@ -608,7 +610,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
             # For categoricals, fisrt listed is least and sorts to first in ascending order
             grouped_prod.submetric = pd.Categorical(grouped_prod['submetric'], ordered=True,
-                                                    categories=['operated', 'own', 'generation', 'equity', '', 'gross', 'net', 'full']+list(submetric_sector_map.keys()))
+                                                    categories=['operated', 'own', 'generation', 'equity', '', 'gross', 'net', 'full']+sector_submetric_keys)
             best_prod = (
                 grouped_prod.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
@@ -621,16 +623,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             # convert "nice" word descriptions of S3 emissions to category numbers
             s3_idx = df_esg.metric.str.upper().eq('S3')
-            s3_dict_matches = df_esg[s3_idx].submetric.str.lower().isin(s3_category_dict)
+            s3_dict_matches = df_esg[s3_idx].submetric.astype('str').str.lower().isin(s3_category_dict)
             s3_dict_idx = s3_dict_matches[s3_dict_matches].index
-            df_esg.loc[s3_dict_idx, 'submetric'] = df_esg.loc[s3_dict_idx].submetric.str.lower().map(s3_category_dict)
+            df_esg.loc[s3_dict_idx, 'submetric'] = df_esg.loc[s3_dict_idx].submetric.astype('str').str.lower().map(s3_category_dict)
 
             # We group, in order to prioritize, emissions according to boundary-like and/or category submetrics.
             grouped_em = (
                 df_esg.loc[em_metrics.index]
                 .assign(metric=df_esg.loc[em_metrics.index].metric.str.upper())
                 .assign(submetric=df_esg.loc[em_metrics.index].submetric.map(lambda x: '' if pd.isna(x) else str(x)))
-                .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
+                # .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
+                .assign(sector=lambda x: x[['company_id', 'submetric']].apply(
+                    lambda y: submetric_sector_map.get(y.submetric, df_fundamentals.loc[y.company_id].sector), axis=1))
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
@@ -643,15 +647,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
             grouped_non_s3 = grouped_em.loc[grouped_em.index.get_level_values('metric') != 'S3'].copy()
             grouped_non_s3.submetric = pd.Categorical(grouped_non_s3['submetric'], ordered=True,
-                                                      categories=['generation', '', 'all', 'combined', 'total', 'location', 'market'])
+                                                      categories=['generation', '', 'all', 'combined', 'total', 'location', 'market']+sector_submetric_keys)
             best_em = (
                 grouped_non_s3.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
-                .drop(columns='submetric')
             )
-            em_all_nan = best_em.apply(lambda x: x.map(lambda y: ITR.isnan(y.m)).all(), axis=1)
+            # Comb out submetric field that we'll need later when sorting out sector data
+            best_em.submetric = best_em.submetric.map(lambda x: x[0] if hasattr(x, 'ndim') else x)
+            em_all_nan = best_em.drop(columns='submetric').apply(lambda x: x.map(lambda y: ITR.isnan(y.m)).all(), axis=1)
             missing_em = best_em[em_all_nan]
             if len(missing_em):
                 logger.warning(f"Emissions data missing for {missing_em.index}") 
@@ -661,15 +666,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # We still need to group and prioritize S3 emissions, according to the benchmark requirements
             grouped_s3 = grouped_em.loc[grouped_em.index.get_level_values('metric') == 'S3'].copy()
             grouped_s3.submetric = pd.Categorical(grouped_s3['submetric'], ordered=True,
-                                                  categories=['', 'all', 'combined', 'total', '3', '11'])
+                                                  categories=['', 'all', 'combined', 'total', '3', '11']+sector_submetric_keys)
             best_s3 = (
                 grouped_s3.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
                 .agg(lambda x:x)
                 .apply(prioritize_submetric, axis=1)
-                .drop(columns='submetric')
             )
-            s3_all_nan = best_s3.apply(lambda x: x.map(lambda y: ITR.isnan(y.m)).all(), axis=1)
+            # Comb out submetric field that we'll need later when sorting out sector data
+            best_s3.submetric = best_s3.submetric.map(lambda x: x[0] if hasattr(x, 'ndim') else x)
+            # x.submetric is np.nan or 
+            s3_all_nan = best_s3.apply(lambda x: x.drop('submetric').map(lambda y: ITR.isnan(y.m)).all(), axis=1)
             missing_s3 = best_s3[s3_all_nan]
             if len(missing_s3):
                 logger.warning(f"Scope 3 Emissions data missing for {missing_s3.index}")
@@ -677,14 +684,22 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 best_s3 = best_s3[~s3_all_nan].copy()
             best_s3[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
 
+            # We use the 'submetric' column to decide which new sectors we need to create
             company_sector_count = best_prod.groupby('company_id')['variable'].transform('count')
             company_sector_idx = best_prod[company_sector_count>1].droplevel('metric').index
             new_prod = None
-            new_esg_em = None
+            new_em_to_allocate = new_em_allocated = None
             best_esg_em = pd.concat([best_em, best_s3]).sort_index()
+
+            # If best_esg_em has a NaN submetric (not '' but NaN) it means somebody entered something that was not understood.  Flag that and Ignore it.
+            ignored_em_idx = best_esg_em.submetric.isna()
+            if ignored_em_idx.any():
+                logger.error(f"Unsupported submetrics appearing in\n{best_esg_em[ignored_em_idx].index} will be ignored")
+                best_esg_em = best_esg_em[~ignored_em_idx]
+
             if company_sector_idx.empty:
                 best_prod = best_prod.droplevel('sector').drop(columns='submetric')
-                best_esg_em = best_esg_em.droplevel('sector')
+                best_esg_em = best_esg_em.droplevel('sector').drop(columns='submetric')
             else:
                 company_em_sector = pd.MultiIndex.from_tuples(
                     [idx for idx in company_sector_idx if idx in best_esg_em.index], names=['sector', 'company_id'])
@@ -706,14 +721,49 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                             .set_index(['company_id', 'metric']))
                 best_prod = best_prod[~prod_to_drop].droplevel('sector').drop(columns=['submetric'])
 
-                em_to_drop = best_esg_em.index.get_level_values('company_id').isin(new_company_ids.company_id)
-                new_esg_em = (best_esg_em.reset_index()[em_to_drop]
-                              # This gives us combinatorial product of common scope emissions across all types of production
-                              # We'll use benchmark data to compute what fraction each type of production should get
-                              .drop(columns='sector').merge(new_company_ids, on='company_id')
-                              .drop(columns=['sector', 'company_id']).rename(columns={'new_company_id':'company_id'})
-                              .set_index(['company_id', 'metric']))
-                best_esg_em = best_esg_em[~em_to_drop].droplevel('sector')
+                # We must now handle three cases of emissions disclosures on a per-company basis:
+                # (1) All-sector emissions that must be allocated across sectors.  In this case we allocate the full amount to each
+                #     sector and it's divided down later in `update_benchmarks` (work defined in work_dict)
+                # (2) Emissions tied to a specific sector
+                # (3) A combination of (1) and (2)
+                # These are all the emissions that need to be sorted into case 1, 2, or 3
+                em_new_cases = best_esg_em.index.get_level_values('company_id').isin(new_company_ids.company_id)
+
+                # Case 1 emissions need to be prorated across sectors using benchmark alignment method
+                case_1 = best_esg_em.submetric[em_new_cases & ~best_esg_em.submetric.isin(sector_submetric_keys)]
+                # Case 2 emissions are good as is; no benchmark alignment needed
+                case_2 = best_esg_em.submetric[em_new_cases & best_esg_em.submetric.isin(sector_submetric_keys)]
+                # Case 3 erroneous overlap of emissions
+                case_3 = best_esg_em.submetric[best_esg_em.droplevel('sector').index.isin(case_2.droplevel('sector').index.intersection(case_1.droplevel('sector').index))]
+                if not case_3.empty:
+                    logger.error(f"Dropping ambiguous submetrics found in sector/scope assignment dataframe:\n{case_3}")
+                    case_1 = case_1.loc[~case_1.index.isin(case_3.index)]
+                    case_2 = case_2.loc[~case_2.index.isin(case_3.index)]
+
+                # Case 4: case_1 scopes containing case_2 scopes that need to be removed before remaining scopes can be allocated
+                # Example: We have S1 allocated to electricity and gas, but S2 and S3 are general.  To allocate S1S2S3 we need to subtract out S1, allocate remaining to S2 and S3 across Electricity and Gas sectors
+                # Eni's Plenitude and power is an example where S1S2S3 > S1+S2+S3 (due to lifecycle emissions concept).  FIXME: don't know how to deal with that!
+                case_4_df = case_1.reset_index('metric').merge(case_2.reset_index('metric'), on=['sector', 'company_id'], suffixes=[None, '_2'])
+                case_4 = case_4_df[case_4_df.apply(lambda x: x.metric_2 in x.metric, axis=1)].set_index('metric', append=True)
+                if not case_4.empty:
+                    logger.error(f"Dropping attempt to disentangle embedded submetrics found in sector/scope assignment dataframe:\n{best_esg_em.submetric[case_4.index]}")
+                    case_1 = case_1.loc[~case_1.index.isin(case_4.index)]
+
+                em_needs_allocation = best_esg_em.index.isin(case_1.index)
+                new_em_to_allocate = (best_esg_em.reset_index()[em_needs_allocation]
+                                      # This gives us combinatorial product of common scope emissions across all types of production
+                                      # We'll use benchmark data to compute what fraction each type of production should get
+                                      .drop(columns='sector').merge(new_company_ids, on='company_id')
+                                      .drop(columns=['sector', 'company_id', 'submetric']).rename(columns={'new_company_id':'company_id'})
+                                      .set_index(['company_id', 'metric']))
+                # Stash this index for later use once we have the benchmark with which to align
+                self._bm_allocation_index = new_em_to_allocate.index
+                em_has_allocation = best_esg_em.index.isin(case_2.index)
+                new_em_allocated = (best_esg_em.reset_index()[em_has_allocation]
+                                    .merge(new_company_ids, on=['sector', 'company_id'])
+                                    .drop(columns=['sector', 'company_id', 'submetric']).rename(columns={'new_company_id':'company_id'})
+                                    .set_index(['company_id', 'metric']))
+                best_esg_em = best_esg_em[~(em_needs_allocation|em_has_allocation)].droplevel('sector').drop(columns='submetric')
 
             prod_metrics = pd.concat([best_prod, new_prod]).groupby(by=['company_id'])[self.projection_controls.BASE_YEAR].agg(lambda x: f"{x.values[0].u:~P}")
             # We update the metrics we were told with the metrics we are given
@@ -730,14 +780,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             # We don't yet know our benchmark, so we cannot yet Use benchmark data to align their respective weights
 
-            df3 = (pd.concat([best_prod, new_prod, best_esg_em, new_esg_em])
+            df3 = (pd.concat([best_prod, new_prod, best_esg_em, new_em_to_allocate, new_em_allocated])
                    .reset_index(level='metric')
                    .rename(columns={'metric':'scope'})
                    .set_index([ColumnsConfig.VARIABLE, 'scope'], append=True)).sort_index()
 
             # XS is how we match labels in indexes.  Here 'variable' is level=1, (company_id=0, scope/production=2)
             # By knocking out 'production', we don't get production / production in the calculations, only emissions (all scopes in data) / production
-
             assert 'sector' not in df3.columns and 'submetric' not in df3.columns
             if len(df3.index):
                 assert 'sector' not in df3.index.names and 'submetric' not in df3.index.names
@@ -748,7 +797,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df5 = pd.concat([df3, df4])
 
             df_historic_data = df5
-            
+
         # df_target_data now ready for conversion to model for each company
         df_target_data = self._validate_target_data(df_target_data)
 
@@ -783,7 +832,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         index_names = ['company_id', 'variable']
         df = fill_blank_or_missing_scopes(df, 'S1', 'S2', 'S1S2', index_names, self.historic_years)
         df = fill_blank_or_missing_scopes(df, 'S1S2', 'S3', 'S1S2S3', index_names, self.historic_years)
-        df_historic_data = df.set_index(['company_id', 'variable', 'scope'])
+        df_historic_data = df.set_index(['company_id', 'variable', 'scope']).sort_index()
         # We might run `fill_blank_or_missing_scopes` again if we get newly estimated S3 data from an as-yet unknown benchmark
         
         # Drop from our companies list the companies dropped in df_fundamentals
@@ -886,39 +935,62 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # TODO pull ghg_s1s2 and ghg_s3 from historic data as appropriate
 
                 if not df_historic_data.empty:
+                    df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                     # FIXME: Is this the best place to finalize base_year_production, ghg_s1s2, and ghg_s3 data?
                     # Something tells me these parameters should be removed in favor of querying historical data directly
-                    company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = (
-                        df_historic_data.loc[company_id, 'Productions', 'production'][base_year])
+                    company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = df_historic_data.loc[
+                        company_id, 'Productions', 'production'].squeeze()[base_year]
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE12] = (
-                            df_historic_data.loc[company_id, 'Emissions', 'S1S2'][base_year])
+                        company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                            company_id, 'Emissions', 'S1S2'].squeeze()[base_year]
                     except KeyError:
                         if (company_id, 'Emissions', 'S2') not in df_historic_data.index:
                             logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
                             try:
                                 company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                    company_id, 'Emissions', 'S1'][base_year]
+                                    company_id, 'Emissions', 'S1'].squeeze()[base_year]
+                                df_historic_data.loc[company_id, 'Emissions', 'S2'] = 0
+                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
+                                df_historic_data.loc[company_id, 'Emissions Intensities', 'S2'] = 0
+                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
+                                df_historic_data.loc[company_id, 'Emissions', 'S2'][:] = df_historic_data.loc[company_id, 'Emissions', 'S1'] * 0
+                                df_historic_data.loc[company_id, 'Emissions Intensities', 'S2'][:] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1'] * 0
                             except KeyError:
                                 try:
                                     company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                        company_id, 'Emissions', 'S1S2S3'][base_year]
+                                        company_id, 'Emissions', 'S1S2S3'].squeeze()[base_year]
                                     logger.warning(f"Using S1+S2+S3 as GHG_SCOPE12 because no Scope 1 or Scope 2 available for company with ID {company_id}")
+                                    # FIXME: we should not allocate these here, but rather in the benchmark alignment code
+                                    if False:
+                                        df_historic_data.loc[company_id, 'Emissions', 'S1S2'] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1S2'] = 0
+                                        df_historic_data.loc[company_id, 'Emissions', 'S1S2'][:] = df_historic_data.loc[company_id, 'Emissions', 'S1S2S3'] * 0
+                                        df_historic_data.loc[company_id, 'Emissions Intensities', 'S1S2'][:] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1S2S3'] * 0
                                 except KeyError:
                                     logger.error(f"Company {company_id} snuck into finalization without any useable S1, S2, S1+S2, or S1+S2+S3 data")
                                     company_data[ColumnsConfig.GHG_SCOPE12] = Q_(np.nan, 'Mt CO2e')
                         else:
-                            # FIXME: This should not reach here because we should have calculated
-                            # S1S2 as an emissions total upstream from S1+S2.
-                            assert False
-                            company_data[ColumnsConfig.GHG_SCOPE12] = (
-                                df_historic_data.loc[company_id, 'Emissions', 'S1'][base_year]
-                                + df_historic_data.loc[company_id, 'Emissions', 'S2'][base_year])
+                            # S1S2 as an emissions total upstream from S1+S2.  While normally done upstream, not done for newly created company_ids.
+                            try:
+                                company_data[ColumnsConfig.GHG_SCOPE12] = (
+                                    df_historic_data.loc[company_id, 'Emissions', 'S1'].squeeze()[base_year]
+                                    + df_historic_data.loc[company_id, 'Emissions', 'S2'].squeeze()[base_year])
+                                df_historic_data.loc[company_id, 'Emissions', 'S1S2'] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1S2'] = 0
+                                df_historic_data.loc[company_id, 'Emissions', 'S1S2'][:] = df_historic_data.loc[company_id, 'Emissions', 'S1'] + df_historic_data.loc[company_id, 'Emissions', 'S2']
+                                df_historic_data.loc[company_id, 'Emissions Intensities', 'S1S2'][:] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1'] + df_historic_data.loc[company_id, 'Emissions Intensities', 'S2']
+                            except KeyError:
+                                logger.error(f"Scope 1 data missing from Company with ID {company_id}; treating as zero")
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, 'Emissions', 'S2'].squeeze()[base_year]
+                                df_historic_data.loc[company_id, 'Emissions', 'S1'] = 0
+                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
+                                df_historic_data.loc[company_id, 'Emissions Intensities', 'S1'] = 0
+                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
+                                df_historic_data.loc[company_id, 'Emissions', 'S1'][:] = df_historic_data.loc[company_id, 'Emissions', 'S2'] * 0
+                                df_historic_data.loc[company_id, 'Emissions Intensities', 'S1'][:] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S2'] * 0
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE3] = (
-                            df_historic_data.loc[company_id, 'Emissions', 'S3'][base_year])
+                        company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
+                            company_id, 'Emissions', 'S3'].squeeze()[base_year]
                     except KeyError:
-                        # If there was no relevant historic data, don't try to use it
+                        # If there was no relevant historic S3 data, don't try to use it
                         pass
                     company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
                         df_historic_data.loc[[company_id]].reset_index()).dict()

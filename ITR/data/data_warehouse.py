@@ -121,7 +121,7 @@ class DataWarehouse(ABC):
         # Production-centric benchmarks shift S3 data after trajectory and targets have been projected
         if new_production_bm:
             # Note that _validate_projected_trajectories overwrites fields of companies, so no need to use return value
-            logger.info(f"calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
+            logger.info(f"calculating trajectories for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
             self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
 
         if new_ei_bm and (new_companies := [c for c in self.company_data._companies if '+' in c.company_id]):
@@ -131,34 +131,51 @@ class DataWarehouse(ABC):
             base_year = self.company_data.projection_controls.BASE_YEAR
 
             from collections import defaultdict
-            work_dict = defaultdict(list)
+            sectors_dict = defaultdict(list)
             region_dict = {}
             historic_dict = {}
 
             for c in new_companies:
                 orig_id, sector = c.company_id.split('+')
-                work_dict[orig_id].append(sector)
+                sectors_dict[orig_id].append(sector)
                 region_dict[orig_id] = c.region
+                # Though we mutate below, it's our own unique copy of c.historic_data we are mutating, so OK
                 historic_dict[c.company_id] = c.historic_data
 
-            for orig_id, sectors in work_dict.items():
+            for orig_id, sectors in sectors_dict.items():
                 region = region_dict[orig_id]
                 sector_ei = [(sector, scope,
                               # bm_prod_df.loc[(sector, region, EScope.AnyScope)][base_year] is '1.0 dimensionless'
                               bm_ei_df.loc[(sector, region, scope)][base_year])
                              for scope in EScope.get_result_scopes()
+                             # This only saves us from having data about sectorized alignments we might not need.  It doesn't affect the emissions being allocated (or not).
+                             if (c.company_id, scope.name) in self.company_data._bm_allocation_index
                              for sector in sectors
                              if (sector, region, scope) in bm_ei_df.index and historic_dict['+'.join([orig_id, sector])].emissions[scope.name]]
                 sector_ei_df = pd.DataFrame(sector_ei, columns=['sector', 'scope', 'ei']).set_index(['sector'])
                 sector_prod_df = pd.DataFrame([(sector, prod.value)
                                                for sector in sectors
                                                for prod in historic_dict['+'.join([orig_id, sector])].productions
+                                               # FIXME: if we don't have proudction values for BASE_YEAR, this fails!  See 'US2333311072+Gas Utilities'
                                                if prod.year==base_year], columns=['sector', 'prod']).set_index('sector')
                 sector_em_df = (sector_ei_df.join(sector_prod_df)
                                 .assign(em=lambda x: x['ei']*x['prod'])
                                 .set_index('scope', append=True)
                                 .drop(columns=['ei', 'prod']))
-                sector_em_df = sector_em_df.astype('pint[Mt CO2e]')
+                # Only now can we drop whatever is not in self.company_data._bm_allocation_index from sector_em_df
+                if self.company_data._bm_allocation_index.empty:
+                    # No allocations to make for any companies
+                    continue
+                to_allocate_idx = self.company_data._bm_allocation_index[self.company_data._bm_allocation_index.map(lambda x: x[0].startswith(orig_id))].map(lambda x: (x[0].split('+')[1], EScope[x[1]]))
+                if to_allocate_idx.empty:
+                    logger.info(f"Already allocated emissions for {orig_id} across {sectors}")
+                    continue
+                # FIXME: to_allocate_idx is missing S1S2S3 for US2091151041
+                to_allocate_idx.names = ['sector','scope']
+                try:
+                    sector_em_df = sector_em_df.loc[sector_em_df.index.intersection(to_allocate_idx)].astype('pint[Mt CO2e]')
+                except DimensionalityError:
+                    breakpoint()
                 em_tot = sector_em_df.groupby('scope')['em'].sum()
                 # The alignment calculation: Company Scope-Sector emissions = Total Company Scope emissions * (BM Scope Sector / SUM(All Scope Sectors of Company))
                 aligned_em = [(sector, [(scope, list(map(lambda em: (em[0], em[1] * sector_em_df.loc[(sector, scope)].squeeze() / em_tot.loc[scope].squeeze()),
@@ -190,7 +207,7 @@ class DataWarehouse(ABC):
 
         # Changes to production benchmark requires re-calculating targets (which are production-dependent)
         if new_production_bm:
-            logger.info(f"projecting targets for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
+            logger.info(f"projecting targets for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
             self.company_data._calculate_target_projections(benchmark_projected_production)
 
         # If our benchmark is production-centric, migrate S3 data (including estimated S3 data) into S1S2
@@ -557,7 +574,7 @@ class DataWarehouse(ABC):
             assert False
         projected_ei_t = asPintDataFrame(projected_ei.T)
         projected_prod_t = asPintDataFrame(projected_production.T)
-        projected_emissions_t = projected_ei_t.mul(projected_prod_t[projected_ei.T.columns])
+        projected_emissions_t = projected_ei_t.mul(projected_prod_t.loc[projected_ei_t.index, projected_ei.T.columns])
         cumulative_emissions = projected_emissions_t.T.cumsum(axis=1).astype('pint[Mt CO2]')
         return cumulative_emissions
 
