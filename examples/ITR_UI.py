@@ -128,7 +128,7 @@ def recalculate_individual_itr(eibm):
     Warehouse.update_benchmarks(base_production_bm, EI_bm)
     temperature_score = TemperatureScore(
                             time_frames = [ETimeFrames.LONG],
-                            scopes=None, # None means "use the appropriate scopes for the benchmark
+                            scopes=[EScope.S1S2S3], # None means "use the appropriate scopes for the benchmark
                             # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
                             aggregation_method=PortfolioAggregationMethod.WATS
                             )
@@ -216,7 +216,7 @@ controls = dbc.Row( # always do in rows ...
                     id="temp-score",
                     min=0, max=8.5, value=[0, 8.5],
                     step=0.5,
-                    marks={i / 10: str(i / 10) for i in range(0, 85, 5)},
+                    marks={i / 10: str(i / 10) for i in range(0, 86, 5)},
                 ),
                 dbc.Row(
                     [
@@ -356,8 +356,33 @@ macro = dbc.Row(
                     min=0, max=100,
                     value=[ProjectionControls.LOWER_PERCENTILE * 100, ProjectionControls.UPPER_PERCENTILE * 100],
                     step=10,
-                    marks={i: str(i) for i in range(0, 100, 10)},
+                    marks={i: str(i) for i in range(0, 101, 10)},
                     allowCross=False
+                ),
+                html.Hr(),  # small space from the top
+                dbc.Row(  # Set ProjectionControls TARGET_YEAR
+                    [
+                        dbc.Col(
+                            dbc.Label("\N{wrench} Select projection end year (2025-2050)"),
+                            width=9,
+                        ),
+                        dbc.Col(
+                            [
+                                dbc.Button("\N{calendar}", id="hover-target8", color="link", n_clicks=0),
+                                dbc.Popover(dbc.PopoverBody(
+                                    "Select the ending year of the benchmark analysis"),
+                                    id="hover9", target="hover-target9", trigger="hover"),
+                            ], width=4,
+                        ),
+                    ],
+                    align="center",
+                ),
+                dcc.Slider(
+                    id="target-year",
+                    min=2025, max=2050,
+                    value=2050,
+                    step=5,
+                    marks={i: str(i) for i in range(2025, 2051, 5)},
                 ),
             ],
         ),
@@ -585,6 +610,7 @@ app.layout = dbc.Container(  # always start with container
         Input("eibm-dropdown", "value"),
         Input('projection-method', 'value'),
         Input("scenarios-cutting", "value"),  # winzorization slide
+        Input("target-year", "value"),
     ],
 )
 
@@ -596,6 +622,7 @@ def update_graph(
         eibm,
         proj_meth,
         winz,
+        target_year,
 ):
     global amended_portfolio_global, initial_portfolio, filt_df, temperature_score
     global companies, company_data_path, template_company_data
@@ -603,6 +630,7 @@ def update_graph(
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
 
+    need_update = need_recalc = False
     if 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:  # if winzorization params were changed
         if proj_meth == 'median':
             template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.median)
@@ -610,11 +638,18 @@ def update_graph(
             template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.mean)
         template_company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
         template_company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
+        need_update = need_recalc = True
+    if 'target-year' in changed_id:
+        EI_bm.projection_controls.TARGET_YEAR = target_year
+        template_company_data.projection_controls.TARGET_YEAR = target_year
+        need_update = need_recalc = True
+    if 'eibm-dropdown' in changed_id:
+        # FIXME: Do we need to do a recalculate_individual_itr before we update and recalculate?  Or was that redundant?
+        need_update = need_recalc = True
+
+    if need_update:
         Warehouse.update_trajectories()
-        # we need to recalculate temperature score as we changed trajectories (which influence temperature scores)
-        amended_portfolio_global = recalculate_individual_itr(eibm)
-    elif 'eibm-dropdown' in changed_id:
-        # we need to recalculate temperature score as we changed benchmark
+    if need_recalc:
         amended_portfolio_global = recalculate_individual_itr(eibm)
 
     temp_score_mask = (amended_portfolio_global.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
@@ -642,7 +677,8 @@ def update_graph(
                              size="investment_value",
                              color="sector", labels={"color": "Sector"},
                              hover_data=["company_name", "investment_value", "temperature_score"],
-                             title="Overview of portfolio")
+                             title="Overview of portfolio",
+                             log_x=True, log_y=True)
     fig1.update_layout({'legend_title_text': '', 'transition_duration': 500})
     fig1.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5))
 
@@ -699,7 +735,7 @@ def update_graph(
         global EI_bm
 
         temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG],
-                                             scopes=None,
+                                             scopes=[EScope.S1S2S3],
                                              aggregation_method=agg_method)  # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
         agg_zero = Q_(0.0, 'delta_degC')
@@ -842,6 +878,7 @@ def download_xlsx(n_clicks):
         Output("region-dropdown", "options"), # update region dropdown options as it could be different depending on the selected scenario
         Output("projection-method", "value"),
         Output("scenarios-cutting", "value"),
+        Output("target-year", "value"),
     ],
     [
         Input('reset-filters-but', 'n_clicks'),
@@ -856,7 +893,8 @@ def reset_filters(n_clicks_reset, eibm):
 
     if (ProjectionControls.TREND_CALC_METHOD != staticmethod(pd.DataFrame.median)
         or ProjectionControls.LOWER_PERCENTILE != 0.1
-        or ProjectionControls.UPPER_PERCENTILE != 0.9):
+        or ProjectionControls.UPPER_PERCENTILE != 0.9
+        or ProjectionControls.TARGET_YEAR != 2050):
         ProjectionControls.TREND_CALC_METHOD=staticmethod(pd.DataFrame.median)
         ProjectionControls.LOWER_PERCENTILE = 0.1
         ProjectionControls.UPPER_PERCENTILE = 0.9
@@ -867,13 +905,14 @@ def reset_filters(n_clicks_reset, eibm):
     # (thought they may change which parts of the portfolio are plotted next)
 
     return ( # if button is clicked, reset filters
-        [0,4],
+        [0,4],                  # Elsewhere we have this as 8.5
         'all_values',
         [{"label": i, "value": i} for i in amended_portfolio_global["sector"].unique()] + [{'label': 'All Sectors', 'value': 'all_values'}],
         'all_values',
         [{"label": i if i != "Global" else "Other", "value": i} for i in amended_portfolio_global["region"].unique()] + [{'label': 'All Regions', 'value': 'all_values'}],
         'median',
         [ProjectionControls.LOWER_PERCENTILE*100,ProjectionControls.UPPER_PERCENTILE*100],
+        2050,
     )
 
 if __name__ == "__main__":
