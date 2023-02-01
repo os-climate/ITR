@@ -659,12 +659,12 @@ class ICompanyData(BaseModel):
 
 # These aggregate terms are all derived from the benchmark being used
 class ICompanyAggregates(ICompanyData):
-    cumulative_budget: EmissionsQuantity
+    cumulative_budget: Optional[EmissionsQuantity]
     cumulative_trajectory: Optional[EmissionsQuantity]
     cumulative_target: Optional[EmissionsQuantity]
-    benchmark_temperature: quantity('delta_degC')
-    benchmark_global_budget: EmissionsQuantity
-    scope: EScope
+    benchmark_temperature: Optional[quantity('delta_degC')]
+    benchmark_global_budget: Optional[EmissionsQuantity]
+    scope: Optional[EScope]
 
     # The first year that cumulative_projections exceeds the 2050 cumulative_budget
     trajectory_exceedance_year: Optional[int]
@@ -684,3 +684,20 @@ class ICompanyAggregates(ICompanyData):
             return None
         raise ValueError(f"{v} is not compatible with Int64 dtype")
 
+    @classmethod
+    def from_ICompanyData(cls, super_instance, scope_company_data):
+        # FIXME: Would love to know how to run these automatically...
+        EmissionsQuantity.validate(scope_company_data['cumulative_budget'])
+        if scope_company_data['cumulative_trajectory']:
+            EmissionsQuantity.validate(scope_company_data['cumulative_trajectory'])
+        if scope_company_data['cumulative_target']:
+            EmissionsQuantity.validate(scope_company_data['cumulative_target'])
+        if not Q_(scope_company_data['benchmark_temperature']).is_compatible_with(ureg('delta_degC')):
+            raise ValueError(f"benchmark temperature {scope_company_data['benchmark_temperature']} is not compatible with delta_degC")
+        else:
+            scope_company_data['benchmark_temperature'] = Q_(scope_company_data['benchmark_temperature'])
+        EmissionsQuantity.validate(scope_company_data['benchmark_global_budget'])
+        if not isinstance(scope_company_data['scope'], EScope):
+            raise ValueError(f"scope {scope_company_data['scope']} is not a valid scope")
+        # ...while not re-running any validation on super_instnace
+        return cls.construct(**scope_company_data, **super_instance.__dict__)

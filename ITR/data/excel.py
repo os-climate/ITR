@@ -254,8 +254,8 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                     'ei_metric': intensity_metric}}
 
                 if df_historic is not None:
-                    company_data[TabsConfig.HISTORIC_DATA] = self._convert_historic_data(
-                        df_historic.loc[company_id, :]).dict()
+                    company_data[TabsConfig.HISTORIC_DATA] = dict(self._convert_historic_data(
+                        df_historic.loc[company_id, :]))
                 else:
                     company_data[TabsConfig.HISTORIC_DATA] = None
 

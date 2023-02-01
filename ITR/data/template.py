@@ -920,7 +920,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         if df_fundamentals is not None:
             companies_data_dict = df_fundamentals.to_dict(orient="records")
         else:
-            companies_data_dict = [c.dict() for c in self._companies]
+            companies_data_dict = [dict(c) for c in self._companies]
         model_companies: List[ICompanyData] = []
         base_year = self.projection_controls.BASE_YEAR
 
@@ -992,13 +992,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     except KeyError:
                         # If there was no relevant historic S3 data, don't try to use it
                         pass
-                    company_data[ColumnsConfig.HISTORIC_DATA] = self._convert_historic_data(
-                        df_historic_data.loc[[company_id]].reset_index()).dict()
+                    company_data[ColumnsConfig.HISTORIC_DATA] = dict(self._convert_historic_data(
+                        df_historic_data.loc[[company_id]].reset_index()))
                 else:
                     company_data[ColumnsConfig.HISTORIC_DATA] = None
 
                 if company_id in df_target_data.index:
-                    company_data[ColumnsConfig.TARGET_DATA] = [td.dict() for td in self._convert_target_data(
+                    company_data[ColumnsConfig.TARGET_DATA] = [dict(td) for td in self._convert_target_data(
                         # don't let a single row of df_target_data become a pd.Series
                         df_target_data.loc[[company_id]].reset_index())]
                 else:
@@ -1124,7 +1124,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         excluded_cols = ['projected_targets', 'projected_intensities', 'historic_data', 'target_data']
         df = pd.DataFrame.from_records(
-            [ICompanyData.parse_obj({k:v for k, v in c.dict().items() if k not in excluded_cols}).dict()
+            [dict(ICompanyData.parse_obj({k:v for k, v in dict(c).items() if k not in excluded_cols}))
              for c in self.get_company_data(company_ids)]).set_index(self.column_config.COMPANY_ID)
         # company_ids_idx = pd.Index(company_ids)
         # df = self.df_fundamentals.loc[company_ids_idx]

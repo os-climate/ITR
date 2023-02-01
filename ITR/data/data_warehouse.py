@@ -462,7 +462,7 @@ class DataWarehouse(ABC):
         """
 
         company_data = self.company_data.get_company_data(company_ids)
-        df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
+        df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data]).set_index(self.column_config.COMPANY_ID, drop=False)
         valid_company_ids = df_company_data.index.to_list()
 
         # Why does the following create ICompanyData?  Because get_company_fundamentals is getting base_year_production, ghg_s1s2, and ghg_s3 the hard way
@@ -533,7 +533,13 @@ class DataWarehouse(ABC):
         # ICompanyAggregates wants this Quantity as a `str`
         df_company_data[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df_company_data)
         companies = df_company_data.to_dict(orient="records")
-        aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
+        # This was WICKED SLOW: aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
+        aggregate_company_data = [ICompanyAggregates.from_ICompanyData(company, scope_company_data)
+                                  for company in company_data
+                                  for scope_company_data in df_company_data.loc[[company.company_id]][[
+                                          'cumulative_budget', 'cumulative_trajectory', 'cumulative_target',
+                                          'benchmark_temperature', 'benchmark_global_budget', 'scope'
+                                  ]].to_dict(orient="records")]
         return aggregate_company_data
 
     def _convert_df_to_model(self, df_company_data: pd.DataFrame) -> List[ICompanyAggregates]:
@@ -560,22 +566,26 @@ class DataWarehouse(ABC):
     def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame) -> pd.DataFrame:
         """
         get the weighted sum of the projected emission
-        :param projected_ei: series of projected emissions intensities
-        :param projected_production: PintArray of projected production amounts
+        :param projected_ei: Rows of projected emissions intensities indexed by (company_id, scope)
+        :param projected_production: Rows of projected production amounts indexed by (company_id, scope)
         :return: cumulative emissions, by year, based on weighted sum of emissions intensity * production
         """
-        # By picking only the rows of projected_production (columns of projected_production.T)
-        # that match projected_ei (columns of projected_ei.T), the rows of the DataFrame are not re-sorted
-        try:
-            projected_ei.T.mul(projected_production.T[projected_ei.T.columns])
-        except KeyError:
-            logger.error("KeyError raised in _get_cumulative_emissions")
-            # breakpoint()
-            assert False
-        projected_ei_t = asPintDataFrame(projected_ei.T)
-        projected_prod_t = asPintDataFrame(projected_production.T)
-        projected_emissions_t = projected_ei_t.mul(projected_prod_t.loc[projected_ei_t.index, projected_ei.T.columns])
-        cumulative_emissions = projected_emissions_t.T.cumsum(axis=1).astype('pint[Mt CO2]')
+
+        # The old and slow way:
+        # projected_ei_t = asPintDataFrame(projected_ei.T)
+        # projected_prod_t = asPintDataFrame(projected_production.T)
+        # projected_emissions_t = projected_ei_t.mul(projected_prod_t.loc[projected_ei_t.index, projected_ei.T.columns])
+        # cumulative_emissions = projected_emissions_t.T.cumsum(axis=1).astype('pint[Mt CO2]')
+
+        # First, ensure that projected_production is ordered the same as projected_ei, preserving order of projected_ei
+        # Second, use projected_ei.columns to set limit of our calculation so we don't return a frame with NaNs in uncomputed years
+        projected_production = projected_production.loc[projected_ei.index, projected_ei.columns]
+        # As per Pint performance recommendations, compute using magnitudes when we have certainty about units
+        scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
+                                                                            lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
+        projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
+        # At the last instance, convert our magnitudes to t CO2e everywhere
+        cumulative_emissions = projected_t_CO2e.cumsum(axis=1).astype('pint[t CO2e]')
         return cumulative_emissions
 
     def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, budget_year: int=None) -> pd.Series:

@@ -100,7 +100,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     if len(company_data) == 0:
         raise ValueError("None of the companies in your portfolio could be found by the data providers")
 
-    df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
+    df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data])
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
     df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
     s3_data_invalid = df_company_data.ghg_s3.isna()

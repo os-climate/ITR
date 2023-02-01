@@ -554,7 +554,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         excluded_cols = ['projected_targets', 'projected_intensities', 'historic_data', 'target_data']
         df = pd.DataFrame.from_records(
-            [ICompanyData.parse_obj({k:v for k, v in c.dict().items() if k not in excluded_cols}).dict()
+            [dict(ICompanyData.parse_obj({k:v for k, v in dict(c).items() if k not in excluded_cols}))
              for c in self.get_company_data(company_ids)]).set_index(self.column_config.COMPANY_ID)
         return df
 
@@ -736,7 +736,7 @@ class EITrajectoryProjector(EIProjector):
 
     def _historic_emissions_to_dicts(self, id: str, emissions_scopes: IHistoricEmissionsScopes) -> List[Dict[str, str]]:
         data = []
-        for scope, emissions in emissions_scopes.dict().items():
+        for scope, emissions in dict(emissions_scopes).items():
             if emissions:
                 ems = {em['year']: em['value'] for em in emissions}
                 data.append({ColumnsConfig.COMPANY_ID: id, ColumnsConfig.VARIABLE: VariablesConfig.EMISSIONS,
@@ -746,7 +746,7 @@ class EITrajectoryProjector(EIProjector):
     def _historic_ei_to_dicts(self, id: str, intensities_scopes: IHistoricEIScopes) \
             -> List[Dict[str, str]]:
         data = []
-        for scope, intensities in intensities_scopes.dict().items():
+        for scope, intensities in dict(intensities_scopes).items():
             if intensities:
                 intsties = {intsty['year']: intsty['value'] for intsty in intensities}
                 data.append(

@@ -193,12 +193,12 @@ class TestExcelProvider(unittest.TestCase):
         self.assertEqual(company_2.company_id, "US00724F1012")
         self.assertAlmostEqual(company_1.ghg_s1s2, Q_(640.885111270135, 'Mt CO2'), places=4)
         self.assertAlmostEqual(company_2.ghg_s1s2, Q_(1027.6039725941699, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(31.7335215, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(181.310393, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(17336.3993, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(27182.4712, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17216.9854, 'Mt CO2'), places=4)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40328.2147, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(31.733521480218407, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(181.3103926965549292, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(17336.399281836505, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(27182.47121883381, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17216.9854230987, 'Mt CO2'), places=4)
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40328.21470703568, 'Mt CO2'), places=4)
 
     def test_get_value(self):
         expected_data = pd.Series([20248547997.0,

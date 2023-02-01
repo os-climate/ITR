@@ -223,7 +223,7 @@ class TestBaseProvider(unittest.TestCase):
         self.assertAlmostEqual(company_1.cumulative_target, Q_(17342.428074061572, 'Mt CO2'))
         self.assertAlmostEqual(company_2.cumulative_target, Q_(27191.863852079525, 'Mt CO2'))
         self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17222.957455753196, 'Mt CO2'))
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40343.09136798881, 'Mt CO2'))
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40343.09136798882, 'Mt CO2'))
 
         # Reload EI benchmark with primary scope S3
         self.setUp_S3_only()
