@@ -175,7 +175,8 @@ class DataWarehouse(ABC):
                 try:
                     sector_em_df = sector_em_df.loc[sector_em_df.index.intersection(to_allocate_idx)].astype('pint[Mt CO2e]')
                 except DimensionalityError:
-                    breakpoint()
+                    # breakpoint()
+                    assert False
                 em_tot = sector_em_df.groupby('scope')['em'].sum()
                 # The alignment calculation: Company Scope-Sector emissions = Total Company Scope emissions * (BM Scope Sector / SUM(All Scope Sectors of Company))
                 aligned_em = [(sector, [(scope, list(map(lambda em: (em[0], em[1] * sector_em_df.loc[(sector, scope)].squeeze() / em_tot.loc[scope].squeeze()),

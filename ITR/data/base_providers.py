@@ -887,7 +887,7 @@ class EITrajectoryProjector(EIProjector):
 
     def _interpolate(self, historic_intensities_t: pd.DataFrame) -> pd.DataFrame:
         # Interpolate NaNs surrounded by values, but don't extrapolate NaNs with last known value
-        breakpoint()
+        raise NotImplementedError
 
 
     def _get_trends(self, intensities_t: pd.DataFrame):
@@ -1151,7 +1151,7 @@ class EITargetProjector(EIProjector):
                                 break
                             if last_ei_year < target.target_base_year:
                                 logger.error(f"Target data for {company.company_id} more up-to-date than disclosed data; please fix and re-run")
-                                breakpoint()
+                                # breakpoint()
                                 raise ValueError
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
