@@ -699,5 +699,9 @@ class ICompanyAggregates(ICompanyData):
         EmissionsQuantity.validate(scope_company_data['benchmark_global_budget'])
         if not isinstance(scope_company_data['scope'], EScope):
             raise ValueError(f"scope {scope_company_data['scope']} is not a valid scope")
+        if not pd.isna(scope_company_data['trajectory_exceedance_year']) and not isinstance(scope_company_data['trajectory_exceedance_year'], int):
+            raise ValueError(f"scope {scope_company_data['trajectory_exceedance_year']} is not a valid trajectory exceedance year value")
+        if not pd.isna(scope_company_data['target_exceedance_year']) and not isinstance(scope_company_data['target_exceedance_year'], int):
+            raise ValueError(f"scope {scope_company_data['target_exceedance_year']} is not a valid target exceedance year value")
         # ...while not re-running any validation on super_instnace
         return cls.construct(**scope_company_data, **super_instance.__dict__)

@@ -538,7 +538,8 @@ class DataWarehouse(ABC):
                                   for company in company_data
                                   for scope_company_data in df_company_data.loc[[company.company_id]][[
                                           'cumulative_budget', 'cumulative_trajectory', 'cumulative_target',
-                                          'benchmark_temperature', 'benchmark_global_budget', 'scope'
+                                          'benchmark_temperature', 'benchmark_global_budget', 'scope',
+                                          'trajectory_exceedance_year', 'target_exceedance_year',
                                   ]].to_dict(orient="records")]
         return aggregate_company_data
 
