@@ -473,7 +473,9 @@ class DataWarehouse(ABC):
             warnings.simplefilter("ignore")
             # See https://github.com/hgrecco/pint-pandas/issues/128
             projected_production = self.benchmark_projected_production.get_company_projected_production(
-                company_info_at_base_year) # .sort_index()
+                company_info_at_base_year)
+            target_year_loc = projected_production.columns.get_loc(self.company_data.projection_controls.TARGET_YEAR)
+            projected_production = projected_production.iloc[:, 0:target_year_loc+1]
 
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
         # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?  Answer: because the following is inscrutible
@@ -483,6 +485,7 @@ class DataWarehouse(ABC):
         #                      for scope in ['S1', 'S1S2', 'S3', 'S1S2S3']
         #                      if x[scope] is not None]).explode()).set_index('scope', append=True)
         projected_trajectories = self.company_data.get_company_projected_trajectories(valid_company_ids)
+        # If we have excess projections (compared to projected_production), _get_cumulative_emissions will drop them
         df_trajectory = self._get_cumulative_emissions(
             projected_ei=projected_trajectories,
             projected_production=projected_production)
@@ -579,13 +582,18 @@ class DataWarehouse(ABC):
         # projected_emissions_t = projected_ei_t.mul(projected_prod_t.loc[projected_ei_t.index, projected_ei.T.columns])
         # cumulative_emissions = projected_emissions_t.T.cumsum(axis=1).astype('pint[Mt CO2]')
 
-        # First, ensure that projected_production is ordered the same as projected_ei, preserving order of projected_ei
-        # Second, use projected_ei.columns to set limit of our calculation so we don't return a frame with NaNs in uncomputed years
-        projected_production = projected_production.loc[projected_ei.index, projected_ei.columns]
-        # As per Pint performance recommendations, compute using magnitudes when we have certainty about units
-        scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
-                                                                            lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
-        projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
+        # Ensure that projected_production is ordered the same as projected_ei, preserving order of projected_ei
+        # projected_production is constructed to be limited to the years we want to analyze
+        projected_production = projected_production.loc[projected_ei.index]
+        # Limit projected_ei to the year range of projected_production
+        projected_ei = projected_ei[projected_production.columns]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Until PintArrays have a map function, we can get UnitStrippedWarning when map tries to convert a PintArray to an array of object type.
+            # As per Pint performance recommendations, compute using magnitudes when we have certainty about units        
+            scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
+                                                                                lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
+            projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
         # At the last instance, convert our magnitudes to t CO2e everywhere
         cumulative_emissions = projected_t_CO2e.cumsum(axis=1).astype('pint[t CO2e]')
         return cumulative_emissions

@@ -630,7 +630,7 @@ def update_graph(
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
 
-    need_update = need_recalc = False
+    need_update = need_recalc = need_ts = False
     if 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:  # if winzorization params were changed
         if proj_meth == 'median':
             template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.median)
@@ -638,19 +638,30 @@ def update_graph(
             template_company_data.projection_controls.TREND_CALC_METHOD = staticmethod(pd.DataFrame.mean)
         template_company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
         template_company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
-        need_update = need_recalc = True
+        need_update = need_recalc = need_ts = True
     if 'target-year' in changed_id:
         EI_bm.projection_controls.TARGET_YEAR = target_year
         template_company_data.projection_controls.TARGET_YEAR = target_year
-        need_update = need_recalc = True
+        least_target_year = min([company.projected_intensities[scope_name].projections.index[-1]
+                                 for company in Warehouse.company_data._companies
+                                 for scope_name in EScope.get_scopes()
+                                 if company.projected_intensities[scope_name]])
+        if least_target_year < target_year:
+            need_update = True
+        need_ts = True
+            
     if 'eibm-dropdown' in changed_id:
         # FIXME: Do we need to do a recalculate_individual_itr before we update and recalculate?  Or was that redundant?
-        need_update = need_recalc = True
+        need_update = need_recalc = need_ts = True
 
     if need_update:
         Warehouse.update_trajectories()
     if need_recalc:
         amended_portfolio_global = recalculate_individual_itr(eibm)
+    elif need_ts:
+        amended_portfolio_global = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
+    else:
+        logger.info("no recalculations needed!")
 
     temp_score_mask = (amended_portfolio_global.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio_global.temperature_score <= Q_(te_sc[1], 'delta_degC'))

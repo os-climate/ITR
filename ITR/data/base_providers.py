@@ -143,9 +143,9 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
             if nan_production.any():
                 # If we don't have valid production data for base year, we get back a nan result that's a pain to debug, so nag here
                 logger.error(f"these companies are missing production data: {nan_production[nan_production].index.get_level_values(0).to_list()}")
-        # We transpose the operation so that Pandas is happy to preserve the dtype integrity of the column
-        company_projected_productions_t = company_benchmark_projections.T.mul(company_production, axis=1)
-        return company_projected_productions_t.T
+            # We transpose the operation so that Pandas is happy to preserve the dtype integrity of the column
+            company_projected_productions_t = company_benchmark_projections.T.mul(company_production, axis=1)
+            return company_projected_productions_t.T
 
     def get_benchmark_projections(self, company_sector_region_scope: pd.DataFrame, scope: EScope = EScope.AnyScope) -> pd.DataFrame:
         """
@@ -586,7 +586,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     values = [{yvp.year:yvp.value for yvp in pt} for pt in projections]
                 else:
                     values = projections
-                return pd.DataFrame(data=values, index=index)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    # FIXME: why cannot Pint and Pandas agree to make a nice DF from a list of PintArray Series?
+                    return pd.DataFrame(data=values, index=index)
         return pd.DataFrame()
 
     def get_company_projected_targets(self, company_ids: List[str], year=None) -> pd.DataFrame:

@@ -255,7 +255,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # Change from emissions intensity metrics to emissions metrics; we know this will trigger a warning
-                df_esg.loc[df5.index, df_esg.columns[start_year_loc:].to_list()] = df5[df_esg.columns[start_year_loc:].to_list()]
+                df_esg.loc[df5.index, df_esg.columns[start_year_loc:]] = df5[df_esg.columns[start_year_loc:]]
             # Set emissions metrics we just derived (if necessary), both in df_fundamentals (for targets, globally) and df_esg (for projections etc)
             for idx in df5.index:
                 if pd.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC]):
@@ -307,7 +307,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 # See also: https://stackoverflow.com/q/74057367/859591
                 warnings.filterwarnings(
                     "ignore",
-                    category=FutureWarning,
+                    category=DeprecationWarning,
                     message=(
                         ".*will attempt to set the values inplace instead of always setting a new array. "
                         "To retain the old behavior, use either.*"
@@ -364,7 +364,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     # See also: https://stackoverflow.com/q/74057367/859591
                     warnings.filterwarnings(
                         "ignore",
-                        category=FutureWarning,
+                        category=DeprecationWarning,
                         message=(
                             ".*will attempt to set the values inplace instead of always setting a new array. "
                             "To retain the old behavior, use either.*"
@@ -576,7 +576,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 em_metrics = em_metrics.loc[em_metrics.index.difference(em_invalid_idx)]
 
             # We don't need units here anymore--they've been translated/transported everywhere we need them
-            df_esg.drop(columns='unit', inplace=True)
+            df_esg = df_esg.drop(columns='unit')
 
             submetric_sector_map = {
                 'cement': 'Cement',
@@ -889,7 +889,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # See also: https://stackoverflow.com/q/74057367/859591
             warnings.filterwarnings(
                 "ignore",
-                category=FutureWarning,
+                category=DeprecationWarning,
                 message=(
                     ".*will attempt to set the values inplace instead of always setting a new array. "
                     "To retain the old behavior, use either.*"

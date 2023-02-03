@@ -105,7 +105,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
     df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
     s3_data_invalid = df_company_data.ghg_s3.isna()
-    df_company_data.loc[s3_data_invalid, 'ghg_s3'] = Q_(np.nan, 'Mt CO2e')
+    df_company_data.loc[s3_data_invalid, 'ghg_s3'] = pd.Series([Q_(np.nan, 'Mt CO2e')] * len(df_company_data), index=df_company_data.index)
     df_company_data.ghg_s3 = df_company_data.ghg_s3.astype('pint[Mt CO2e]')
     df_company_data.cumulative_budget = df_company_data.cumulative_budget.astype('pint[Mt CO2e]')
     df_company_data.cumulative_target = df_company_data.cumulative_target.astype('pint[Mt CO2e]')
