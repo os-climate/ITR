@@ -8,6 +8,7 @@ import json
 import os
 import base64
 import io
+import warnings
 
 import dash
 from dash import html
@@ -31,7 +32,7 @@ from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import EScope, ETimeFrames, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
 # from ITR.configs import LoggingConfig
 
-from ITR.data.osc_units import Q_
+from ITR.data.osc_units import Q_, asPintSeries
 from pint import Quantity
 from pint_pandas import PintType
 
@@ -98,6 +99,35 @@ logger.info('Load dummy portfolio from {}. You could upload your own portfolio u
 
 temperature_score: TemperatureScore = None # created during `recalculate_individual_itr`
 EI_bm: BaseProviderIntensityBenchmark = None # Emissions Intensity benchmarks, created during `recalculate_individual_itr`
+# The temperature score of the benchmark on annual basis (which grows until it remains constant at the net-zero year)
+target_year_cum_co2 = None
+target_year_ts = None
+
+# For now all benchmarks use OECM productino data, so just compute the hard stuff once
+def recalculate_target_year_ts():
+    '''
+    When changing endpoint of bencchmark budget calculations, update total budget and ITR resulting therefrom.
+    '''
+    global EI_bm, Warehouse, temperature_score, target_year_cum_co2, target_year_ts
+
+    if target_year_cum_co2 is None:
+        # Get some benchmark temperatures for < 2050 using OECM
+        prod_bm = Warehouse.benchmark_projected_production
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            bm_base_prod_by_region = asPintSeries(pd.Series({bm.region: bm.base_year_production
+                                                             for bm in prod_bm._productions_benchmarks.AnyScope.benchmarks
+                                                             if bm.sector=='Energy'}))
+        # In the OECM benchmark, Scope 1, Scope 2, and Scope 3 actually account for all global emissions
+        energy_prod_df = prod_bm._prod_df.loc[('Energy', slice(None), EScope.AnyScope)].apply(lambda col: col.mul(bm_base_prod_by_region))
+        target_year_cum_co2 = (energy_prod_df
+                             .mul(EI_bm._EI_df.loc[('Energy', slice(None), EScope.S1S2S3)])
+                             .astype('pint[Gt CO2e]')
+                             .cumsum(axis=1))
+    total_final_co2 = target_year_cum_co2[EI_bm._EI_df.columns[-1]].sum()
+    ts_cc = temperature_score.c.CONTROLS_CONFIG
+    target_year_ts = ts_cc.scenario_target_temperature + total_final_co2 * (
+        (target_year_cum_co2[EI_bm.projection_controls.TARGET_YEAR].sum() / total_final_co2) - 1.0) * ts_cc.tcre_multiplier
 
 # load default intensity benchmarks
 def recalculate_individual_itr(eibm):
@@ -137,6 +167,7 @@ def recalculate_individual_itr(eibm):
 
 
 initial_portfolio = recalculate_individual_itr('OECM_S3')
+recalculate_target_year_ts()
 amended_portfolio_global = initial_portfolio.copy()
 filt_df = initial_portfolio.copy()
 
@@ -384,6 +415,8 @@ macro = dbc.Row(
                     step=5,
                     marks={i: str(i) for i in range(2025, 2051, 5)},
                 ),
+                html.Div([html.Span("Total benchmark budget through "), html.Span(id="target-bm-year"), html.Span(": "), html.Span(id="bm-budget")]),
+                html.Div([html.Span("ITR of benchmark: "), html.Span(id="scenario-itr")]),
             ],
         ),
     ],
@@ -590,11 +623,11 @@ app.layout = dbc.Container(  # always start with container
 
 @app.callback(
     [
-        Output("graph-2", "figure"),
-        Output("graph-6", "figure"),
-        Output("graph-3", "figure"),
-        Output("graph-4", "figure"),
-        Output("graph-5", "figure"),
+        Output("graph-2", "figure"), # fig1
+        Output("graph-6", "figure"), # fig5
+        Output("graph-3", "figure"), # heatmap_fig
+        Output("graph-4", "figure"), # high_score_fig
+        Output("graph-5", "figure"), # port_score_diff_methods_fig
         Output('dummy-output-info', 'children'),  # fake for spinner
         Output('output-info', 'children'),  # portfolio score
         Output('output-info', 'style'),  # conditional color
@@ -602,6 +635,9 @@ app.layout = dbc.Container(  # always start with container
         Output('pf-info', 'children'),  # portfolio notional
         Output('comp-info', 'children'),  # num of companies
         Output('container-button-basic', 'children'),  # Table
+        Output("target-bm-year", "children"),
+        Output("bm-budget", "children"),
+        Output("scenario-itr", "children"),
     ],
     [
         Input("temp-score", "value"),
@@ -649,7 +685,8 @@ def update_graph(
         if least_target_year < target_year:
             need_update = True
         need_ts = True
-            
+        recalculate_target_year_ts()
+
     if 'eibm-dropdown' in changed_id:
         # FIXME: Do we need to do a recalculate_individual_itr before we update and recalculate?  Or was that redundant?
         need_update = need_recalc = need_ts = True
@@ -658,6 +695,7 @@ def update_graph(
         Warehouse.update_trajectories()
     if need_recalc:
         amended_portfolio_global = recalculate_individual_itr(eibm)
+        recalculate_target_year_ts()
     elif need_ts:
         amended_portfolio_global = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
     else:
@@ -868,6 +906,9 @@ def update_graph(
                                  hover=True,
                                  responsive=True,
                                  ),
+        EI_bm.projection_controls.TARGET_YEAR,
+        f"{round(target_year_cum_co2[EI_bm.projection_controls.TARGET_YEAR].sum().m, 3)} Gt CO2e",
+        f"{round(target_year_ts.m, 3)}˚C",
     )
 
 
