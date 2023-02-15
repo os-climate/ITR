@@ -296,48 +296,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
     def _np_sum(g):
         return np.sum(g.values)
 
-    def _get_projection(self, company_ids: List[str], projections: pd.DataFrame,
-                        production_metric: pd.DataFrame) -> pd.DataFrame:
-        """
-        get the projected emission intensities for list of companies
-        :param company_ids: list of company ids
-        :param projections: Dataframe with listed projections per company
-        :param production_metric: Dataframe with production_metric per company
-        :return: series of projected emission intensities
-        """
-        projections = projections.reset_index().set_index(ColumnsConfig.COMPANY_ID)
-
-        missing_companies = [company_id for company_id in company_ids if company_id not in projections.index]
-        if missing_companies:
-            error_message = f"Missing target or trajectory projections for companies with ID: {missing_companies}"
-            logger.error(error_message)
-            raise ValueError(error_message)
-
-        projections = projections.loc[company_ids, range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
-                                                         TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)]
-        # Due to bug (https://github.com/pandas-dev/pandas/issues/20824) in Pandas where NaN are treated as zero workaround below:
-        projected_ei_s1s2 = projections.groupby(level=0, sort=False).agg(
-            TemplateProviderCompany._np_sum)  # add scope 1 and 2
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # See https://github.com/hgrecco/pint-pandas/issues/114
-            projected_ei_s1s2 = projected_ei_s1s2.apply(
-                lambda x: x.astype(f'pint[??t CO2/({production_metric[x.name]})]'), axis=1)
-
-        return projected_ei_s1s2
-
-    # class ITargetData(PintModel):
-    #     netzero_year: int
-    #     target_type: Union[Literal['intensity'],Literal['absolute'],Literal['other']]
-    #     target_scope: EScope
-    #     target_start_year: Optional[int]
-    #     target_base_year: int
-    #     target_end_year: int
-
-    #     target_base_year_qty: float
-    #     target_base_year_unit: str
-    #     target_reduction_pct: float
-
     def _convert_target_data(self, target_data: pd.DataFrame) -> List[ITargetData]:
         """
         :param historic: historic production, emission and emission intensity data for a company

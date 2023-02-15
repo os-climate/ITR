@@ -69,7 +69,6 @@ data_dir="data"
 data_json_units_dir="json-units"
 root = os.path.abspath('')
 
-
 # Set input filename (from commandline or default)
 parser = argparse.ArgumentParser()
 parser.add_argument('file')
@@ -687,7 +686,6 @@ def update_graph(
                                              scopes=[EI_bm.scope_to_calc],
                                              aggregation_method=agg_method)  # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregated_scores = temperature_score.aggregate_scores(filt_df)
-<<<<<<< HEAD
         if aggregated_scores.long.S1S2:
             agg_s1s2 = [agg_method.value,aggregated_scores.long.S1S2.all.score]
         else:
@@ -696,11 +694,7 @@ def update_graph(
             agg_s3 = [agg_method.value,aggregated_scores.long.S3.all.score]
         else:
             agg_s3 = []
-    
         return agg_s1s2 + agg_s3
-=======
-        return [agg_method.value, aggregated_scores.long.S1S2.all.score]
->>>>>>> hotfix - cmd line arguments ui set to optional
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
     methods, scores = list(map(list, zip(*agg_temp_scores)))
@@ -765,14 +759,6 @@ def update_graph(
         fig1, fig5,
         heatmap_fig, high_score_fig,
         port_score_diff_methods_fig,
-<<<<<<< HEAD
-        "{:.2f}".format(scores), # fake for spinner
-        "{:.2f}".format(scores), # portfolio score
-        {'color': 'ForestGreen'} if scores < 2 else {'color': 'Red'}, # conditional color
-        str(round((filt_df.company_ev_plus_cash.sum())/10**9,0)), # sum of total EVIC for companies in portfolio
-        str(round((filt_df.investment_value.sum())/10**6,1)), # portfolio notional
-        str(len(filt_df)), # num of companies
-=======
         "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m),  # fake for spinner
         "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m),  # portfolio score
         {'color': 'ForestGreen'} if aggregated_scores.long.S1S2.all.score.m < 2 else {'color': 'Red'},
@@ -780,7 +766,6 @@ def update_graph(
         str(round((filt_df.company_ev_plus_cash.sum()) / 10 ** 9, 0)),  # sum of total EVIC for companies in portfolio
         str(round((filt_df.investment_value.sum()) / 10 ** 6, 1)),  # portfolio notional
         str(len(filt_df)),  # num of companies
->>>>>>> hotfix - cmd line arguments ui set to optional
         dbc.Table.from_dataframe(df_for_output_table,
                                  striped=True,
                                  bordered=True,

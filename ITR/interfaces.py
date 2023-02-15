@@ -436,15 +436,12 @@ class ITargetData(PintModel):
     target_base_year_unit: str
     target_reduction_pct: float
 
-<<<<<<< HEAD
-=======
     @root_validator
     def must_be_greater_than_2022(cls, v):
         if v['target_end_year'] < 2023:
             raise ValueError(f"Scope {v['target_scope']}: Target end year ({v['target_end_year']}) must be greater than 2022")
         return v
 
->>>>>>> Initial Scope 3 support aligned with OECM 2.0
 
 class ICompanyData(PintModel):
     company_name: str
