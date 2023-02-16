@@ -2,7 +2,7 @@
 This module handles initialization of pint functionality
 """
 
-from pint import set_application_registry
+from pint import set_application_registry, Quantity
 from pint_pandas import PintArray, PintType
 from openscm_units import unit_registry
 import re

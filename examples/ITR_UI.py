@@ -40,6 +40,19 @@ import logging
 import sys
 import argparse
 
+# Initial calculations
+
+
+examples_dir = ''  # 'examples'
+data_dir = "data"
+data_json_units_dir = "json-units"
+root = os.path.abspath('')
+
+# Set input filename (from commandline or default)
+parser = argparse.ArgumentParser()
+parser.add_argument('-file')
+args = parser.parse_args()
+company_data_path = args.file or os.path.join(root, examples_dir, data_dir, "20220720 ITR Tool Sample Data.xlsx")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -681,7 +694,6 @@ def update_graph(
             agg_s3 = [agg_method.value,aggregated_scores.long.S3.all.score]
         else:
             agg_s3 = []
-    
         return agg_s1s2 + agg_s3
 
     agg_temp_scores = [agg_score(i) for i in PortfolioAggregationMethod]
@@ -747,12 +759,13 @@ def update_graph(
         fig1, fig5,
         heatmap_fig, high_score_fig,
         port_score_diff_methods_fig,
-        "{:.2f}".format(scores), # fake for spinner
-        "{:.2f}".format(scores), # portfolio score
-        {'color': 'ForestGreen'} if scores < 2 else {'color': 'Red'}, # conditional color
-        str(round((filt_df.company_ev_plus_cash.sum())/10**9,0)), # sum of total EVIC for companies in portfolio
-        str(round((filt_df.investment_value.sum())/10**6,1)), # portfolio notional
-        str(len(filt_df)), # num of companies
+        "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m),  # fake for spinner
+        "{:.2f}".format(aggregated_scores.long.S1S2.all.score.m),  # portfolio score
+        {'color': 'ForestGreen'} if aggregated_scores.long.S1S2.all.score.m < 2 else {'color': 'Red'},
+        # conditional color
+        str(round((filt_df.company_ev_plus_cash.sum()) / 10 ** 9, 0)),  # sum of total EVIC for companies in portfolio
+        str(round((filt_df.investment_value.sum()) / 10 ** 6, 1)),  # portfolio notional
+        str(len(filt_df)),  # num of companies
         dbc.Table.from_dataframe(df_for_output_table,
                                  striped=True,
                                  bordered=True,

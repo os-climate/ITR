@@ -82,6 +82,14 @@ class CompanyDataProvider(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def get_company_fundamentals(self, company_ids: List[str]) -> pd.DataFrame:
+        """
+        :param company_ids: A list of company IDs
+        :return: A pandas DataFrame with company fundamental info per company
+        """
+        raise NotImplementedError
+
 
 class ProductionBenchmarkDataProvider(ABC):
     """

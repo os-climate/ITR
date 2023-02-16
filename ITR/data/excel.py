@@ -277,7 +277,6 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :return: historic data with unit attributes added to yearly data on a per-element basis
         """
         self.historic_years = [column for column in historic_data.columns if type(column) == int]
-
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
         if missing_ids:
             error_message = f"Company ids missing in provided historic data: {missing_ids}"
