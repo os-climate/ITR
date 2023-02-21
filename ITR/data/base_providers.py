@@ -13,7 +13,7 @@ from typing import List, Type, Dict
 import ITR
 from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType, EI_Metric
 
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, ProjectionControls, LoggingConfig
+from ITR.configs import ColumnsConfig, VariablesConfig, ProjectionControls, LoggingConfig
 
 import logging
 logger = logging.getLogger(__name__)
@@ -376,7 +376,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             sector = company.sector
             region = company.region
             if (sector, region) in df_bm_ei.index:
-                # FIXME: if we change _EI_df to columnar data we could pick up unit from dtype
+                # FIXME: if we change _EI_df to columnar data we could pick up units from dtype
                 ei_metric = str(df_bm_ei.loc[(sector, region)].iat[0, 0].u)
             elif (sector, 'Global') in df_bm_ei.index:
                 ei_metric = str(df_bm_ei.loc[(sector, 'Global')].iat[0, 0].u)

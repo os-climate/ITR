@@ -52,6 +52,8 @@ for currency_symbol, currency_abbrev in ITR.data.currency_dict.items():
 ureg.define("CHF = nan USD")
 ureg.define("MXN = nan USD") # $ abbreviation is ambiguous
 
+fx_ctx = Context('FX')
+
 ureg.define("btu = Btu")
 ureg.define("mmbtu = 1e6 btu")
 # ureg.define("boe = 5.712 GJ")

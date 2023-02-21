@@ -6,7 +6,7 @@ import numpy as np
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintSeries, asPintDataFrame, ProductionMetric, EmissionsMetric
+from ITR.data.osc_units import ureg, fx_ctx, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintSeries, asPintDataFrame, ProductionMetric, EmissionsMetric
 import pint
 
 from ITR.data.base_providers import BaseCompanyDataProvider
@@ -385,15 +385,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 fx_df = df_fundamentals.loc[fx_quote, ['report_date', 'currency', 'fx_quote', 'fx_rate']].drop_duplicates().set_index('report_date')
                 fx_df = fx_df.assign(currency_tuple=lambda x: x['currency'].map(convert_prefix_to_scalar),
                                      fx_quote_tuple=lambda x: x['fx_quote'].map(convert_prefix_to_scalar))
-                self.fx = pint.Context('FX')
+
                 # FIXME: These simple rules don't take into account different conversion rates at different time periods.
-                fx_df.apply(lambda x: self.fx.redefine(f"{x.currency_tuple[0]} = {x.fx_rate * x.fx_quote_tuple[1] / x.currency_tuple[1]} {x.fx_quote_tuple[0]}")
-                            if x.currency != 'USD' else self.fx.redefine(f"{x.fx_quote_tuple[0]} = {x.currency_tuple[1]/(x.fx_rate * x.fx_quote_tuple[1])} {x.currency_tuple[0]}"),
+                fx_df.apply(lambda x: fx_ctx.redefine(f"{x.currency_tuple[0]} = {x.fx_rate * x.fx_quote_tuple[1] / x.currency_tuple[1]} {x.fx_quote_tuple[0]}")
+                            if x.currency != 'USD' else fx_ctx.redefine(f"{x.fx_quote_tuple[0]} = {x.currency_tuple[1]/(x.fx_rate * x.fx_quote_tuple[1])} {x.currency_tuple[0]}"),
                             axis=1)
-                ureg.add_context(self.fx)
+                ureg.add_context(fx_ctx)
                 ureg.enable_contexts('FX')
-            else:
-                self.fx = None
         else:
             if len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) != 1:
                 error_message = f"All data should be in the same currency."

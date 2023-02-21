@@ -128,6 +128,7 @@ class DataWarehouse(ABC):
             logger.info("Allocating emissions to align with benchmark data")
             bm_prod_df = benchmark_projected_production._prod_df
             bm_ei_df = benchmarks_projected_ei._EI_df
+            bm_sectors = bm_ei_df.index.get_level_values('sector').unique().to_list()
             base_year = self.company_data.projection_controls.BASE_YEAR
 
             from collections import defaultdict
@@ -137,8 +138,19 @@ class DataWarehouse(ABC):
 
             for c in new_companies:
                 orig_id, sector = c.company_id.split('+')
-                sectors_dict[orig_id].append(sector)
-                region_dict[orig_id] = c.region
+                if sector in bm_sectors:
+                    sectors_dict[orig_id].append(sector)
+                else:
+                    logger.error(f"No benchmark sector data for {orig_id}: sector = {sector}")
+                    continue
+                if (sector, c.region) in bm_ei_df.index:
+                    region_dict[orig_id] = c.region
+                elif (sector, 'Global') in bm_ei_df.index:
+                    region_dict[orig_id] = 'Global'
+                else:
+                    logger.error(f"No benchmark region data for {orig_id}: sector = {sector}; region = {region}")
+                    continue
+                    
                 # Though we mutate below, it's our own unique copy of c.historic_data we are mutating, so OK
                 historic_dict[c.company_id] = c.historic_data
 
@@ -345,7 +357,7 @@ class DataWarehouse(ABC):
             if len(scopes) == 1:
                 self.company_scope[c.company_id] = scopes[0]
                 continue
-            for scope in [EScope.S1S2S3, EScope.S1S2, EScope.S1, EScope.S3]:
+            for scope in EScope.get_result_scopes():
                 if scope in scopes:
                     self.company_scope[c.company_id] = scope
                     break

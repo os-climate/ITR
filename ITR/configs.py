@@ -12,6 +12,14 @@ from typing import List
 from pydantic import BaseModel
 from dataclasses import dataclass
 
+def ITR_median(*args, **kwargs):
+    method = getattr(pd.DataFrame, 'median')
+    return method(*args, **kwargs)
+
+def ITR_mean(*args, **kwargs):
+    method = getattr(pd.DataFrame, 'mean')
+    return method(*args, **kwargs)
+
 class ColumnsConfig:
     # Define a constant for each column used in the dataframe
     COMPANY_ID = "company_id"
@@ -183,7 +191,7 @@ class ProjectionControls:
 
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050
-    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)
+    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = ITR_median
 
 
 class TemperatureScoreControls(BaseModel):

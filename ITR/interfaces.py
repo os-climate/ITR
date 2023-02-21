@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import numpy as np
 import pandas as pd
 
@@ -60,6 +61,12 @@ class EScope(SortableEnum):
     S1S2S3 = "S1+S2+S3"
     AnyScope = 'AnyScope'
 
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.__str__()
+
     @classmethod
     def get_scopes(cls) -> List[str]:
         """
@@ -99,6 +106,12 @@ class EScoreResultType(Enum):
     TRAJECTORY_ONLY = "Trajectory only"
     TARGET_ONLY = "Target only"
     COMPLETE = "Complete"
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.__str__()
 
     @classmethod
     def get_result_types(cls) -> List[str]:

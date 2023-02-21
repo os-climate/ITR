@@ -417,7 +417,7 @@
       },
       {
         "sector": "Electricity Utilities",
-        "region": "North-America",
+        "region": "North America",
         "benchmark_metric": "t CO2/MWh",
         "scenario name": "TPI 1.5 Degrees",
         "release date": "2022-04-01",

@@ -214,10 +214,10 @@ class TestEIBenchmarks(unittest.TestCase):
         print(scores[['company_name', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.14, 1.22, 1.14, 1.14, 1.16], dtype='pint[delta_degC]')
+        expected = pd.Series([1.14, 1.31, 1.14, 1.14, 1.16], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.160, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.18, ureg.delta_degC), places=2)
 
         # OECM PC -- This overwrites company data (which it should not)
         self.OECM_PC_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_PC_bm)
