@@ -726,7 +726,7 @@ def recalculate_target_year_ts(warehouse_pickle_json, sector, region, scope, tar
                                    for bm in prod_bm._productions_benchmarks.AnyScope.benchmarks
                                    if bm.sector==sector and bm.region==region ][0]
         # There is no meaningful scope in production...
-        base_prod_df = prod_bm._prod_df.loc[sector].droplevel(['scope']).apply(lambda col: col.mul(bm_base_prod_in_region))
+        base_prod_ser = prod_bm._prod_df.droplevel(['scope']).loc[(sector, region)].mul(bm_base_prod_in_region)
         sector_scope = None if scope_list is None else scope_list[0]
         if sector_scope is None:
             if EScope.S1S2S3 in EI_scopes:
@@ -740,18 +740,15 @@ def recalculate_target_year_ts(warehouse_pickle_json, sector, region, scope, tar
 
         # FIXME: Methinks we need to reinterpret the OECM production benchmarks for TPI
         intensity_df = EI_bm._EI_df.loc[(sector, region, sector_scope)]
-        target_year_cum_co2 = (base_prod_df.loc[base_prod_df.index.intersection(intensity_df.index)]
-                               .mul(intensity_df)
-                               .cumsum()
-                               .astype('pint[Gt CO2e]'))
+        target_year_cum_co2 = base_prod_ser.mul(intensity_df).cumsum().astype('pint[Gt CO2e]')
     elif 'Energy' in EI_bm._EI_df.index.get_level_values('sector'):
         # Get some benchmark temperatures for < 2050 using OECM
         bm_base_prod_in_region = [ bm.base_year_production
                                    for bm in prod_bm._productions_benchmarks.AnyScope.benchmarks
-                                   if bm.sector=='Energy' and bm.region==region ][0]
+                                   if bm.sector=='Energy' and bm.region==region][0]
         # In the OECM benchmark, Energy Scope 1, Scope 2, and Scope 3 actually account for all global emissions
-        base_prod_df = prod_bm._prod_df.loc[('Energy', region, EScope.AnyScope)].mul(bm_base_prod_in_region)
-        target_year_cum_co2 = (base_prod_df
+        base_prod_ser = prod_bm._prod_df.loc[('Energy', region, EScope.AnyScope)].mul(bm_base_prod_in_region)
+        target_year_cum_co2 = (base_prod_ser
                                .mul(EI_bm._EI_df.loc[('Energy', region, scope_list[0] if scope_list else EScope.S1S2S3)])
                                .cumsum()
                                .astype('pint[Gt CO2e]'))
@@ -778,7 +775,6 @@ def recalculate_target_year_ts(warehouse_pickle_json, sector, region, scope, tar
                                .squeeze()
                                .cumsum()
                                .astype('pint[Gt CO2e]'))
-                               # The logic below needs everything condensed down to the 'Global' region (whatever scope that is)
 
     total_target_co2 = target_year_cum_co2.loc[EI_bm.projection_controls.TARGET_YEAR]
     total_final_co2 = target_year_cum_co2.loc[EI_bm._EI_df.columns[-1]]
