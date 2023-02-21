@@ -783,7 +783,6 @@ def recalculate_target_year_ts(warehouse_pickle_json, sector, region, scope, tar
     total_target_co2 = target_year_cum_co2.loc[EI_bm.projection_controls.TARGET_YEAR]
     total_final_co2 = target_year_cum_co2.loc[EI_bm._EI_df.columns[-1]]
     ts_cc = ITR.configs.TemperatureScoreConfig.CONTROLS_CONFIG
-    breakpoint()
     # FIXME: Note that we cannot use ts_cc.scenario_target_temperature because that doesn't track the benchmark value
     # And we cannot make it track the benchmark value because then it becomes another global variable that would break Dash.
     target_year_ts = EI_bm._benchmark_temperature + (total_target_co2 - total_final_co2) * ts_cc.tcre_multiplier
@@ -848,10 +847,10 @@ def calc_temperature_score(warehouse_pickle_json, sector_region_scope, *_):
 
     Input("portfolio-df", "data"),
     Input("temp-score-range", "value"),
-    Input("sector-dropdown", "value"),
-    Input("region-dropdown", "value"),
-    Input("scope-options", "value"),
-    Input("scope-column", "value"),
+    State("sector-dropdown", "value"),
+    State("region-dropdown", "value"),
+    State("scope-options", "value"),
+    State("scope-column", "value"),
 
     prevent_initial_call=True,)
 def update_graph(
