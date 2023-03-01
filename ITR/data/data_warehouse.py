@@ -8,7 +8,9 @@ from pydantic import ValidationError
 
 import ITR
 from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame
-from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, DF_ICompanyEIProjections, IHistoricData
+from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, \
+    ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, \
+    DF_ICompanyEIProjections, IHistoricData
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 
@@ -73,11 +75,11 @@ class DataWarehouse(ABC):
             }
             orig_historic_data = self.orig_historic_data[c.company_id]
             for scope_name in EScope.get_scopes():
-                intensity_scope = getattr(orig_historic_data['projected_intensities'], scope_name)
+                intensity_scope = getattr(orig_historic_data['projected_intensities'], scope_name, None)
                 if intensity_scope is not None:
                     setattr(orig_historic_data['projected_intensities'], scope_name,
                             (type(intensity_scope)(ei_metric=intensity_scope.ei_metric, projections=intensity_scope.projections.copy())))
-                target_scope = getattr(orig_historic_data['projected_targets'], scope_name)
+                target_scope = getattr(orig_historic_data['projected_targets'], scope_name, None)
                 if target_scope is not None:
                     setattr(orig_historic_data['projected_targets'], scope_name,
                             (type(target_scope)(ei_metric=target_scope.ei_metric, projections=target_scope.projections.copy())))
@@ -150,7 +152,7 @@ class DataWarehouse(ABC):
                 else:
                     logger.error(f"No benchmark region data for {orig_id}: sector = {sector}; region = {region}")
                     continue
-                    
+
                 # Though we mutate below, it's our own unique copy of c.historic_data we are mutating, so OK
                 historic_dict[c.company_id] = c.historic_data
 
@@ -258,7 +260,7 @@ class DataWarehouse(ABC):
                             setattr (data, primary_scope_attr, list( map(data_adder, data[primary_scope_attr], s3_data)))
                         else:
                             setattr (data, primary_scope_attr, data.S3)
-                            
+
                     if c.historic_data.emissions and c.historic_data.emissions.S3:
                         _adjust_historic_data(c.historic_data.emissions, 'S1', IEmissionRealization.add)
                         _adjust_historic_data(c.historic_data.emissions, 'S1S2', IEmissionRealization.add)
@@ -295,11 +297,14 @@ class DataWarehouse(ABC):
                 if c.projected_targets and c.projected_targets.S3:
                     # For production-centric benchmarks, S3 emissions are counted against S1 (and/or the S1 in S1+S2)
                     def _align_and_sum_projected_targets(targets, primary_scope_attr):
+                        if targets[primary_scope_attr] is None:
+                            raise AttributeError
                         primary_projections = targets[primary_scope_attr].projections
                         s3_projections = targets.S3.projections
                         if isinstance(s3_projections, pd.Series):
                             targets[primary_scope_attr].projections = (
-                                targets[primary_scope_attr].projections + s3_projections)
+                                # We should convert S3 data from benchmark-type to disclosed-type earlier in the chain
+                                primary_projections + s3_projections.astype(primary_projections.dtype))
                         else:
                             # Should not be reached as we are using DF_ICompanyEIProjections consistently now
                             # breakpoint()
@@ -311,6 +316,7 @@ class DataWarehouse(ABC):
                                 while primary_projections[0].year > s3_projections[0].year:
                                     s3_projections = s3_projections[1:]
                             targets[primary_scope_attr].projections = list( map(ICompanyEIProjection.add, primary_projections, s3_projections) )
+
                     if c.projected_targets.S1:
                         _align_and_sum_projected_targets (c.projected_targets, 'S1')
                     try:
@@ -319,12 +325,20 @@ class DataWarehouse(ABC):
                     except AttributeError:
                         if c.projected_targets.S2:
                             logger.warning(f"Scope 1+2 target projections should have been created for {c.company_id}; repairing")
-                            c.projected_targets.S1S2 = ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
-                                                                             projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1.projections, c.projected_targets.S2.projections) ))
+                            if isinstance(c.projected_targets.S1.projections, pd.Series) and isinstance(c.projected_targets.S2.projections, pd.Series):
+                                c.projected_targets.S1S2 = DF_ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
+                                                                                 projections = c.projected_targets.S1.projections + c.projected_targets.S2.projections)
+                            else:
+                                c.projected_targets.S1S2 = ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
+                                                                                 projections = list( map(ICompanyEIProjection.add, c.projected_targets.S1.projections, c.projected_targets.S2.projections) ))
                         else:
                             logger.warning(f"Scope 2 target projections missing from company with ID {c.company_id}; treating as zero")
-                            c.projected_targets.S1S2 = ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
-                                                                             projections = c.projected_targets.S1.projections)
+                            if isinstance(c.projected_targets.S1.projections, pd.Series):
+                                c.projected_targets.S1S2 = DF_ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
+                                                                                    projections = c.projected_targets.S1.projections)
+                            else:
+                                c.projected_targets.S1S2 = ICompanyEIProjections(ei_metric = c.projected_targets.S1.ei_metric,
+                                                                                 projections = c.projected_targets.S1.projections)
                         if c.projected_targets.S3:
                             _align_and_sum_projected_targets (c.projected_targets, 'S1S2')
                         else:
@@ -415,7 +429,8 @@ class DataWarehouse(ABC):
                 bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[("Chemicals", region, EScope.S3)]) * s3_chemical_weighting[sector]
                 bm_ei_s3.name = (sector, region, EScope.S3)
             else:
-                raise ValueError(f"Sector {sector} is missing S3 values")
+                # Some benchmarks don't include S3 for all sectors; so nothing to estimate
+                return
         else:
             bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S3)])
         if (sector, region, EScope.S1S2) in self.benchmarks_projected_ei._EI_df.index:
@@ -602,7 +617,7 @@ class DataWarehouse(ABC):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # Until PintArrays have a map function, we can get UnitStrippedWarning when map tries to convert a PintArray to an array of object type.
-            # As per Pint performance recommendations, compute using magnitudes when we have certainty about units        
+            # As per Pint performance recommendations, compute using magnitudes when we have certainty about units
             scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
                                                                                 lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
             projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)

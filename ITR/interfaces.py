@@ -154,6 +154,7 @@ class ScoreAggregation(BaseModel):
 
 class ScoreAggregationScopes(BaseModel):
     S1: Optional[ScoreAggregation]
+    S2: Optional[ScoreAggregation]
     S1S2: Optional[ScoreAggregation]
     S3: Optional[ScoreAggregation]
     S1S2S3: Optional[ScoreAggregation]
@@ -249,6 +250,7 @@ class IProductionBenchmarkScopes(BaseModel):
 
 class IEIBenchmarkScopes(BaseModel):
     S1: Optional[IBenchmarks]
+    S2: Optional[IBenchmarks]
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]

@@ -100,7 +100,15 @@ ng.add_transformation('[carbon] * [time] ** 2 / [length] ** 2', '[carbon] * [mas
 ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2e / (Mscf CH4)'))
 ng.add_transformation('g CH4', 'g CO2e', lambda ureg, x: x * ureg('44 g CO2e / (16 g CH4)'))
 ureg.add_context(ng)
-ureg.enable_contexts('ngas')
+
+COAL_SE = 29307.6 * ureg('MJ/(t Coal)')                  # specific energy (energy per mass); range is 50-55
+coal = Context('coal')
+coal.add_transformation('[mass] Coal', '[energy]', lambda ureg, x: x * COAL_SE)
+coal.add_transformation('[energy]', '[mass] Coal', lambda ureg, x: x / COAL_SE)
+coal.add_transformation('g Coal', 'g CO2e', lambda ureg, x: x * ureg('1.992 g CO2e / (1 g Coal)'))
+ureg.add_context(coal)
+
+ureg.enable_contexts('ngas', 'coal')
 
 def time_dimension(unit, exp):
     return ureg(unit).is_compatible_with("s") # and exp == -1

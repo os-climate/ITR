@@ -203,8 +203,8 @@ class TestTemplateProvider(unittest.TestCase):
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities
         companies = self.data_warehouse.get_preprocessed_company_data(self.company_ids)
-        company_1 = companies[1]
-        company_2 = companies[4]
+        company_1 = companies[2]
+        company_2 = companies[6]
         self.assertEqual(company_1.company_name, "AES Corp.")
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")

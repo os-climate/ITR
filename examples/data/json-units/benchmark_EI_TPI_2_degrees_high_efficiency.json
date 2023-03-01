@@ -148,7 +148,7 @@
       {
         "sector": "Autos",
         "region": "Global",
-        "benchmark_metric": "verage new vehicle emissions (grams of CO2 per kilometre [NEDC]",
+        "benchmark_metric": "g CO2 / pkm",
         "scenario name": "TPI 2 Degrees (High Efficiency)",
         "release date": "2020-12-01",
         "projections_nounits": [

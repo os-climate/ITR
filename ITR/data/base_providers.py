@@ -162,7 +162,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
               .reset_index()
               .drop_duplicates()
               .set_index(['company_id', 'scope']))
-        # We drop the meaningless S1S2 from the production benchmark and replace it with the company's scope.
+        # We drop the meaningless S1S2/AnyScope from the production benchmark and replace it with the company's scope.
         # This is needed to make indexes align when we go to multiply production times intensity for a scope.
         company_benchmark_projections = df.merge(benchmark_projection.droplevel('scope'),
                                                  left_on=['sector', 'region'], right_index=True, how='left')
@@ -187,12 +187,13 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self.column_config = column_config
         self.projection_controls = projection_controls
         benchmarks_as_series = []
-        for scope in EScope.get_result_scopes():
+        for scope_name in EScope.get_scopes():
             try:
-                for bm in EI_benchmarks[scope.name].benchmarks:
-                    benchmarks_as_series.append(self._convert_benchmark_to_series(bm, scope))
+                for bm in EI_benchmarks[scope_name].benchmarks:
+                    benchmarks_as_series.append(self._convert_benchmark_to_series(bm, EScope[scope_name]))
             except AttributeError:
                 pass
+
         with warnings.catch_warnings():
             # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
             warnings.simplefilter("ignore")
@@ -473,6 +474,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     logger.error(f"While calculating target projections for {c.company_id}, raised {err} (possible intensity vs. absolute unit mis-match?)")
                     traceback.print_exc()
                     logger.info("Continuing from _calculate_target_projections...")
+                    c.projected_targets = ICompanyEIProjectionsScopes()
     
     # ??? Why prefer TRAJECTORY over TARGET?
     def _get_company_intensity_at_year(self, year: int, company_ids: List[str]) -> pd.Series:
@@ -565,11 +567,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :return: A pandas DataFrame with projected intensity trajectories per company, indexed by company_id and scope
         """
         company_ids, scopes, projections = list(
-            map(list, zip(*[ (c.company_id, scope, c.projected_intensities[scope.name].projections)
+            map(list, zip(*[ (c.company_id, EScope[scope_name], c.projected_intensities[scope_name].projections)
                              # FIXME: we should make _companies a dict so we can look things up rather than searching every time!
-                             for c in self._companies for scope in EScope.get_result_scopes()
+                             for c in self._companies for scope_name in EScope.get_scopes()
                              if c.company_id in company_ids
-                             if c.projected_intensities[scope.name] ])) )
+                             if c.projected_intensities[scope_name] ])) )
         if projections:
             index=pd.MultiIndex.from_tuples(zip(company_ids, scopes), names=["company_id", "scope"])
             if year is not None:
@@ -603,10 +605,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         # _convert_projections_to_series has the nice side effect that PintArrays produce NaNs with units.
         # So if we just need a year from this dataframe, we compute the whole dataframe and return one column.
         # Feel free to write a better implementation if you have time!
-        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS, scope)
+        target_list = [self._convert_projections_to_series(c, self.column_config.PROJECTED_TARGETS, EScope[scope_name])
                        for c in self.get_company_data(company_ids)
-                       for scope in EScope.get_result_scopes()
-                       if c.projected_targets and c.projected_targets[scope.name]]
+                       for scope_name in EScope.get_scopes()
+                       if c.projected_targets and c.projected_targets[scope_name]]
         if target_list:
             with warnings.catch_warnings():
                 # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
@@ -761,7 +763,7 @@ class EITrajectoryProjector(EIProjector):
     # The purpose of this function is not to infer scope data that might be interesting,
     # but rather to impute the scope data that is actually required, no more, no less.
     def _compute_missing_historic_ei(self, companies: List[ICompanyData], historic_df: pd.DataFrame):
-        scopes = EScope.get_result_scopes()
+        scopes = [EScope[scope_name] for scope_name in EScope.get_scopes()]
         missing_data = []
         for company in companies:
             # Create keys to index historic_df DataFrame for readability

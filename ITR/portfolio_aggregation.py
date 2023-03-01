@@ -117,7 +117,7 @@ class PortfolioAggregation(ABC):
 
         # Total emissions weighted temperature score (TETS)
         elif portfolio_aggregation_method == PortfolioAggregationMethod.TETS:
-            use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1, EScope.S1S2, EScope.S1S2S3])
+            use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1, EScope.S2, EScope.S1S2, EScope.S1S2S3])
             use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
             if use_S3.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE3)
@@ -153,7 +153,7 @@ class PortfolioAggregation(ABC):
             try:
                 self._check_column(data, self.c.COLS.INVESTMENT_VALUE)
                 self._check_column(data, value_column)
-                use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1, EScope.S1S2, EScope.S1S2S3])
+                use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1, EScope.S2, EScope.S1S2, EScope.S1S2S3])
                 use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
                 if use_S1S2.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE12)
