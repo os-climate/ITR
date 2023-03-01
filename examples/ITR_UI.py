@@ -7,19 +7,21 @@ import numpy as np
 import json
 import pickle
 import os
+# from uuid import uuid4
 import base64
 import io
 import warnings
 import ast
 
 import dash
-from dash import html
-from dash import dcc
+from dash import html, dcc
+# from dash import DiskcacheManager
 
 import dash_bootstrap_components as dbc # should be installed separately
 
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
+# import diskcache
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -35,7 +37,7 @@ from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
 # from ITR.configs import LoggingConfig
 
-from ITR.data.osc_units import Q_, asPintSeries
+from ITR.data.osc_units import ureg, Q_, asPintSeries
 from pint import Quantity
 from pint_pandas import PintType
 
@@ -43,6 +45,8 @@ import logging
 
 import sys
 import argparse
+
+# launch_uid = uuid4()
 
 # from pint import pint_eval
 # pint_eval.tokenizer = pint_eval.uncertainty_tokenizer
@@ -56,6 +60,9 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
 logger.info("Start!")
+
+# cache = diskcache.Cache("./cache")
+# background_callback_manager = DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=300)
 
 examples_dir ='' #'examples'
 data_dir="data"
@@ -71,11 +78,42 @@ if len(sys.argv)>1:
 else:
     company_data_path = os.path.join(root, examples_dir, data_dir, "20220927 ITR V2 Sample Data.xlsx")
 
-# Production benchmark (there's only one)
+# Production benchmark (there's only one, and we have to stretch it from OECM to cover TPI)
 benchmark_prod_json_file = "benchmark_production_OECM.json"
 benchmark_prod_json = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_prod_json_file)
 with open(benchmark_prod_json) as json_file:
     parsed_json = json.load(json_file)
+
+oil_prod_bm = [bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Oil'][0]
+oil_base_prod = ureg(oil_prod_bm['base_year_production']).to('MJ')
+oil_prod_series = pd.DataFrame({**{'year': [oil_prod['year'] for oil_prod in oil_prod_bm['projections_nounits']]},
+                                **{'value': [oil_prod['value'] for oil_prod in oil_prod_bm['projections_nounits']]}}).set_index('year').squeeze()
+oil_prod_series = oil_prod_series.add(1).cumprod().mul(oil_base_prod.m)
+
+gas_prod_bm = [bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Gas'][0]
+gas_base_prod = ureg(gas_prod_bm['base_year_production']).to('MJ')
+gas_prod_series = pd.DataFrame({**{'year': [gas_prod['year'] for gas_prod in gas_prod_bm['projections_nounits']]},
+                                **{'value': [gas_prod['value'] for gas_prod in gas_prod_bm['projections_nounits']]}}).set_index('year').squeeze()
+gas_prod_series = gas_prod_series.add(1).cumprod().mul(gas_base_prod.m)
+
+oil_and_gas_prod_series = oil_prod_series.add(gas_prod_series).div(oil_base_prod.m + gas_base_prod.m)
+oil_and_gas_prod_series = oil_and_gas_prod_series.div(oil_and_gas_prod_series.shift(1))
+oil_and_gas_prod_series.iloc[0] = 1.0
+oil_and_gas_prod_series = oil_and_gas_prod_series.sub(1)
+
+oil_and_gas_bm = dict(oil_prod_bm)
+oil_and_gas_bm['sector'] = 'Oil & Gas'
+oil_and_gas_bm['base_year_production'] = f"{oil_base_prod + gas_base_prod:~P}"
+oil_and_gas_bm['projections_nounits'] = [ {'year': year, 'value': value} for year,value in oil_and_gas_prod_series.to_dict().items() ]
+parsed_json['AnyScope']['benchmarks'].append(oil_and_gas_bm)
+
+coal_prod_bm = dict([bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Coal'][0])
+coal_base_prod = ureg(coal_prod_bm['base_year_production']).to('MJ')
+
+# coal_prod_bm['sector'] = 'Diversified Mining'
+# coal_prod_bm['base_year_production'] = f"{coal_base_prod:~P}"
+# parsed_json['AnyScope']['benchmarks'].append(coal_prod_bm)
+
 prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
 base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file))
@@ -87,6 +125,8 @@ benchmark_EI_OECM_file = "benchmark_EI_OECM.json" # Deprecated!
 benchmark_EI_TPI_15_file = "benchmark_EI_TPI_1_5_degrees.json"
 benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
 benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
+benchmark_EI_TPI_2deg_high_efficiency_file = "benchmark_EI_TPI_2_degrees_high_efficiency.json"
+benchmark_EI_TPI_2deg_shift_improve_file = "benchmark_EI_TPI_2_degrees_shift_improve.json"
 
 # loading dummy portfolio
 df_portfolio = pd.read_excel(company_data_path, sheet_name="Portfolio")
@@ -139,7 +179,8 @@ def dequantify_plotly(px_func, df, **kwargs):
 # Define app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], # theme should be written in CAPITAL letters; list of themes https://www.bootstrapcdn.com/bootswatch/
                 meta_tags=[{'name': 'viewport', # this thing makes layout responsible to mobile view
-                            'content': 'width=device-width, initial-scale=1.0'}]
+                            'content': 'width=device-width, initial-scale=1.0'}],
+                # background_callback_manager=background_callback_manager,
                 )
 app.title = "ITR Tool" # this puts text to the browser tab
 server = app.server
@@ -187,8 +228,8 @@ filter_box = dbc.Row( # We are a row of the left-side column box
             align="center",
         ),
         dcc.Dropdown(id="sector-dropdown",
-                     options=[{'label': 'All Sectors', 'value': 'all_values'}],
-                     value='all_values',
+                     options=[{'label': 'All Sectors', 'value': ''}],
+                     value='',
                      clearable=False,
                      placeholder="Select a sector"),
         dbc.Row(
@@ -209,8 +250,8 @@ filter_box = dbc.Row( # We are a row of the left-side column box
             align="center",
         ),
         dcc.Dropdown(id="region-dropdown",
-                     options=[{'label': 'All Regions', 'value': 'all_values'}],
-                     value='all_values',
+                     options=[{'label': 'All Regions', 'value': ''}],
+                     value='',
                      clearable=False,
                      placeholder="Select a region"),
     ],
@@ -237,11 +278,12 @@ benchmark_box = dbc.Row(
         ),
         dcc.Dropdown(id="eibm-dropdown",
                      options=[  # 16.05.2022: make this dynamic
+                         {'label': 'OECM (Deprecated) 1.5 degrees', 'value': 'OECM'},
                          {'label': 'OECM (Prod-Centric) 1.5 degC', 'value': 'OECM_PC'},
                          {'label': 'OECM (Scope 3) 1.5 degC', 'value': 'OECM_S3'},
-                         {'label': 'OECM (Deprecated) 1.5 degrees', 'value': 'OECM'},
-                         {'label': 'TPI 1.5 degrees', 'value': 'TPI_15_degrees'},
-                         {'label': 'TPI 2 degrees', 'value': 'TPI_2_degrees'},
+                         {'label': 'TPI 1.5 degrees (No Autos)', 'value': 'TPI_15_degrees'},
+                         {'label': 'TPI 2 degrees (HE)', 'value': 'TPI_2_degrees_high_efficiency'},
+                         {'label': 'TPI 2 degrees (SI)', 'value': 'TPI_2_degrees_shift_improve'},
                          {'label': 'TPI below 2 degrees', 'value': 'TPI_below_2_degrees'}
                      ],
                      value='OECM_S3',
@@ -298,6 +340,7 @@ benchmark_box = dbc.Row(
             id="scope-options",
             options=[
                 {'label': 'S1', 'value': 'S1'},
+                {'label': 'S2', 'value': 'S2'},
                 {'label': 'S1+S2', 'value': 'S1S2'},
                 {'label': 'S3', 'value': 'S3'},
                 {'label': 'S1S2S3', 'value': 'S1S2S3'},
@@ -358,8 +401,7 @@ benchmark_box = dbc.Row(
             step=5,
             marks={i: str(i) for i in range(2025, 2051, 5)},
         ),
-        html.Div([html.Span("Total benchmark budget through "), html.Span(id="target-bm-year"), html.Span(": "), html.Span(id="bm-budget")]),
-        html.Div([html.Span("ITR of benchmark: "), html.Span(id="tempscore-ty")]),
+        html.Div(id="bm-budgets-target-year")
     ],
 )
 
@@ -384,20 +426,25 @@ itr_titlebar = dbc.Row(  # upload portfolio
             ],
             width=8,
         ),
+        dbc.Col([html.Span(id="loading-template-data", hidden=False, children="loading template data...")]),
         dbc.Col([
-            dbc.Spinner([html.H1(id="dummy-output-info", style={'color': 'white'}),
-                         html.Data(id="spinner-warehouse"),
-                         html.Data(id="spinner-eibm"),
-                         html.Data(id="spinner-ty"),
-                         html.Data(id="spinner-ts"),
-                         html.Data(id="spinner-graphs"),
-                         html.Data(id="spinner-xlsx"),
-                         html.Data(id="spinner-reset"),
-                         ], color="primary",
-                        spinner_style={"width": "3rem", "height": "3rem"}),  # Spinner implementations
-        ],
-                width=1,
-                ),
+            dbc.Spinner(
+                [
+                    html.H1(id="dummy-output-info", style={'color': 'white'}),
+                    html.Data(id="spinner-warehouse"),
+                    html.Data(id="spinner-eibm"),
+                    html.Data(id="spinner-ty"),
+                    html.Data(id="spinner-ty-ts"),
+                    html.Data(id="spinner-ts"),
+                    html.Data(id="spinner-graphs"),
+                    html.Data(id="spinner-xlsx"),
+                    html.Data(id="spinner-reset"),
+                ],
+                color="primary",
+                spinner_style={"width": "3rem", "height": "3rem"},
+                # value="Finished",
+            ),  # Spinner/Progress implementations
+        ], width=1, ),
     ],
     justify='between',  # for this to work you need some space left (in total there 12 columns)
     align='center',
@@ -555,20 +602,25 @@ app.layout = dbc.Container(  # always start with container
             ]
         ),
         itr_portfolio,
-        html.Data(id="sector"),
-        html.Data(id="region"),
-        html.Data(id="scope-column"),
+#        html.Data(id="scope-column"),
+        html.Data(id="scope-options-ty"),
         html.Data(id="scope-options-ts"),
-        html.Data(id="scope-options-reset"),
+#         html.Data(id="scope-options-reset"),
         dcc.Store(id="warehouse"),
         dcc.Store(id="warehouse-eibm"),
         dcc.Store(id="warehouse-ty"),
         dcc.Store(id="portfolio-df"),
-        html.Data(id="sector-region-scope-ty"),
-        html.Data(id="sector-dropdown-ts"),
-        html.Data(id="sector-dropdown-reset"),
-        html.Data(id="region-dropdown-ts"),
-        html.Data(id="region-dropdown-reset"),
+        html.Data(id="sector-region-scope-ty-ts"),
+#        html.Data(id="sector-dropdown-ty"),
+#        html.Data(id="sector-dropdown-reset"),
+#        html.Data(id="region-dropdown-ty"),
+#        html.Data(id="region-dropdown-reset"),
+        html.Data(id="show-oecm-bm"),
+        html.Data(id="bm-budget"),
+        html.Data(id="bm-1e-budget"),
+        html.Data(id="bm-2e-budget"),
+        html.Data(id="tempscore-ty-ts"),
+        html.Data(id="reset-sector-region-scope"),
         # dash_table.DataTable(df.to_dict('records'), [{"name": i, "id": i} for i in df.columns])
     ],
     style={"max-width": "1500px"},
@@ -576,6 +628,7 @@ app.layout = dbc.Container(  # always start with container
 
 @app.callback(
     Output("warehouse", "data"),
+    Output("loading-template-data", "hidden"),
     Output("spinner-warehouse", "value"),
 
     Input("banner-title", "children"),) # Just something to get us going...
@@ -585,13 +638,13 @@ def warehouse_new(banner_title):
     Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
                               estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
     return (json.dumps(pickle.dumps(Warehouse), default=str),
+            True,
             "Spin-warehouse")
 
 @app.callback(
-    Output("warehouse-eibm", "data"),
-    Output("sector-dropdown", "options"),
-    Output("region-dropdown", "options"),
-    Output("scope-options", "value"),
+    Output("warehouse-eibm", "data"),        # Warehouse initialized with benchmark
+    # We cannot set scope_options based on benchmark, because that may depend on sector
+    Output("show-oecm-bm", "value"),
     Output("spinner-eibm", "value"),  # fake for spinner
 
     Input("warehouse", "data"),
@@ -604,7 +657,10 @@ def warehouse_new(banner_title):
 def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz):
     '''
     Reload Emissions Intensity benchmark from a selected file
+    :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
     :param eibm: Emissions Intensity benchmark identifier
+    :param proj_meth: Trajectory projection method (median or mean)
+    :param winz: Winsorization parameters (limit of outlier data)
     '''
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
@@ -620,66 +676,73 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz):
         Warehouse.update_trajectories()
 
     if 'eibm-dropdown' in changed_id or Warehouse.benchmarks_projected_ei is None:
+        show_oecm_bm = 'no'
         if eibm == 'OECM_PC':
             benchmark_file = benchmark_EI_OECM_PC_file
-            scope = 'S1S2'
+            show_oecm_bm = 'yes'
         elif eibm == 'OECM_S3':
             benchmark_file = benchmark_EI_OECM_S3_file
-            scope = 'S1S2S3'
-        elif eibm == 'TPI_2_degrees':
+            show_oecm_bm = 'yes'
+        elif eibm.startswith('TPI_2_degrees'):
             benchmark_file = benchmark_EI_TPI_file
-            scope = None
         elif eibm == 'TPI_15_degrees':
             benchmark_file = benchmark_EI_TPI_15_file
-            scope = None
         elif eibm == 'OECM':
             benchmark_file = benchmark_EI_OECM_file
-            scope = None
             logger.info('OECM benchmark is for backward compatibility only.  Use OECM_PC instead.')
         else:
             benchmark_file = benchmark_EI_TPI_below_2_file
-            scope = None
         # load intensity benchmarks
         benchmark_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_file)
         with open(benchmark_EI) as json_file:
             parsed_json = json.load(json_file)
+        if eibm.startswith('TPI_2_degrees'):
+            if '_high_efficiency' in eibm:
+                extra_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_EI_TPI_2deg_high_efficiency_file)
+            else:
+                extra_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_EI_TPI_2deg_shift_improve_file)                
+            with open(extra_EI) as json_file:
+                extra_json = json.load(json_file)
+                for scope_name in EScope.get_scopes():
+                    if scope_name in extra_json:
+                        if scope_name not in parsed_json:
+                            parsed_json[scope_name] = extra_json[scope_name]
+                        else:
+                            parsed_json[scope_name]['benchmarks'] += extra_json[scope_name]['benchmarks']
         EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
 
-    # Company fundamentals are in template_company_data.df_fundamentals
-    df_fundamentals = Warehouse.company_data.df_fundamentals
-    sectors = sorted(set(df_fundamentals.sector) & set(EI_bm._EI_df.index.get_level_values('sector')))
-    regions = sorted(set(df_fundamentals.region) & set(EI_bm._EI_df.index.get_level_values('region')))
-    # portfolio data is on the "Portfolio" page, and in df_portfolio
-
     return (json.dumps(pickle.dumps(Warehouse), default=str),
-            [{"label": i, "value": i} for i in sectors] + [{'label': 'All Sectors', 'value': 'all_values'}],
-            [{"label": i, "value": i} for i in regions] + [{'label': 'All Regions', 'value': 'all_values'}],
-            scope,
+            show_oecm_bm,
             "Spin-eibm")
 
 @app.callback(
     # In the future, also adjust sector-dropdown options
     Output("warehouse-ty", "data"),
-    Output("sector-region-scope-ty", "value"),
-    Output("bm-budget", "children"),
-    Output("target-bm-year", "children"),
-    Output("tempscore-ty", "children"),
+    Output("sector-dropdown", "options"),
+    Output("sector-dropdown", "value"),
+    Output("region-dropdown", "options"),
+    Output("region-dropdown", "value"),
+    Output("scope-options-ty", "value"),
+    Output("scope-options", "value"),
     Output("spinner-ty", "value"),  # fake for spinner
 
     Input("warehouse-eibm", "data"),
-    Input("sector-dropdown", "value"),
-    Input("region-dropdown", "value"),
-    Input("scope-options", "value"),
     Input("target-year", "value"),
+    Input("reset-sector-region-scope", "children"),
+
+    State("sector-dropdown", "value"),
+    State("region-dropdown", "value"),
+    State("scope-options", "value"),
 
     prevent_initial_call=True,)
-def recalculate_target_year_ts(warehouse_pickle_json, sector, region, scope, target_year):
+def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, reset_sector_region_scope, sector, region, scope, *_):
     '''
     When changing endpoint of benchmark budget calculations, update total budget and benchmark ITR resulting therefrom.
     We assume that 'Global' is the all-world, not rest-of-world, for any benchmark.
     Where possible, honor users' selection of SCOPE, REGION, and SCOPE_LIST, and where necessary, adjust
-    REGION and SCOPE_LIST to accommodate SECTOR selection.
+    REGION and SCOPE_LIST to accommodate SECTOR selection.  But don't "listen" for new user SECTOR/REGION/SCOPE
+    choices.
     '''
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
@@ -691,16 +754,21 @@ def recalculate_target_year_ts(warehouse_pickle_json, sector, region, scope, tar
 
     df_fundamentals = Warehouse.company_data.df_fundamentals
     sectors = sorted(set(df_fundamentals.sector) & set(EI_bm._EI_df.index.get_level_values('sector')))
-    regions = sorted(set(df_fundamentals.region) & set(EI_bm._EI_df.index.get_level_values('region')))
+    regions = sorted(set(df_fundamentals.region) & set(EI_bm._EI_df.index.get_level_values('region')) | {'Global'})
 
     df = EI_bm._EI_df
-    if sector=='all_values' or sector not in sectors:
-        sector = None
+    # Our Warehouse doesn't retain side-effects, so we cannot "set-and-forget"
+    # Instead, we have to re-make the change for the benefit of downstream users...
+    EI_bm.projection_controls.TARGET_YEAR = target_year
+    Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
+
+    if sector not in sectors:
+        sector = ''
         EI_sectors = df[df.index.get_level_values('sector').isin(sectors)]
-        sector_scopes = df[df.index.get_level_values('sector').isin(sectors)][df.columns[0]].groupby(['sector', 'scope']).count()
+        sector_scopes = EI_sectors[df.columns[0]].groupby(['sector', 'scope']).count()
         if not sector_scopes.index.get_level_values('sector').duplicated().any():
             # TPI is a scope-per-sector benchmarks, so looks best when we see all scopes
-            scope = None
+            scope = ''
             EI_scopes = sector_scopes.index.get_level_values('scope').unique()
         else:
             EI_scopes = EI_sectors.index.get_level_values('scope').unique()
@@ -708,123 +776,343 @@ def recalculate_target_year_ts(warehouse_pickle_json, sector, region, scope, tar
         EI_sectors = df.loc[sector]
         EI_scopes = EI_sectors.index.get_level_values('scope').unique()
 
-    # So...our Warehouse doesn't retain side-effects, so we cannot "set-and-forget"
-    # Instead, we have to re-make the change for the benefit of downstream users...
-    EI_bm.projection_controls.TARGET_YEAR = target_year
-    Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
+    if region not in regions:
+        region = ''
 
-    if region=='all_values':
-        # In this case, we want to deal exclusively with Global data, not sum things that will add to more than 1.0
-        region = 'Global'
     if not scope or EScope[scope] not in EI_scopes:
-        scope_list = None
+        scope = ''
+
+    return (
+        json.dumps(pickle.dumps(Warehouse), default=str),
+        [{"label": i, "value": i} for i in sectors] + [{'label': 'All Sectors', 'value': ''}], sector,
+        [{"label": i, "value": i} for i in regions] + [{'label': 'All Regions', 'value': ''}], region,
+        json.dumps([{"label": scope.name, "value": scope.name} for scope in sorted(EI_scopes)] + [{'label': 'All Scopes', 'value': ''}]),
+        scope,
+        "Spin-ty",
+    )
+
+# Some words on the current concept of Scope Math
+# 
+# For a single sector, any and all scope combinations give "valid" footprint descriptions...
+# ...and we can compare against the scope footprints of the sector.
+# 
+# Beyond the sector is the Acvitity (Primary Energy, Secondary Energy, End Use)
+# We can aggregate within an Activity as we do within a Sector, noting that End Use has special S3 rules.
+# ...and if we have the same scope data for each sector and the overall activity,
+# we can compare the activity-aggregated sectors with the bnechmark budget (on a per-scope or all-scope basis).
+#
+# If we look across multiple Acivities, scopes give the rules:
+# The Scope 1 footprint can be computed as the sum of S1 scope emissions across all sectors (company aggregates and benchmark budget)
+# The Scope 2 footprint can be computed as the sum of S2 scope emissions across all sectors (company aggregates and benchmark budget)
+# The S1+S2 footprint can be computed as sum(S1) + abs(sum(S2) - Electric Utilties S1) (company aggregates and benchmark budget)
+# If there are no Electricity Utilities in the sector, then it just aggregates all S1+S2 across all sectors
+# There's no meaningful S3 aggregation in the multi-acvtivity case
+# For S1+S2+S3, we separate Energy from Power from End Use, then...
+# The S1+S2+S3 footprint for Energy is meaningful (if Energy is in the mix)
+# The S1+S2+S3 footprint for Utilities is meaningful (if Utilities are in the mix)
+# The S1+S2+S3 are meaningful for End Use as follows: sum(S1+S2) + S3(cement, buildings, aviation, shipping, roads)
+# The overall S1+S2+S3 budget is also meaningful
+
+def get_co2_per_sector_region_scope(prod_bm, ei_df, sector, region, scope_list) -> pd.Series:
+    '''
+    Given a production benchmark PROD_BM and an emissions intensity benchmark EI_DF, compute series of
+    benchmark emissions for SECTOR, REGION, SCOPE.  SCOPE may be given by SCOPE_LIST
+    or inferred from benchmark scope when SCOPE_LIST is None.
+    '''
+    EI_sectors = ei_df.loc[sector]
+    EI_scopes = EI_sectors.index.get_level_values('scope').unique()
+    # Get some benchmark temperatures for < 2050 using OECM; should be only one so can use list comprehension to search
+    bm_sector_prod_in_region = [ bm.base_year_production
+                                 for bm in prod_bm._productions_benchmarks.AnyScope.benchmarks
+                                 # All benchmarks have a 'Global' region defined, but not all are defined for all regions (or sectors)
+                                 if bm.sector==sector and bm.region==region][0]
+    # There is no meaningful scope in production...
+    base_prod_ser = prod_bm._prod_df.droplevel(['scope']).loc[(sector, region)].mul(bm_sector_prod_in_region)
+    sector_scope = None if scope_list is None else scope_list[0]
+    if sector_scope is None:
+        if EScope.S1S2S3 in EI_scopes:
+            sector_scope = EScope.S1S2S3
+        elif EScope.S1S2 in EI_scopes:
+            sector_scope = EScope.S1S2
+        else:
+            if len(EI_scopes) != 1:
+                raise ValueError(f"Non-unique scope for sector {sector}")
+            sector_scope = EI_scopes[0]
+    elif sector_scope not in EI_scopes:
+        raise ValueError(f"Scope {sector_scope.name} not in benchmark for sector {sector}")
+
+    intensity_df = ei_df.loc[(sector, region, sector_scope)]
+    target_year_cum_co2 = base_prod_ser.mul(intensity_df).cumsum().astype('pint[Gt CO2e]')
+    return target_year_cum_co2
+
+energy_activities = {'Energy', 'Coal', 'Gas', 'Oil', 'Oil & Gas'}
+utility_activities = {'Utilities', 'Electricity Utilities', 'Gas Utilities'}
+end_use_s3_activities = {'Cement', 'Residential Buildings', 'Commercial Buildings', 'Airlines', 'Shipping', 'Autos'}
+
+
+def try_get_co2(prod_bm, ei_df, sectors, region, scope_list):
+    result = []
+    if 'Energy' in sectors:
+        sectors = (sectors - energy_activities) | {'Energy'}
+    elif 'Oil & Gas' in sectors:
+        sectors = (sectors - energy_activities) | {'Oil & Gas'}
+    elif 'Utilities' in sectors:
+        sectors = (sectors - utility_activities) | {'Utilities'}
+    for sector in sectors:
+        try:
+            result.append(get_co2_per_sector_region_scope(prod_bm, ei_df, sector, region, scope_list ))
+        except ValueError:
+            pass
+    if len(result) > 1 and scope_list and scope_list[0] == EScope.S3:
+        if 'Energy' in ei_df.index and sectors - end_use_s3_activities:
+            # We are in OECM...Scope 3 doesn't overlap across end_use_s3_activities
+            # But if there are any sectors outside that (such as 'Gas' + end_use_s3_activities), raise error
+            raise ValueError(f"Scope 3 only meaningful for single-activity footprints (sectors were {sectors})")
+        # Else we are in TPI, which has no S3 overlaps
+    return result
+
+# For OECM, calculate multi-sector footprints in a given activity
+def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list) -> pd.DataFrame:
+    '''
+    Aggregate benchmark emissions across SECTORS.  If SCOPE_LIST is none, we feel our way through them (TPI).
+    Otherwise, caller is responsible for setting SCOPE_LIST to the specific scope requested (and in the TPI case
+    this may limit what sectors can be aggregated).
+    '''
+    energy_sectors = sectors & energy_activities
+    utility_sectors = sectors & utility_activities
+    end_use_sectors = sectors - energy_sectors - utility_sectors
+
+    if (not energy_sectors) + (not utility_sectors) + (not end_use_sectors) == 2:
+        # All sectors are in a single activity, so aggregate by scope.  Caller sets scope!
+        if len(sectors)==1:
+            return get_co2_per_sector_region_scope(prod_bm, ei_df, next(iter(sectors)), region, scope_list)
+
+        if scope_list and (scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]):
+            co2_s1s2_elements = try_get_co2(prod_bm, ei_df, sectors, region, [ EScope.S1S2 ] )
+            if co2_s1s2_elements:
+                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+            else:
+                raise ValueError(f"no benchmark emissions for {sectors} in scope")
+            if sectors & {'Utilities'}:
+                power_co2_s1 = get_co2_per_sector_region_scope(prod_bm, ei_df, 'Utilities', region, [ EScope.S1 ])
+            elif sectors & {'Electricity Utilities'}:
+                power_co2_s1 = get_co2_per_sector_region_scope(prod_bm, ei_df, 'Electricity Utilities', region, [ EScope.S1 ])
+            else:
+                power_co2_s1 = 0.0 * total_co2_s1s2
+            total_co2 = total_co2_s1s2 - power_co2_s1
+            if scope_list[0] == EScope.S1S2S3:
+                total_co2_s3_elements = []
+                if end_use_sectors:
+                    total_co2_s3_elements = try_get_co2(prod_bm, ei_df, end_use_sectors & end_use_s3_activities, region, [ EScope.S3 ] )
+                elif energy_sectors:
+                    total_co2_s3_elements = try_get_co2(prod_bm, ei_df, energy_sectors, region, [ EScope.S3 ] )
+                else:
+                    total_co2_s3_elements = try_get_co2(prod_bm, ei_df, utility_sectors, region, [ EScope.S3 ] )
+                if total_co2_s3_elements:
+                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2 = total_co2 + total_co2_s3
+            return total_co2
+        # At this point, either scope_list is None, meaning fish out TPI metrics, or S1, S2, or S3, all of which aggregate within activity under OECM
+        return pd.concat( try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+    # Multi-activity case, so SCOPE sets the rules for OECM
+    if scope_list:
+        if scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]:
+            co2_s1s2_elements = try_get_co2(prod_bm, ei_df, sectors, region, [ EScope.S1S2 ] )
+            if co2_s1s2_elements:
+                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+            else:
+                raise ValueError(f"No S1S2 data for sectors {sectors}")
+            # Now subtract out the S1 from Power Generation so we don't double-count that
+            if sectors & {'Utilities'}:
+                power_co2_s1 = get_co2_per_sector_region_scope(prod_bm, ei_df, 'Utilities', region, [ EScope.S1])
+            elif sectors & {'Electricity Utilities'}:
+                power_co2_s1 = get_co2_per_sector_region_scope(prod_bm, ei_df, 'Electricity Utilities', region, [ EScope.S1])
+            else:
+                power_co2_s1 = 0.0 * total_co2_s1s2
+            total_co2 = total_co2_s1s2 - power_co2_s1
+            if EScope.S1S2S3 in scope_list:
+                total_co2_s3_elements = try_get_co2(prod_bm, ei_df, sectors & end_use_s3_activities, region, [ EScope.S3] )
+                if total_co2_s3_elements:
+                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2 = total_co2 + total_co2_s3
+            return total_co2
+    # Must be S1 or S2 by itself (or scope_list is None, meaning whatever scope can be found).  try_get_co2 will deal with S3 case.
+    total_co2 = pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+    return total_co2
+
+@app.callback(
+    Output("scope-options-ts", "value"),
+    Output("sector-region-scope-ty-ts", "children"),
+    Output("bm-budget", "children"),
+    Output("bm-1e-budget", "children"),
+    Output("bm-2e-budget", "children"),
+    Output("tempscore-ty-ts", "children"),
+    Output("spinner-ty-ts", "value"),  # fake for spinner
+
+    Input("warehouse-ty", "data"),
+    Input("sector-dropdown", "options"),
+    Input("sector-dropdown", "value"),
+    Input("region-dropdown", "value"),
+    Input("scope-options", "value"),
+
+    prevent_initial_call=True,)
+def recalculate_target_year_ts(warehouse_pickle_json, sectors_dict_list, sector, region, scope):
+    '''
+    Recalculate budget amounts and aligned temperature score for Warehouse after setting target year.
+    These calculations are for display purposes.  Downstream processes make their own decisions with respect to upstream Warehouse.
+    '''
+
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
+    Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
+
+    # All benchmarks use OECM production
+    prod_bm = Warehouse.benchmark_projected_production
+    EI_bm = Warehouse.benchmarks_projected_ei
+    bm_energy_calcs = False
+    df_fundamentals = Warehouse.company_data.df_fundamentals
+    zero_co2 = Q_(0.0, 'Gt CO2e')
+
+    df_ei = EI_bm._EI_df
+    if not scope:
+        if 'Energy' in df_ei.index:
+            if EI_bm._EI_benchmarks['S1S2'].production_centric:
+                scope_list = [ EScope.S1S2 ]
+            else:
+                scope_list = [ EScope.S1S2S3 ]
+        else:
+            scope_list = None
     else:
         scope_list = [ EScope[scope] ]
-    if sector:
-        # Get some benchmark temperatures for < 2050 using OECM
-        bm_base_prod_in_region = [ bm.base_year_production
-                                   for bm in prod_bm._productions_benchmarks.AnyScope.benchmarks
-                                   if bm.sector==sector and bm.region==region ][0]
-        # There is no meaningful scope in production...
-        base_prod_ser = prod_bm._prod_df.droplevel(['scope']).loc[(sector, region)].mul(bm_base_prod_in_region)
-        sector_scope = None if scope_list is None else scope_list[0]
-        if sector_scope is None:
-            if EScope.S1S2S3 in EI_scopes:
-                sector_scope = EScope.S1S2S3
-            else:
-                if len(EI_scopes) != 1:
-                    raise ValueError(f"Non-unique scope for sector {sector}")
-                sector_scope = EI_scopes[0]
-        elif sector_scope not in EI_scopes:
-            raise ValueError(f"Scope {sector_scope} not in benchmark for sector {sector}")
-
-        # FIXME: Methinks we need to reinterpret the OECM production benchmarks for TPI
-        intensity_df = EI_bm._EI_df.loc[(sector, region, sector_scope)]
-        target_year_cum_co2 = base_prod_ser.mul(intensity_df).cumsum().astype('pint[Gt CO2e]')
-    elif 'Energy' in EI_bm._EI_df.index.get_level_values('sector'):
-        # Get some benchmark temperatures for < 2050 using OECM
-        bm_base_prod_in_region = [ bm.base_year_production
-                                   for bm in prod_bm._productions_benchmarks.AnyScope.benchmarks
-                                   if bm.sector=='Energy' and bm.region==region][0]
-        # In the OECM benchmark, Energy Scope 1, Scope 2, and Scope 3 actually account for all global emissions
-        base_prod_ser = prod_bm._prod_df.loc[('Energy', region, EScope.AnyScope)].mul(bm_base_prod_in_region)
-        target_year_cum_co2 = (base_prod_ser
-                               .mul(EI_bm._EI_df.loc[('Energy', region, scope_list[0] if scope_list else EScope.S1S2S3)])
-                               .cumsum()
-                               .astype('pint[Gt CO2e]'))
-    else:
-        # We have to manually sum all the benchmark data...and it only works for 'Global' right now (and need to reflect such is selection options)
+    if not region:
         region = 'Global'
-        scope_list = None
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            bm_base_prod_by_sector = pd.Series({bm.sector: bm.base_year_production
-                                                for bm in prod_bm._productions_benchmarks.AnyScope.benchmarks
-                                                if bm.region==region})
-            bm_base_prod_by_sector.index.name = 'sector'
-        # base_prod_df = prod_bm._prod_df.loc[(slice(None), region, EScope.AnyScope)].apply(lambda col: col.mul(bm_base_prod_by_sector))
-        base_prod_df = prod_bm._prod_df.loc[(slice(None), region, EScope.AnyScope)].apply(lambda col: col.combine(bm_base_prod_by_sector,
-                                                                                                                  lambda x, y: ITR.data.osc_units.ureg(f"{x} * {y}")))
-        # TPI has Shipping vs. OECM's Trucking
-        # TPI has Diversified Mining and Airlines (not yet imported from OECM)
-        # TPI has Oil & Gas vs. OECM's separate Oil and Gas sectors
-        common_sectors = base_prod_df.index.intersection(EI_bm._EI_df.loc[(slice(None), region, slice(None))].index.get_level_values('sector'))
-        target_year_cum_co2 = (base_prod_df.loc[common_sectors]
-                               .mul(EI_bm._EI_df.loc[(common_sectors, region, slice(None))])
-                               .groupby(['region']).sum()
-                               .squeeze()
-                               .cumsum()
-                               .astype('pint[Gt CO2e]'))
+
+    target_year_1e_cum_co2 = None
+    target_year_2e_cum_co2 = None
+    if sector:
+        sectors = { sector }
+        target_year_cum_co2 = get_co2_per_sector_region_scope(prod_bm, df_ei, sector, region, scope_list)
+    else:
+        sectors = { x['value'] for x in sectors_dict_list if x['value'] }
+        if 'Energy' in df_ei.index:
+            # We are in OECM
+            if scope_list[0] in [ EScope.S1, EScope.S2 , EScope.S3 ]:
+                # For Scope 1 and Scope 2, we can just aggregate companies across all sectors (and error if S3)
+                target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, sectors, region, scope_list)
+            else:
+                # Single or Multiple activities...
+                
+                # Separate out Energy (1e), Utilities (2e), and End Use
+                energy_sectors = sectors & energy_activities
+                utility_sectors = sectors & utility_activities
+                end_use_sectors = sectors - energy_sectors - utility_sectors
+
+                if energy_sectors:
+                    target_year_1e_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, energy_sectors, region, scope_list)
+                if utility_sectors:
+                    target_year_2e_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, utility_sectors, region, scope_list)
+                if end_use_sectors:
+                    target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, end_use_sectors, region, scope_list)
+                else:
+                    if target_year_1e_cum_co2 is not None:
+                        if target_year_2e_cum_co2:
+                            target_year_cum_co2 = target_year_2e_cum_co2
+                            target_year_2e_cum_co2 = None
+                        else:
+                            target_year_cum_co2 = target_year_1e_cum_co2
+                            target_year_1e_cum_co2 = None
+                    elif target_year_2e_cum_co2 is not None:
+                        target_year_cum_co2 = target_year_2e_cum_co2
+                        target_year_2e_cum_co2 = None
+        else:
+            # We are in TPI
+            target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, sectors, region, scope_list)
+
+        assert EI_bm.projection_controls.TARGET_YEAR in target_year_cum_co2.index
 
     total_target_co2 = target_year_cum_co2.loc[EI_bm.projection_controls.TARGET_YEAR]
-    total_final_co2 = target_year_cum_co2.loc[EI_bm._EI_df.columns[-1]]
+    total_final_co2 = target_year_cum_co2.loc[df_ei.columns[-1]]
+    if target_year_1e_cum_co2 is not None:
+        target_year_1e = target_year_1e_cum_co2.loc[EI_bm.projection_controls.TARGET_YEAR]
+    if target_year_2e_cum_co2 is not None:
+        target_year_2e = target_year_2e_cum_co2.loc[EI_bm.projection_controls.TARGET_YEAR]
     ts_cc = ITR.configs.TemperatureScoreConfig.CONTROLS_CONFIG
     # FIXME: Note that we cannot use ts_cc.scenario_target_temperature because that doesn't track the benchmark value
     # And we cannot make it track the benchmark value because then it becomes another global variable that would break Dash.
     target_year_ts = EI_bm._benchmark_temperature + (total_target_co2 - total_final_co2) * ts_cc.tcre_multiplier
+    EI_scopes = set()
+    for sector in sectors:
+        EI_scopes = EI_scopes | set(df_ei.loc[sector].index.get_level_values('scope'))
     return (
-        json.dumps(pickle.dumps(Warehouse), default=str),
+        json.dumps([{"label": scope.name, "value": scope.name} for scope in sorted(EI_scopes)] + [{'label': 'All Scopes', 'value': ''}]),
         json.dumps([sector, region, scope]),
         f"{round(total_target_co2.m, 3)} Gt CO2e",
+        f"{round(target_year_1e.m, 3)} Gt CO2e" if target_year_1e_cum_co2 is not None else "", # bm-1e-budget
+        f"{round(target_year_2e.m, 3)} Gt CO2e" if target_year_2e_cum_co2 is not None else "", # bm-2e-budget
         f"{round(target_year_ts.m, 3)}˚C",
-        EI_bm.projection_controls.TARGET_YEAR,
+        # EI_bm.projection_controls.TARGET_YEAR,
         "Spin-ty",
     )
 
 @app.callback(
+    Output("scope-options", "options"),
+
+    Input("scope-options-ty", "value"),
+    Input("scope-options-ts", "value"),
+
+    prevent_initial_call=True,)
+def update_scope_options(scope_options_ty, scope_options_ts):
+    new_scope_options = None
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
+    if "scope-options-ts" in changed_id:
+        new_scope_options = scope_options_ts
+    else:
+        new_scope_options = scope_options_ty
+    return json.loads(new_scope_options)
+
+@app.callback(
+    Output("bm-budgets-target-year", "children"),
+
+    Input("show-oecm-bm", "value"),
+    Input("target-year", "value"),
+    Input("bm-budget", "children"),
+    Input("bm-1e-budget", "children"),
+    Input("bm-2e-budget", "children"),
+    Input("tempscore-ty-ts", "children"),
+
+    prevent_initial_call=True,)
+def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budget, bm_2e_budget, tempscore_ty):
+    if show_oecm=="yes":
+        children = [ html.Div([html.Span(f"Benchmark totals through {target_year}")]), ]
+        if not bm_1e_budget.startswith('0.0 '):
+            children.append(html.Div([html.Span(f"Primary energy budget: {bm_1e_budget}")]))
+        if not bm_2e_budget.startswith('0.0 '):
+            children.append(html.Div([html.Span(f"Secondary energy budget: {bm_2e_budget}")]))
+        if not bm_end_use_budget.startswith('0.0 '):
+            children.append(html.Div([html.Span(f"End-use budget: {bm_end_use_budget}")]))
+    else:
+        children = [html.Div([html.Span(f"Benchmark budget through {target_year}: {bm_end_use_budget}")])]
+    return children + [html.Div([html.Span(f"ITR of benchmark: {tempscore_ty}")])]
+
+@app.callback(
     Output("portfolio-df", "data"),
-    Output("scope-column", "value"),
     Output("spinner-ts", "value"),  # fake for spinner
 
     Input("warehouse-ty", "data"),
-    Input("sector-region-scope-ty", "value"),
-    Input("target-bm-year", "children"),
-    Input("tempscore-ty", "children"),
 
     prevent_initial_call=True,)
-def calc_temperature_score(warehouse_pickle_json, sector_region_scope, *_):
+def calc_temperature_score(warehouse_pickle_json, *_):
     global companies
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
     EI_bm = Warehouse.benchmarks_projected_ei
-    sector, region, scope = json.loads(sector_region_scope)
-    if not scope:
-        scope_list = None
-    else:
-        scope_list = [ EScope[scope] ]
     temperature_score = TemperatureScore(
         time_frames = [ETimeFrames.LONG],
-        scopes=scope_list, # None means "use the appropriate scopes for the benchmark
+        scopes=None, # None means "use the appropriate scopes for the benchmark
         # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
         aggregation_method=PortfolioAggregationMethod.WATS
     )
     df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
-    # Filter out whatever is not in the benchmark
-    bm_filter = EI_bm._EI_df.reset_index()[['sector', 'scope']].drop_duplicates() # Don't need rows from each region
-    df = df.merge(bm_filter, on=['sector', 'scope'], how='inner')
-
     return (df.drop(columns=['historic_data', 'target_data']).to_json(orient='split', default_handler=str),
-            'ghg_' + (EI_bm.scope_to_calc if hasattr(EI_bm, 'scope_to_calc') else EScope.S1S2).name.lower(),
             "Spin-ts",)
 
 @app.callback(
@@ -843,17 +1131,15 @@ def calc_temperature_score(warehouse_pickle_json, sector_region_scope, *_):
 
     Input("portfolio-df", "data"),
     Input("temp-score-range", "value"),
-    State("sector-dropdown", "value"),
-    State("region-dropdown", "value"),
-    State("scope-options", "value"),
-    State("scope-column", "value"),
+    Input("sector-dropdown", "value"),
+    Input("region-dropdown", "value"),
+    Input("scope-options", "value"),
 
     prevent_initial_call=True,)
 def update_graph(
         portfolio_json,
         te_sc,
         sec, reg, scope,
-        scope_column,          # ghg_s1s2 or ghg_s3
 ):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     amended_portfolio = pd.read_json(portfolio_json, orient='split')
@@ -875,16 +1161,21 @@ def update_graph(
     temp_score_mask = (amended_portfolio.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio.temperature_score <= Q_(te_sc[1], 'delta_degC'))
     # Dropdown filters
-    if sec == 'all_values':
+    if not sec:
         sec_mask = (amended_portfolio.sector != 'dummy')  # select all
     else:
         sec_mask = amended_portfolio.sector == sec
-    if reg == 'all_values':
+    if not reg:
         reg_mask = (amended_portfolio.region != 'dummy')  # select all
     else:
         reg_mask = (amended_portfolio.region == reg)
-    filt_df = amended_portfolio.loc[temp_score_mask & sec_mask & reg_mask]  # filtering
+    if not scope:
+        scope_mask = (amended_portfolio.scope != 'dummy')
+    else:
+        scope_mask = (amended_portfolio.scope == EScope[scope])
+    filt_df = amended_portfolio.loc[temp_score_mask & sec_mask & reg_mask & scope_mask]  # filtering
     if len(filt_df) == 0:  # if after filtering the dataframe is empty
+        # breakpoint()
         raise PreventUpdate
 
     if not scope:
@@ -910,7 +1201,7 @@ def update_graph(
                        hover_data=["company_name", "investment_value", "temperature_score"],
                        title="Overview of portfolio",
                        log_x=True, log_y=True)
-    if sec and sec != 'all_values':
+    if sec:
         fig1_kwargs['text'] = 'company_name'
     fig1 = dequantify_plotly(px.scatter, filt_df, **fig1_kwargs)
     min_xy = min(ITR.nominal_values(filt_df.cumulative_budget.pint.m).min(), ITR.nominal_values(filt_df.cumulative_usage.pint.m).min())/2.0
@@ -922,11 +1213,12 @@ def update_graph(
     fig1.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5))
 
     # Covered companies analysis; if we pre-filter portfolio-df, then we'll never have "uncovered" companies here
-    coverage = filt_df.reset_index('company_id')[['company_id', scope_column, 'cumulative_target']].copy()
-    coverage['coverage_category'] = np.where(coverage[scope_column].isnull(),
+    coverage = filt_df.reset_index('company_id')[['company_id', 'scope', 'ghg_s1s2', 'ghg_s3', 'cumulative_target']]
+    coverage['ghg'] = coverage.apply(lambda x: x.ghg_s1s2+x.ghg_s3 if x.scope==EScope.S1S2S3 else x.ghg_s3 if x.scope==EScope.S3 else x.ghg_s1s2, axis=1).astype('pint[t CO2e]')
+    coverage['coverage_category'] = np.where(coverage['ghg'].isnull(),
                                              np.where(ITR.isnan(coverage['cumulative_target'].pint.m), "Not Covered",
                                                       "Covered only<Br>by target"),
-                                             np.where(~ITR.isnan(coverage[scope_column].pint.m) & ITR.isnan(
+                                             np.where(~ITR.isnan(coverage['ghg'].pint.m) & ITR.isnan(
                                                          coverage['cumulative_target'].pint.m),
                                                       "Covered only<Br>by emissions",
                                                       "Covered by<Br>emissions and targets"))
@@ -1075,6 +1367,8 @@ def update_graph(
         scores = aggregated_scores.long.S1S2S3.all.score.m
     elif aggregated_scores.long.S3:
         scores = aggregated_scores.long.S3.all.score.m
+    elif aggregated_scores.long.S2:
+        scores = aggregated_scores.long.S2.all.score.m
     else:
         raise ValueError("No aggregated scores")
     if ITR.HAS_UNCERTAINTIES and isinstance(scores, ITR.UFloat):
@@ -1103,8 +1397,9 @@ def update_graph(
     Output("spinner-xlsx", "value"),
 
     Input("export-to-excel", "n_clicks"),
-    Input("portfolio-df", "data"),
-    Input("temp-score-range", "value"),
+
+    State("portfolio-df", "data"),
+    State("temp-score-range", "value"),
     State("sector-dropdown", "value"),
     State("region-dropdown", "value"),
     State("scope-options", "value"),
@@ -1133,11 +1428,11 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sec, reg, scope):
     temp_score_mask = (amended_portfolio.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio.temperature_score <= Q_(te_sc[1], 'delta_degC'))
     # Dropdown filters
-    if sec == 'all_values':
+    if sec is None:
         sec_mask = (amended_portfolio.sector != 'dummy')  # select all
     else:
         sec_mask = amended_portfolio.sector == sec
-    if reg == 'all_values':
+    if reg is None:
         reg_mask = (amended_portfolio.region != 'dummy')  # select all
     else:
         reg_mask = (amended_portfolio.region == reg)
@@ -1152,20 +1447,13 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sec, reg, scope):
     Output("projection-method", "value"),
     Output("scenarios-cutting", "value"),
     Output("target-year", "value"),
+    Output("reset-sector-region-scope", "children"),
     Output("spinner-reset", "value"),
 
     Input("reset-filters-button", "n_clicks"),
-    State("portfolio-df", "data"),
 
     prevent_initial_call=True,)
-def reset_filters(n_clicks_reset, portfolio_json):
-    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0] # to catch which widgets were pressed
-    if n_clicks_reset is None:
-        raise PreventUpdate
-
-    amended_portfolio = pd.read_json(portfolio_json, orient='split')[['sector', 'region']]
-    # Don't really need to do this...but why is it lost in translation?
-    amended_portfolio.index.name = 'company_id'
+def reset_filters(n_clicks_reset):
 
     if (ProjectionControls.TREND_CALC_METHOD != ITR_median
         or ProjectionControls.LOWER_PERCENTILE != 0.1
@@ -1183,20 +1471,22 @@ def reset_filters(n_clicks_reset, portfolio_json):
         'median',
         [ProjectionControls.LOWER_PERCENTILE*100,ProjectionControls.UPPER_PERCENTILE*100],
         2050,
+        "Reset Sector, Region, Scope",
         "Spin-reset",
     )
 
 @app.callback(
-    Output('dummy-output-info', 'children'),  # fake for spinner
+    Output("dummy-output-info", "children"),  # fake for spinner
 
-    Input('spinner-eibm', 'value'),
-    Input('spinner-ts', 'value'),
-    Input('spinner-ty', 'value'),
-    Input('spinner-graphs', 'value'),
-    Input('spinner-xlsx', 'value'),
-    Input('spinner-reset', 'value'),)
+    Input("spinner-eibm", "value"),
+    Input("spinner-ts", "value"),
+    Input("spinner-ty", "value"),
+    Input("spinner-ty-ts", "value"),
+    Input("spinner-graphs", "value"),
+    Input("spinner-xlsx", "value"),
+    Input("spinner-reset", "value"),)
 def spinner_concentrator(*_):
     return 'Spin!'
 
 if __name__ == "__main__":
-    app.run_server(use_reloader=False, debug=False)
+    app.run_server(use_reloader=False, debug=True)
