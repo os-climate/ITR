@@ -7,7 +7,7 @@ import numpy as np
 import json
 import pickle
 import os
-# from uuid import uuid4
+from uuid import uuid4
 import base64
 import io
 import warnings
@@ -15,13 +15,13 @@ import ast
 
 import dash
 from dash import html, dcc
-# from dash import DiskcacheManager
+from dash import DiskcacheManager
 
 import dash_bootstrap_components as dbc # should be installed separately
 
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
-# import diskcache
+import diskcache
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -46,10 +46,7 @@ import logging
 import sys
 import argparse
 
-# launch_uid = uuid4()
-
-# from pint import pint_eval
-# pint_eval.tokenizer = pint_eval.uncertainty_tokenizer
+launch_uid = uuid4()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -61,8 +58,8 @@ logger.addHandler(stream_handler)
 
 logger.info("Start!")
 
-# cache = diskcache.Cache("./cache")
-# background_callback_manager = DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=300)
+cache = diskcache.Cache("./.webassets-cache")
+background_callback_manager = DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=600)
 
 examples_dir ='' #'examples'
 data_dir="data"
@@ -107,8 +104,8 @@ oil_and_gas_bm['base_year_production'] = f"{oil_base_prod + gas_base_prod:~P}"
 oil_and_gas_bm['projections_nounits'] = [ {'year': year, 'value': value} for year,value in oil_and_gas_prod_series.to_dict().items() ]
 parsed_json['AnyScope']['benchmarks'].append(oil_and_gas_bm)
 
-coal_prod_bm = dict([bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Coal'][0])
-coal_base_prod = ureg(coal_prod_bm['base_year_production']).to('MJ')
+# coal_prod_bm = dict([bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Coal'][0])
+# coal_base_prod = ureg(coal_prod_bm['base_year_production']).to('MJ')
 
 # coal_prod_bm['sector'] = 'Diversified Mining'
 # coal_prod_bm['base_year_production'] = f"{coal_base_prod:~P}"
@@ -180,7 +177,7 @@ def dequantify_plotly(px_func, df, **kwargs):
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], # theme should be written in CAPITAL letters; list of themes https://www.bootstrapcdn.com/bootswatch/
                 meta_tags=[{'name': 'viewport', # this thing makes layout responsible to mobile view
                             'content': 'width=device-width, initial-scale=1.0'}],
-                # background_callback_manager=background_callback_manager,
+                background_callback_manager=background_callback_manager,
                 )
 app.title = "ITR Tool" # this puts text to the browser tab
 server = app.server
@@ -641,16 +638,18 @@ def warehouse_new(banner_title):
             True,
             "Spin-warehouse")
 
-@app.callback(
-    Output("warehouse-eibm", "data"),        # Warehouse initialized with benchmark
-    # We cannot set scope_options based on benchmark, because that may depend on sector
-    Output("show-oecm-bm", "value"),
-    Output("spinner-eibm", "value"),  # fake for spinner
+@dash.callback(
+    output=(Output("warehouse-eibm", "data"),        # Warehouse initialized with benchmark
+            # We cannot set scope_options based on benchmark, because that may depend on sector
+            Output("show-oecm-bm", "value"),
+            Output("spinner-eibm", "value"),),  # fake for spinner
 
-    Input("warehouse", "data"),
-    Input("eibm-dropdown", "value"),
-    Input("projection-method", "value"),
-    Input("scenarios-cutting", "value"),  # winzorization slide
+    inputs=(Input("warehouse", "data"),
+            Input("eibm-dropdown", "value"),
+            Input("projection-method", "value"),
+            Input("scenarios-cutting", "value"),),  # winzorization slide
+
+    background=True,
 
     prevent_initial_call=True,)
 # load default intensity benchmarks
@@ -716,24 +715,26 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz):
             show_oecm_bm,
             "Spin-eibm")
 
-@app.callback(
+@dash.callback(
     # In the future, also adjust sector-dropdown options
-    Output("warehouse-ty", "data"),
-    Output("sector-dropdown", "options"),
-    Output("sector-dropdown", "value"),
-    Output("region-dropdown", "options"),
-    Output("region-dropdown", "value"),
-    Output("scope-options-ty", "value"),
-    Output("scope-options", "value"),
-    Output("spinner-ty", "value"),  # fake for spinner
+    output = (Output("warehouse-ty", "data"),
+              Output("sector-dropdown", "options"),
+              Output("sector-dropdown", "value"),
+              Output("region-dropdown", "options"),
+              Output("region-dropdown", "value"),
+              Output("scope-options-ty", "value"),
+              Output("scope-options", "value"),
+              Output("spinner-ty", "value"),),  # fake for spinner
 
-    Input("warehouse-eibm", "data"),
-    Input("target-year", "value"),
-    Input("reset-sector-region-scope", "children"),
+    inputs = (Input("warehouse-eibm", "data"),
+              Input("target-year", "value"),
+              Input("reset-sector-region-scope", "children"),
 
-    State("sector-dropdown", "value"),
-    State("region-dropdown", "value"),
-    State("scope-options", "value"),
+              State("sector-dropdown", "value"),
+              State("region-dropdown", "value"),
+              State("scope-options", "value"),),
+
+    background=True,
 
     prevent_initial_call=True,)
 def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, reset_sector_region_scope, sector, region, scope, *_):
@@ -940,20 +941,22 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
     total_co2 = pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
     return total_co2
 
-@app.callback(
-    Output("scope-options-ts", "value"),
-    Output("sector-region-scope-ty-ts", "children"),
-    Output("bm-budget", "children"),
-    Output("bm-1e-budget", "children"),
-    Output("bm-2e-budget", "children"),
-    Output("tempscore-ty-ts", "children"),
-    Output("spinner-ty-ts", "value"),  # fake for spinner
+@dash.callback(
+    output = (Output("scope-options-ts", "value"),
+              Output("sector-region-scope-ty-ts", "children"),
+              Output("bm-budget", "children"),
+              Output("bm-1e-budget", "children"),
+              Output("bm-2e-budget", "children"),
+              Output("tempscore-ty-ts", "children"),
+              Output("spinner-ty-ts", "value"),),  # fake for spinner
 
-    Input("warehouse-ty", "data"),
-    Input("sector-dropdown", "options"),
-    Input("sector-dropdown", "value"),
-    Input("region-dropdown", "value"),
-    Input("scope-options", "value"),
+    inputs = (Input("warehouse-ty", "data"),
+              Input("sector-dropdown", "options"),
+              Input("sector-dropdown", "value"),
+              Input("region-dropdown", "value"),
+              Input("scope-options", "value"),),
+
+    background=True,
 
     prevent_initial_call=True,)
 def recalculate_target_year_ts(warehouse_pickle_json, sectors_dict_list, sector, region, scope):
@@ -1093,11 +1096,13 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
         children = [html.Div([html.Span(f"Benchmark budget through {target_year}: {bm_end_use_budget}")])]
     return children + [html.Div([html.Span(f"ITR of benchmark: {tempscore_ty}")])]
 
-@app.callback(
-    Output("portfolio-df", "data"),
-    Output("spinner-ts", "value"),  # fake for spinner
+@dash.callback(
+    output = (Output("portfolio-df", "data"),
+              Output("spinner-ts", "value"),),  # fake for spinner
 
-    Input("warehouse-ty", "data"),
+    inputs = (Input("warehouse-ty", "data"),),
+
+    background=True,
 
     prevent_initial_call=True,)
 def calc_temperature_score(warehouse_pickle_json, *_):
