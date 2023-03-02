@@ -631,7 +631,7 @@ app.layout = dbc.Container(  # always start with container
     Input("banner-title", "children"),) # Just something to get us going...
 def warehouse_new(banner_title):
     # load company data
-    template_company_data = TemplateProviderCompany(company_data_path)
+    template_company_data = TemplateProviderCompany(company_data_path, projection_controls = ProjectionControls())
     Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
                               estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
     return (json.dumps(pickle.dumps(Warehouse), default=str),
@@ -647,13 +647,15 @@ def warehouse_new(banner_title):
     inputs=(Input("warehouse", "data"),
             Input("eibm-dropdown", "value"),
             Input("projection-method", "value"),
-            Input("scenarios-cutting", "value"),),  # winzorization slide
+            Input("scenarios-cutting", "value"), # winzorization slider
+
+            State("target-year", "value"),),
 
     background=True,
 
     prevent_initial_call=True,)
 # load default intensity benchmarks
-def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz):
+def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, target_year):
     '''
     Reload Emissions Intensity benchmark from a selected file
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
@@ -708,8 +710,12 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz):
                             parsed_json[scope_name] = extra_json[scope_name]
                         else:
                             parsed_json[scope_name]['benchmarks'] += extra_json[scope_name]['benchmarks']
+        # Initialize with the default ProjectionControls...
         EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
+        # ...then trim TARGET_YEAR to fit whatever has been set.
+        EI_bm.projection_controls.TARGET_YEAR = target_year
+        Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
 
     return (json.dumps(pickle.dumps(Warehouse), default=str),
             show_oecm_bm,
