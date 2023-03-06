@@ -774,7 +774,9 @@ app.layout = dbc.Container(  # always start with container
     Output("loading-template-data", "hidden"),
     Output("spinner-warehouse", "value"),
 
-    Input("banner-title", "children"),) # Just something to get us going...
+    Input("banner-title", "children"), # Just something to get us going...
+
+    prevent_initial_call=False,)
 def warehouse_new(banner_title):
     # load company data
     template_company_data = TemplateProviderCompany(company_data_path, projection_controls = ProjectionControls())
@@ -793,10 +795,10 @@ def warehouse_new(banner_title):
     inputs=(Input("warehouse", "data"),
             Input("eibm-dropdown", "value"),
             Input("projection-method", "value"),
-            Input("scenarios-cutting", "value"),
-            State("benchmark-region", "children"),), # winzorization slider
+            Input("scenarios-cutting", "value"), # winzorization slider
+            State("benchmark-region", "children"),),
     background=True,
-    prevent_initial_call=True,)
+    prevent_initial_call=False,)
 # load default intensity benchmarks
 def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
     '''
@@ -892,22 +894,24 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
     # All benchmarks use OECM production
     prod_bm = Warehouse.benchmark_projected_production
     EI_bm = Warehouse.benchmarks_projected_ei
+    df_ei = EI_bm._EI_df
 
     df_fundamentals = Warehouse.company_data.df_fundamentals
     df_fundamentals = df_fundamentals[df_fundamentals.index.isin(df_portfolio.company_id)]
-    sectors = set(df_fundamentals.sector) & set(EI_bm._EI_df.index.get_level_values('sector'))
-    regions = set(df_fundamentals.region) & set(EI_bm._EI_df.index.get_level_values('region')) | {'Global'}
+    # pf_bm_* is the overlap of our portfolio and our benchmark
+    pf_bm_sectors = set(df_fundamentals.sector) & set(df_ei.index.get_level_values('sector'))
+    # pf_regions contains company-specific regions, like Asia, Great Britain, etc.
+    # pf_regions = set(df_fundamentals.region)
 
-    df = EI_bm._EI_df
     # Our Warehouse doesn't retain side-effects, so we cannot "set-and-forget"
     # Instead, we have to re-make the change for the benefit of downstream users...
     EI_bm.projection_controls.TARGET_YEAR = target_year
     Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
 
-    if sector not in sectors:
+    if sector not in pf_bm_sectors:
         sector = ''
-        EI_sectors = df[df.index.get_level_values('sector').isin(sectors)]
-        sector_scopes = EI_sectors[df.columns[0]].groupby(['sector', 'scope']).count()
+        EI_sectors = df_ei[df_ei.index.get_level_values('sector').isin(pf_bm_sectors)]
+        sector_scopes = EI_sectors[df_ei.columns[0]].groupby(['sector', 'scope']).count()
         if not sector_scopes.index.get_level_values('sector').duplicated().any():
             # TPI is a scope-per-sector benchmarks, so looks best when we see all scopes
             scope = ''
@@ -915,10 +919,20 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
         else:
             EI_scopes = EI_sectors.index.get_level_values('scope').unique()
     else:
-        EI_sectors = df.loc[sector]
+        EI_sectors = df_ei.loc[sector]
         EI_scopes = EI_sectors.index.get_level_values('scope').unique()
 
-    if region not in regions:
+    if sector:
+        # Ensure we have appropriate region for sector...not all benchmarks support all regions for all sectors
+        pf_sector_df = df_fundamentals[df_fundamentals.sector.eq(sector)][['sector', 'region']]
+        bm_sector_df = df_ei.drop(columns=df_ei.columns).loc[sector].reset_index('region')
+    else:
+        pf_sector_df = df_fundamentals[df_fundamentals.sector.isin(pf_bm_sectors)][['sector', 'region']]
+        bm_sector_df = df_ei.drop(columns=df_ei.columns).loc[list(pf_bm_sectors)].reset_index('region')
+    pf_bm_regions = set(pf_sector_df.region)
+    bm_regions = set(bm_sector_df.region)
+
+    if region not in pf_bm_regions:
         region = ''
 
     if not scope or EScope[scope] not in EI_scopes:
@@ -926,9 +940,9 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
 
     return (
         json.dumps(pickle.dumps(Warehouse), default=str),
-        json.dumps([{"label": i, "value": i} for i in sorted(sectors)] + [{'label': 'All Sectors', 'value': ''}]),
+        json.dumps([{"label": i, "value": i} for i in sorted(pf_bm_sectors)] + [{'label': 'All Sectors', 'value': ''}]),
         sector,
-        json.dumps([{"label": i, "value": i} for i in sorted(regions)] + [{'label': 'All Regions', 'value': ''}]),
+        json.dumps([{"label": i, "value": i} for i in sorted(pf_bm_regions)] + [{'label': 'All Regions', 'value': ''}]),
         region,
         json.dumps([{"label": scope.name, "value": scope.name} for scope in sorted(EI_scopes)] + [{'label': 'All Scopes', 'value': ''}]),
         scope,
@@ -1028,6 +1042,7 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, reg
         changed_ty = True
     if "sector-dropdown-ty.value" in changed_ids:
         sectors_dl = json.loads(sectors_ty)
+        sectors = { d['value'] for d in sectors_dl if d['value'] }
         sector = sector_ty
         changed_ty = True
     if "region-dropdown-ty.value" in changed_ids:
@@ -1184,22 +1199,24 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, reg
     else:
         scope_list = [ EScope[scope] ]
 
-    if not changed_ty:
-        # From here on out, we use benchmark regions, not company-given regions to compute benchmark budgets.
-        # The first guess is that REGION can be our BM_REGION.
-        bm_region = region
-        if bm_region not in df_ei.loc[pf_bm_df.sector.unique()].index.get_level_values('region'):
-            # Convert '' (all regions) or custom region names to 'Global'
+    # From here on out, we use benchmark regions, not company-given regions to compute benchmark budgets.
+    # The first guess is that REGION can be our BM_REGION.
+    if region == '':
+        bm_region = 'Global'
+    elif sector:
+        if (sector, region) not in df_ei.index:
             bm_region = 'Global'
-        elif sector:
-            if df_ei.loc[([ sector ], [ region ], scope_list if scope_list else slice(None))].empty:
-                bm_region = 'Global'
-        elif len(df_ei.loc[(list(sectors), [ region ], scope_list if scope_list else slice(None))]) < len(sectors):
-            # If company-based region fans across multiple regions, set bm_region to 'Global'
-            bm_region = 'Global'
+        else:
+            bm_region = region
     else:
-        # Trust that regions coming from *_ty are canonical
-        bm_region = region if region else 'Global'
+        try:
+            if len(df_ei.loc[(list(sectors), [ region ], scope_list if scope_list else slice(None))]) < len(sectors):
+                # If company-based region fans across multiple regions, set bm_region to 'Global'
+                bm_region = 'Global'
+            else:
+                bm_region = region
+        except KeyError:
+            bm_region = 'Global'
 
     target_year_1e_cum_co2 = None
     target_year_2e_cum_co2 = None
@@ -1278,11 +1295,13 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, reg
 
     prevent_initial_call=True,)
 def set_bm_region(bm_region_eibm, bm_region_ts):
-    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
-    if 'bm-region-eibm' in changed_id:
-        return (True, f"New EI Benchmark {bm_region_eibm} Loaded")
-    else:
+    changed_ids = [p['prop_id'] for p in dash.callback_context.triggered]  # to catch which widgets were pressed
+    if 'bm-region-ts.value' in changed_ids:
+        # Prioritize displaying what we know...
         return (False, f"Benchmark region: {bm_region_ts}")
+    else:
+        # ...to displaying what we don't know
+        return (True, f"New EI Benchmark {bm_region_eibm} Loaded")
 
 @app.callback(
     Output("bm-budgets-target-year", "children"),
@@ -1315,7 +1334,6 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
 
     inputs = (Input("warehouse-ty", "data"),),
 
-    background=True,
     prevent_initial_call=True,)
 def calc_temperature_score(warehouse_pickle_json, *_):
     global companies
@@ -1720,4 +1738,4 @@ def spinner_concentrator(*_):
     return 'Spin!'
 
 if __name__ == "__main__":
-    app.run_server(use_reloader=False, debug=False)
+    app.run_server(use_reloader=False, debug=True)
