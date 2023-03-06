@@ -676,8 +676,8 @@ itr_main_figures = dbc.Col(
             ),
             dbc.Row(  # row with 2 graphs
                 [
-                    dbc.Col(dcc.Graph(id="co2-usage-vs-budget"), width=9),  # big bubble graph
-                    dbc.Col(dcc.Graph(id="itr-coverage"), ),  # covered stacked bar graph
+                    dbc.Col(dcc.Graph(id="co2-usage-vs-budget"), width=8),  # big bubble graph
+                    dbc.Col(dcc.Graph(id="itr-coverage"), width=3),  # covered stacked bar graph
                 ],
             ),
             dbc.Row(  # row with 2 graphs
@@ -876,7 +876,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
               State("sector-dropdown", "value"),
               State("region-dropdown", "value"),
               State("scope-options", "value"),),
-    # background=True,
+    background=True,
     prevent_initial_call=True,)
 def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector, region, scope, *_):
     '''
@@ -989,7 +989,7 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
               Input("region-dropdown", "value"),
               State("scope-options", "options"),
               Input("scope-options", "value"),),
-#    background=True,
+    background=True,
     prevent_initial_call=True,)
 def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, regions_ty, region_ty, scopes_ty, scope_ty,
                                sectors_dl, sector, regions_dl, region, scopes_dl, scope,):
@@ -1316,7 +1316,6 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
     inputs = (Input("warehouse-ty", "data"),),
 
     background=True,
-
     prevent_initial_call=True,)
 def calc_temperature_score(warehouse_pickle_json, *_):
     global companies
@@ -1721,5 +1720,4 @@ def spinner_concentrator(*_):
     return 'Spin!'
 
 if __name__ == "__main__":
-    app.run_server(use_reloader=False, debug=True)
-
+    app.run_server(use_reloader=False, debug=False)
