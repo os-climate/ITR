@@ -340,32 +340,33 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         companies_without_historic_data = [c for c in companies if not c.historic_data]
         if companies_without_historic_data:
             # Can arise from degenerate test cases
-            base_year = self.projection_controls.BASE_YEAR
-            for company in companies_without_historic_data:
-                scope_em = {}
-                scope_ei = {}
-                if company.projected_intensities:
-                    for scope_name in EScope.get_scopes():
-                        if isinstance(company.projected_intensities[scope_name], DF_ICompanyEIProjections):
-                            scope_ei[scope_name] = [ IEIRealization(year=base_year, value=company.projected_intensities[scope_name].projections[base_year]) ]
-                        elif company.projected_intensities[scope_name] is None:
-                            scope_ei[scope_name] = []
-                        else:
-                            # Should not be reached, but this gives right answer if it is.
-                            scope_ei[scope_name] = [ eir.value for eir in company.projected_intensities[scope_name].projections if eir.year==base_year ]
-                    scope_em = { scope: [IEmissionRealization(year=base_year, value=ei[0].value * company.base_year_production)] if ei else []
-                                 for scope, ei in scope_ei.items() }
-                else:
-                    scope_em['S1'] = scope_em['S2'] = []
-                    scope_em['S3'] = [IEmissionRealization(year=base_year, value=company.ghg_s3)] if company.ghg_s3 else []
-                    scope_em['S1S2'] = [IEmissionRealization(year=base_year, value=company.ghg_s1s2)]
-                    scope_em['S1S2S3'] = [IEmissionRealization(year=base_year, value=company.ghg_s1s2+company.ghg_s3)] if company.ghg_s1s2 and company.ghg_s3 else []
-                    scope_ei = { scope: [IEIRealization(year=base_year, value=em[0].value / company.base_year_production)] if em else []
-                                 for scope, em in scope_em.items() }
-                company.historic_data = IHistoricData(
-                    productions=[IProductionRealization(year=base_year, value=company.base_year_production)],
-                    emissions=IHistoricEmissionsScopes(**scope_em),
-                    emissions_intensities=IHistoricEIScopes(**scope_ei))
+            pass
+        base_year = self.projection_controls.BASE_YEAR
+        for company in companies_without_historic_data:
+            scope_em = {}
+            scope_ei = {}
+            if company.projected_intensities:
+                for scope_name in EScope.get_scopes():
+                    if isinstance(company.projected_intensities[scope_name], DF_ICompanyEIProjections):
+                        scope_ei[scope_name] = [ IEIRealization(year=base_year, value=company.projected_intensities[scope_name].projections[base_year]) ]
+                    elif company.projected_intensities[scope_name] is None:
+                        scope_ei[scope_name] = []
+                    else:
+                        # Should not be reached, but this gives right answer if it is.
+                        scope_ei[scope_name] = [ eir.value for eir in company.projected_intensities[scope_name].projections if eir.year==base_year ]
+                scope_em = { scope: [IEmissionRealization(year=base_year, value=ei[0].value * company.base_year_production)] if ei else []
+                             for scope, ei in scope_ei.items() }
+            else:
+                scope_em['S1'] = scope_em['S2'] = []
+                scope_em['S3'] = [IEmissionRealization(year=base_year, value=company.ghg_s3)] if company.ghg_s3 else []
+                scope_em['S1S2'] = [IEmissionRealization(year=base_year, value=company.ghg_s1s2)]
+                scope_em['S1S2S3'] = [IEmissionRealization(year=base_year, value=company.ghg_s1s2+company.ghg_s3)] if company.ghg_s1s2 and company.ghg_s3 else []
+                scope_ei = { scope: [IEIRealization(year=base_year, value=em[0].value / company.base_year_production)] if em else []
+                             for scope, em in scope_em.items() }
+            company.historic_data = IHistoricData(
+                productions=[IProductionRealization(year=base_year, value=company.base_year_production)],
+                emissions=IHistoricEmissionsScopes(**scope_em),
+                emissions_intensities=IHistoricEIScopes(**scope_ei))
         companies_without_projections = [c for c in companies if not c.projected_intensities]
         if companies_without_projections:
             companies_with_projections = [c for c in companies if c.projected_intensities]
@@ -652,7 +653,7 @@ class EITrajectoryProjector(EIProjector):
     def __init__(self, projection_controls: ProjectionControls = ProjectionControls()):
         super().__init__(projection_controls=projection_controls)
 
-    def project_ei_trajectories(self, companies: List[ICompanyData]) -> List[ICompanyData]:
+    def project_ei_trajectories(self, companies: List[ICompanyData], backfill_needed=True) -> List[ICompanyData]:
         historic_df = self._extract_historic_df(companies)
         # This modifies historic_df in place...which feeds the intensity extrapolations below
         self._compute_missing_historic_ei(companies, historic_df)
@@ -661,43 +662,44 @@ class EITrajectoryProjector(EIProjector):
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
             warnings.simplefilter("ignore")
-            historic_intensities_t = asPintDataFrame(
+            historic_ei_t = asPintDataFrame(
                 historic_df[historic_years].query(f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'").T).pint.dequantify()
-            historic_intensities_t.index.name = 'year'
-        # Fill in gaps between BASE_YEAR and the first data we have
-        if ITR.HAS_UNCERTAINTIES:
-            backfilled_t = historic_intensities_t.apply(lambda col: (lambda fvi: col if fvi is None else col.where(col.index.get_level_values('year') >= fvi, col[fvi]))
-                                                        (col.map(lambda x: x.n if isinstance(x, ITR.UFloat) else x).first_valid_index()))
-        else:
-            backfilled_t = historic_intensities_t.apply(lambda col: col.fillna(method='bfill'))
-        # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases
-        # while also working on real-world use cases.  But we need to formalize this decision.
-        backfilled_t = backfilled_t.reset_index()
-        backfilled_t = backfilled_t.where(backfilled_t.year >= self.projection_controls.BASE_YEAR, historic_intensities_t.reset_index())
-        backfilled_t.set_index('year', inplace=True)
-        if not historic_intensities_t.compare(backfilled_t).empty:
-            logger.warning(f"some data backfilled to {self.projection_controls.BASE_YEAR} for company_ids in list {historic_intensities_t.compare(backfilled_t).columns.get_level_values('company_id').unique().tolist()}")
-            historic_intensities_t = backfilled_t.sort_index(axis=1)
-            for company in companies:
-                if company.ghg_s3 is None or ITR.isnan(company.ghg_s3):
-                    try:
-                        idx = (company.company_id, 'Emissions Intensities', EScope.S3)
-                        company.ghg_s3 = Q_(historic_intensities_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
-                                            historic_intensities_t[idx].columns[0]) * company.base_year_production
-                    except KeyError:
-                        # If it's not there, we'll complain later
-                        pass
-                if company.ghg_s1s2 is None or ITR.isnan(company.ghg_s1s2):
-                    try:
-                        idx = (company.company_id, 'Emissions Intensities', EScope.S1S2)
-                        company.ghg_s1s2 = Q_(historic_intensities_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
-                                              historic_intensities_t[idx].columns[0]) * company.base_year_production
-                    except KeyError:
-                        # If it's not there, we'll complain later
-                        pass
-        standardized_intensities_t = self._standardize(historic_intensities_t)
-        intensity_trends_t = self._get_trends(standardized_intensities_t)
-        extrapolated_t = self._extrapolate(intensity_trends_t, projection_years, historic_intensities_t)
+            historic_ei_t.index.name = 'year'
+        if backfill_needed:
+            # Fill in gaps between BASE_YEAR and the first data we have
+            if ITR.HAS_UNCERTAINTIES:
+                backfilled_t = historic_ei_t.apply(lambda col: (lambda fvi: col if fvi is None else col.where(col.index.get_level_values('year') >= fvi, col[fvi]))
+                                                            (col.map(lambda x: x.n if isinstance(x, ITR.UFloat) else x).first_valid_index()))
+            else:
+                backfilled_t = historic_ei_t.apply(lambda col: col.fillna(method='bfill'))
+            # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases
+            # while also working on real-world use cases.  But we need to formalize this decision.
+            backfilled_t = backfilled_t.reset_index()
+            backfilled_t = backfilled_t.where(backfilled_t.year >= self.projection_controls.BASE_YEAR, historic_ei_t.reset_index())
+            backfilled_t.set_index('year', inplace=True)
+            if not historic_ei_t.compare(backfilled_t).empty:
+                logger.warning(f"some data backfilled to {self.projection_controls.BASE_YEAR} for company_ids in list {historic_ei_t.compare(backfilled_t).columns.get_level_values('company_id').unique().tolist()}")
+                historic_ei_t = backfilled_t.sort_index(axis=1)
+                for company in companies:
+                    if company.ghg_s3 is None or ITR.isnan(company.ghg_s3):
+                        try:
+                            idx = (company.company_id, 'Emissions Ei', EScope.S3)
+                            company.ghg_s3 = Q_(historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
+                                                historic_ei_t[idx].columns[0]) * company.base_year_production
+                        except KeyError:
+                            # If it's not there, we'll complain later
+                            pass
+                    if company.ghg_s1s2 is None or ITR.isnan(company.ghg_s1s2):
+                        try:
+                            idx = (company.company_id, 'Emissions Intensities', EScope.S1S2)
+                            company.ghg_s1s2 = Q_(historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
+                                                  historic_ei_t[idx].columns[0]) * company.base_year_production
+                        except KeyError:
+                            # If it's not there, we'll complain later
+                            pass
+        standardized_ei_t = self._standardize(historic_ei_t)
+        intensity_trends_t = self._get_trends(standardized_ei_t)
+        extrapolated_t = self._extrapolate(intensity_trends_t, projection_years, historic_ei_t)
         # Restrict projection to benchmark years
         extrapolated_t = extrapolated_t[extrapolated_t.index >= self.projection_controls.BASE_YEAR]
         # Restore row-wise shape of DataFrame

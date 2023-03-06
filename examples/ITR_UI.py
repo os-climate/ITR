@@ -149,7 +149,7 @@ def dequantify_plotly(px_func, df, **kwargs):
             assert kwargs[col] in df.columns
             new_kwargs[col] = kwargs[col]
             continue
-        new_kwargs[col] = f"{kwargs[col]} (units = {str(s.pint.u)})"
+        new_kwargs[col] = f"{kwargs[col]} (units = {s.pint.u:~P})"
         new_df[new_kwargs[col]] = ITR.nominal_values(s.pint.m)
         if ITR.HAS_UNCERTAINTIES:
             # uncertainties in production affect cumulative_budget
@@ -170,655 +170,6 @@ def dequantify_plotly(px_func, df, **kwargs):
     
     return px_func (new_df, **new_kwargs)
 
-
-# nice cheatsheet for managing layout via className attribute: https://hackerthemes.com/bootstrap-cheatsheet/
-
-# Define app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], # theme should be written in CAPITAL letters; list of themes https://www.bootstrapcdn.com/bootswatch/
-                meta_tags=[{'name': 'viewport', # this thing makes layout responsible to mobile view
-                            'content': 'width=device-width, initial-scale=1.0'}],
-                background_callback_manager=background_callback_manager,
-                )
-app.title = "ITR Tool" # this puts text to the browser tab
-server = app.server
-
-filter_box = dbc.Row( # We are a row of the left-side column box
-    children=[
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Label("\N{thermometer} Individual temperature score"),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target2", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Focus on companies from portfolio with specific temperature score"), id="hover2",
-                                    target="hover-target2", trigger="hover"),
-                    ], width=2, align="center",
-                ),
-            ],
-            align="center",
-        ),
-        dcc.RangeSlider(
-            id="temp-score-range",
-            min=0, max=8.5, value=[0, 8.5],
-            step=0.5,
-            marks={i / 10: str(i / 10) for i in range(0, 86, 5)},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Label("\N{factory} Focus on a specific sector "),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target3", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Scope of sectors could be different for different emission benchmark.\nScope of sectors covered by the tool is constantly growing."),
-                                    id="hover3", target="hover-target3", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.Dropdown(id="sector-dropdown",
-                     options=[{'label': 'All Sectors', 'value': ''}],
-                     value='',
-                     clearable=False,
-                     placeholder="Select a sector"),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Label("\N{globe with meridians} Focus on a specific region "),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target4", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Scope of countries could be different for different emission benchmark"),
-                                    id="hover4", target="hover-target4", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.Dropdown(id="region-dropdown",
-                     options=[{'label': 'All Regions', 'value': ''}],
-                     value='',
-                     clearable=False,
-                     placeholder="Select a region"),
-    ],
-)
-
-benchmark_box = dbc.Row(
-    children=[
-        dbc.Row(  # Select Benchmark
-            [
-                dbc.Col(
-                    dbc.Label("\N{bar chart} Select Emissions Intensity benchmark "),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target5", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "This benchmark describes emission intensities projection for different regions and sectors"),
-                                    id="hover5", target="hover-target5", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.Dropdown(id="eibm-dropdown",
-                     options=[  # 16.05.2022: make this dynamic
-                         {'label': 'OECM (Deprecated) 1.5 degrees', 'value': 'OECM'},
-                         {'label': 'OECM (Prod-Centric) 1.5 degC', 'value': 'OECM_PC'},
-                         {'label': 'OECM (Scope 3) 1.5 degC', 'value': 'OECM_S3'},
-                         {'label': 'TPI 1.5 degrees (No Autos)', 'value': 'TPI_15_degrees'},
-                         {'label': 'TPI 2 degrees (HE)', 'value': 'TPI_2_degrees_high_efficiency'},
-                         {'label': 'TPI 2 degrees (SI)', 'value': 'TPI_2_degrees_shift_improve'},
-                         {'label': 'TPI below 2 degrees', 'value': 'TPI_below_2_degrees'}
-                     ],
-                     value='OECM_S3',
-                     clearable=False,
-                     placeholder="Select Emissions Intensity benchmark"),
-        html.Div(id='hidden-div', style={'display': 'none'}),
-        html.Hr(),  # small space from the top
-        dbc.Row(  # Mean / Median projection
-            [
-                dbc.Col(
-                    dbc.Label("\N{level slider} Select method for projection"),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target6", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select method of averaging trend of emission intensities projections"),
-                                    id="hover6", target="hover-target6", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.RadioItems(
-            id="projection-method",
-            options=[
-                {'label': 'Median', 'value': 'median'},
-                {'label': 'Mean', 'value': 'mean'},
-            ],
-            value='median',
-            inputStyle={"margin-right": "10px", "margin-left": "30px"},
-            inline=True,
-        ),
-        html.Hr(),  # small space from the top
-        dbc.Row(  # Scope selection
-            [
-                dbc.Col(
-                    dbc.Label("\N{abacus} Select Scope(s) to Evaluate"),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target10", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select Scope(s) to process (S1, S1+S2, S3, S1+S1+S3, or All Scopes)"),
-                                    id="hover10", target="hover-target10", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.RadioItems(
-            id="scope-options",
-            options=[
-                {'label': 'S1', 'value': 'S1'},
-                {'label': 'S2', 'value': 'S2'},
-                {'label': 'S1+S2', 'value': 'S1S2'},
-                {'label': 'S3', 'value': 'S3'},
-                {'label': 'S1S2S3', 'value': 'S1S2S3'},
-                {'label': 'All Scopes', 'value': ''},
-            ],
-            value='S1S2S3',
-            inputStyle={"margin-right": "10px", "margin-left": "30px"},
-            inline=True,
-        ),
-        html.Hr(),  # small space from the top
-        dbc.Row(  # Winsorization of scenarios
-            [
-                dbc.Col(
-                    dbc.Label("\N{wrench} Select winsorization value cap range"),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target8", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select which extreme datapoints of historical emission intensities you would like to exclude from calculations of projections"),
-                                    id="hover8", target="hover-target8", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.RangeSlider(
-            id="scenarios-cutting",
-            min=0, max=100,
-            value=[ProjectionControls.LOWER_PERCENTILE * 100, ProjectionControls.UPPER_PERCENTILE * 100],
-            step=10,
-            marks={i: str(i) for i in range(0, 101, 10)},
-            allowCross=False
-        ),
-        html.Hr(),  # small space from the top
-        dbc.Row(  # Set ProjectionControls TARGET_YEAR
-            [
-                dbc.Col(
-                    dbc.Label("\N{wrench} Select projection end year (2025-2050)"),
-                    width=9,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{calendar}", id="hover-target9", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select the ending year of the benchmark analysis"),
-                                    id="hover9", target="hover-target9", trigger="hover"),
-                    ], width=4,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.Slider(
-            id="target-year",
-            min=2025, max=2050,
-            value=2050,
-            step=5,
-            marks={i: str(i) for i in range(2025, 2051, 5)},
-        ),
-        html.Div(id="bm-budgets-target-year")
-    ],
-)
-
-itr_titlebar = dbc.Row(  # upload portfolio
-    [
-        dbc.Col(  # upload OS-C logo
-            dbc.CardImg(
-                src="https://os-climate.org/wp-content/uploads/sites/138/2021/10/OSC-Logo.png",
-                className='align-self-center',
-                # 'h-60 w-60 float-middle align-middle', # reducing size and alligning
-                        bottom=False),
-            width=2,
-            align="center",
-        ),
-        dbc.Col(
-            [
-                html.H1(id="banner-title", children=[
-                    html.A("OS-Climate Portfolio Alignment Tool", href="https://github.com/plotly/dash-svm",
-                           style={"text-decoration": "none", "color": "inherit"})]),
-                html.Div(
-                    children='Prototype tool for calculating the Implied Temperature Rise of investor portfolio in the steel and electric utilities sectors \N{deciduous tree}'),
-            ],
-            width=8,
-        ),
-        dbc.Col([html.Span(id="loading-template-data", hidden=False, children="loading template data...")]),
-        dbc.Col([
-            dbc.Spinner(
-                [
-                    html.H1(id="dummy-output-info", style={'color': 'white'}),
-                    html.Data(id="spinner-warehouse"),
-                    html.Data(id="spinner-eibm"),
-                    html.Data(id="spinner-ty"),
-                    html.Data(id="spinner-ty-ts"),
-                    html.Data(id="spinner-ts"),
-                    html.Data(id="spinner-graphs"),
-                    html.Data(id="spinner-xlsx"),
-                    html.Data(id="spinner-reset"),
-                ],
-                color="primary",
-                spinner_style={"width": "3rem", "height": "3rem"},
-                # value="Finished",
-            ),  # Spinner/Progress implementations
-        ], width=1, ),
-    ],
-    justify='between',  # for this to work you need some space left (in total there 12 columns)
-    align='center',
-)
-
-itr_filters_and_benchmarks = dbc.Col(
-    [  # filters pane
-        dbc.Card(
-            [
-                dbc.Row(
-                    [  # Row with key figures
-                        dbc.Col(html.H5("Filters", className="pf-filter")),  # PF score
-                        dbc.Col(
-                            html.Div(
-                                dbc.Button("Reset filters",
-                                           id="reset-filters-button",
-                                           outline=True, color="dark", size="sm",
-                                           className="me-md-2"
-                                           ),
-                                className="d-grid gap-2 d-md-flex justify-content-md-end"
-                            )
-                        ),
-                    ]
-                ),
-                html.P("Select part of your portfolio", className="text-black-50"),
-                filter_box,
-            ], body=True
-        ),
-        html.Br(),
-        dbc.Card(
-            [
-                html.H5("Benchmarks", className="macro-filters"),
-                html.P("Here you could adjust benchmarks of calculations",
-                       className="text-black-50"),
-                benchmark_box,
-            ], body=True
-        ),
-    ],
-    width=3,
-)
-
-itr_main_figures = dbc.Col(
-    [  # main pane
-        dbc.Card([
-            dbc.Row(  # Row with key figures
-                [
-                    dbc.Col(  # PF score
-                        dbc.Card(
-                            [
-                                html.H1(id="output-info"),
-                                html.Div('Portfolio-level temperature rating of selected companies',
-                                         style={'color': 'black', 'fontSize': 16}),
-                                html.Div('in delta degree Celsius',
-                                         style={'color': 'grey', 'fontSize': 10}),
-                            ], body=True
-                        ),
-                    ),
-                    dbc.Col(  # Portfolio EVIC
-                        dbc.Card(
-                            [
-                                html.H1(id="evic-info"),
-                                html.Div('Enterprise Value incl. Cash of selected portfolio',
-                                         style={'color': 'black', 'fontSize': 16}),
-                                html.Div('in billions of template curr',
-                                         style={'color': 'grey', 'fontSize': 10}),
-                            ], body=True
-                        ),
-                    ),
-                    dbc.Col(  # Portfolio notional
-                        dbc.Card(
-                            [
-                                html.H1(id="pf-info"),
-                                html.Div('Total Notional of a selected portfolio',
-                                         style={'color': 'black', 'fontSize': 16}),
-                                html.Div('in millions of template curr',
-                                         style={'color': 'grey', 'fontSize': 10}),
-                            ], body=True
-                        ),
-                    ),
-                    dbc.Col(  # Number of companies
-                        dbc.Card(
-                            [
-                                html.H1(id="comp-info"),
-                                html.Div('Number of companies in the selected portfolio',
-                                         style={'color': 'black', 'fontSize': 16}),
-                                html.Div('# of companies', style={'color': 'grey', 'fontSize': 10}),
-                            ], body=True
-                        ),
-                    ),
-                ],
-            ),
-            dbc.Row(  # row with 2 graphs
-                [
-                    dbc.Col(dcc.Graph(id="co2-usage-vs-budget"), width=8),  # big bubble graph
-                    dbc.Col(dcc.Graph(id="itr-coverage"), ),  # covered stacked bar graph
-                ],
-            ),
-            dbc.Row(  # row with 2 graphs
-                [
-                    dbc.Col(dcc.Graph(id="industry-region-heatmap")),
-                    dbc.Col(dcc.Graph(id="highest-ts-barchart")),
-                ]
-            ),
-            dbc.Row(  # row with 1 bar graph
-                [
-                    dbc.Col(dcc.Graph(id="ts-aggr-barchart")),
-                ]
-            ),
-        ], body=True),
-        html.Br(),
-    ],
-    width=9,
-)
-
-itr_portfolio = dbc.Card(
-    [
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.H5(
-                        "Table below contains details about the members of the selected portfolio"),
-                    width=10,
-                ),
-                dbc.Col(
-                    html.Div(
-                        [
-                            dbc.Button("Export table to spreadsheet",
-                                       id="export-to-excel",
-                                       size="sm", className="me-md-2"
-                                       ),
-                            dcc.Download(id="download-dataframe-xlsx"),
-                        ],
-                        className="d-grid gap-2 d-md-flex justify-content-md-end"
-                    ),
-                    width=2,
-                ),
-            ],
-            align="center",
-        ),
-        html.Br(),
-        html.Div(id='display-excel-data'),
-    ], body=True
-)
-
-# Define Layout
-app.layout = dbc.Container(  # always start with container
-    children=[
-        html.Hr(),  # small space from the top
-        itr_titlebar,           # This has static text and the spinner
-        html.Hr(),
-        dbc.Row(
-            [
-                itr_filters_and_benchmarks,
-                itr_main_figures,
-            ]
-        ),
-        itr_portfolio,
-#        html.Data(id="scope-column"),
-        html.Data(id="scope-options-ty"),
-        html.Data(id="scope-options-ts"),
-#         html.Data(id="scope-options-reset"),
-        dcc.Store(id="warehouse"),
-        dcc.Store(id="warehouse-eibm"),
-        dcc.Store(id="warehouse-ty"),
-        dcc.Store(id="portfolio-df"),
-        html.Data(id="sector-region-scope-ty-ts"),
-#        html.Data(id="sector-dropdown-ty"),
-#        html.Data(id="sector-dropdown-reset"),
-#        html.Data(id="region-dropdown-ty"),
-#        html.Data(id="region-dropdown-reset"),
-        html.Data(id="show-oecm-bm"),
-        html.Data(id="bm-budget"),
-        html.Data(id="bm-1e-budget"),
-        html.Data(id="bm-2e-budget"),
-        html.Data(id="tempscore-ty-ts"),
-        html.Data(id="reset-sector-region-scope"),
-        # dash_table.DataTable(df.to_dict('records'), [{"name": i, "id": i} for i in df.columns])
-    ],
-    style={"max-width": "1500px"},
-)
-
-@app.callback(
-    Output("warehouse", "data"),
-    Output("loading-template-data", "hidden"),
-    Output("spinner-warehouse", "value"),
-
-    Input("banner-title", "children"),) # Just something to get us going...
-def warehouse_new(banner_title):
-    # load company data
-    template_company_data = TemplateProviderCompany(company_data_path, projection_controls = ProjectionControls())
-    Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
-                              estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
-    return (json.dumps(pickle.dumps(Warehouse), default=str),
-            True,
-            "Spin-warehouse")
-
-@dash.callback(
-    output=(Output("warehouse-eibm", "data"),        # Warehouse initialized with benchmark
-            # We cannot set scope_options based on benchmark, because that may depend on sector
-            Output("show-oecm-bm", "value"),
-            Output("spinner-eibm", "value"),),  # fake for spinner
-
-    inputs=(Input("warehouse", "data"),
-            Input("eibm-dropdown", "value"),
-            Input("projection-method", "value"),
-            Input("scenarios-cutting", "value"), # winzorization slider
-
-            State("target-year", "value"),),
-
-    background=True,
-
-    prevent_initial_call=True,)
-# load default intensity benchmarks
-def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, target_year):
-    '''
-    Reload Emissions Intensity benchmark from a selected file
-    :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
-    :param eibm: Emissions Intensity benchmark identifier
-    :param proj_meth: Trajectory projection method (median or mean)
-    :param winz: Winsorization parameters (limit of outlier data)
-    '''
-    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
-    Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
-
-    if 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:  # if winzorization params were changed
-        if proj_meth == 'median':
-            Warehouse.company_data.projection_controls.TREND_CALC_METHOD = ITR_median
-        else:
-            Warehouse.company_data.projection_controls.TREND_CALC_METHOD = ITR_mean
-        Warehouse.company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
-        Warehouse.company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
-        # Trajectories are company-specific and don't depend on benchmarks
-        Warehouse.update_trajectories()
-
-    if 'eibm-dropdown' in changed_id or Warehouse.benchmarks_projected_ei is None:
-        show_oecm_bm = 'no'
-        if eibm == 'OECM_PC':
-            benchmark_file = benchmark_EI_OECM_PC_file
-            show_oecm_bm = 'yes'
-        elif eibm == 'OECM_S3':
-            benchmark_file = benchmark_EI_OECM_S3_file
-            show_oecm_bm = 'yes'
-        elif eibm.startswith('TPI_2_degrees'):
-            benchmark_file = benchmark_EI_TPI_file
-        elif eibm == 'TPI_15_degrees':
-            benchmark_file = benchmark_EI_TPI_15_file
-        elif eibm == 'OECM':
-            benchmark_file = benchmark_EI_OECM_file
-            logger.info('OECM benchmark is for backward compatibility only.  Use OECM_PC instead.')
-        else:
-            benchmark_file = benchmark_EI_TPI_below_2_file
-        # load intensity benchmarks
-        benchmark_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_file)
-        with open(benchmark_EI) as json_file:
-            parsed_json = json.load(json_file)
-        if eibm.startswith('TPI_2_degrees'):
-            if '_high_efficiency' in eibm:
-                extra_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_EI_TPI_2deg_high_efficiency_file)
-            else:
-                extra_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_EI_TPI_2deg_shift_improve_file)                
-            with open(extra_EI) as json_file:
-                extra_json = json.load(json_file)
-                for scope_name in EScope.get_scopes():
-                    if scope_name in extra_json:
-                        if scope_name not in parsed_json:
-                            parsed_json[scope_name] = extra_json[scope_name]
-                        else:
-                            parsed_json[scope_name]['benchmarks'] += extra_json[scope_name]['benchmarks']
-        # Initialize with the default ProjectionControls...
-        EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
-        Warehouse.update_benchmarks(base_production_bm, EI_bm)
-        # ...then trim TARGET_YEAR to fit whatever has been set.
-        EI_bm.projection_controls.TARGET_YEAR = target_year
-        Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
-
-    return (json.dumps(pickle.dumps(Warehouse), default=str),
-            show_oecm_bm,
-            "Spin-eibm")
-
-@dash.callback(
-    # In the future, also adjust sector-dropdown options
-    output = (Output("warehouse-ty", "data"),
-              Output("sector-dropdown", "options"),
-              Output("sector-dropdown", "value"),
-              Output("region-dropdown", "options"),
-              Output("region-dropdown", "value"),
-              Output("scope-options-ty", "value"),
-              Output("scope-options", "value"),
-              Output("spinner-ty", "value"),),  # fake for spinner
-
-    inputs = (Input("warehouse-eibm", "data"),
-              Input("target-year", "value"),
-              Input("reset-sector-region-scope", "children"),
-
-              State("sector-dropdown", "value"),
-              State("region-dropdown", "value"),
-              State("scope-options", "value"),),
-
-    background=True,
-
-    prevent_initial_call=True,)
-def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, reset_sector_region_scope, sector, region, scope, *_):
-    '''
-    When changing endpoint of benchmark budget calculations, update total budget and benchmark ITR resulting therefrom.
-    We assume that 'Global' is the all-world, not rest-of-world, for any benchmark.
-    Where possible, honor users' selection of SCOPE, REGION, and SCOPE_LIST, and where necessary, adjust
-    REGION and SCOPE_LIST to accommodate SECTOR selection.  But don't "listen" for new user SECTOR/REGION/SCOPE
-    choices.
-    '''
-
-    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
-    Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
-
-    # All benchmarks use OECM production
-    prod_bm = Warehouse.benchmark_projected_production
-    EI_bm = Warehouse.benchmarks_projected_ei
-
-    df_fundamentals = Warehouse.company_data.df_fundamentals
-    sectors = sorted(set(df_fundamentals.sector) & set(EI_bm._EI_df.index.get_level_values('sector')))
-    regions = sorted(set(df_fundamentals.region) & set(EI_bm._EI_df.index.get_level_values('region')) | {'Global'})
-
-    df = EI_bm._EI_df
-    # Our Warehouse doesn't retain side-effects, so we cannot "set-and-forget"
-    # Instead, we have to re-make the change for the benefit of downstream users...
-    EI_bm.projection_controls.TARGET_YEAR = target_year
-    Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
-
-    if sector not in sectors:
-        sector = ''
-        EI_sectors = df[df.index.get_level_values('sector').isin(sectors)]
-        sector_scopes = EI_sectors[df.columns[0]].groupby(['sector', 'scope']).count()
-        if not sector_scopes.index.get_level_values('sector').duplicated().any():
-            # TPI is a scope-per-sector benchmarks, so looks best when we see all scopes
-            scope = ''
-            EI_scopes = sector_scopes.index.get_level_values('scope').unique()
-        else:
-            EI_scopes = EI_sectors.index.get_level_values('scope').unique()
-    else:
-        EI_sectors = df.loc[sector]
-        EI_scopes = EI_sectors.index.get_level_values('scope').unique()
-
-    if region not in regions:
-        region = ''
-
-    if not scope or EScope[scope] not in EI_scopes:
-        scope = ''
-
-    return (
-        json.dumps(pickle.dumps(Warehouse), default=str),
-        [{"label": i, "value": i} for i in sectors] + [{'label': 'All Sectors', 'value': ''}], sector,
-        [{"label": i, "value": i} for i in regions] + [{'label': 'All Regions', 'value': ''}], region,
-        json.dumps([{"label": scope.name, "value": scope.name} for scope in sorted(EI_scopes)] + [{'label': 'All Scopes', 'value': ''}]),
-        scope,
-        "Spin-ty",
-    )
-
-# Some words on the current concept of Scope Math
-# 
-# For a single sector, any and all scope combinations give "valid" footprint descriptions...
-# ...and we can compare against the scope footprints of the sector.
-# 
-# Beyond the sector is the Acvitity (Primary Energy, Secondary Energy, End Use)
-# We can aggregate within an Activity as we do within a Sector, noting that End Use has special S3 rules.
-# ...and if we have the same scope data for each sector and the overall activity,
-# we can compare the activity-aggregated sectors with the bnechmark budget (on a per-scope or all-scope basis).
-#
-# If we look across multiple Acivities, scopes give the rules:
-# The Scope 1 footprint can be computed as the sum of S1 scope emissions across all sectors (company aggregates and benchmark budget)
-# The Scope 2 footprint can be computed as the sum of S2 scope emissions across all sectors (company aggregates and benchmark budget)
-# The S1+S2 footprint can be computed as sum(S1) + abs(sum(S2) - Electric Utilties S1) (company aggregates and benchmark budget)
-# If there are no Electricity Utilities in the sector, then it just aggregates all S1+S2 across all sectors
-# There's no meaningful S3 aggregation in the multi-acvtivity case
-# For S1+S2+S3, we separate Energy from Power from End Use, then...
-# The S1+S2+S3 footprint for Energy is meaningful (if Energy is in the mix)
-# The S1+S2+S3 footprint for Utilities is meaningful (if Utilities are in the mix)
-# The S1+S2+S3 are meaningful for End Use as follows: sum(S1+S2) + S3(cement, buildings, aviation, shipping, roads)
-# The overall S1+S2+S3 budget is also meaningful
 
 def get_co2_per_sector_region_scope(prod_bm, ei_df, sector, region, scope_list) -> pd.Series:
     '''
@@ -871,7 +222,13 @@ def try_get_co2(prod_bm, ei_df, sectors, region, scope_list):
         except ValueError:
             pass
     if len(result) > 1 and scope_list and scope_list[0] == EScope.S3:
-        if 'Energy' in ei_df.index and sectors - end_use_s3_activities:
+        if 'Energy' in ei_df.index:
+            if not (sectors - energy_activities):
+                return result
+            if not (sectors - utility_activities):
+                return result
+            if not (sectors - end_use_s3_activities):
+                return result
             # We are in OECM...Scope 3 doesn't overlap across end_use_s3_activities
             # But if there are any sectors outside that (such as 'Gas' + end_use_s3_activities), raise error
             raise ValueError(f"Scope 3 only meaningful for single-activity footprints (sectors were {sectors})")
@@ -941,47 +298,881 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
                 total_co2_s3_elements = try_get_co2(prod_bm, ei_df, sectors & end_use_s3_activities, region, [ EScope.S3] )
                 if total_co2_s3_elements:
                     total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
-                    total_co2 = total_co2 + total_co2_s3
+                    total_co2 = total_co2.add(total_co2_s3)
             return total_co2
     # Must be S1 or S2 by itself (or scope_list is None, meaning whatever scope can be found).  try_get_co2 will deal with S3 case.
     total_co2 = pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
     return total_co2
 
+# nice cheatsheet for managing layout via className attribute: https://hackerthemes.com/bootstrap-cheatsheet/
+
+# Define app
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], # theme should be written in CAPITAL letters; list of themes https://www.bootstrapcdn.com/bootswatch/
+                meta_tags=[{'name': 'viewport', # this thing makes layout responsible to mobile view
+                            'content': 'width=device-width, initial-scale=1.0'}],
+                background_callback_manager=background_callback_manager,
+                )
+app.title = "ITR Tool" # this puts text to the browser tab
+server = app.server
+
+filter_width = 6
+filter_box = dbc.Row( # We are a row of the left-side column box
+    children=[
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Label("\N{thermometer} Individual temperature score"),
+                    width=filter_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target2", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Focus on companies from portfolio with specific temperature score"), id="hover2",
+                                    target="hover-target2", trigger="hover"),
+                    ], width=2, align="center",
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RangeSlider(
+            id="temp-score-range",
+            min=0, max=8.5, value=[0, 8.5],
+            step=0.5,
+            marks={i / 10: str(i / 10) for i in range(0, 86, 5)},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Label("\N{factory} Focus on a specific sector "),
+                    width=filter_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target3", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Scope of sectors could be different for different emission benchmark.\nScope of sectors covered by the tool is constantly growing."),
+                                    id="hover3", target="hover-target3", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Dropdown(id="sector-dropdown",
+                     options=[{'label': 'All Sectors', 'value': ''}],
+                     value='',
+                     clearable=False,
+                     placeholder="Select a sector"),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Label("\N{globe with meridians} Focus on a specific region "),
+                    width=filter_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target4", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Scope of countries could be different for different emission benchmark"),
+                                    id="hover4", target="hover-target4", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Dropdown(id="region-dropdown",
+                     options=[{'label': 'All Regions', 'value': ''}],
+                     value='',
+                     clearable=False,
+                     placeholder="Select a region"),
+        dbc.Row(
+            [
+                html.Span(id="benchmark-region", hidden=True, children="No benchmark loaded"),
+            ]
+        ),
+    ],
+)
+
+benchmark_width = 6
+benchmark_box = dbc.Row(
+    children=[
+        dbc.Row(  # Select Benchmark
+            [
+                dbc.Col(
+                    dbc.Label("\N{bar chart} Select Emissions Intensity benchmark "),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target5", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "This benchmark describes emission intensities projection for different regions and sectors"),
+                                    id="hover5", target="hover-target5", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Dropdown(id="eibm-dropdown",
+                     options=[  # 16.05.2022: make this dynamic
+                         {'label': 'OECM (Deprecated) 1.5 degrees', 'value': 'OECM'},
+                         {'label': 'OECM (Prod-Centric) 1.5 degC', 'value': 'OECM_PC'},
+                         {'label': 'OECM (Scope 3) 1.5 degC', 'value': 'OECM_S3'},
+                         {'label': 'TPI 1.5 degrees (No Autos)', 'value': 'TPI_15_degrees'},
+                         {'label': 'TPI 2 degrees (HE)', 'value': 'TPI_2_degrees_high_efficiency'},
+                         {'label': 'TPI 2 degrees (SI)', 'value': 'TPI_2_degrees_shift_improve'},
+                         {'label': 'TPI below 2 degrees', 'value': 'TPI_below_2_degrees'}
+                     ],
+                     value= 'OECM_S3', # 'TPI_15_degrees', # 'TPI_2_degrees_high_efficiency', 
+                     clearable=False,
+                     placeholder="Select Emissions Intensity benchmark"),
+        html.Div(id='hidden-div', style={'display': 'none'}),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Mean / Median projection
+            [
+                dbc.Col(
+                    dbc.Label("\N{level slider} Select method for projection"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target6", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select method of averaging trend of emission intensities projections"),
+                                    id="hover6", target="hover-target6", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RadioItems(
+            id="projection-method",
+            options=[
+                {'label': 'Median', 'value': 'median'},
+                {'label': 'Mean', 'value': 'mean'},
+            ],
+            value='median',
+            inputStyle={"margin-right": "10px", "margin-left": "30px"},
+            inline=True,
+        ),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Scope selection
+            [
+                dbc.Col(
+                    dbc.Label("\N{abacus} Select Scope(s) to Evaluate"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target10", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select Scope(s) to process (S1, S1+S2, S3, S1+S1+S3, or All Scopes)"),
+                                    id="hover10", target="hover-target10", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RadioItems(
+            id="scope-options",
+            options=[
+                {'label': 'S1', 'value': 'S1'},
+                {'label': 'S2', 'value': 'S2'},
+                {'label': 'S1S2', 'value': 'S1S2'},
+                {'label': 'S3', 'value': 'S3'},
+                {'label': 'S1S2S3', 'value': 'S1S2S3'},
+                {'label': 'All Scopes', 'value': ''},
+            ],
+            value='S1S2S3',
+            inputStyle={"margin-right": "10px", "margin-left": "30px"},
+            inline=True,
+        ),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Winsorization of scenarios
+            [
+                dbc.Col(
+                    dbc.Label("\N{wrench} Select winsorization value cap range"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target8", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select which extreme datapoints of historical emission intensities you would like to exclude from calculations of projections"),
+                                    id="hover8", target="hover-target8", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RangeSlider(
+            id="scenarios-cutting",
+            min=0, max=100,
+            value=[ProjectionControls.LOWER_PERCENTILE * 100, ProjectionControls.UPPER_PERCENTILE * 100],
+            step=10,
+            marks={i: str(i) for i in range(0, 101, 10)},
+            allowCross=False
+        ),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Set ProjectionControls TARGET_YEAR
+            [
+                dbc.Col(
+                    dbc.Label("\N{wrench} Select projection end year (2025-2050)"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{calendar}", id="hover-target9", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select the ending year of the benchmark analysis"),
+                                    id="hover9", target="hover-target9", trigger="hover"),
+                    ], width=4,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Slider(
+            id="target-year",
+            min=2025, max=2050,
+            value=2050,
+            step=5,
+            marks={i: str(i) for i in range(2025, 2051, 5)},
+        ),
+        html.Div(id="bm-budgets-target-year")
+    ],
+)
+
+itr_titlebar = dbc.Row(  # upload portfolio
+    [
+        dbc.Col(  # upload OS-C logo
+            dbc.CardImg(
+                src="https://os-climate.org/wp-content/uploads/sites/138/2021/10/OSC-Logo.png",
+                className='align-self-center',
+                # 'h-60 w-60 float-middle align-middle', # reducing size and alligning
+                        bottom=False),
+            width=2,
+            align="center",
+        ),
+        dbc.Col(
+            [
+                html.H1(id="banner-title", children=[
+                    html.A("OS-Climate Sector Alignment Tool", href="https://github.com/plotly/dash-svm",
+                           style={"text-decoration": "none", "color": "inherit"})]),
+                html.Div(
+                    children='Prototype tool for calculating the Implied Temperature Rise of investor portfolio in the steel and electric utilities sectors \N{deciduous tree}'),
+            ],
+            width=8,
+        ),
+        dbc.Col([html.Span(id="loading-template-data", hidden=False, children="loading template data...")]),
+        dbc.Col([
+            dbc.Spinner(
+                [
+                    html.H1(id="dummy-output-info", style={'color': 'white'}),
+                    html.Data(id="spinner-warehouse"),
+                    html.Data(id="spinner-eibm"),
+                    html.Data(id="spinner-ty"),
+                    html.Data(id="spinner-ty-ts"),
+                    html.Data(id="spinner-ts"),
+                    html.Data(id="spinner-graphs"),
+                    html.Data(id="spinner-xlsx"),
+                    html.Data(id="spinner-reset"),
+                ],
+                color="primary",
+                spinner_style={"width": "3rem", "height": "3rem"},
+                # value="Finished",
+            ),  # Spinner/Progress implementations
+        ], width=1, ),
+    ],
+    justify='between',  # for this to work you need some space left (in total there 12 columns)
+    align='center',
+)
+
+itr_filters_and_benchmarks = dbc.Col(
+    [  # filters pane
+        dbc.Card(
+            [
+                dbc.Row(
+                    [  # Row with key figures
+                        dbc.Col(html.H5("Filters", className="pf-filter")),  # PF score
+                        dbc.Col(
+                            html.Div(
+                                dbc.Button("Reset filters",
+                                           id="reset-filters-button",
+                                           outline=True, color="dark", size="sm",
+                                           className="me-md-2"
+                                           ),
+                                className="d-grid gap-2 d-md-flex justify-content-md-end"
+                            )
+                        ),
+                    ]
+                ),
+                html.P("Select part of your portfolio", className="text-black-50"),
+                filter_box,
+            ], body=True
+        ),
+        html.Br(),
+        dbc.Card(
+            [
+                html.H5("Benchmarks", className="macro-filters"),
+                html.P("Here you could adjust benchmarks of calculations",
+                       className="text-black-50"),
+                benchmark_box,
+            ], body=True
+        ),
+    ],
+    width=3,
+)
+
+itr_main_width = 9
+itr_main_figures = dbc.Col(
+    [  # main pane
+        dbc.Card([
+            dbc.Row(  # Row with key figures
+                [
+                    dbc.Col(  # PF score
+                        dbc.Card(
+                            [
+                                html.H1(id="output-info"),
+                                html.Div('Portfolio-level temperature rating of selected companies',
+                                         style={'color': 'black', 'fontSize': 16}),
+                                html.Div('in delta degree Celsius',
+                                         style={'color': 'grey', 'fontSize': 10}),
+                            ], body=True
+                        ),
+                    ),
+                    dbc.Col(  # Portfolio EVIC
+                        dbc.Card(
+                            [
+                                html.H1(id="evic-info"),
+                                html.Div('Enterprise Value incl. Cash of selected portfolio',
+                                         style={'color': 'black', 'fontSize': 16}),
+                                html.Div('in billions of template curr',
+                                         style={'color': 'grey', 'fontSize': 10}),
+                            ], body=True
+                        ),
+                    ),
+                    dbc.Col(  # Portfolio notional
+                        dbc.Card(
+                            [
+                                html.H1(id="pf-info"),
+                                html.Div('Total Notional of a selected portfolio',
+                                         style={'color': 'black', 'fontSize': 16}),
+                                html.Div('in millions of template curr',
+                                         style={'color': 'grey', 'fontSize': 10}),
+                            ], body=True
+                        ),
+                    ),
+                    dbc.Col(  # Number of companies
+                        dbc.Card(
+                            [
+                                html.H1(id="comp-info"),
+                                html.Div('Number of companies in the selected portfolio',
+                                         style={'color': 'black', 'fontSize': 16}),
+                                html.Div('# of companies', style={'color': 'grey', 'fontSize': 10}),
+                            ], body=True
+                        ),
+                    ),
+                ],
+            ),
+            dbc.Row(  # row with 2 graphs
+                [
+                    dbc.Col(dcc.Graph(id="co2-usage-vs-budget"), width=9),  # big bubble graph
+                    dbc.Col(dcc.Graph(id="itr-coverage"), ),  # covered stacked bar graph
+                ],
+            ),
+            dbc.Row(  # row with 2 graphs
+                [
+                    dbc.Col(dcc.Graph(id="industry-region-heatmap")),
+                    dbc.Col(dcc.Graph(id="highest-ts-barchart")),
+                ]
+            ),
+            dbc.Row(  # row with 1 bar graph
+                [
+                    dbc.Col(dcc.Graph(id="ts-aggr-barchart")),
+                ]
+            ),
+        ], body=True),
+        html.Br(),
+    ],
+    width=itr_main_width,
+)
+
+itr_portfolio_width = 10
+itr_portfolio = dbc.Card(
+    [
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.H5(
+                        "Table below contains details about the members of the selected portfolio"),
+                    width=itr_portfolio_width,
+                ),
+                dbc.Col(
+                    html.Div(
+                        [
+                            dbc.Button("Export table to spreadsheet",
+                                       id="export-to-excel",
+                                       size="sm", className="me-md-2"
+                                       ),
+                            dcc.Download(id="download-dataframe-xlsx"),
+                        ],
+                        className="d-grid gap-2 d-md-flex justify-content-md-end"
+                    ),
+                    width=2,
+                ),
+            ],
+            align="center",
+        ),
+        html.Br(),
+        html.Div(id='display-excel-data'),
+    ], body=True
+)
+
+# Define Layout
+app.layout = dbc.Container(  # always start with container
+    children=[
+        html.Hr(),  # small space from the top
+        itr_titlebar,           # This has static text and the spinner
+        html.Hr(),
+        dbc.Row(
+            [
+                itr_filters_and_benchmarks,
+                itr_main_figures,
+            ]
+        ),
+        itr_portfolio,
+#        html.Data(id="scope-column"),
+        html.Data(id="scope-options-ty"),
+        html.Data(id="scope-value-ty"),
+#         html.Data(id="scope-options-reset"),
+        dcc.Store(id="warehouse"),
+        dcc.Store(id="warehouse-eibm"),
+        dcc.Store(id="warehouse-ty"),
+        dcc.Store(id="portfolio-df"),
+        html.Data(id="sector-dropdown-ty"),
+        html.Data(id="sector-value-ty"),
+        html.Data(id="region-dropdown-ty"),
+        html.Data(id="region-value-ty"),
+#        html.Data(id="sector-dropdown-reset"),
+#        html.Data(id="region-dropdown-reset"),
+        html.Data(id="show-oecm-bm"),
+        html.Data(id="bm-region-eibm"),
+        html.Data(id="bm-region-ts"),
+        html.Data(id="bm-budget"),
+        html.Data(id="bm-1e-budget"),
+        html.Data(id="bm-2e-budget"),
+        html.Data(id="tempscore-ty-ts"),
+        html.Data(id="reset-sector-region-scope"),
+        # dash_table.DataTable(df.to_dict('records'), [{"name": i, "id": i} for i in df.columns])
+    ],
+    fluid=True,
+    style={"max-width": "1920px"},
+)
+
+@app.callback(
+    Output("warehouse", "data"),
+    Output("loading-template-data", "hidden"),
+    Output("spinner-warehouse", "value"),
+
+    Input("banner-title", "children"),) # Just something to get us going...
+def warehouse_new(banner_title):
+    # load company data
+    template_company_data = TemplateProviderCompany(company_data_path, projection_controls = ProjectionControls())
+    Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
+                              estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
+    return (json.dumps(pickle.dumps(Warehouse), default=str),
+            True,
+            "Spin-warehouse")
+
 @dash.callback(
-    output = (Output("scope-options-ts", "value"),
-              Output("sector-region-scope-ty-ts", "children"),
-              Output("bm-budget", "children"),
-              Output("bm-1e-budget", "children"),
-              Output("bm-2e-budget", "children"),
-              Output("tempscore-ty-ts", "children"),
-              Output("spinner-ty-ts", "value"),),  # fake for spinner
-
-    inputs = (Input("warehouse-ty", "data"),
-              Input("sector-dropdown", "options"),
-              Input("sector-dropdown", "value"),
-              Input("region-dropdown", "value"),
-              Input("scope-options", "value"),),
-
+    output=(Output("warehouse-eibm", "data"),        # Warehouse initialized with benchmark
+            # We cannot set scope_options based on benchmark, because that may depend on sector
+            Output("show-oecm-bm", "value"),
+            Output("bm-region-eibm", "value"),
+            Output("spinner-eibm", "value"),),  # fake for spinner
+    inputs=(Input("warehouse", "data"),
+            Input("eibm-dropdown", "value"),
+            Input("projection-method", "value"),
+            Input("scenarios-cutting", "value"),
+            State("benchmark-region", "children"),), # winzorization slider
     background=True,
-
     prevent_initial_call=True,)
-def recalculate_target_year_ts(warehouse_pickle_json, sectors_dict_list, sector, region, scope):
+# load default intensity benchmarks
+def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
     '''
-    Recalculate budget amounts and aligned temperature score for Warehouse after setting target year.
-    These calculations are for display purposes.  Downstream processes make their own decisions with respect to upstream Warehouse.
+    Reload Emissions Intensity benchmark from a selected file
+    :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
+    :param eibm: Emissions Intensity benchmark identifier
+    :param proj_meth: Trajectory projection method (median or mean)
+    :param winz: Winsorization parameters (limit of outlier data)
+    '''
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
+    Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
+
+    if 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:  # if winzorization params were changed
+        Warehouse.company_data.projection_controls.TREND_CALC_METHOD = ITR_median if proj_meth == 'median' else ITR_mean
+        Warehouse.company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
+        Warehouse.company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
+
+    if 'eibm-dropdown' in changed_id or Warehouse.benchmarks_projected_ei is None:
+        show_oecm_bm = 'no'
+        if eibm == 'OECM_PC':
+            benchmark_file = benchmark_EI_OECM_PC_file
+            show_oecm_bm = 'yes'
+        elif eibm == 'OECM_S3':
+            benchmark_file = benchmark_EI_OECM_S3_file
+            show_oecm_bm = 'yes'
+        elif eibm.startswith('TPI_2_degrees'):
+            benchmark_file = benchmark_EI_TPI_file
+        elif eibm == 'TPI_15_degrees':
+            benchmark_file = benchmark_EI_TPI_15_file
+        elif eibm == 'OECM':
+            benchmark_file = benchmark_EI_OECM_file
+            logger.info('OECM benchmark is for backward compatibility only.  Use OECM_PC instead.')
+        else:
+            benchmark_file = benchmark_EI_TPI_below_2_file
+        # load intensity benchmarks
+        benchmark_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_file)
+        with open(benchmark_EI) as json_file:
+            parsed_json = json.load(json_file)
+        if eibm.startswith('TPI_2_degrees'):
+            extra_EI = os.path.join(root, examples_dir, data_dir, data_json_units_dir,
+                                    benchmark_EI_TPI_2deg_high_efficiency_file if '_high_efficiency' in eibm
+                                    else benchmark_EI_TPI_2deg_shift_improve_file)
+            with open(extra_EI) as json_file:
+                extra_json = json.load(json_file)
+                for scope_name in EScope.get_scopes():
+                    if scope_name in extra_json:
+                        if scope_name not in parsed_json:
+                            parsed_json[scope_name] = extra_json[scope_name]
+                        else:
+                            parsed_json[scope_name]['benchmarks'] += extra_json[scope_name]['benchmarks']
+        EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
+        # This updates benchmarks and all that depends on them (including trajectories)
+        Warehouse.update_benchmarks(base_production_bm, EI_bm)
+        bm_region = eibm
+    elif 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:
+        # Trajectories are company-specific, but ultimately do depend on benchmarks (for units/scopes)
+        Warehouse.update_trajectories()
+
+    return (json.dumps(pickle.dumps(Warehouse), default=str),
+            show_oecm_bm,
+            bm_region,
+            "Spin-eibm")
+
+# A fresh benchmark (warehouse-eibm) can set/reset sector/region/scope options and values
+@dash.callback(
+    output = (Output("warehouse-ty", "data"),
+              Output("sector-dropdown-ty", "value"),
+              Output("sector-value-ty", "value"),
+              Output("region-dropdown-ty", "value"),
+              Output("region-value-ty", "value"),
+              Output("scope-options-ty", "value"),
+              Output("scope-value-ty", "value"),
+              Output("spinner-ty", "value"),),  # fake for spinner
+    inputs = (Input("warehouse-eibm", "data"),
+              Input("target-year", "value"),
+
+              State("sector-dropdown", "value"),
+              State("region-dropdown", "value"),
+              State("scope-options", "value"),),
+    # background=True,
+    prevent_initial_call=True,)
+def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector, region, scope, *_):
+    '''
+    When changing endpoint of benchmark budget calculations, update total budget and benchmark ITR resulting therefrom.
+    We assume that 'Global' is the all-world, not rest-of-world, for any benchmark.
+    Where possible, honor users' selection of SCOPE, REGION, and SCOPE_LIST, and where necessary, adjust
+    REGION and SCOPE_LIST to accommodate SECTOR selection.  But don't "listen" for new user SECTOR/REGION/SCOPE
+    choices.
     '''
 
-    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
 
     # All benchmarks use OECM production
     prod_bm = Warehouse.benchmark_projected_production
     EI_bm = Warehouse.benchmarks_projected_ei
-    bm_energy_calcs = False
-    df_fundamentals = Warehouse.company_data.df_fundamentals
-    zero_co2 = Q_(0.0, 'Gt CO2e')
 
+    df_fundamentals = Warehouse.company_data.df_fundamentals
+    df_fundamentals = df_fundamentals[df_fundamentals.index.isin(df_portfolio.company_id)]
+    sectors = set(df_fundamentals.sector) & set(EI_bm._EI_df.index.get_level_values('sector'))
+    regions = set(df_fundamentals.region) & set(EI_bm._EI_df.index.get_level_values('region')) | {'Global'}
+
+    df = EI_bm._EI_df
+    # Our Warehouse doesn't retain side-effects, so we cannot "set-and-forget"
+    # Instead, we have to re-make the change for the benefit of downstream users...
+    EI_bm.projection_controls.TARGET_YEAR = target_year
+    Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
+
+    if sector not in sectors:
+        sector = ''
+        EI_sectors = df[df.index.get_level_values('sector').isin(sectors)]
+        sector_scopes = EI_sectors[df.columns[0]].groupby(['sector', 'scope']).count()
+        if not sector_scopes.index.get_level_values('sector').duplicated().any():
+            # TPI is a scope-per-sector benchmarks, so looks best when we see all scopes
+            scope = ''
+            EI_scopes = sector_scopes.index.get_level_values('scope').unique()
+        else:
+            EI_scopes = EI_sectors.index.get_level_values('scope').unique()
+    else:
+        EI_sectors = df.loc[sector]
+        EI_scopes = EI_sectors.index.get_level_values('scope').unique()
+
+    if region not in regions:
+        region = ''
+
+    if not scope or EScope[scope] not in EI_scopes:
+        scope = ''
+
+    return (
+        json.dumps(pickle.dumps(Warehouse), default=str),
+        json.dumps([{"label": i, "value": i} for i in sorted(sectors)] + [{'label': 'All Sectors', 'value': ''}]),
+        sector,
+        json.dumps([{"label": i, "value": i} for i in sorted(regions)] + [{'label': 'All Regions', 'value': ''}]),
+        region,
+        json.dumps([{"label": scope.name, "value": scope.name} for scope in sorted(EI_scopes)] + [{'label': 'All Scopes', 'value': ''}]),
+        scope,
+        "Spin-ty",
+    )
+
+# `recalculate_warehouse_target_year` is the central switchboard for sector/region/scope changes.
+# These changes may come from selecting a fresh benchmark (which has its own sector/region/scope coverage)
+# or from direct manipulation of the dropdowns/radio buttons.
+
+# some words on the current concept of Scope Math
+# 
+# For a single sector, any and all scope combinations give "valid" footprint descriptions...
+# ...and we can compare against the scope footprints of the sector.
+# 
+# Beyond the sector is the Acvitity (Primary Energy, Secondary Energy, End Use)
+# We can aggregate within an Activity as we do within a Sector, noting that End Use has special S3 rules.
+# ...and if we have the same scope data for each sector and the overall activity,
+# we can compare the activity-aggregated sectors with the benchmark budget (on a per-scope or all-scope basis).
+#
+# If we look across multiple Activities, scopes give the rules:
+# The Scope 1 footprint can be computed as the sum of S1 scope emissions across all sectors (company aggregates and benchmark budget)
+# The Scope 2 footprint can be computed as the sum of S2 scope emissions across all sectors (company aggregates and benchmark budget)
+# The S1+S2 footprint can be computed as sum(S1) + abs(sum(S2) - Electric Utilties S1) (company aggregates and benchmark budget)
+# If there are no Electricity Utilities in the sector, then it just aggregates all S1+S2 across all sectors
+# There's no meaningful S3 aggregation in the multi-activity case
+# For S1+S2+S3, we separate Energy from Power from End Use, then...
+# The S1+S2+S3 footprint for Energy is meaningful (if Energy is in the mix)
+# The S1+S2+S3 footprint for Utilities is meaningful (if Utilities are in the mix)
+# The S1+S2+S3 are meaningful for End Use as follows: sum(S1+S2) + S3(cement, buildings, aviation, shipping, roads)
+# The overall S1+S2+S3 budget is also meaningful
+
+# Presumption is that when called, any selection of an available sector, region, or scope option has data (though other optios may need to change)
+@dash.callback(
+    output = (Output("sector-dropdown", "options"),
+              Output("sector-dropdown", "value"),
+              Output("region-dropdown", "options"),
+              Output("region-dropdown", "value"),
+              Output("scope-options", "options"),
+              Output("scope-options", "value"),
+              Output("bm-budget", "value"),
+              Output("bm-1e-budget", "value"),
+              Output("bm-2e-budget", "value"),
+              Output("tempscore-ty-ts", "value"),
+              Output("bm-region-ts", "value"),
+              Output("spinner-ty-ts", "value"),),  # fake for spinner
+    inputs = (Input("warehouse-ty", "data"),
+              Input("sector-dropdown-ty", "value"),
+              Input("sector-value-ty", "value"),
+              Input("region-dropdown-ty", "value"),
+              Input("region-value-ty", "value"),
+              Input("scope-options-ty", "value"),
+              Input("scope-value-ty", "value"),
+
+              State("sector-dropdown", "options"),
+              Input("sector-dropdown", "value"),
+              State("region-dropdown", "options"),
+              Input("region-dropdown", "value"),
+              State("scope-options", "options"),
+              Input("scope-options", "value"),),
+#    background=True,
+    prevent_initial_call=True,)
+def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, regions_ty, region_ty, scopes_ty, scope_ty,
+                               sectors_dl, sector, regions_dl, region, scopes_dl, scope,):
+    '''
+    Recalculate budget amounts and aligned temperature score for Warehouse after setting target year.
+    These calculations are for display purposes, especially REGION, which is a company-disclosed value, not necessarily in the benchmark.
+    Downstream processes make their own decisions with respect to upstream Warehouse.
+    '''
+
+    changed_ids = [p['prop_id'] for p in dash.callback_context.triggered]  # to catch which widgets were pressed
+    Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
+
+    # All benchmarks use OECM production
+    prod_bm = Warehouse.benchmark_projected_production
+    df_fundamentals = Warehouse.company_data.df_fundamentals
+    df_fundamentals = df_fundamentals[df_fundamentals.index.isin(df_portfolio.company_id)]
+    zero_co2 = Q_(0.0, 'Gt CO2e')
+    EI_bm = Warehouse.benchmarks_projected_ei
     df_ei = EI_bm._EI_df
+
+    # pf_bm_* is the overlap of our portfolio and our benchmark
+    pf_bm_sectors = set(df_fundamentals.sector) & set(df_ei.index.get_level_values('sector'))
+    pf_bm_regions = set(df_ei.loc[list(pf_bm_sectors)].index.get_level_values('region'))
+    # pf_regions contains company-specific regions, like Asia, Great Britain, etc.
+    # pf_regions = set(df_fundamentals.region)
+
+    # sector/region/scope inputs from benchmarks attempt to preserve settings,
+    # but if the previous sector or region or scope setting is not valid
+    # for the benchmark, the incoming value will be '', meaning all.
+    # In the function, we use sector, region, and scope to narrow down on our footprint;
+    # the *_ts versions are the values we'll use in updates, which may be wider or narrower than our starting point.
+    # For example, when selecting a scope that is only defined for a few sectors, that selection must narrow the sector selector.
+    # When selecting "All Scopes", it should widen back out to the full list.
+    changed_ty = False
+    if "warehouse-ty.value" in changed_ids:
+        changed_ty = True
+    if "sector-dropdown-ty.value" in changed_ids:
+        sectors_dl = json.loads(sectors_ty)
+        sector = sector_ty
+        changed_ty = True
+    if "region-dropdown-ty.value" in changed_ids:
+        regions_dl = json.loads(regions_ty)
+        region = region_ty
+        changed_ty = True
+    if "scope-options-ty.value" in changed_ids:
+        scopes_dl = json.loads(scopes_ty)
+        scope = scope_ty
+        changed_ty = True
+    # The _ts versions are what we will return; the non-ts versions are what we use
+    sector_ts, region_ts, scope_ts = sector, region, scope
+    if not changed_ty:
+        # If we entered otherwise, it was the user's own selection of Sector, Region, or Scope
+        # Sector could narrow Region or Scope
+        # Scope could narrow Sector.  But we never widen past `sectors` (which is limited by portfolio)
+
+        # sectors, regions, and scopes will become options user can select in the future
+        # pf_bm_df is the universe from which we narrow selections
+        # sectors_dl are ultimately the sectors we sum across (with sector, region and scope to select)
+        pf_bm_df = df_ei.loc[list(pf_bm_sectors)].drop(columns=df_ei.columns).reset_index('scope')
+        # retain the company-designated region information--we'll match to the benchmark when necessary
+        pf_bm_df = pf_bm_df.merge(df_fundamentals[['sector','region']].drop_duplicates(), on=['sector'])
+        selector = ''
+        sectors = set(pf_bm_df.sector)
+        regions = set(pf_bm_df.region)
+        if "sector-dropdown.value" in changed_ids:
+            # 3 options: select sector, sectors narrowed by scope/region, all sectors
+            if sector not in [ '', '+' ]:
+                pf_bm_df = pf_bm_df[pf_bm_df.sector.eq(sector)]
+                if regions - set(pf_bm_df.region):
+                    regions = set(pf_bm_df.region)
+                    if region == '':
+                        region_ts = '+'
+                    selector = 'sectors'
+                if region == '+':
+                    region = ''
+            elif sector_ts == '+':
+                # If we can safely narrow to scope/region, do so (and take note).
+                # Otherwise, drop constraint so that requesting something wider is wider
+                if scope and EScope[scope] in pf_bm_df.scope.values:
+                    selector = 'scopes'
+                    pf_bm_df = pf_bm_df[pf_bm_df.scope.eq(EScope[scope])]
+                else:
+                    scope = ''
+                if region in pf_bm_df.region.values:
+                    selector = "scopes and regions" if selector else "regions"
+                    pf_bm_df = pf_bm_df[pf_bm_df.region.eq(region)]
+                else:
+                    region = ''
+            else:
+                # Widen to all sectors
+                if 'Energy' in df_ei.index:
+                    # Better default for OECM
+                    scope_ts = scope = EScope.S1S2S3.name
+                else:
+                    scope_ts = scope = ''
+                region_ts = region = ''
+            # Narrow or widen by sector...
+            scopes = set(pf_bm_df.scope)
+            if sector_ts == '+':
+                # Change this last so we retain all the regions and scopes if narrowing
+                sectors = set(pf_bm_df.sector)
+        elif "region-dropdown.value" in changed_ids:
+            if region not in [ '', '+' ]:
+                pf_region_sectors = pf_bm_df[pf_bm_df.region.eq(region)]
+                if sector == '' and sectors - set(pf_region_sectors.sector):
+                    sector_ts = '+'
+                if sector_ts == '+':
+                    selector = 'regions'
+                sectors = set(pf_region_sectors.sector)
+            if region_ts == '+' or sector not in [ '', '+' ]:
+                # If we can safely narrow to sector/scope, do so (and take note).
+                # Otherwise, drop constraint so that requesting something wider is wider
+                if sector in pf_bm_df.sector.values:
+                    pf_bm_df = pf_bm_df[pf_bm_df.sector.eq(sector)]
+                    if regions - set(pf_bm_df.region):
+                        if region in [ '', '+' ]:
+                            region_ts = '+'
+                            selector = 'sectors'
+                            regions = set(pf_bm_df.region)
+                            region = ''
+                        else:
+                            regions = set(pf_bm_df.region)
+                else:
+                    sector = ''
+                    selector = 'regions'
+                scopes = set(pf_bm_df.scope)
+                if scope and EScope[scope] in scopes:
+                    pf_bm_df = pf_bm_df[pf_bm_df.scope.eq(EScope[scope])]
+                    if region in [ '', '+' ] and regions - set(pf_bm_df.region):
+                        region_ts = '+'
+                        selector = "sectors and scopes" if selector else "scopes" 
+                        regions = set(pf_bm_df.region)
+                        region = ''
+                else:
+                    scope = ''
+            else:
+                scopes = set(pf_bm_df.scope)
+        elif "scope-options.value" in changed_ids:
+            scopes = set(pf_bm_df.scope)
+            if scope:
+                pf_bm_df = pf_bm_df[pf_bm_df.scope.eq(EScope[scope])]
+                # Use scope to narrow sector/region choices
+                if sector in sectors:
+                    pf_bm_df = pf_bm_df[pf_bm_df.sector.eq(sector)]
+                else:
+                    if sectors - set(pf_bm_df.sector):
+                        sector_ts = '+'
+                    sector = ''
+                if region in regions:
+                    pf_bm_df = pf_bm_df[pf_bm_df.region.eq(region)]
+                else:
+                    if regions - set(pf_bm_df.region):
+                        region_ts = '+'
+                    region = ''
+            else:
+                # Unwrap scope narrowing side-effects when widening
+                if sector_ts == '+':
+                    sector_ts = sector = ''
+                if region_ts == '+':
+                    region_ts = region = ''
+                
+            if scope and region:
+                selector = 'scopes and regions'
+            elif scope:
+                selector = 'scopes'
+            elif region:
+                selector = 'region'
+        else:
+            assert False
+
+        sectors_dl = [{"label": s, "value": s} for s in sorted(sectors)] + [{'label': 'All Sectors', 'value': ''}]
+        if sector_ts == '+' or (sector == '' and pf_bm_sectors - sectors):
+            sectors_dl.insert(-1, {'label': f'All Sectors (in {selector})', 'value': '+'})
+            sector = ''
+            sector_ts = '+'
+        regions_dl = [{"label": r, "value": r} for r in sorted(regions)] + [{'label': 'All Regions', 'value': ''}]
+        if region_ts == '+' or (region == '' and pf_bm_regions - regions):
+            regions_dl.insert(-1, {'label': f'All Regions (in sectors)', 'value': '+'})
+            region = ''
+            region_ts = '+'
+        scopes_dl = [{"label": s.name, "value": s.name} for s in sorted(scopes)] + [{'label': 'All Scopes', 'value': ''}]
+        scope_ts = scope
+
     if not scope:
         if 'Energy' in df_ei.index:
             if EI_bm._EI_benchmarks['S1S2'].production_centric:
@@ -992,21 +1183,36 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_dict_list, sector,
             scope_list = None
     else:
         scope_list = [ EScope[scope] ]
-    if not region:
-        region = 'Global'
+
+    if not changed_ty:
+        # From here on out, we use benchmark regions, not company-given regions to compute benchmark budgets.
+        # The first guess is that REGION can be our BM_REGION.
+        bm_region = region
+        if bm_region not in df_ei.loc[pf_bm_df.sector.unique()].index.get_level_values('region'):
+            # Convert '' (all regions) or custom region names to 'Global'
+            bm_region = 'Global'
+        elif sector:
+            if df_ei.loc[([ sector ], [ region ], scope_list if scope_list else slice(None))].empty:
+                bm_region = 'Global'
+        elif len(df_ei.loc[(list(sectors), [ region ], scope_list if scope_list else slice(None))]) < len(sectors):
+            # If company-based region fans across multiple regions, set bm_region to 'Global'
+            bm_region = 'Global'
+    else:
+        # Trust that regions coming from *_ty are canonical
+        bm_region = region if region else 'Global'
 
     target_year_1e_cum_co2 = None
     target_year_2e_cum_co2 = None
     if sector:
         sectors = { sector }
-        target_year_cum_co2 = get_co2_per_sector_region_scope(prod_bm, df_ei, sector, region, scope_list)
+        target_year_cum_co2 = get_co2_per_sector_region_scope(prod_bm, df_ei, sector, bm_region, scope_list)
     else:
-        sectors = { x['value'] for x in sectors_dict_list if x['value'] }
+        sectors = { x['value'] for x in sectors_dl if not x['value'] in ['', '+'] }
         if 'Energy' in df_ei.index:
             # We are in OECM
             if scope_list[0] in [ EScope.S1, EScope.S2 , EScope.S3 ]:
                 # For Scope 1 and Scope 2, we can just aggregate companies across all sectors (and error if S3)
-                target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, sectors, region, scope_list)
+                target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, sectors, bm_region, scope_list)
             else:
                 # Single or Multiple activities...
                 
@@ -1016,14 +1222,14 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_dict_list, sector,
                 end_use_sectors = sectors - energy_sectors - utility_sectors
 
                 if energy_sectors:
-                    target_year_1e_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, energy_sectors, region, scope_list)
+                    target_year_1e_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, energy_sectors, bm_region, scope_list)
                 if utility_sectors:
-                    target_year_2e_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, utility_sectors, region, scope_list)
+                    target_year_2e_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, utility_sectors, bm_region, scope_list)
                 if end_use_sectors:
-                    target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, end_use_sectors, region, scope_list)
+                    target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, end_use_sectors, bm_region, scope_list)
                 else:
                     if target_year_1e_cum_co2 is not None:
-                        if target_year_2e_cum_co2:
+                        if target_year_2e_cum_co2 is not None:
                             target_year_cum_co2 = target_year_2e_cum_co2
                             target_year_2e_cum_co2 = None
                         else:
@@ -1032,9 +1238,11 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_dict_list, sector,
                     elif target_year_2e_cum_co2 is not None:
                         target_year_cum_co2 = target_year_2e_cum_co2
                         target_year_2e_cum_co2 = None
+                    else:
+                        assert False
         else:
             # We are in TPI
-            target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, sectors, region, scope_list)
+            target_year_cum_co2 = get_co2_in_sectors_region_scope(prod_bm, df_ei, sectors, bm_region, scope_list)
 
         assert EI_bm.projection_controls.TARGET_YEAR in target_year_cum_co2.index
 
@@ -1048,56 +1256,55 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_dict_list, sector,
     # FIXME: Note that we cannot use ts_cc.scenario_target_temperature because that doesn't track the benchmark value
     # And we cannot make it track the benchmark value because then it becomes another global variable that would break Dash.
     target_year_ts = EI_bm._benchmark_temperature + (total_target_co2 - total_final_co2) * ts_cc.tcre_multiplier
-    EI_scopes = set()
-    for sector in sectors:
-        EI_scopes = EI_scopes | set(df_ei.loc[sector].index.get_level_values('scope'))
     return (
-        json.dumps([{"label": scope.name, "value": scope.name} for scope in sorted(EI_scopes)] + [{'label': 'All Scopes', 'value': ''}]),
-        json.dumps([sector, region, scope]),
+        sectors_dl, sector_ts,
+        regions_dl, region_ts,
+        scopes_dl, scope_ts,
         f"{round(total_target_co2.m, 3)} Gt CO2e",
-        f"{round(target_year_1e.m, 3)} Gt CO2e" if target_year_1e_cum_co2 is not None else "", # bm-1e-budget
-        f"{round(target_year_2e.m, 3)} Gt CO2e" if target_year_2e_cum_co2 is not None else "", # bm-2e-budget
+        f"{round(target_year_1e.m, 1)} Gt CO2e" if target_year_1e_cum_co2 is not None else "", # bm-1e-budget
+        f"{round(target_year_2e.m, 1)} Gt CO2e" if target_year_2e_cum_co2 is not None else "", # bm-2e-budget
         f"{round(target_year_ts.m, 3)}˚C",
+        bm_region,               # Unhide "benchmark-region" and display REGION
         # EI_bm.projection_controls.TARGET_YEAR,
         "Spin-ty",
     )
 
 @app.callback(
-    Output("scope-options", "options"),
+    Output("benchmark-region", "hidden"),
+    Output("benchmark-region", "children"),
 
-    Input("scope-options-ty", "value"),
-    Input("scope-options-ts", "value"),
+    Input("bm-region-eibm", "value"),
+    Input("bm-region-ts", "value"),
 
     prevent_initial_call=True,)
-def update_scope_options(scope_options_ty, scope_options_ts):
-    new_scope_options = None
+def set_bm_region(bm_region_eibm, bm_region_ts):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
-    if "scope-options-ts" in changed_id:
-        new_scope_options = scope_options_ts
+    if 'bm-region-eibm' in changed_id:
+        return (True, f"New EI Benchmark {bm_region_eibm} Loaded")
     else:
-        new_scope_options = scope_options_ty
-    return json.loads(new_scope_options)
+        return (False, f"Benchmark region: {bm_region_ts}")
 
 @app.callback(
     Output("bm-budgets-target-year", "children"),
 
     Input("show-oecm-bm", "value"),
     Input("target-year", "value"),
-    Input("bm-budget", "children"),
-    Input("bm-1e-budget", "children"),
-    Input("bm-2e-budget", "children"),
-    Input("tempscore-ty-ts", "children"),
+    Input("bm-budget", "value"),
+    Input("bm-1e-budget", "value"),
+    Input("bm-2e-budget", "value"),
+    Input("tempscore-ty-ts", "value"),
 
     prevent_initial_call=True,)
 def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budget, bm_2e_budget, tempscore_ty):
     if show_oecm=="yes":
         children = [ html.Div([html.Span(f"Benchmark totals through {target_year}")]), ]
-        if not bm_1e_budget.startswith('0.0 '):
+        if bm_1e_budget: # .startswith('0.0 '):
             children.append(html.Div([html.Span(f"Primary energy budget: {bm_1e_budget}")]))
-        if not bm_2e_budget.startswith('0.0 '):
+        if bm_2e_budget: # .startswith('0.0 '):
             children.append(html.Div([html.Span(f"Secondary energy budget: {bm_2e_budget}")]))
-        if not bm_end_use_budget.startswith('0.0 '):
-            children.append(html.Div([html.Span(f"End-use budget: {bm_end_use_budget}")]))
+        if len(children)==1 and not bm_end_use_budget: # .startswith('0.0 '):
+            bm_end_use_budget = '0.0 Gt CO2e'
+        children.append(html.Div([html.Span(f"End-use budget: {bm_end_use_budget}")]))
     else:
         children = [html.Div([html.Span(f"Benchmark budget through {target_year}: {bm_end_use_budget}")])]
     return children + [html.Div([html.Span(f"ITR of benchmark: {tempscore_ty}")])]
@@ -1142,49 +1349,60 @@ def calc_temperature_score(warehouse_pickle_json, *_):
 
     Input("portfolio-df", "data"),
     Input("temp-score-range", "value"),
+    State("sector-dropdown", "options"),
     Input("sector-dropdown", "value"),
+    State("region-dropdown", "options"),
     Input("region-dropdown", "value"),
+    State("scope-options", "options"),
     Input("scope-options", "value"),
 
     prevent_initial_call=True,)
 def update_graph(
         portfolio_json,
         te_sc,
-        sec, reg, scope,
+        sectors_dl, sec, regions_dl, reg, scopes_dl, scope,
 ):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     amended_portfolio = pd.read_json(portfolio_json, orient='split')
     # Why does this get lost in translation?
     amended_portfolio.index.name='company_id'
-    amended_portfolio = amended_portfolio.assign(scope=lambda x: x.scope.map(lambda y: EScope[y]),
-                                                 time_frame=lambda x: x.time_frame.map(lambda y: ETimeFrames[y]),
-                                                 score_result_type=lambda x: x.score_result_type.map(lambda y: EScoreResultType[y]),
-                                                 temperature_score=lambda x: x.temperature_score.map(Q_).astype('pint[delta_degC]'),
-                                                 ghg_s1s2=lambda x: x.ghg_s1s2.map(Q_).astype('pint[t CO2e]'),
-                                                 # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
-                                                 ghg_s3=lambda x: x.ghg_s3.map(Q_).astype('pint[t CO2e]'),
-                                                 cumulative_budget=lambda x: x.cumulative_budget.map(Q_).astype('pint[t CO2e]'),
-                                                 cumulative_trajectory=lambda x: x.cumulative_trajectory.map(Q_).astype('pint[t CO2e]'),
-                                                 cumulative_target=lambda x: x.cumulative_target.map(Q_).astype('pint[t CO2e]'),
-                                                 trajectory_score=lambda x: x.trajectory_score.map(Q_).astype('pint[delta_degC]'),
-                                                 target_score=lambda x: x.target_score.map(Q_).astype('pint[delta_degC]'))
+    amended_portfolio = amended_portfolio.assign(
+        scope=lambda x: x.scope.map(lambda y: EScope[y]),
+        time_frame=lambda x: x.time_frame.map(lambda y: ETimeFrames[y]),
+        score_result_type=lambda x: x.score_result_type.map(lambda y: EScoreResultType[y]),
+        temperature_score=lambda x: x.temperature_score.map(Q_).astype('pint[delta_degC]'),
+        ghg_s1s2=lambda x: x.ghg_s1s2.map(Q_).astype('pint[t CO2e]'),
+        # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
+        ghg_s3=lambda x: x.ghg_s3.map(Q_).astype('pint[t CO2e]'),
+        cumulative_budget=lambda x: x.cumulative_budget.map(Q_).astype('pint[t CO2e]'),
+        cumulative_trajectory=lambda x: x.cumulative_trajectory.map(Q_).astype('pint[t CO2e]'),
+        cumulative_target=lambda x: x.cumulative_target.map(Q_).astype('pint[t CO2e]'),
+        trajectory_score=lambda x: x.trajectory_score.map(Q_).astype('pint[delta_degC]'),
+        target_score=lambda x: x.target_score.map(Q_).astype('pint[delta_degC]'))
 
     temp_score_mask = (amended_portfolio.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio.temperature_score <= Q_(te_sc[1], 'delta_degC'))
     # Dropdown filters
-    if not sec:
-        sec_mask = (amended_portfolio.sector != 'dummy')  # select all
+    if sec in ['', '+']:
+        # If the benchmark doesn't cover the sector, don't try to plot the company
+        sectors = [ s['value'] for s in sectors_dl if not s['value'] in ['', '+'] ]
+        sec_mask = amended_portfolio.sector.isin(sectors)  # select all
+        sec = ''
     else:
-        sec_mask = amended_portfolio.sector == sec
-    if not reg:
-        reg_mask = (amended_portfolio.region != 'dummy')  # select all
+        sec_mask = (amended_portfolio.sector == sec)
+    if reg in ['', '+', 'Global' ]:
+        # If a company's region is not in the benchmark, it will be treated as 'Global' (no harm, no foul)
+        reg_mask = amended_portfolio.region.map(lambda *_:True)
+        reg = ''
     else:
         reg_mask = (amended_portfolio.region == reg)
     if not scope:
-        scope_mask = (amended_portfolio.scope != 'dummy')
+        # Tricky bit: scope must be valid for sector; solve problem half-way by eliminating scopes not in any sector
+        scopes = [ EScope[s['value']] for s in scopes_dl[:-1] ]
+        scope_mask = amended_portfolio.scope.isin(scopes)  # select all
     else:
         scope_mask = (amended_portfolio.scope == EScope[scope])
-    filt_df = amended_portfolio.loc[temp_score_mask & sec_mask & reg_mask & scope_mask]  # filtering
+    filt_df = amended_portfolio[temp_score_mask & sec_mask & reg_mask & scope_mask]  # filtering
     if len(filt_df) == 0:  # if after filtering the dataframe is empty
         # breakpoint()
         raise PreventUpdate
@@ -1411,42 +1629,45 @@ def update_graph(
 
     State("portfolio-df", "data"),
     State("temp-score-range", "value"),
+    State("sector-dropdown", "options"),
     State("sector-dropdown", "value"),
     State("region-dropdown", "value"),
-    State("scope-options", "value"),
 
     prevent_initial_call=True,)
-def download_xlsx(n_clicks, portfolio_json, te_sc, sec, reg, scope):
+def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
     if n_clicks is None:
         raise PreventUpdate
     amended_portfolio = pd.read_json(portfolio_json, orient='split')
     # Why does this get lost in translation?
     amended_portfolio.index.name = 'company_id'
-    amended_portfolio = amended_portfolio.assign(scope=lambda x: x.scope.map(lambda y: EScope[y]),
-                                                 time_frame=lambda x: x.time_frame.map(lambda y: ETimeFrames[y]),
-                                                 score_result_type=lambda x: x.score_result_type.map(lambda y: EScoreResultType[y]),
-                                                 temperature_score=lambda x: x.temperature_score.map(Q_).astype('pint[delta_degC]'),
-                                                 ghg_s1s2=lambda x: x.ghg_s1s2.map(Q_).astype('pint[t CO2e]'),
-                                                 # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
+    amended_portfolio = amended_portfolio.assign(
+        # scope=lambda x: x.scope.map(lambda y: EScope[y]),
+        time_frame=lambda x: x.time_frame.map(lambda y: ETimeFrames[y]),
+        score_result_type=lambda x: x.score_result_type.map(lambda y: EScoreResultType[y]),
+        temperature_score=lambda x: x.temperature_score.map(Q_).astype('pint[delta_degC]'),
+        ghg_s1s2=lambda x: x.ghg_s1s2.map(Q_).astype('pint[t CO2e]'),
+        # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
                                                  ghg_s3=lambda x: x.ghg_s3.map(Q_).astype('pint[t CO2e]'),
-                                                 cumulative_budget=lambda x: x.cumulative_budget.map(Q_).astype('pint[t CO2e]'),
-                                                 cumulative_trajectory=lambda x: x.cumulative_trajectory.map(Q_).astype('pint[t CO2e]'),
-                                                 cumulative_target=lambda x: x.cumulative_target.map(Q_).astype('pint[t CO2e]'),
-                                                 trajectory_score=lambda x: x.trajectory_score.map(Q_).astype('pint[delta_degC]'),
-                                                 target_score=lambda x: x.target_score.map(Q_).astype('pint[delta_degC]'),
-                                                 benchmark_temperature=lambda x: x.benchmark_temperature.map(Q_).astype('pint[delta_degC]'),
-                                                 benchmark_global_budget=lambda x: x.benchmark_global_budget.map(Q_).astype('pint[Gt CO2e]'))
+        cumulative_budget=lambda x: x.cumulative_budget.map(Q_).astype('pint[t CO2e]'),
+        cumulative_trajectory=lambda x: x.cumulative_trajectory.map(Q_).astype('pint[t CO2e]'),
+        cumulative_target=lambda x: x.cumulative_target.map(Q_).astype('pint[t CO2e]'),
+        trajectory_score=lambda x: x.trajectory_score.map(Q_).astype('pint[delta_degC]'),
+        target_score=lambda x: x.target_score.map(Q_).astype('pint[delta_degC]'),
+        benchmark_temperature=lambda x: x.benchmark_temperature.map(Q_).astype('pint[delta_degC]'),
+        benchmark_global_budget=lambda x: x.benchmark_global_budget.map(Q_).astype('pint[Gt CO2e]'))
     temp_score_mask = (amended_portfolio.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio.temperature_score <= Q_(te_sc[1], 'delta_degC'))
     # Dropdown filters
-    if sec is None:
-        sec_mask = (amended_portfolio.sector != 'dummy')  # select all
+    if sec in [ '', '+' ]:
+        # If the benchmark doesn't cover the sector, don't try to plot the company
+        sectors = [ s['value'] for s in sectors_dl if not s['value'] in ['', '+'] ]
+        sec_mask = amended_portfolio.sector.isin(sectors)  # select all
     else:
         sec_mask = amended_portfolio.sector == sec
-    if reg is None:
-        reg_mask = (amended_portfolio.region != 'dummy')  # select all
+    if reg in [ '', '+', 'Global' ]:
+        reg_mask = amended_portfolio.region.map(lambda *_:True)
     else:
-        reg_mask = (amended_portfolio.region == reg)
+        reg_mask = amended_portfolio.region == reg
     filt_df = amended_portfolio.loc[temp_score_mask & sec_mask & reg_mask].pint.dequantify()  # filtering
     if len(filt_df) == 0:  # if after filtering the dataframe is empty
         raise PreventUpdate
@@ -1501,3 +1722,4 @@ def spinner_concentrator(*_):
 
 if __name__ == "__main__":
     app.run_server(use_reloader=False, debug=True)
+

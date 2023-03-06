@@ -123,7 +123,7 @@ class DataWarehouse(ABC):
         # Production-centric benchmarks shift S3 data after trajectory and targets have been projected
         if new_production_bm:
             # Note that _validate_projected_trajectories overwrites fields of companies, so no need to use return value
-            logger.info(f"calculating trajectories for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
+            logger.info(f"new_production_bm calculating trajectories for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
             self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
 
         if new_ei_bm and (new_companies := [c for c in self.company_data._companies if '+' in c.company_id]):
@@ -282,7 +282,7 @@ class DataWarehouse(ABC):
                         else:
                             if isinstance(trajectories.S3.projections, pd.Series):
                                 trajectories[primary_scope_attr].projections = (
-                                    trajectories[primary_scope_attr].projections + trajectories.S3.projections)
+                                    trajectories[primary_scope_attr].projections.add(trajectories.S3.projections))
                             else:
                                 # Should not be reached as we are using DF_ICompanyEIProjections consistently now
                                 # breakpoint()
@@ -388,6 +388,7 @@ class DataWarehouse(ABC):
         Update the trajectory calculations after changing global ProjectionControls.  Production and EI benchmarks remain the same.
         """
         # We cannot only update trajectories without regard for all that depend on those trajectories
+        # For example, different benchmarks may have different scopes defined, units for benchmarks, etc.
         logger.info(f"re-calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
         for company in self.company_data._companies:
             company.projected_intensities = None
