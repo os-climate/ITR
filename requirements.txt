@@ -1,11 +1,13 @@
-dash==2.6.2
+dash==2.7.1
 dash_bootstrap_components==1.2.1
+multiprocess==0.70.14
+diskcache==5.4.0
 iam-units==2022.10.27
 jupyter==1.0.0
 matplotlib==3.6.1
 openpyxl==3.0.10
 openscm-units==0.5.0
-pandas==1.5.2
+pandas==1.5.3
 Pint==0.20.1
 Pint-Pandas==0.3
 pydantic==1.10.2
