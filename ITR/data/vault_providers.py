@@ -14,8 +14,6 @@ import trino
 import osc_ingest_trino as osc
 import sqlalchemy
 
-ingest_catalog = 'osc_datacommons_dev'
-
 import pandas as pd
 from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
@@ -37,7 +35,7 @@ from pint import Quantity
 from pint_pandas import PintArray
 
 ingest_catalog = 'osc_datacommons_dev'
-ingest_schema = 'sandbox'
+ingest_schema = 'demo_dv'
 demo_schema = 'demo_dv'
 
 engine = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=ingest_schema)
@@ -463,9 +461,9 @@ class DataVaultWarehouse(DataWarehouse):
                  engine: sqlalchemy.engine.base.Engine,
                  company_data: VaultCompanyDataProvider,
                  # This arrives as a table instantiated in the database
-                 benchmark_projected_production: ProductionBenchmarkDataProvider,
+                 benchmark_projected_production: VaultProviderProductionBenchmark,
                  # This arrives as a table instantiated in the database
-                 benchmarks_projected_ei: IntensityBenchmarkDataProvider,
+                 benchmarks_projected_ei: VaultProviderIntensityBenchmark,
                  ingest_schema: str = None,
                  column_config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__(company_data=None,
@@ -517,7 +515,7 @@ select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1+S2'
        sum(B.intensity * P.production_by_year) as cumulative_budget
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
-     join {self._schema}.benchmark_ei B on P.year=B.year and C.region=B.region and C.sector=B.sector
+     join {self._schema}.{benchmarks_projected_ei.benchmark_name} B on P.year=B.year and C.region=B.region and C.sector=B.sector
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'benchmark_1', B.global_budget, B.benchmark_temp
 """, self._engine, verbose=False)
@@ -530,9 +528,9 @@ group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'bench
         #    * Target and Trajectory overshoot ratios
         #    * Temperature Scores
 
-        qres = osc._do_sql(f"drop table if exists {self._schema}.overshoot_ratios", self._engine, verbose=False)
+        qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}overshoot_ratios", self._engine, verbose=False)
         qres = osc._do_sql(f"""
-create table {self._schema}.overshoot_ratios with (
+create table {self._schema}.{itr_prefix}overshoot_ratios with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
@@ -540,8 +538,8 @@ select E.company_name, E.company_id, '{company_data._schema}' as source, 'S1+S2'
        B.global_budget, B.benchmark_temp,
        E.cumulative_trajectory/B.cumulative_budget as trajectory_overshoot_ratio,
        E.cumulative_target/B.cumulative_budget as target_overshoot_ratio
-from {self._schema}.cumulative_emissions E
-     join {self._schema}.cumulative_budget_1 B on E.company_id=B.company_id
+from {self._schema}.{itr_prefix}cumulative_emissions E
+     join {self._schema}.{itr_prefix}cumulative_budget_1 B on E.company_id=B.company_id
 """, self._engine, verbose=False)
 
         qres = osc._do_sql(f"drop table if exists {self._schema}.temperature_scores", self._engine, verbose=False)
@@ -555,7 +553,7 @@ select R.company_name, R.company_id, '{company_data._schema}' as source, 'S1+S2'
        'delta_degC' as trajectory_temperature_score_units,
        R.benchmark_temp + R.global_budget * (R.target_overshoot_ratio-1) * 2.2/3664.0 as target_temperature_score,
        'delta_degC' as target_temperature_score_units
-from {self._schema}.overshoot_ratios R
+from {self._schema}.{itr_prefix}overshoot_ratios R
 """, self._engine, verbose=False)
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
