@@ -2,21 +2,13 @@ import os
 import pathlib
 from dotenv import load_dotenv
 
-# Load some standard environment variables from a dot-env file, if it exists.
-# If no such file can be found, does not fail, and so allows these environment vars to
-# be populated in some other way
-dotenv_dir = os.environ.get('CREDENTIAL_DOTENV_DIR', os.environ.get('HOME', '/opt/app-root/src'))
-dotenv_path = pathlib.Path(dotenv_dir) / 'credentials.env'
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path=dotenv_path,override=True)
-
 import trino
 import osc_ingest_trino as osc
 import sqlalchemy
 
 import pandas as pd
 from typing import List, Type
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
 from ITR.data.data_warehouse import DataWarehouse
@@ -33,6 +25,18 @@ import trino
 from sqlalchemy.engine import create_engine
 from pint import Quantity
 from pint_pandas import PintArray
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
+# Load some standard environment variables from a dot-env file, if it exists.
+# If no such file can be found, does not fail, and so allows these environment vars to
+# be populated in some other way
+dotenv_dir = os.environ.get('CREDENTIAL_DOTENV_DIR', os.environ.get('HOME', '/opt/app-root/src'))
+dotenv_path = pathlib.Path(dotenv_dir) / 'credentials.env'
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path=dotenv_path,override=True)
 
 ingest_catalog = 'osc_datacommons_dev'
 ingest_schema = 'demo_dv'
@@ -143,7 +147,6 @@ class VaultCompanyDataProvider(CompanyDataProvider):
     :param trajectory_table: the name of the Trino table that contains company (emissions intensity) historical data (and possibly trajectory data)
     :param company_schema: the name of the schema where the company_table is found
     :param column_config: An optional ColumnsConfig object containing relevant variable names
-    :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
     """
 
     def __init__(self,
@@ -152,24 +155,22 @@ class VaultCompanyDataProvider(CompanyDataProvider):
                  target_table: str = None,
                  trajectory_table: str = None,
                  company_schema: str = None,
-                 column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+                 column_config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__()
         self._engine = engine
         self._schema = company_schema or engine.dialect.default_schema_name or 'demo_dv'
         self._company_table = company_table
         self.column_config = column_config
-        self.temp_config = tempscore_config
         # Validate and complete the projected trajectories
-        self._target_table = target_table or company_table.replace('company_', 'target_')
-        self._trajectory_table = trajectory_table or company_table.replace('company_', 'trajectory_')
-        self._production_table = company_table.replace('company_', 'production_')
-        self._emissions_table = company_table.replace('company_', 'emissions_')
+        self._target_table = target_table or company_table.replace('company_', 'target_') # target_data
+        self._trajectory_table = trajectory_table or company_table.replace('company_', 'trajectory_') # trajectory_data
+        self._production_table = company_table.replace('company_', 'production_') # production_data
+        self._emissions_table = company_table.replace('company_', 'emissions_') # emissions_data
         companies_without_projections = osc._do_sql(f"""
 select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._target_table} EI on EI.company_name=C.company_name
-where EI.ei_s1_by_year is NULL
-""", self._engine, verbose=False)
-        assert len(companies_without_projections)==0, f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}"
+where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_by_year is NULL
+""", self._engine, verbose=True)
+        logger.error(f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}")
 
     # The factors one would want to sum over companies for weighting purposes are:
     #   * market_cap_usd
@@ -177,7 +178,7 @@ where EI.ei_s1_by_year is NULL
     #   * assets_usd
     #   * revenue_usd
     #   * emissions
-    
+
     # TODO: make return value a Quantity (USD or CO2)
     def sum_over_companies(self, company_ids: List[str], year: int, factor: str, scope: EScope = EScope.S1S2) -> float:
         if factor=='enterprise_value_usd':
@@ -277,18 +278,15 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
                  benchmark_name: str,
                  production_benchmarks: IProductionBenchmarkScopes,
                  ingest_schema: str = None,
-                 column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+                 column_config: Type[ColumnsConfig] = ColumnsConfig):
         """
         Base provider that relies on pydantic interfaces. Default for FastAPI usage
         :param benchmark_name: the table name of the benchmark (in Trino)
         :param production_benchmarks: List of IBenchmarkScopes
         :param column_config: An optional ColumnsConfig object containing relevant variable names
-        :param tempscore_config: An optional TemperatureScoreConfig object containing temperature scoring settings
         """
         super().__init__(production_benchmarks=production_benchmarks,
-                         column_config=column_config,
-                         tempscore_config=tempscore_config)
+                         column_config=column_config)
         self._engine=engine
         self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo_dv'
         self.benchmark_name=benchmark_name
@@ -350,8 +348,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                  benchmark_name: str,
                  EI_benchmarks: IEIBenchmarkScopes,
                  ingest_schema: str = None,
-                 column_config: Type[ColumnsConfig] = ColumnsConfig,
-                 tempscore_config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
+                 column_config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__(EI_benchmarks.benchmark_temperature, EI_benchmarks.benchmark_global_budget,
                          EI_benchmarks.is_AFOLU_included)
         self._engine=engine
@@ -363,8 +360,8 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                 continue
             for benchmark in EI_benchmarks.dict()[scope]['benchmarks']:
                 bdf = pd.DataFrame.from_dict({r['year']: [r['value'], benchmark['region'], benchmark['sector'], scope, EI_benchmarks.benchmark_global_budget, EI_benchmarks.benchmark_temperature] for r in benchmark['projections']},
-                                   columns=['intensity', 'region', 'sector', 'scope', 'global_budget', 'benchmark_temp'],
-                                            orient='index')
+                                             columns=['intensity', 'region', 'sector', 'scope', 'global_budget', 'benchmark_temp'],
+                                             orient='index')
                 # TODO: AFOLU correction
                 df = pd.concat([df, bdf])
         df.reset_index(inplace=True)
@@ -465,6 +462,7 @@ class DataVaultWarehouse(DataWarehouse):
                  # This arrives as a table instantiated in the database
                  benchmarks_projected_ei: VaultProviderIntensityBenchmark,
                  ingest_schema: str = None,
+                 itr_prefix: str = '',
                  column_config: Type[ColumnsConfig] = ColumnsConfig):
         super().__init__(company_data=None,
                          benchmark_projected_production=None,
@@ -472,10 +470,12 @@ class DataVaultWarehouse(DataWarehouse):
                          column_config=column_config)
         self._engine=engine
         self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo_dv'
+        self._tempscore_table = f"{itr_prefix}temperature_scores"
+
         # intensity_projections = read_quantified_sql(f"select * from {self._schema}.{self._target_table}", self._target_table, self._schema, self._engine)
         # intensity_projections['scope'] = 'S1+S2'
         # intensity_projections['source'] = self._schema
-        
+
         # If there's no company data, we are just using the vault, not initializing it
         if company_data==None:
             return
@@ -487,9 +487,9 @@ class DataVaultWarehouse(DataWarehouse):
         #    * Cumulative target of emissions
         #    * Cumulative budget of emissions (separately for each benchmark)
 
-        qres = osc._do_sql(f"drop table if exists {self._schema}.cumulative_emissions", self._engine, verbose=False)
+        qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}cumulative_emissions", self._engine, verbose=False)
         qres = osc._do_sql(f"""
-create table {self._schema}.cumulative_emissions with (
+create table {self._schema}.{itr_prefix}cumulative_emissions with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
@@ -504,9 +504,9 @@ where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2'
 """, self._engine, verbose=False)
 
-        qres = osc._do_sql(f"drop table if exists {self._schema}.cumulative_budget_1", self._engine, verbose=False)
+        qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}cumulative_budget_1", self._engine, verbose=False)
         qres = osc._do_sql(f"""
-create table {self._schema}.cumulative_budget_1 with (
+create table {self._schema}.{itr_prefix}cumulative_budget_1 with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
@@ -518,12 +518,13 @@ from {company_data._schema}.{company_data._company_table} C
      join {self._schema}.{benchmarks_projected_ei.benchmark_name} B on P.year=B.year and C.region=B.region and C.sector=B.sector
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'benchmark_1', B.global_budget, B.benchmark_temp
-""", self._engine, verbose=False)
+""", self._engine, verbose=True)
 
     def quant_init(self,
                    engine: sqlalchemy.engine.base.Engine,
                    company_data: VaultCompanyDataProvider,
-                   ingest_schema: str = None):
+                   ingest_schema: str = None,
+                   itr_prefix: str = ''):
         # The Quant users of the DataVaultWarehouse produces two calculations per company:
         #    * Target and Trajectory overshoot ratios
         #    * Temperature Scores
@@ -542,9 +543,9 @@ from {self._schema}.{itr_prefix}cumulative_emissions E
      join {self._schema}.{itr_prefix}cumulative_budget_1 B on E.company_id=B.company_id
 """, self._engine, verbose=False)
 
-        qres = osc._do_sql(f"drop table if exists {self._schema}.temperature_scores", self._engine, verbose=False)
+        qres = osc._do_sql(f"drop table if exists {self._schema}.{self._tempscore_table}", self._engine, verbose=False)
         qres = osc._do_sql(f"""
-create table {self._schema}.temperature_scores with (
+create table {self._schema}.{self._tempscore_table} with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
@@ -562,8 +563,8 @@ from {self._schema}.{itr_prefix}overshoot_ratios R
     def get_pa_temp_scores(self, probability: float, company_ids: List[str]) -> pd.Series:
         if probability < 0 or probability > 1:
             raise ValueError(f"probability value {probability} outside range [0.0, 1.0]")
-        temp_scores = read_quantified_sql(f"select company_id, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units from {self._schema}.temperature_scores",
-                                          'temperature_scores', self._schema, self._engine, index_col='company_id')
+        temp_scores = read_quantified_sql(f"select company_id, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units from {self._schema}.{self._tempscore_table}",
+                                          self._tempscore_table, self._schema, self._engine, index_col='company_id')
         # We may have company_ids in our portfolio not in our database, and vice-versa.
         # Return proper pa_temp_scores for what we can find, and np.nan for those we cannot
         retval = pd.Series(data=None, index=company_ids, dtype='float64')
