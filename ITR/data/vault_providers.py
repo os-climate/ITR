@@ -11,13 +11,14 @@ from typing import List, Type
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
+# Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
+from ITR.data.base_providers import BaseCompanyDataProvider
+
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, ICompanyAggregates
 
 from ITR.data.osc_units import *
-
-# TODO handling of scopes in benchmarks
 
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
 
@@ -68,28 +69,39 @@ def dequantify_df(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([dequantify_column(df[col]) for col in df.columns], axis=1)
 
 # Because this DF comes from reading a Trino table, and because columns must be unqiue, we don't have to enumerate to ensure we properly handle columns with duplicated names
-def requantify_df(df: pd.DataFrame) -> pd.DataFrame:
+def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
     units_col = None
+    columns_not_found = [k for k in typemap.keys() if k not in df.columns]
+    if columns_not_found:
+        logger.error(f"columns {columns_not_found} not found in DataFrame")
+        raise ValueError
     columns_reversed = reversed(df.columns)
     for col in columns_reversed:
         if col.endswith("_units"):
             if units_col:
+                logger.error(f"Column {units_col} follows {col} without intervening value column")
                 # We expect _units column to follow a non-units column
                 raise ValueError
             units_col = col
             continue
         if units_col:
             if col + '_units' != units_col:
+                logger.error(f"Excpecting column name {col}_units but saw {units_col} instead")
                 raise ValueError
             if (df[units_col]==df[units_col][0]).all():
-                # Make a PintArray
+                # We can make a PintArray since column is of homogeneous type
                 new_col = PintArray(df[col], dtype=f"pint[{ureg(df[units_col][0]).u}]")
             else:
                 # Make a pd.Series of Quantity in a way that does not throw UnitStrippedWarning
-                new_col = pd.Series(data=df[col], name=col) * pd.Series(data=df[units_col].map(lambda x: ureg(x).u), name=col)
+                new_col = pd.Series(data=df[col], name=col) * pd.Series(data=df[units_col].map(
+                    lambda x: typemap.get(col, 'dimensionless') if pd.isna(x) else ureg(x).u), name=col)
+            if col in typemap.keys():
+                new_col = new_col.astype(typemap[col])
             df = df.drop(columns=units_col)
             df[col] = new_col
             units_col = None
+        elif col in typemap.keys():
+            df[col] = df[col].astype(f"pint[{typemap[col]}]")
     return df
 
 def create_table_from_df (df: pd.DataFrame, schemaname: str, tablename: str, engine: sqlalchemy.engine.base.Engine, verbose=False):
@@ -170,7 +182,8 @@ class VaultCompanyDataProvider(CompanyDataProvider):
 select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._target_table} EI on EI.company_name=C.company_name
 where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_by_year is NULL
 """, self._engine, verbose=True)
-        logger.error(f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}")
+        if companies_without_projections:
+            logger.error(f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}")
 
     # The factors one would want to sum over companies for weighting purposes are:
     #   * market_cap_usd
@@ -184,9 +197,14 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
         if factor=='enterprise_value_usd':
             qres = osc._do_sql(f"select sum(market_cap_usd + debt_usd - cash_usd) as {factor}_sum from {self._schema}.{self._company_table} where year={year}", self._engine, verbose=False)
         elif factor=='emissions':
-            # TODO: properly interpret SCOPE parameter
-            assert scope==EScope.S1S2
-            qres = osc._do_sql(f"select sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}", self._engine, verbose=False)
+            if scope in [EScope.S1, EScope.S2, EScope.S3]:
+                qres = osc._do_sql(f"select sum(co2_{scope.name.lower()}_by_year) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}", self._engine, verbose=False)
+            elif scope==EScope.S1S2:
+                qres = osc._do_sql(f"select sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}", self._engine, verbose=False)
+            elif scope==EScope.S1S2S3:
+                qres = osc._do_sql(f"select sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)+if(is_nan(co2_s3_by_year),0.0,co2_s3_by_year)) as {factor}_sum from {self._schema}.{self._emissions_table} where year={year}", self._engine, verbose=False)
+            else:
+                assert False
         else:
             qres = osc._do_sql(f"select sum({factor}) as {factor}_sum from {self._schema}.{self._company_table} where year={year}", self._engine, verbose=False)
         # qres[0] is the first row of the returned data; qres[0][0] is the first (and only) column of the row returned
@@ -202,9 +220,14 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
         if factor=='company_evic':
             qres = osc._do_sql(f"select company_id, sum(company_market_cap + company_cash_equivalents) as {factor} from {self._schema}.{self._company_table} group by company_id", self._engine, verbose=False)
         elif factor=='emissions':
-            # TODO: properly interpret SCOPE parameter
-            assert scope==EScope.S1S2
-            qres = osc._do_sql(f"select company_id, sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id", self._engine, verbose=False)
+            if scope in [EScope.S1, EScope.S2, EScope.S3]:
+                qres = osc._do_sql(f"select company_id, sum(co2_{scope.name.lower()}_by_year) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id", self._engine, verbose=False)
+            elif scope==EScope.S1S2:
+                qres = osc._do_sql(f"select company_id, sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id", self._engine, verbose=False)
+            elif scope==EScope.S1S2:
+                qres = osc._do_sql(f"select company_id, sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)+if(is_nan(co2_s3_by_year),0.0,co2_s3_by_year)) as {factor} from {self._schema}.{self._emissions_table} where year={year} group by company_id", self._engne, verbose=False)
+            else:
+                assert False
         else:
             qres = osc._do_sql(f"select company_id, sum({factor}) as {factor} from {self._schema}.{self._company_table} group by company_id", self._engine, verbose=False)
         weights = pd.Series(data=[s[1] for s in qres], index=[s[0] for s in qres], dtype=float)
@@ -269,8 +292,6 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
 
 
 
-benchmark_scopes = ['S1S2', 'S3', 'S1S2S3']
-
 class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
 
     def __init__(self,
@@ -292,11 +313,10 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         self.benchmark_name=benchmark_name
         qres = osc._do_sql(f"drop table if exists {self._schema}.{benchmark_name}", self._engine, verbose=False)
         df = pd.DataFrame()
-        for scope in benchmark_scopes:
+        for scope in ['AnyScope']:
             if production_benchmarks.dict()[scope] is None:
                 continue
             for benchmark in production_benchmarks.dict()[scope]['benchmarks']:
-                # ??? I don't understand why I cannot use benchmark.projections and must use benchmark['projections']
                 bdf = pd.DataFrame.from_dict({r['year']: [r['value'], benchmark['region'], benchmark['sector'], scope] for r in benchmark['projections']},
                                              columns=['production', 'region', 'sector', 'scope'],
                                              orient='index')
@@ -306,40 +326,11 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         df = df.convert_dtypes()
         create_table_from_df (df, self._schema, benchmark_name, engine)
 
-    def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
-        """
-        get the projected productions for list of companies in ghg_scope12
-        :param ghg_scope12: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID,ColumnsConfig.GHG_SCOPE12, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :return: DataFrame of projected productions for [base_year - base_year + 50]
-        """
-        benchmark_production_projections = self.get_benchmark_projections(ghg_scope12)
-        return benchmark_production_projections.add(1).cumprod(axis=1).mul(
-            ghg_scope12[self.column_config.GHG_SCOPE12].values, axis=0)
+    def get_company_projected_production(self, *args, **kwargs):
+        return BaseCompanyDataProvider.get_company_projected_production(*args, **kwargs)
 
-    def get_benchmark_projections(self, company_sector_region_info: pd.DataFrame,
-                                  scope: EScope = EScope.S1S2) -> pd.DataFrame:
-        """
-        Overrides subclass method
-        returns a Dataframe with production benchmarks per company_id given a region and sector.
-        :param company_sector_region_info: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :param scope: a scope
-        :return: A DataFrame with company and intensity benchmarks per calendar year per row
-        """
-        benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
-        sectors = company_sector_region_info[self.column_config.SECTOR]
-        regions = company_sector_region_info[self.column_config.REGION]
-        benchmark_regions = regions.copy()
-        mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
-        benchmark_regions.loc[~mask] = "Global"
-
-        benchmark_projection = benchmark_projection.loc[list(zip(benchmark_regions, sectors)),
-                                                        range(self.temp_config.CONTROLS_CONFIG.base_year,
-                                                              self.temp_config.CONTROLS_CONFIG.target_end_year + 1)]
-        benchmark_projection.index = sectors.index
-
-        return benchmark_projection
+    def get_benchmark_projections(self, *args, **kwargs):
+        return BaseCompanyDataProvider.get_benchmark_projections(*args, **kwargs)
 
 
 class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
@@ -453,6 +444,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
 
         return benchmark_projection
 
+# FIXME: Need to reshape the tables TARGET_DATA and TRAJECTORY_DATA so scope is a column and the EI data relates only to that scope (wide to long)
 class DataVaultWarehouse(DataWarehouse):
     def __init__(self,
                  engine: sqlalchemy.engine.base.Engine,
@@ -473,7 +465,7 @@ class DataVaultWarehouse(DataWarehouse):
         self._tempscore_table = f"{itr_prefix}temperature_scores"
 
         # intensity_projections = read_quantified_sql(f"select * from {self._schema}.{self._target_table}", self._target_table, self._schema, self._engine)
-        # intensity_projections['scope'] = 'S1+S2'
+        # intensity_projections['scope'] = 'S1S2'
         # intensity_projections['source'] = self._schema
 
         # If there's no company data, we are just using the vault, not initializing it
@@ -493,16 +485,34 @@ create table {self._schema}.{itr_prefix}cumulative_emissions with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1+S2' as scope,
+select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2' as scope,
        sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)) * P.production_by_year) as cumulative_trajectory,
-       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) as cumulative_target
+       concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units) as cumulative_trajectory_units,
+       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) as cumulative_target,
+       concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
      join {company_data._schema}.{company_data._target_table} EI on EI.company_name=C.company_name and EI.year=P.year
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_name=C.company_name and ET.year=P.year
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2'
-""", self._engine, verbose=False)
+group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2',
+         concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units),
+         concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units)
+UNION ALL
+select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2S3' as scope,
+       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)+if(is_nan(ET.ei_s3_by_year),0.0,ET.ei_s3_by_year)) * P.production_by_year) as cumulative_trajectory,
+       concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units) as cumulative_trajectory_units,
+       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)+if(is_nan(EI.ei_s3_by_year),0.0,EI.ei_s3_by_year)) * P.production_by_year) as cumulative_target,
+       concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units) as cumulative_target_units
+from {company_data._schema}.{company_data._company_table} C
+     join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
+     join {company_data._schema}.{company_data._target_table} EI on EI.company_name=C.company_name and EI.year=P.year
+     join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_name=C.company_name and ET.year=P.year
+where P.year>=2020
+group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2S3',
+         concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units),
+         concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units)
+""", self._engine, verbose=True)
 
         qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}cumulative_budget_1", self._engine, verbose=False)
         qres = osc._do_sql(f"""
@@ -510,14 +520,16 @@ create table {self._schema}.{itr_prefix}cumulative_budget_1 with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1+S2' as scope, 'benchmark_1' as benchmark,
+select C.company_name, C.company_id, '{company_data._schema}' as source, B.scope, 'benchmark_1' as benchmark,
        B.global_budget, B.benchmark_temp,
-       sum(B.intensity * P.production_by_year) as cumulative_budget
+       sum(B.intensity * P.production_by_year) as cumulative_budget,
+       concat(P.production_by_year_units, ' * ', B.intensity_units) as cumulative_budget_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
      join {self._schema}.{benchmarks_projected_ei.benchmark_name} B on P.year=B.year and C.region=B.region and C.sector=B.sector
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', 'S1+S2', 'benchmark_1', B.global_budget, B.benchmark_temp
+group by C.company_name, C.company_id, '{company_data._schema}', B.scope, 'benchmark_1', B.global_budget, B.benchmark_temp,
+         concat(P.production_by_year_units, ' * ', B.intensity_units)
 """, self._engine, verbose=True)
 
     def quant_init(self,
@@ -535,12 +547,14 @@ create table {self._schema}.{itr_prefix}overshoot_ratios with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select E.company_name, E.company_id, '{company_data._schema}' as source, 'S1+S2' as scope, 'benchmark_1' as benchmark,
+select E.company_name, E.company_id, '{company_data._schema}' as source, B.scope, 'benchmark_1' as benchmark,
        B.global_budget, B.benchmark_temp,
        E.cumulative_trajectory/B.cumulative_budget as trajectory_overshoot_ratio,
-       E.cumulative_target/B.cumulative_budget as target_overshoot_ratio
+       concat(E.cumulative_trajectory_units, ' / (', B.cumulative_budget_units, ')') as trajectory_overshoot_ratio_units,
+       E.cumulative_target/B.cumulative_budget as target_overshoot_ratio,
+       concat(E.cumulative_target_units, ' / (', B.cumulative_budget_units, ')') as target_overshoot_ratio_units
 from {self._schema}.{itr_prefix}cumulative_emissions E
-     join {self._schema}.{itr_prefix}cumulative_budget_1 B on E.company_id=B.company_id
+     join {self._schema}.{itr_prefix}cumulative_budget_1 B on E.company_id=B.company_id and E.scope=B.scope
 """, self._engine, verbose=False)
 
         qres = osc._do_sql(f"drop table if exists {self._schema}.{self._tempscore_table}", self._engine, verbose=False)
@@ -549,7 +563,7 @@ create table {self._schema}.{self._tempscore_table} with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select R.company_name, R.company_id, '{company_data._schema}' as source, 'S1+S2' as scope, 'benchmark_1' as benchmark,
+select R.company_name, R.company_id, '{company_data._schema}' as source, R.scope, 'benchmark_1' as benchmark,
        R.benchmark_temp + R.global_budget * (R.trajectory_overshoot_ratio-1) * 2.2/3664.0 as trajectory_temperature_score,
        'delta_degC' as trajectory_temperature_score_units,
        R.benchmark_temp + R.global_budget * (R.target_overshoot_ratio-1) * 2.2/3664.0 as target_temperature_score,
