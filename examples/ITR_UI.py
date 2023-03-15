@@ -63,7 +63,6 @@ background_callback_manager = DiskcacheManager(cache, cache_by=[lambda: launch_u
 
 examples_dir ='' #'examples'
 data_dir="data"
-data_json_units_dir="json-units"
 root = os.path.abspath('')
 
 # Set input filename (from commandline or default)
@@ -75,7 +74,10 @@ if len(sys.argv)>1:
 else:
     company_data_path = os.path.join(root, examples_dir, data_dir, "20220927 ITR V2 Sample Data.xlsx")
 
+use_data_vault = False
+
 # Production benchmark (there's only one, and we have to stretch it from OECM to cover TPI)
+data_json_units_dir="json-units"
 benchmark_prod_json_file = "benchmark_production_OECM.json"
 benchmark_prod_json = os.path.join(root, examples_dir, data_dir, data_json_units_dir, benchmark_prod_json_file)
 with open(benchmark_prod_json) as json_file:
@@ -797,7 +799,7 @@ def warehouse_new(banner_title):
             Input("projection-method", "value"),
             Input("scenarios-cutting", "value"), # winzorization slider
             State("benchmark-region", "children"),),
-    background=True,
+    background=not use_data_vault,
     prevent_initial_call=False,)
 # load default intensity benchmarks
 def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
@@ -878,7 +880,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
               State("sector-dropdown", "value"),
               State("region-dropdown", "value"),
               State("scope-options", "value"),),
-    background=True,
+    background=not use_data_vault,
     prevent_initial_call=True,)
 def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector, region, scope, *_):
     '''
@@ -890,23 +892,19 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
     '''
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
-
-    # All benchmarks use OECM production
-    prod_bm = Warehouse.benchmark_projected_production
     EI_bm = Warehouse.benchmarks_projected_ei
+    # Our Warehouse doesn't retain side-effects, so we cannot "set-and-forget"
+    # Instead, we have to re-make the change for the benefit of downstream users...
+    EI_bm.projection_controls.TARGET_YEAR = target_year
+    Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
     df_ei = EI_bm._EI_df
-
     df_fundamentals = Warehouse.company_data.df_fundamentals
+
     df_fundamentals = df_fundamentals[df_fundamentals.index.isin(df_portfolio.company_id)]
     # pf_bm_* is the overlap of our portfolio and our benchmark
     pf_bm_sectors = set(df_fundamentals.sector) & set(df_ei.index.get_level_values('sector'))
     # pf_regions contains company-specific regions, like Asia, Great Britain, etc.
     # pf_regions = set(df_fundamentals.region)
-
-    # Our Warehouse doesn't retain side-effects, so we cannot "set-and-forget"
-    # Instead, we have to re-make the change for the benefit of downstream users...
-    EI_bm.projection_controls.TARGET_YEAR = target_year
-    Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
 
     if sector not in pf_bm_sectors:
         sector = ''
@@ -930,7 +928,6 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
         pf_sector_df = df_fundamentals[df_fundamentals.sector.isin(pf_bm_sectors)][['sector', 'region']]
         bm_sector_df = df_ei.drop(columns=df_ei.columns).loc[list(pf_bm_sectors)].reset_index('region')
     pf_bm_regions = set(pf_sector_df.region)
-    bm_regions = set(bm_sector_df.region)
 
     if region not in pf_bm_regions:
         region = ''
@@ -1003,7 +1000,7 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
               Input("region-dropdown", "value"),
               State("scope-options", "options"),
               Input("scope-options", "value"),),
-    background=True,
+    background=not use_data_vault,
     prevent_initial_call=True,)
 def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, regions_ty, region_ty, scopes_ty, scope_ty,
                                sectors_dl, sector, regions_dl, region, scopes_dl, scope,):
@@ -1013,16 +1010,17 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, reg
     Downstream processes make their own decisions with respect to upstream Warehouse.
     '''
 
-    changed_ids = [p['prop_id'] for p in dash.callback_context.triggered]  # to catch which widgets were pressed
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
-
+    df_fundamentals = Warehouse.company_data.df_fundamentals
     # All benchmarks use OECM production
     prod_bm = Warehouse.benchmark_projected_production
-    df_fundamentals = Warehouse.company_data.df_fundamentals
-    df_fundamentals = df_fundamentals[df_fundamentals.index.isin(df_portfolio.company_id)]
-    zero_co2 = Q_(0.0, 'Gt CO2e')
     EI_bm = Warehouse.benchmarks_projected_ei
     df_ei = EI_bm._EI_df
+
+    changed_ids = [p['prop_id'] for p in dash.callback_context.triggered]  # to catch which widgets were pressed
+
+    zero_co2 = Q_(0.0, 'Gt CO2e')
+    df_fundamentals = df_fundamentals[df_fundamentals.index.isin(df_portfolio.company_id)]
 
     # pf_bm_* is the overlap of our portfolio and our benchmark
     pf_bm_sectors = set(df_fundamentals.sector) & set(df_ei.index.get_level_values('sector'))
@@ -1339,7 +1337,6 @@ def calc_temperature_score(warehouse_pickle_json, *_):
     global companies
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
-    EI_bm = Warehouse.benchmarks_projected_ei
     temperature_score = TemperatureScore(
         time_frames = [ETimeFrames.LONG],
         scopes=None, # None means "use the appropriate scopes for the benchmark
@@ -1347,7 +1344,9 @@ def calc_temperature_score(warehouse_pickle_json, *_):
         aggregation_method=PortfolioAggregationMethod.WATS
     )
     df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
-    return (df.drop(columns=['historic_data', 'target_data']).to_json(orient='split', default_handler=str),
+    df = df.drop(columns=['historic_data', 'target_data'])
+    amended_portfolio = df
+    return (amended_portfolio.to_json(orient='split', default_handler=str),
             "Spin-ts",)
 
 @app.callback(
@@ -1403,7 +1402,7 @@ def update_graph(
     if sec in ['', '+']:
         # If the benchmark doesn't cover the sector, don't try to plot the company
         sectors = [ s['value'] for s in sectors_dl if not s['value'] in ['', '+'] ]
-        sec_mask = amended_portfolio.sector.isin(sectors)  # select all
+        sec_mask = amended_portfolio.sector.isin(sectors) if sectors else amended_portfolio.sector.map(lambda *_: True)
         sec = ''
     else:
         sec_mask = (amended_portfolio.sector == sec)
@@ -1583,11 +1582,11 @@ def update_graph(
     port_score_diff_methods_fig.update_layout(transition_duration=500)
 
     # input for the dash table
-    df_for_output_table = filt_df.reset_index('company_id')[
-        ['company_name', 'company_id', 'region', 'sector', 'cumulative_budget', 'investment_value',
-         'trajectory_score', 'trajectory_exceedance_year',
-         'target_score', 'target_exceedance_year',
-         'temperature_score', 'scope']].copy()
+    common_columns = set(filt_df.columns) & {
+        'company_name', 'company_id', 'region', 'sector', 'scope', 'cumulative_budget', 'investment_value',
+        'trajectory_score', 'trajectory_exceedance_year', 'target_score', 'target_exceedance_year',
+        'temperature_score'}
+    df_for_output_table = filt_df.reset_index('company_id')[list(common_columns)].copy()
     for col in ['temperature_score', 'trajectory_score', 'target_score', 'cumulative_budget']:
         df_for_output_table[col] = ITR.nominal_values(df_for_output_table[col].pint.m).round(2)  # f"{q:.2f~#P}"
         # pd.to_numeric(...).round(2)

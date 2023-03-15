@@ -240,7 +240,6 @@ def get_co2_per_sector_region_scope(prod_bm, ei_df, sector, region, scope_list) 
         raise ValueError(f"Scope {sector_scope.name} not in benchmark for sector {sector}")
 
     intensity_df = ei_df.loc[(sector, region, sector_scope)]
-
     target_year_cum_co2 = base_prod_ser.mul(intensity_df).cumsum().astype('pint[Gt CO2e]')
     return target_year_cum_co2
 
@@ -955,9 +954,7 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
         # Instead, we have to re-make the change for the benefit of downstream users...
         EI_bm.projection_controls.TARGET_YEAR = target_year
         Warehouse.company_data.projection_controls.TARGET_YEAR = target_year
-
         df_ei = EI_bm._EI_df
-
         df_fundamentals = Warehouse.company_data.df_fundamentals
 
     df_fundamentals = df_fundamentals[df_fundamentals.index.isin(df_portfolio.company_id)]
@@ -1449,7 +1446,6 @@ select cd.company_id, cd.sector, cd.region, ts.scope, cd.company_name,
             'cumulative_trajectory':'g CO2e', 'cumulative_target':'g CO2e', 'cumulative_budget':'g CO2e',
             'trajectory_score':'delta_degC', 'target_score':'delta_degC'})
         df = temp_score_df[~temp_score_df.index.isin(['US6362744095+Gas Utilities', 'US0236081024+Gas Utilities', 'CA87807B1076+Gas', 'CA87807B1076+Oil', 'NO0010657505'])]
-        breakpoint()        
         df = df.assign(
             scope=lambda x: x.scope.map(lambda y: EScope[y]),
             time_frame=ETimeFrames['LONG'],
@@ -1474,7 +1470,8 @@ select cd.company_id, cd.sector, cd.region, ts.scope, cd.company_name,
         aggregation_method=PortfolioAggregationMethod.WATS
         )
         df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
-        amended_portfolio = df.drop(columns=['historic_data', 'target_data'])
+        df = df.drop(columns=['historic_data', 'target_data'])
+        amended_portfolio = df
     return (amended_portfolio.to_json(orient='split', default_handler=str),
             "Spin-ts",)
 
