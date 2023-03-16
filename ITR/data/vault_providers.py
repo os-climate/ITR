@@ -56,10 +56,8 @@ def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
     elif df_col.size==0:
         return df_col
     elif isinstance(df_col.iloc[0], Quantity):
-        values = df_col.map(lambda x: (x.m, x.u))
-        return pd.DataFrame({df_col.name: df_col.map(lambda x: x.m),
-                             df_col.name + "_units": df_col.map(lambda x: str(x.u))},
-                            index=df_col.index)
+        m, u = list(zip(*df_col.map(lambda x: (np.nan, 'dimensionless') if pd.isna(x) else (x.m, str(x.u)))))
+        return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index)
     else:
         return df_col
 
@@ -347,7 +345,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._schema = ingest_schema or engine.dialect.default_schema_name or 'demo_dv'
         self.benchmark_name = benchmark_name
         df = pd.DataFrame()
-        for scope in benchmark_scopes:
+        for scope in EScope.get_scopes():
             if EI_benchmarks.dict()[scope] is None:
                 continue
             for benchmark in EI_benchmarks.dict()[scope]['benchmarks']:
@@ -578,8 +576,8 @@ from {self._schema}.{itr_prefix}overshoot_ratios R
     def get_pa_temp_scores(self, probability: float, company_ids: List[str]) -> pd.Series:
         if probability < 0 or probability > 1:
             raise ValueError(f"probability value {probability} outside range [0.0, 1.0]")
-        temp_scores = read_quantified_sql(f"select company_id, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units from {self._schema}.{self._tempscore_table}",
-                                          self._tempscore_table, self._schema, self._engine, index_col='company_id')
+        temp_scores = read_quantified_sql(f"select company_id, scope, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units from {self._schema}.{self._tempscore_table}",
+                                          self._tempscore_table, self._schema, self._engine, index_col=['company_id', 'scope'])
         # We may have company_ids in our portfolio not in our database, and vice-versa.
         # Return proper pa_temp_scores for what we can find, and np.nan for those we cannot
         retval = pd.Series(data=None, index=company_ids, dtype='float64')
