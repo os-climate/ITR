@@ -4,6 +4,7 @@ This module handles initialization of pint functionality
 
 import numpy as np
 import pandas as pd
+import pint
 from pint import get_application_registry, Context, Quantity, DimensionalityError
 import ITR
 
@@ -97,6 +98,17 @@ ng.add_transformation('[energy]', '[volume] CH4', lambda ureg, x: x / (NG_DENS *
 ng.add_transformation('[carbon] * [length] * [methane] * [time] ** 2', '[carbon] * [mass]', lambda ureg, x: x * NG_DENS * NG_SE)
 ng.add_transformation('[carbon] * [mass] / [volume] / [methane]', '[carbon] * [mass] / [energy]', lambda ureg, x: x / (NG_DENS * NG_SE))
 ng.add_transformation('[carbon] * [time] ** 2 / [length] ** 2', '[carbon] * [mass] / [length] ** 3 / [methane]', lambda ureg, x: x * NG_DENS * NG_SE)
+# Cannot convert from 'CO2e * megawatt_hour * metric_ton / CH4 / mmscf' ([carbon] * [mass] ** 2 / [length] / [methane] / [time] ** 2) to 'CO2e * metric_ton' ([carbon] * [mass])
+ng.add_transformation('[carbon] * [mass] * [energy] / [methane] / [volume]', '[carbon] * [mass]', lambda ureg, x: (x / (NG_DENS * NG_SE)).to_reduced_units())
+# Cannot convert from 'CO2e * MMbbl * kt / megawatt_hour' ([carbon] * [length] * [time] ** 2) to 'CO2e * metric_ton' ([carbon] * [mass])
+ng.add_transformation('[carbon] * [mass] * bbl / [energy]', '[carbon] * [mass]', lambda ureg, x: x.m * dimension_as(x.u, 'MJ'))
+# FIXME: If we mix up target intensities (applying Gas to Oil and vice-versa), we need to bail...
+# ng.add_transformation('[carbon] * [mass] / [methane]', '[carbon] * [mass]', lambda ureg, x: Q_(np.nan, 't CO2e'))
+# ng.add_transformation('[carbon] * [mass] * [methane]', '[carbon] * [mass]', lambda ureg, x: Q_(np.nan, 't CO2e'))
+
+# Cannot convert from 'megawatt_hour / CH4 / mmscf' ([mass] / [length] / [methane] / [time] ** 2) to 'dimensionless' (dimensionless)
+# conversion to dimensionless throws key error on '' in ureg
+
 ng.add_transformation('Mscf CH4', 'kg CO2e', lambda ureg, x: x * ureg('54.87 kg CO2e / (Mscf CH4)'))
 ng.add_transformation('g CH4', 'g CO2e', lambda ureg, x: x * ureg('44 g CO2e / (16 g CH4)'))
 ureg.add_context(ng)
@@ -109,6 +121,27 @@ coal.add_transformation('g Coal', 'g CO2e', lambda ureg, x: x * ureg('1.992 g CO
 ureg.add_context(coal)
 
 ureg.enable_contexts('ngas', 'coal')
+
+# from https://github.com/hgrecco/pint/discussions/1697
+def direct_conversions(ureg, unit):
+    def unit_dimensionality(ureg, name):
+        unit = getattr(ureg, name, None)
+
+        if unit is None or not isinstance(unit, pint.Unit):
+            return {}
+
+        return unit.dimensionality
+
+    if isinstance(unit, str):
+        unit = ureg.parse_units(unit)
+
+    return [
+        name
+        for name in ureg
+        if name != '%' and unit.dimensionality == unit_dimensionality(ureg, name)
+    ]
+# conversions = direct_conversions(ureg, "m / s ** 2")
+# {name: getattr(ureg, name).dimensionality for name in conversions}
 
 def time_dimension(unit, exp):
     return ureg(unit).is_compatible_with("s") # and exp == -1

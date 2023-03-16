@@ -95,7 +95,9 @@ def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
                 new_col = pd.Series(data=df[col], name=col) * pd.Series(data=df[units_col].map(
                     lambda x: typemap.get(col, 'dimensionless') if pd.isna(x) else ureg(x).u), name=col)
             if col in typemap.keys():
-                new_col = new_col.astype(f"pint[{typemap[col]}]")
+                breakpoint()
+                # new_col = new_col.astype(f"pint[{typemap[col]}]")
+                new_col = new_col.map(lambda x: x.to(typemap[col]) if x.is_compatible_with(typemap[col]) else Q_(np.nan, typemap[col]))
             df = df.drop(columns=units_col)
             df[col] = new_col
             units_col = None
@@ -486,31 +488,31 @@ create table {self._schema}.{itr_prefix}cumulative_emissions with (
 ) as
 select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2' as scope,
        sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)) * P.production_by_year) as cumulative_trajectory,
-       concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units) as cumulative_trajectory_units,
+       concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_trajectory_units,
        sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) as cumulative_target,
-       concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units) as cumulative_target_units
+       concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
-     join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
-     join {company_data._schema}.{company_data._target_table} EI on EI.company_name=C.company_name and EI.year=P.year
-     join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_name=C.company_name and ET.year=P.year
+     join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
+     join {company_data._schema}.{company_data._target_table} EI on EI.company_id=C.company_id and EI.year=P.year and EI.ei_s1_by_year is not NULL
+     join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_id=C.company_id and ET.year=P.year and ET.ei_s1_by_year is not NULL
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2',
-         concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units),
-         concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units)
+         concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units),
+         concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units)
 UNION ALL
 select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2S3' as scope,
        sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)+if(is_nan(ET.ei_s3_by_year),0.0,ET.ei_s3_by_year)) * P.production_by_year) as cumulative_trajectory,
-       concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units) as cumulative_trajectory_units,
+       concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_trajectory_units,
        sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)+if(is_nan(EI.ei_s3_by_year),0.0,EI.ei_s3_by_year)) * P.production_by_year) as cumulative_target,
-       concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units) as cumulative_target_units
+       concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
-     join {company_data._schema}.{company_data._target_table} EI on EI.company_name=C.company_name and EI.year=P.year
-     join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_name=C.company_name and ET.year=P.year
+     join {company_data._schema}.{company_data._target_table} EI on EI.company_name=C.company_name and EI.year=P.year and EI.ei_s1_by_year is not NULL
+     join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_name=C.company_name and ET.year=P.year and ET.ei_s1_by_year is not NULL
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2S3',
-         concat(P.production_by_year_units, ' * ', ET.ei_s1_by_year_units),
-         concat(P.production_by_year_units, ' * ', EI.ei_s1_by_year_units)
+         concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units),
+         concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units)
 """, self._engine, verbose=True)
 
         qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}cumulative_budget_1", self._engine, verbose=False)
@@ -522,13 +524,13 @@ create table {self._schema}.{itr_prefix}cumulative_budget_1 with (
 select C.company_name, C.company_id, '{company_data._schema}' as source, B.scope, 'benchmark_1' as benchmark,
        B.global_budget, B.benchmark_temp,
        sum(B.intensity * P.production_by_year) as cumulative_budget,
-       concat(P.production_by_year_units, ' * ', B.intensity_units) as cumulative_budget_units
+       concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_budget_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
      join {self._schema}.{benchmarks_projected_ei.benchmark_name} B on P.year=B.year and C.region=B.region and C.sector=B.sector
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', B.scope, 'benchmark_1', B.global_budget, B.benchmark_temp,
-         concat(P.production_by_year_units, ' * ', B.intensity_units)
+         concat(B.intensity_units, ' * ', P.production_by_year_units)
 """, self._engine, verbose=True)
 
     def quant_init(self,
