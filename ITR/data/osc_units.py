@@ -98,13 +98,6 @@ ng.add_transformation('[energy]', '[volume] CH4', lambda ureg, x: x / (NG_DENS *
 ng.add_transformation('[carbon] * [length] * [methane] * [time] ** 2', '[carbon] * [mass]', lambda ureg, x: x * NG_DENS * NG_SE)
 ng.add_transformation('[carbon] * [mass] / [volume] / [methane]', '[carbon] * [mass] / [energy]', lambda ureg, x: x / (NG_DENS * NG_SE))
 ng.add_transformation('[carbon] * [time] ** 2 / [length] ** 2', '[carbon] * [mass] / [length] ** 3 / [methane]', lambda ureg, x: x * NG_DENS * NG_SE)
-# Cannot convert from 'CO2e * megawatt_hour * metric_ton / CH4 / mmscf' ([carbon] * [mass] ** 2 / [length] / [methane] / [time] ** 2) to 'CO2e * metric_ton' ([carbon] * [mass])
-ng.add_transformation('[carbon] * [mass] * [energy] / [methane] / [volume]', '[carbon] * [mass]', lambda ureg, x: (x / (NG_DENS * NG_SE)).to_reduced_units())
-# Cannot convert from 'CO2e * MMbbl * kt / megawatt_hour' ([carbon] * [length] * [time] ** 2) to 'CO2e * metric_ton' ([carbon] * [mass])
-ng.add_transformation('[carbon] * [mass] * bbl / [energy]', '[carbon] * [mass]', lambda ureg, x: x.m * dimension_as(x.u, 'MJ'))
-# FIXME: If we mix up target intensities (applying Gas to Oil and vice-versa), we need to bail...
-# ng.add_transformation('[carbon] * [mass] / [methane]', '[carbon] * [mass]', lambda ureg, x: Q_(np.nan, 't CO2e'))
-# ng.add_transformation('[carbon] * [mass] * [methane]', '[carbon] * [mass]', lambda ureg, x: Q_(np.nan, 't CO2e'))
 
 # Cannot convert from 'megawatt_hour / CH4 / mmscf' ([mass] / [length] / [methane] / [time] ** 2) to 'dimensionless' (dimensionless)
 # conversion to dimensionless throws key error on '' in ureg
