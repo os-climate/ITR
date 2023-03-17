@@ -178,7 +178,7 @@ class VaultCompanyDataProvider(CompanyDataProvider):
         self._production_table = company_table.replace('company_', 'production_') # production_data
         self._emissions_table = company_table.replace('company_', 'emissions_') # emissions_data
         companies_without_projections = osc._do_sql(f"""
-select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._target_table} EI on EI.company_name=C.company_name
+select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._target_table} EI on EI.company_id=C.company_id
 where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_by_year is NULL
 """, self._engine, verbose=True)
         if companies_without_projections:
@@ -504,7 +504,7 @@ select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2S3
        sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)+if(is_nan(EI.ei_s3_by_year),0.0,EI.ei_s3_by_year)) * P.production_by_year) as cumulative_target,
        concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
-     join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
+     join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {company_data._schema}.{company_data._target_table} EI on EI.company_id=C.company_id and EI.year=P.year and EI.ei_s1_by_year is not NULL
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_id=C.company_id and ET.year=P.year and ET.ei_s1_by_year is not NULL
 where P.year>=2020
@@ -524,7 +524,7 @@ select C.company_name, C.company_id, '{company_data._schema}' as source, B.scope
        sum(B.intensity * P.production_by_year) as cumulative_budget,
        concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_budget_units
 from {company_data._schema}.{company_data._company_table} C
-     join {company_data._schema}.{company_data._production_table} P on P.company_name=C.company_name
+     join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {self._schema}.{benchmarks_projected_ei.benchmark_name} B on P.year=B.year and C.region=B.region and C.sector=B.sector
 where P.year>=2020
 group by C.company_name, C.company_id, '{company_data._schema}', B.scope, 'benchmark_1', B.global_budget, B.benchmark_temp,
@@ -554,7 +554,7 @@ select E.company_name, E.company_id, '{company_data._schema}' as source, B.scope
        concat(E.cumulative_target_units, ' / (', B.cumulative_budget_units, ')') as target_overshoot_ratio_units
 from {self._schema}.{itr_prefix}cumulative_emissions E
      join {self._schema}.{itr_prefix}cumulative_budget_1 B on E.company_id=B.company_id and E.scope=B.scope
-""", self._engine, verbose=False)
+""", self._engine, verbose=True)
 
         qres = osc._do_sql(f"drop table if exists {self._schema}.{self._tempscore_table}", self._engine, verbose=False)
         qres = osc._do_sql(f"""
@@ -568,7 +568,7 @@ select R.company_name, R.company_id, '{company_data._schema}' as source, R.scope
        R.benchmark_temp + R.global_budget * (R.target_overshoot_ratio-1) * 2.2/3664.0 as target_temperature_score,
        'delta_degC' as target_temperature_score_units
 from {self._schema}.{itr_prefix}overshoot_ratios R
-""", self._engine, verbose=False)
+""", self._engine, verbose=True)
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         raise NotImplementedError
