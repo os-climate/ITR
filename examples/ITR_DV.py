@@ -943,8 +943,8 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
     '''
 
     if use_data_vault:
-        df_fundamentals = pd.read_sql_table('itr_company_data', engine, index_col='company_id')
-        df_ei = requantify_df (pd.read_sql_table('itr_benchmark_ei', engine, index_col=['sector', 'region']).sort_index()).convert_dtypes()
+        df_fundamentals = pd.read_sql_table(f'{itr_prefix}company_data', engine, index_col='company_id')
+        df_ei = requantify_df (pd.read_sql_table(f'{itr_prefix}benchmark_ei', engine, index_col=['sector', 'region']).sort_index()).convert_dtypes()
         df_ei.scope = df_ei.scope.map(lambda x: EScope[x])
         df_ei = df_ei.set_index('scope', append=True).sort_index()
     else:
@@ -1068,9 +1068,9 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, reg
     '''
 
     if use_data_vault:
-        df_fundamentals = pd.read_sql_table('itr_company_data', engine).set_index('company_id')
-        df_prod = requantify_df (pd.read_sql_table('itr_benchmark_prod', engine)).convert_dtypes()
-        df_ei = requantify_df (pd.read_sql_table('itr_benchmark_ei', engine, index_col=['year', 'sector', 'region'])).convert_dtypes()
+        df_fundamentals = pd.read_sql_table(f'{itr_prefix}company_data', engine).set_index('company_id')
+        df_prod = requantify_df (pd.read_sql_table(f'{itr_prefix}benchmark_prod', engine)).convert_dtypes()
+        df_ei = requantify_df (pd.read_sql_table(f'{itr_prefix}benchmark_ei', engine, index_col=['year', 'sector', 'region'])).convert_dtypes()
         df_ei.scope = df_ei.scope.map(lambda x: EScope[x])
         df_ei = df_ei.set_index('scope', append=True)[['intensity']].unstack(level='year').droplevel(level=0, axis=1)
         # Would be so great to be able to use database instead of global variable
@@ -1421,27 +1421,27 @@ def calc_temperature_score(warehouse_pickle_json, *_):
         # FIXME: need target year!
         sql_query = f"""
 select cd.company_id, cd.sector, cd.region, ts.scope, cd.company_name,
-        'LONG' as time_frame, 'COMPLETE' as score_result_type,
-        production_by_year as base_year_production,
-        production_by_year_units as base_year_production,
-        co2_s1_by_year + coalesce(co2_s2_by_year, 0) as ghg_s1s2,
-        co2_s1_by_year_units as ghg_s1s2_units,
-        co2_s3_by_year as ghg_s3,
-        co2_s3_by_year_units as ghg_s3_units,
-        company_revenue, company_market_cap, company_ev as company_enterprise_value, company_evic as company_ev_plus_cash,
-        company_total_assets, company_cash_equivalents, company_debt,
-        cumulative_budget, cumulative_budget_units,
-        cumulative_trajectory, cumulative_trajectory_units,
-        cumulative_target, cumulative_target_units,
-        trajectory_temperature_score as trajectory_score,
-        target_temperature_score as target_score
-        from {itr_prefix}temperature_scores ts
-        join {itr_prefix}production_data pd on ts.company_id=pd.company_id
-        join {itr_prefix}emissions_data co2 on ts.company_id=co2.company_id
-        join {itr_prefix}company_data cd on ts.company_id=cd.company_id
-        join {itr_prefix}cumulative_budget_1 cb on ts.company_id=cb.company_id and ts.scope=cb.scope
-        join {itr_prefix}cumulative_emissions ce on ts.company_id=ce.company_id and ts.scope=ce.scope
-        where pd.year=2019 and co2.year=2019"""
+       'LONG' as time_frame, 'COMPLETE' as score_result_type,
+       production_by_year as base_year_production,
+       production_by_year_units as base_year_production,
+       co2_s1_by_year + coalesce(co2_s2_by_year, 0) as ghg_s1s2,
+       co2_s1_by_year_units as ghg_s1s2_units,
+       co2_s3_by_year as ghg_s3,
+       co2_s3_by_year_units as ghg_s3_units,
+       company_revenue, company_market_cap, company_ev as company_enterprise_value, company_evic as company_ev_plus_cash,
+       company_total_assets, company_cash_equivalents, company_debt,
+       cumulative_budget, cumulative_budget_units,
+       cumulative_trajectory, cumulative_trajectory_units,
+       cumulative_target, cumulative_target_units,
+       trajectory_temperature_score as trajectory_score,
+       target_temperature_score as target_score
+from {itr_prefix}temperature_scores ts
+       join {itr_prefix}production_data pd on ts.company_id=pd.company_id
+       join {itr_prefix}emissions_data co2 on ts.company_id=co2.company_id
+       join {itr_prefix}company_data cd on ts.company_id=cd.company_id
+       join {itr_prefix}cumulative_budget_1 cb on ts.company_id=cb.company_id and ts.scope=cb.scope
+       join {itr_prefix}cumulative_emissions ce on ts.company_id=ce.company_id and ts.scope=ce.scope
+where pd.year=2019 and co2.year=2019"""
         sql_temp_score_df = pd.read_sql_query(sql_query, engine, index_col='company_id')
         temp_score_df = requantify_df(sql_temp_score_df, typemap={
             'ghg_s1s2':'Mt CO2e', 'ghg_s3':'Mt CO2e',
@@ -1452,16 +1452,8 @@ select cd.company_id, cd.sector, cd.region, ts.scope, cd.company_name,
             scope=lambda x: x.scope.map(lambda y: EScope[y]),
             time_frame=ETimeFrames['LONG'],
             score_result_type=EScoreResultType['COMPLETE'],
-            ghg_s1s2=lambda x: x.ghg_s1s2.map(Q_).astype('pint[Mt CO2e]'),
-            # FIXME: we're going to have to deal with NULL ghg_s3, and possibly ghg_s1s2
-            ghg_s3=lambda x: x.ghg_s3.map(Q_).astype('pint[Mt CO2e]'),
-            cumulative_budget=lambda x: x['cumulative_budget'].map(Q_).astype('pint[Mt CO2e]'),
-            cumulative_trajectory=lambda x: x['cumulative_trajectory'].map(Q_).astype('pint[Mt CO2e]'),
-            cumulative_target=lambda x: x['cumulative_target'].map(Q_).astype('pint[Mt CO2e]'),
         )
-        df.trajectory_score = df.trajectory_score.astype('pint[delta_degC]')
-        df.target_score = df.target_score.astype('pint[delta_degC]')
-        df['temperature_score'] = (df.trajectory_score + df.target_score) / 2.0
+        df['temperature_score'] = (df.trajectory_score.fillna(df.target_score) + df.target_score.fillna(df.trajectory_score)) / 2.0
         amended_portfolio = df.merge(df_portfolio[['company_id', 'investment_value']], on='company_id').set_index('company_id')
     else:
         Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))

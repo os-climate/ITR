@@ -86,9 +86,7 @@ def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
             if col + '_units' != units_col:
                 logger.error(f"Excpecting column name {col}_units but saw {units_col} instead")
                 raise ValueError
-            if col in typemap.keys():
-                new_col = PintArray(df[col], dtype=f"pint[{typemap[col]}]")
-            elif (df[units_col]==df[units_col].iloc[0]).all():
+            if (df[units_col]==df[units_col].iloc[0]).all():
                 # We can make a PintArray since column is of homogeneous type
                 # ...and if the first valid index matches all, we can take first row as good
                 new_col = PintArray(df[col], dtype=f"pint[{ureg(df[units_col].iloc[0]).u}]")
@@ -96,6 +94,8 @@ def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
                 # Make a pd.Series of Quantity in a way that does not throw UnitStrippedWarning
                 new_col = pd.Series(data=df[col], name=col) * pd.Series(data=df[units_col].map(
                     lambda x: typemap.get(col, 'dimensionless') if pd.isna(x) else ureg(x).u), name=col)
+            if col in typemap.keys():
+                new_col = new_col.astype(f"pint[{typemap[col]}]")
             df = df.drop(columns=units_col)
             df[col] = new_col
             units_col = None
