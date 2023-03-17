@@ -94,7 +94,7 @@ essd_schema = 'essd'
 essd_prefix = ''
 demo_schema = 'demo_dv'
 
-itr_prefix = 'itr_'
+itr_prefix = 'template_'
 
 engine = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=demo_schema)
 
@@ -1418,7 +1418,8 @@ def calc_temperature_score(warehouse_pickle_json, *_):
     global companies
 
     if use_data_vault:
-        sql_temp_score_df = pd.read_sql_query(f"""
+        # FIXME: need target year!
+        sql_query = f"""
 select cd.company_id, cd.sector, cd.region, ts.scope, cd.company_name,
         'LONG' as time_frame, 'COMPLETE' as score_result_type,
         production_by_year as base_year_production,
@@ -1440,10 +1441,11 @@ select cd.company_id, cd.sector, cd.region, ts.scope, cd.company_name,
         join {itr_prefix}company_data cd on ts.company_id=cd.company_id
         join {itr_prefix}cumulative_budget_1 cb on ts.company_id=cb.company_id and ts.scope=cb.scope
         join {itr_prefix}cumulative_emissions ce on ts.company_id=ce.company_id and ts.scope=ce.scope
-        where pd.year=2019 and co2.year=2019""", engine, index_col='company_id')
+        where pd.year=2019 and co2.year=2019"""
+        sql_temp_score_df = pd.read_sql_query(sql_query, engine, index_col='company_id')
         temp_score_df = requantify_df(sql_temp_score_df, typemap={
             'ghg_s1s2':'Mt CO2e', 'ghg_s3':'Mt CO2e',
-            'cumulative_trajectory':'g CO2e', 'cumulative_target':'g CO2e', 'cumulative_budget':'g CO2e',
+            'cumulative_trajectory':'Mt CO2e', 'cumulative_target':'Mt CO2e', 'cumulative_budget':'Mt CO2e',
             'trajectory_score':'delta_degC', 'target_score':'delta_degC'})
         df = temp_score_df[~temp_score_df.index.isin(['US6362744095+Gas Utilities', 'US0236081024+Gas Utilities', 'CA87807B1076+Gas', 'CA87807B1076+Oil', 'NO0010657505'])]
         df = df.assign(
