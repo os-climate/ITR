@@ -1,13 +1,25 @@
+from __future__ import annotations
+
+import sys
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from typing import List, Optional, Tuple
-from pint import Quantity
 
-from .configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, logger
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations, TemperatureScoreControls
+import ITR
+from ITR.data.osc_units import ureg, Q_
+import pint
+
+from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
+from .configs import ColumnsConfig, TemperatureScoreControls, TemperatureScoreConfig, LoggingConfig
+
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
+
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
-
+from .temperature_score import TemperatureScore
 
 # If this file is moved, the computation of get_project_root may also need to change
 def get_project_root() -> Path:
@@ -74,23 +86,38 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
     :param data_warehouse: DataWarehouse instances
     :param portfolio: A list of PortfolioCompany models
-    :return: A data frame containing the relevant company data
+    :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
     """
-    df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio])
+    df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio
+                                              if c.company_id not in data_warehouse.company_data.missing_ids])
 
+    if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
+        raise ValueError(f"Portfolio contains no company_id data")
+
+    # This transforms a dataframe of portfolio data into model data just so we can transform that back into a dataframe?!
+    # It does this for all scopes, not only the scopes of interest
     company_data = data_warehouse.get_preprocessed_company_data(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
-
+    
     if len(company_data) == 0:
         raise ValueError("None of the companies in your portfolio could be found by the data providers")
 
-    df_company_data = pd.DataFrame.from_records([c.dict() for c in company_data])
+    df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data])
+    # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
+    df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
+    s3_data_invalid = df_company_data.ghg_s3.isna()
+    df_company_data.loc[s3_data_invalid, 'ghg_s3'] = pd.Series([Q_(np.nan, 'Mt CO2e')] * len(df_company_data), index=df_company_data.index)
+    df_company_data.ghg_s3 = df_company_data.ghg_s3.astype('pint[Mt CO2e]')
+    df_company_data.cumulative_budget = df_company_data.cumulative_budget.astype('pint[Mt CO2e]')
+    df_company_data.cumulative_target = df_company_data.cumulative_target.astype('pint[Mt CO2e]')
+    df_company_data.cumulative_trajectory = df_company_data.cumulative_trajectory.astype('pint[Mt CO2e]')
+    df_company_data.benchmark_temperature = df_company_data.benchmark_temperature.astype('pint[delta_degC]')
+    df_company_data.benchmark_global_budget = df_company_data.benchmark_global_budget.astype('pint[Gt CO2e]')
     portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop("company_name", axis=1), how="left",
-                              on=["company_id"])
-
+                              on=["company_id"]).set_index(['company_id', 'scope'])
     return portfolio_data
 
 
-def calculate(portfolio_data: pd.DataFrame, fallback_score: Quantity['delta_degC'], aggregation_method: PortfolioAggregationMethod,
+def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta_degC'], aggregation_method: PortfolioAggregationMethod,
               grouping: Optional[List[str]], time_frames: List[ETimeFrames],
               scopes: List[EScope], anonymize: bool, aggregate: bool = True,
               controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,
@@ -124,3 +151,66 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: Quantity['delta_degC
         scores = ts.anonymize_data_dump(scores)
 
     return scores, aggregations
+
+
+# https://stackoverflow.com/a/74137209/1291237
+def umean(unquantified_data):
+    """
+    Assuming Gaussian statistics, uncertainties stem from Gaussian parent distributions. In such a case,
+    it is standard to weight the measurements (nominal values) by the inverse variance.
+
+    This function uses error propagation on the to get an uncertainty of the weighted average.
+    :param: A set of uncertainty values
+    :return: The weighted mean of the values, with a freshly calculated error term
+    """
+    values = np.array(list(map(lambda v: v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0), unquantified_data)))
+    epsilon = 1e-7
+    wavg = ITR.ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
+                      np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
+    if wavg.s==0.0:
+        # Uncertainties of zero can unpromote back to floats
+        return wavg.n
+    elif wavg.s < epsilon:
+        logger.debug(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
+        wavg = wavg.n
+
+    return wavg
+
+
+def uround(u, ndigits):
+    """
+    Round an uncertainty to ndigits.
+    """
+    if ITR.isnan(u.n):
+        return ITR._ufloat_nan
+    if ITR.isnan(u.s):
+        return ITR.ufloat(round(u.n, ndigits), u.s)
+    return ITR.ufloat(round(u.n, ndigits), round(u.s, ndigits))
+
+try:
+    import uncertainties as un
+    un.UFloat.__round__ = uround
+except (ImportError, ModuleNotFoundError):
+    pass
+
+
+# From https://goshippo.com/blog/measure-real-size-any-python-object/
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+        size += sum([get_size(i, seen) for i in obj])
+    return size

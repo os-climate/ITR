@@ -1,122 +1,28 @@
+from __future__ import annotations
+
+import json
 import numpy as np
 import pandas as pd
+
 from operator import add
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
-from pydantic import BaseModel, parse_obj_as, validator, root_validator
-from pint import Quantity
-from dataclasses import dataclass
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
+from pydantic import BaseModel, parse_obj_as, validator, root_validator, ValidationError
 
-from ITR.data.osc_units import ureg, Q_
+import ITR
 
+from ITR.data.osc_units import ureg, Q_, M_, PA_, \
+    BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, quantity
+from ITR.configs import ProjectionControls, LoggingConfig
 
-@dataclass
-class ProjectionControls:
-    LOWER_PERCENTILE: float = 0.1
-    UPPER_PERCENTILE: float = 0.9
+import logging
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
 
-    LOWER_DELTA: float = -0.10
-    UPPER_DELTA: float = +0.03
-
-    # FIXME: Should agree with TemperatureScoreConfig.CONTROLS_CONFIG
-    BASE_YEAR: int = 2019
-    TARGET_YEAR: int = 2050
-    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = staticmethod(pd.DataFrame.median)
-
-
-class PintModel(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-
-
-class ProductionMetric(BaseModel):
-    units: str
-    @validator('units')
-    def unit_must_be_production(cls, v):
-        qty = ureg(v)
-        if qty.is_compatible_with("Wh"):
-            return v
-        if qty.is_compatible_with("Fe_ton"):
-            return v
-        if qty.is_compatible_with("passenger km"):
-            return v
-        if qty.is_compatible_with("tkm"):
-            return v
-        if qty.is_compatible_with("boe"):
-            return v
-        if qty.is_compatible_with("t Aluminum"):
-            return v
-        if qty.is_compatible_with("t Cement"):
-            return v
-        if qty.is_compatible_with("USD"):
-            return v
-        if qty.is_compatible_with("m**2"):
-            return v
-        raise ValueError(f"cannot convert {v} to units of production")
-
-
-# Right now we have only one kind of Emissions: Co2
-class EmissionsMetric(BaseModel):
-    units: str
-    @validator('units')
-    def units_must_be_tCO2(cls, v):
-        qty = ureg(v)
-        if qty.is_compatible_with("t CO2"):
-            return v
-        raise ValueError(f"cannot convert {v} to t CO2")
-
-
-class IntensityMetric(BaseModel):
-    units: str 
-    @validator('units')
-    def units_must_be_EI(cls, v):
-        qty = ureg(v)
-        if qty.is_compatible_with("t CO2/MWh"):
-            return v
-        if qty.is_compatible_with("t CO2/Fe_ton"):
-            return v
-        if qty.is_compatible_with("g CO2/(passenger km)"):
-            return v
-        if qty.is_compatible_with("g CO2/tkm"):
-            return v
-        if qty.is_compatible_with("kg CO2/boe"):
-            return v
-        if qty.is_compatible_with("t CO2/(t Aluminum)"):
-            return v
-        if qty.is_compatible_with("t CO2/(t Cement)"):
-            return v
-        if qty.is_compatible_with("kg CO2/USD"):
-            return v
-        if qty.is_compatible_with("g CO2/m**2"):
-            return v
-        raise ValueError(f"cannot convert {v} to known t CO2/production unit")
-
-
-class DimensionlessNumber(BaseModel):
-    units: Literal['dimensionless']
-
-
-class OSC_Metric(BaseModel):
-    units: str 
-    @validator('units')
-    def units_must_be_OSC(cls, v):
-        if v == 'dimensionless':
-            return v
-        try:
-            if ProductionMetric.unit_must_be_production(v):
-                return v
-        except ValueError:
-            try:
-                if EmissionsMetric.units_must_be_tCO2(v):
-                    return v
-            except ValueError:
-                try:
-                    if IntensityMetric.units_must_be_EI(v):
-                        return v
-                except ValueError:
-                    raise ValueError(f"cannot understand {v} as OSC_Metric")
-
+import pint
+from pint.errors import DimensionalityError
+import pint_pandas
 
 class SortableEnum(Enum):
     def __str__(self):
@@ -153,6 +59,13 @@ class EScope(SortableEnum):
     S3 = "S3"
     S1S2 = "S1+S2"
     S1S2S3 = "S1+S2+S3"
+    AnyScope = 'AnyScope'
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.__str__()
 
     @classmethod
     def get_scopes(cls) -> List[str]:
@@ -169,7 +82,8 @@ class EScope(SortableEnum):
 
         :return: A list of EScope objects
         """
-        return [cls.S1S2, cls.S3, cls.S1S2S3]
+        # FIXME: Should this also contain cls.S2 or no?
+        return [cls.S1, cls.S1S2, cls.S3, cls.S1S2S3]
 
 
 class ETimeFrames(SortableEnum):
@@ -190,22 +104,37 @@ class ECarbonBudgetScenario(Enum):
 class EScoreResultType(Enum):
     DEFAULT = "Default"
     TRAJECTORY_ONLY = "Trajectory only"
+    TARGET_ONLY = "Target only"
     COMPLETE = "Complete"
 
+    def __str__(self):
+        return self.name
 
-class AggregationContribution(PintModel):
+    def __repr__(self):
+        return self.__str__()
+
+    @classmethod
+    def get_result_types(cls) -> List[str]:
+        """
+        Get a list of all result types, ordered by priority (first << last priority).
+        :return: A list of the EScoreResultType values
+        """
+        return [EScoreResultType.DEFAULT, EScoreResultType.TRAJECTORY_ONLY, EScoreResultType.TARGET_ONLY, EScoreResultType.COMPLETE]
+
+
+class AggregationContribution(BaseModel):
     company_name: str
     company_id: str
-    temperature_score: Quantity['delta_degC']
-    contribution_relative: Optional[Quantity['percent']]
-    contribution: Optional[Quantity['delta_degC']]
+    temperature_score: quantity('delta_degC')
+    contribution_relative: Optional[quantity('percent')]
+    contribution: Optional[quantity('delta_degC')]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class Aggregation(PintModel):
-    score: Quantity['delta_degC']
+class Aggregation(BaseModel):
+    score: quantity('delta_degC')
     # proportion is a number from 0..1
     proportion: float
     contributions: List[AggregationContribution]
@@ -216,7 +145,7 @@ class Aggregation(PintModel):
 
 class ScoreAggregation(BaseModel):
     all: Aggregation
-    influence_percentage: float
+    influence_percentage: quantity('percent')
     grouped: Dict[str, Aggregation]
 
     def __getitem__(self, item):
@@ -224,6 +153,8 @@ class ScoreAggregation(BaseModel):
 
 
 class ScoreAggregationScopes(BaseModel):
+    S1: Optional[ScoreAggregation]
+    S2: Optional[ScoreAggregation]
     S1S2: Optional[ScoreAggregation]
     S3: Optional[ScoreAggregation]
     S1S2S3: Optional[ScoreAggregation]
@@ -249,70 +180,46 @@ class PortfolioCompany(BaseModel):
     user_fields: Optional[dict]
 
 
-def pint_ify(x, units='dimensionless'):
-    if 'units' in units:
-        units = units['units']
-    if x is None or x is np.nan:
-        return Q_(np.nan, units)
-    if type(x) == str:
-        if x.startswith('nan '):
-            return Q_(np.nan, units)
-        return ureg(x)
-    if isinstance(x, Quantity):
-        # Emissions intensities can arrive as dimensionless if emissions_metric and production_metric are both None
-        if x.m is np.nan and x.u == 'dimensionless':
-            return Q_(np.nan, units)
-        return x
-    return Q_(x, units)
-
-
-def UProjections_to_IProjections(classtype, ul, metric):
-    if ul is None or ul is np.nan:
-        return ul
-    for x in ul:
-        if isinstance(x, classtype):
-            return ul
-    units = metric['units']
-    if 'units' in units:
-        units = units['units']
-    pl = [dict(x) for x in ul]
-    for x in pl:
-        if x['value'] is None or x['value'] is np.nan:
-            x['value'] = Q_(np.nan, units)
-        else:
-            x['value'] = pint_ify(x['value'], units)
-    return pl
-
-
-# U is Unquantified
+# U is Unquantified, which is presently how our benchmarks come in (production_metric comes in elsewhere)
 class UProjection(BaseModel):
     year: int
-    value: Optional[float]
+    value: float
 
-
-# When IProjection is NULL, we don't actually know its type, so we instantiate that later
-class IProjection(PintModel):
+class IProjection(BaseModel):
     year: int
-    value: Optional[Quantity]
+    value: BenchmarkQuantity
 
 
 class IBenchmark(BaseModel):
     sector: str
     region: str
-    benchmark_metric: OSC_Metric
-    projections: List[IProjection]
+    benchmark_metric: BenchmarkMetric
+    projections_nounits: Optional[List[UProjection]]
+    projections: Optional[List[IProjection]]
+    base_year_production: Optional[ProductionQuantity] # FIXME: applies only to production benchmarks
 
-    def __init__(self, benchmark_metric, projections, *args, **kwargs):
+    def __init__(self, benchmark_metric, projections_nounits=None, projections=None,
+                 base_year_production=None, *args, **kwargs):
         # FIXME: Probably want to define `target_end_year` to be 2051, not 2050...
         super().__init__(benchmark_metric=benchmark_metric,
-                         projections=UProjections_to_IProjections(IProjection, projections, benchmark_metric),
+                         projections_nounits=projections_nounits,
+                         projections=projections,
+                         base_year_production=base_year_production,
                          *args, **kwargs)
         # Sadly we need to build the full projection range before cutting it down to size...
         # ...until Tiemann learns the bi-valence of dict and Model parameters
-        self.projections = [p for p in self.projections
-                            if p.year in range(ProjectionControls.BASE_YEAR,
-                                               ProjectionControls.TARGET_YEAR+1)]
-
+        if self.projections_nounits:
+            if self.projections:
+                # Check if we've already seen/processed these exact projections
+                changed_projections = [p for p in self.projections if not any([n for n in self.projections_nounits if n.year==p.year and n.value==p.value.m])]
+                if changed_projections:
+                    raise ValueError
+                return
+            self.projections = [IProjection(year=p.year, value=BenchmarkQuantity(Q_(p.value, benchmark_metric))) for p in self.projections_nounits
+                                if p.year in range(ProjectionControls.BASE_YEAR,
+                                                   ProjectionControls.TARGET_YEAR+1)]
+        elif not self.projections:
+            logger.warning(f"Empty Benchmark for sector {sector}, region {region}")
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -320,111 +227,237 @@ class IBenchmark(BaseModel):
 
 class IBenchmarks(BaseModel):
     benchmarks: List[IBenchmark]
+    production_centric = False
 
     def __getitem__(self, item):
         return getattr(self, item)
 
+
+# These IProductionBenchmarkScopes and IEIBenchmarkScopes are vessels for holding initialization data
+# The CompanyDataProvider methods create their own dataframes that are then used throughout
 
 class IProductionBenchmarkScopes(BaseModel):
     AnyScope: Optional[IBenchmarks]
-
-
-class IEIBenchmarkScopes(PintModel):
+    S1: Optional[IBenchmarks]
+    S2: Optional[IBenchmarks]
     S1S2: Optional[IBenchmarks]
     S3: Optional[IBenchmarks]
     S1S2S3: Optional[IBenchmarks]
-    benchmark_temperature: Quantity['delta_degC']
-    benchmark_global_budget: Quantity['CO2']
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+
+class IEIBenchmarkScopes(BaseModel):
+    S1: Optional[IBenchmarks]
+    S2: Optional[IBenchmarks]
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
+    benchmark_temperature: quantity('delta_degC')
+    benchmark_global_budget: quantity('Gt CO2')
     is_AFOLU_included: bool
 
-    def __init__(self, benchmark_temperature, benchmark_global_budget, *args, **kwargs):
-        super().__init__(benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
-                         benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
-                         *args, **kwargs)
-
     def __getitem__(self, item):
         return getattr(self, item)
 
 
-class ICompanyEIProjection(PintModel):
+class ICompanyEIProjection(BaseModel):
     year: int
-    value: Optional[Quantity]
+    value: Optional[EI_Quantity]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    def __eq__(self, o):
+        if self.year != o.year:
+            raise ValueError(f"EI Projection years not aligned for __eq__(): {self.year} vs. {o.year}")
+        if ITR.isnan(self.value.m) and ITR.isnan(o.value.m):
+            return True
+        return self.value == o.value
 
     def add(self, o):
-        assert self.year==o.year
-        return IEmissionRealization(year=self.year, value = self.value + o.value)
+        if self.year != o.year:
+            # breakpoint()
+            raise ValueError(f"EI Projection years not aligned for add(): {self.year} vs. {o.year}")
+        return ICompanyEIProjection(year=self.year,
+                                    value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
+    def min(self, o):
+        if self.year != o.year:
+            raise ValueError(f"EI Projection years not aligned for min(): {self.year} vs. {o.year}")
+        return ICompanyEIProjection(year=self.year, value = min(self.value, o.value))
 
 class ICompanyEIProjections(BaseModel):
-    ei_metric: IntensityMetric
+    ei_metric: EI_Metric
     projections: List[ICompanyEIProjection]
-
-    def __init__(self, ei_metric, projections, *args, **kwargs):
-        super().__init__(ei_metric=ei_metric, projections=UProjections_to_IProjections(ICompanyEIProjection, projections,
-                                                                                       ei_metric.dict() if isinstance(ei_metric, BaseModel) else  ei_metric),
-                         *args, **kwargs)
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+    def __str__(self):
+        # Work-around for https://github.com/hgrecco/pint/issues/1687
+        ei_metric = str(ureg.parse_units(self.ei_metric))
+        series = (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1]) \
+                 (list (zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in self.projections])) )
+        return str(series)
+
+class DF_ICompanyEIProjections(BaseModel):
+    ei_metric: Optional[EI_Metric] = None
+    projections: pd.Series
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @validator('projections')
+    def allow_projections(cls, v):
+        if isinstance(v.pint, pint_pandas.pint_array.PintSeriesAccessor):
+            return v
+        raise ValidationError(f"{v} is not composed of a PintArray")
+
+    def __init__(self, icompany_ei_projections=None, *args, **kwargs):
+        projections = None
+        projections_gen = None
+        if icompany_ei_projections is not None:
+            ei_metric = icompany_ei_projections.ei_metric
+            projections_gen = icompany_ei_projections.projections
+        else:
+            ei_metric = kwargs['ei_metric']
+            projections = kwargs['projections']
+            if not isinstance(projections, pd.Series):
+                projections_gen = projections
+                projections = None
+        if projections_gen is not None:
+            # Work-around for https://github.com/hgrecco/pint/issues/1687
+            ei_metric = str(ureg.parse_units(ei_metric))
+            years, values = list( map(list, zip(*[(x['year'], np.nan if x['value'] is None else pint.Quantity(x['value']).m_as(ei_metric))
+                                                  for x in projections_gen])) )
+            projections = pd.Series(PA_(values, dtype=ei_metric), index=pd.Index(years, name='year'), name='value')
+        super().__init__(ei_metric=ei_metric, projections=projections)
 
 
 class ICompanyEIProjectionsScopes(BaseModel):
-    S1: Optional[ICompanyEIProjections]
-    S2: Optional[ICompanyEIProjections]
-    S1S2: Optional[ICompanyEIProjections]
-    S3: Optional[ICompanyEIProjections]
-    S1S2S3: Optional[ICompanyEIProjections]
+    S1: Optional[DF_CompanyEIProjections] = None
+    S2: Optional[DF_CompanyEIProjections] = None
+    S1S2: Optional[DF_CompanyEIProjections] = None
+    S3: Optional[DF_CompanyEIProjections] = None
+    S1S2S3: Optional[DF_CompanyEIProjections] = None
+
+    def __init__(self, *args, **kwargs):
+        # We don't validate anything in the first step because incoming parameters are the wild west
+        # (dict, ICompanyEIProjections, pd.Series)
+        super().__init__()
+            
+        for k, v in kwargs.items():
+            if isinstance(v, dict):
+                setattr(self, k, DF_ICompanyEIProjections(ei_metric=EI_Metric(v['ei_metric']), projections=v['projections']))
+            elif isinstance(v, ICompanyEIProjections):
+                setattr(self, k, DF_ICompanyEIProjections(icompany_ei_projections=v))
+            elif isinstance(v, pd.Series):
+                setattr(self, k, DF_ICompanyEIProjections(ei_metric=EI_Metric(str(v.dtype)), projections=v))
+            elif isinstance(v, DF_ICompanyEIProjections) or v is None:
+                setattr(self, k, v)
+            else:
+                # breakpoint()
+                assert False
+            # We could do a post-hoc validation here...
 
     def __getitem__(self, item):
         return getattr(self, item)
 
+    def __str__(self):
+        dict_items = {scope: getattr(self, scope).projections
+                      for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      if getattr(self, scope) is not None}
+        return str(pd.DataFrame.from_dict(dict_items))
 
-class IProductionRealization(PintModel):
+
+class IProductionRealization(BaseModel):
     year: int
-    value: Optional[Quantity[ProductionMetric]]
+    value: Optional[ProductionQuantity]
 
 
-class IEmissionRealization(PintModel):
+class IEmissionRealization(BaseModel):
     year: int
-    value: Optional[Quantity['CO2']]
+    value: Optional[EmissionsQuantity]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    def __eq__(self, o):
+        assert self.year==o.year
+        if ITR.isnan(self.value.m) and ITR.isnan(o.value.m):
+            return True
+        return self.value == o.value
 
     def add(self, o):
         assert self.year==o.year
-        return IEmissionRealization(year=self.year, value = self.value + o.value)
+        return IEmissionRealization(year=self.year,
+                                    value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
-class IHistoricEmissionsScopes(PintModel):
+class IHistoricEmissionsScopes(BaseModel):
     S1: List[IEmissionRealization]
     S2: List[IEmissionRealization]
     S1S2: List[IEmissionRealization]
     S3: List[IEmissionRealization]
     S1S2S3: List[IEmissionRealization]
 
+    def __getitem__(self, item):
+        return getattr(self, item)
 
-class IEIRealization(PintModel):
+    def __str__(self):
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[Mt CO2e]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as('Mt CO2e'), 4)) for x in getattr(self, scope)])))
+                      for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      if getattr(self, scope) is not None}
+        return str(pd.DataFrame.from_dict(dict_items))
+
+class IEIRealization(BaseModel):
     year: int
-    value: Optional[Quantity[IntensityMetric]]
+    value: Optional[EI_Quantity]
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    def __eq__(self, o):
+        assert self.year==o.year
+        if ITR.isnan(self.value.m) and ITR.isnan(o.value.m):
+            return True
+        return self.value == o.value
 
     def add(self, o):
         assert self.year==o.year
-        return IEIRealization(year=self.year, value = self.value + o.value)
+        return IEIRealization(year=self.year,
+                              value = self.value + (0 if ITR.isnan(o.value.m) else o.value))
 
 
-class IHistoricEIScopes(PintModel):
+class IHistoricEIScopes(BaseModel):
     S1: List[IEIRealization]
     S2: List[IEIRealization]
     S1S2: List[IEIRealization]
     S3: List[IEIRealization]
     S1S2S3: List[IEIRealization]
 
+    def __getitem__(self, item):
+        return getattr(self, item)
 
-class IHistoricData(PintModel):
+    def __str__(self):
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope)])))
+                      for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
+                      # Work-around for https://github.com/hgrecco/pint/issues/1687
+                      for ei_metric in [ str(ureg.parse_units(getattr(self, scope).ei_metric)) ]
+                      if getattr(self, scope) is not None}
+        return str(pd.DataFrame.from_dict(dict_items))
+
+class IHistoricData(BaseModel):
     productions: Optional[List[IProductionRealization]]
     emissions: Optional[IHistoricEmissionsScopes]
     emissions_intensities: Optional[IHistoricEIScopes]
 
 
-class ITargetData(PintModel):
+class ITargetData(BaseModel):
     netzero_year: Optional[int]
     target_type: Union[Literal['intensity'], Literal['absolute'], Literal['Intensity'], Literal['Absolute']]
     target_scope: EScope
@@ -434,7 +467,7 @@ class ITargetData(PintModel):
 
     target_base_year_qty: float
     target_base_year_unit: str
-    target_reduction_pct: float
+    target_reduction_pct: float # This is actually a fraction, not a percentage.  1.0 = complete reduction to zero.
 
     @root_validator
     def must_be_greater_than_2022(cls, v):
@@ -443,26 +476,26 @@ class ITargetData(PintModel):
         return v
 
 
-class ICompanyData(PintModel):
+class ICompanyData(BaseModel):
     company_name: str
     company_id: str
 
-    region: str  # TODO: make SortableEnums
     sector: str  # TODO: make SortableEnums
+    region: str  # TODO: make SortableEnums
     target_probability: float = 0.5
 
     target_data: Optional[List[ITargetData]]
-    historic_data: Optional[IHistoricData]
+    historic_data: Optional[IHistoricData] # IHistoric data can contain None values; need to convert to Quantified NaNs
 
     country: Optional[str]
 
     emissions_metric: Optional[EmissionsMetric]    # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
-    production_metric: Optional[ProductionMetric]  # Optional because it can be inferred from sector and region
+    production_metric: Optional[ProductionMetric]
     
     # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
-    base_year_production: Optional[Quantity[ProductionMetric]]
-    ghg_s1s2: Optional[Quantity[EmissionsMetric]]
-    ghg_s3: Optional[Quantity[EmissionsMetric]]
+    base_year_production: Optional[ProductionQuantity]
+    ghg_s1s2: Optional[EmissionsQuantity]
+    ghg_s3: Optional[EmissionsQuantity]
 
     industry_level_1: Optional[str]
     industry_level_2: Optional[str]
@@ -483,30 +516,6 @@ class ICompanyData(PintModel):
 
     # TODO: Do we want to do some sector inferencing here?
     
-    def _fixup_year_value_list(self, ListType, u_list, metric, inferred_metric):
-        # u_list is unprocessed; i_list is processed; r_list is returned list
-        i_list = [ul.dict() if isinstance(ul, BaseModel)
-                  # In Python 3.9, dictionary union of x, y is x | y
-                  # In Python 3.8, it's {**x, **y}
-                  else {**{'year':ul['year']}, **{'value':Q_(ul['value'])
-                                                  if ul['value'] is not None else Q_(np.nan, metric)}}
-                  for ul in u_list]
-        if not i_list:
-            return []
-        if metric is None:
-            try:
-                metric = next(str(x['value'].u) for x in i_list if str(x['value'].u) != 'dimensionless')
-            except StopIteration as e:
-                # TODO: If everything in the list is empty, why not NULL it out and return []?
-                metric = inferred_metric
-        else:
-            metric = metric['units']
-        for il in i_list:
-            if str(il['value'].u) == 'dimensionless':
-                il['value'] = Q_(il['value'].m, metric)
-        r_list = UProjections_to_IProjections(ListType, i_list, {'units':metric})
-        return r_list
-    
     def _sector_to_production_units(self, sector, region="Global"):
         sector_unit_dict = {
             'Electricity Utilities': { 'North America':'MWh', 'Global': 'GJ' },
@@ -514,7 +523,11 @@ class ICompanyData(PintModel):
             'Utilities': { 'Global': 'PJ' },
             'Steel': { 'Global': 't Steel' },
             'Aluminum': { 'Global': 't Aluminum' },
-            'Oil & Gas': { 'Global': 'mmboe' },
+            'Energy': { 'Global': 'PJ' },
+            'Coal': { 'Global': 't Coal' },
+            'Oil': { 'Global': 'bbl/d' },
+            'Gas': { 'Global': 'bcm' },
+            # 'Oil & Gas': { 'Global': 'mmboe' },
             'Autos': { 'Global': 'pkm' },
             'Trucking': { 'Global': 'tkm' },
             'Cement': { 'Global': 't Cement' },
@@ -523,6 +536,12 @@ class ICompanyData(PintModel):
             'Commercial Buildings': { 'Global': 'billion m**2' }, # Should it be 'built m**2' ?
             'Textiles': { 'Global': 'billion USD' },
             'Chemicals': { 'Global': 'billion USD' },
+            'Chemicals': { 'Global': 'billion USD' },
+            'Pharmaceuticals': { 'Global': 'billion USD' },
+            'Ag Chem': { 'Global': 'billion USD' },
+            'Consumer Products': { 'Global': 'billion USD' },
+            'Fiber & Rubber': { 'Global': 'billion USD' },
+            'Petrochem & Plastics': { 'Global': 'billion USD' },
         }
         units = None
         if sector_unit_dict.get(sector):
@@ -535,64 +554,8 @@ class ICompanyData(PintModel):
             raise ValueError(f"No source of production metrics for {self.company_name}")
         return units        
 
-    def _fixup_ei_projections(self, projections, production_metric, emissions_metric, sector, region):
-        if projections is None or isinstance(projections, ICompanyEIProjectionsScopes):
-            return projections
-        ei_metric = None
-        if emissions_metric is None and production_metric is None:
-            inferred_emissions_metric = 't CO2'
-            inferred_production_metric = self._sector_to_production_units(sector, region)
-        else:
-            inferred_emissions_metric = emissions_metric['units']
-            inferred_production_metric = production_metric['units']
-        inferred_ei_metric = f"{inferred_emissions_metric}/({inferred_production_metric})"
-        for scope in projections:
-            if projections[scope] is None:
-                continue
-            projections[scope]['projections'] = self._fixup_year_value_list(ICompanyEIProjectionsScopes, projections[scope]['projections'], None, inferred_ei_metric)
-            ei_metric = f"{projections[scope]['projections'][0]['value'].u:~P}"
-            projections[scope]['ei_metric'] = {'units':ei_metric}
-        model_projections = ICompanyEIProjectionsScopes(**projections)
-        return model_projections
-
-    def _fixup_historic_data(self, historic_data, production_metric, emissions_metric, sector, region):
-        if historic_data is None:
-            return None
-        if production_metric is None:
-            inferred_production_metric = self._sector_to_production_units(sector, region)
-        else:
-            inferred_production_metric = production_metric['units']
-        if not historic_data.get('productions'):
-            productions = None
-        else:
-            productions = self._fixup_year_value_list(IProductionRealization, historic_data['productions'], production_metric, inferred_production_metric)
-        if emissions_metric is None:
-            if production_metric in ['TWh', 'PJ', 'mmboe']:
-                inferred_emissions_metric = 'Mt CO2'
-            else:
-                inferred_emissions_metric = 't CO2'
-        else:
-            inferred_emissions_metric = emissions_metric['units']
-        if not historic_data.get('emissions'):
-            emissions = None
-        else:
-            emissions = {}
-            for scope in historic_data['emissions']:
-                emissions[scope] = self._fixup_year_value_list(IEmissionRealization, historic_data['emissions'][scope], emissions_metric, inferred_emissions_metric)
-        if not historic_data.get('emissions_intensities'):
-            emissions_intensities = None
-        else: 
-            emissions_intensities = {}
-            inferred_ei_metric = f"{inferred_emissions_metric}/({inferred_production_metric})"
-            for scope in historic_data['emissions_intensities']:
-                emissions_intensities[scope] = self._fixup_year_value_list(IEIRealization, historic_data['emissions_intensities'][scope], None, inferred_ei_metric)
-
-        # Tempting to rewrite history here to push S3 into S1S2, but we have to wait until projections are finished
-        model_historic_data = IHistoricData(productions=productions, emissions=emissions, emissions_intensities=emissions_intensities)
-        return model_historic_data
-
-    def _get_base_realization_from_historic(self, realized_values: List[PintModel], units, base_year=None):
-        valid_realizations = [rv for rv in realized_values if np.isfinite(rv.value)]
+    def _get_base_realization_from_historic(self, realized_values: List[BaseModel], units, base_year=None):
+        valid_realizations = [rv for rv in realized_values if rv.value is not None and not ITR.isnan(rv.value.magnitude)]
         if not valid_realizations:
             retval = realized_values[0].copy()
             retval.year = None
@@ -601,116 +564,159 @@ class ICompanyData(PintModel):
         if base_year and valid_realizations[0].year != base_year:
             retval = realized_values[0].copy()
             retval.year = base_year
+            # FIXME: Unless and until we accept uncertainties as input, rather than computed data, we don't need to make this a UFloat here
             retval.value = Q_(np.nan, units)
             return retval
         return valid_realizations[0]
 
-    def __init__(self, historic_data=None, projected_targets=None, projected_intensities=None, emissions_metric=None,
-                 production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None, *args, **kwargs):
-        super().__init__(historic_data=self._fixup_historic_data(historic_data, production_metric, emissions_metric, kwargs.get('sector'), kwargs.get('region')),
-                         # Not necessarily initialized here; may be fixed up if initially None after benchmark info is set
-                         projected_targets=self._fixup_ei_projections(projected_targets, production_metric, emissions_metric, kwargs.get('sector'), kwargs.get('region')),
-                         projected_intensities=self._fixup_ei_projections(projected_intensities, production_metric, emissions_metric, kwargs.get('sector'), kwargs.get('region')),
-                         emissions_metric=emissions_metric,
+    def _normalize_historic_data(self, historic_data: IHistoricData, production_metric: ProductionMetric, emissions_metric: EmissionsMetric) -> IHistoricData:
+        def _normalize(value, metric):
+            if value is not None:
+                # We've pre-conditioned metric so don't need to work around https://github.com/hgrecco/pint/issues/1687
+                return value.to(metric)
+            return Q_(np.nan, metric)
+        
+        if historic_data is None:
+            return None
+
+        if historic_data.productions:
+            # Work-around for https://github.com/hgrecco/pint/issues/1687
+            production_metric = str(ureg.parse_units(production_metric))
+            historic_data.productions = [IProductionRealization(year=p.year, value=_normalize (p.value, production_metric))
+                                         for p in historic_data.productions]
+        # Work-around for https://github.com/hgrecco/pint/issues/1687
+        ei_metric = str(ureg.parse_units(f"{emissions_metric} / ({production_metric})"))
+        for scope_name in EScope.get_scopes():
+            if historic_data.emissions:
+                setattr(historic_data.emissions, scope_name, [IEmissionRealization(year=p.year, value=_normalize(p.value, emissions_metric))
+                                                              for p in historic_data.emissions[scope_name]])
+            if historic_data.emissions_intensities:
+                setattr(historic_data.emissions_intensities, scope_name, [IEIRealization(year=p.year, value=_normalize(p.value, ei_metric))
+                                                                          for p in historic_data.emissions_intensities[scope_name]])
+        return historic_data
+
+    def __init__(self, emissions_metric=None, production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None,
+                 target_data=None, historic_data=None, *args, **kwargs):
+        super().__init__(emissions_metric=emissions_metric,
                          production_metric=production_metric,
+                         base_year_production=base_year_production,
+                         ghg_s1s2=ghg_s1s2, ghg_s3=ghg_s3,
+                         target_data=target_data,
+                         historic_data=historic_data,
                          *args, **kwargs)
-        # In-bound parameters are dicts, which are converted to models by __super__ and stored as instance variables
+        # In-bound parameters are JSON (str, int, float, dict), which are converted to models by __super__ and stored as instance variables
         if production_metric is None:
             units = self._sector_to_production_units(self.sector, self.region)
-            self.production_metric = parse_obj_as(ProductionMetric, {'units': units})
+            self.production_metric = ProductionMetric(units)
             if emissions_metric is None:
-                self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
+                self.emissions_metric = EmissionsMetric('t CO2')
         elif emissions_metric is None:
-            if self.production_metric.units in ['TWh', 'PJ', 'MFe_ton', 'megaFe_ton', 'mmboe']:
-                self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 'Mt CO2'})
+            if str(self.production_metric) in ['TWh', 'PJ', 'Mt Steel', 'megaFe_ton', 'mmboe']:
+                self.emissions_metric = EmissionsMetric('Mt CO2')
             else:
-                self.emissions_metric = parse_obj_as(EmissionsMetric, {'units': 't CO2'})
+                self.emissions_metric = EmissionsMetric('t CO2')
             # TODO: Should raise a warning here
+
+        # This is only a partial initialization
+        if self.historic_data is None:
+            return
+        self.historic_data = self._normalize_historic_data(self.historic_data, self.production_metric, self.emissions_metric)
         base_year = None
-        if base_year_production is not None:
-            self.base_year_production = pint_ify(base_year_production, self.production_metric.units)
-        elif self.historic_data and self.historic_data.productions:
+        if self.base_year_production:
+            pass
+        # Right now historic_data comes in via template.py ESG data
+        elif self.historic_data.productions:
             # TODO: This is a hack to get things going.
-            base_realization = self._get_base_realization_from_historic(self.historic_data.productions, self.production_metric.units, base_year)
+            base_realization = self._get_base_realization_from_historic(self.historic_data.productions, str(self.production_metric), base_year)
             base_year = base_realization.year
             self.base_year_production = base_realization.value
         else:
-            # raise ValueError(f"missing historic data for base_year_production for {self.company_name}")
-            self.base_year_production = Q_(np.nan, self.production_metric.units)
-        if ghg_s1s2 is not None:
-            self.ghg_s1s2=pint_ify(ghg_s1s2, self.emissions_metric.units)
-        elif self.historic_data and self.historic_data.emissions:
+            logger.warning(f"missing historic data for base_year_production for {self.company_name}")
+            self.base_year_production = Q_(np.nan, str(self.production_metric))
+        if self.ghg_s1s2 is None and self.historic_data.emissions:
             if self.historic_data.emissions.S1S2:
-                base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S1S2, self.emissions_metric.units, base_year)
+                base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S1S2, str(self.emissions_metric), base_year)
                 base_year = base_year or base_realization.year
                 self.ghg_s1s2 = base_realization.value
             elif self.historic_data.emissions.S1 and self.historic_data.emissions.S2:
-                base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions.S1, self.emissions_metric.units, base_year)
-                base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions.S2, self.emissions_metric.units, base_year)
+                base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions.S1, str(self.emissions_metric), base_year)
+                base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions.S2, str(self.emissions_metric), base_year)
                 base_year = base_year or base_realization_s1.year
-                self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
-        if self.ghg_s1s2 is None and self.historic_data and self.historic_data.emissions_intensities:
-            intensity_units = (Q_(1.0, self.emissions_metric.units) / Q_(1.0, self.production_metric.units)).units
+                if base_realization_s1.value is not None and base_realization_s2.value is not None:
+                    self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
+        if self.ghg_s1s2 is None and self.historic_data.emissions_intensities:
+            intensity_units = (Q_(self.emissions_metric) / Q_(self.production_metric)).units
             if self.historic_data.emissions_intensities.S1S2:
                 base_realization = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1S2, intensity_units, base_year)
                 base_year = base_year or base_realization.year
-                self.ghg_s1s2 = base_realization.value * self.base_year_production
+                if base_realization.value is not None:
+                    self.ghg_s1s2 = base_realization.value * self.base_year_production
             elif self.historic_data.emissions_intensities.S1 and self.historic_data.emissions_intensities.S2:
                 base_realization_s1 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S1, intensity_units, base_year)
                 base_realization_s2 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S2, intensity_units, base_year)
                 base_year = base_year or base_realization_s1.year
-                self.ghg_s1s2 = (base_realization_s1.value + base_realization_s2.value) * self.base_year_production
+                if base_realization_s1.value is not None and base_realization_s2.value is not None:
+                    self.ghg_s1s2 = (base_realization_s1.value + base_realization_s2.value) * self.base_year_production
             else:
                 raise ValueError(f"missing S1S2 historic intensity data for {self.company_name}")
         if self.ghg_s1s2 is None:
             raise ValueError(f"missing historic emissions or intensity data to calculate ghg_s1s2 for {self.company_name}")
-        if ghg_s3 is not None:
-            self.ghg_s3 = pint_ify(ghg_s3, self.emissions_metric.units)
-        elif self.historic_data and self.historic_data.emissions and self.historic_data.emissions.S3:
-            base_realization_s3 = self._get_base_realization_from_historic(self.historic_data.emissions.S3, self.emissions_metric.units, base_year)
+        if self.ghg_s3 is None and self.historic_data.emissions and self.historic_data.emissions.S3:
+            base_realization_s3 = self._get_base_realization_from_historic(self.historic_data.emissions.S3, str(self.emissions_metric), base_year)
             self.ghg_s3 = base_realization_s3.value
-        if self.ghg_s3 is None and self.historic_data and self.historic_data.emissions_intensities:
+        if self.ghg_s3 is None and self.historic_data.emissions_intensities:
             if self.historic_data.emissions_intensities.S3:
-                intensity_units = (Q_(1.0, self.emissions_metric.units) / Q_(1.0, self.production_metric.units)).units
+                intensity_units = (Q_(self.emissions_metric) / Q_(self.production_metric)).units
                 base_realization_s3 = self._get_base_realization_from_historic(self.historic_data.emissions_intensities.S3, intensity_units, base_year)
-                self.ghg_s3 = base_realization_s3.value * self.base_year_production
+                if base_realization_s3.value is not None:
+                    self.ghg_s3 = base_realization_s3.value * self.base_year_production
 
 
+# These aggregate terms are all derived from the benchmark being used
 class ICompanyAggregates(ICompanyData):
-    cumulative_budget: Quantity['CO2']
-    cumulative_trajectory: Quantity['CO2']
-    cumulative_target: Quantity['CO2']
-    benchmark_temperature: Quantity['delta_degC']
-    benchmark_global_budget: Quantity['CO2']
+    cumulative_budget: Optional[EmissionsQuantity]
+    cumulative_trajectory: Optional[EmissionsQuantity]
+    cumulative_target: Optional[EmissionsQuantity]
+    benchmark_temperature: Optional[quantity('delta_degC')]
+    benchmark_global_budget: Optional[EmissionsQuantity]
+    scope: Optional[EScope]
 
+    # The first year that cumulative_projections exceeds the 2050 cumulative_budget
+    trajectory_exceedance_year: Optional[int]
+    target_exceedance_year: Optional[int]
+
+    # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
     # projected_targets: Optional[ICompanyEIProjectionsScopes]
     # projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
-    def __init__(self, cumulative_budget, cumulative_trajectory, cumulative_target,
-                 benchmark_temperature, benchmark_global_budget,
-                 *args, **kwargs):
-        super().__init__(cumulative_budget=pint_ify(cumulative_budget, 't CO2'),
-                         cumulative_trajectory=pint_ify(cumulative_trajectory, 't CO2'),
-                         cumulative_target=pint_ify(cumulative_target, 't CO2'),
-                         benchmark_temperature=pint_ify(benchmark_temperature, 'delta_degC'),
-                         benchmark_global_budget=pint_ify(benchmark_global_budget, 'Gt CO2'),
-                         *args, **kwargs)
+    # Custom validator here
+    @validator('trajectory_exceedance_year', 'target_exceedance_year',
+               pre=True)
+    def allow_NA(cls, v):
+        if isinstance(v, int):
+            return v
+        if pd.isna(v):
+            return None
+        raise ValueError(f"{v} is not compatible with Int64 dtype")
 
-
-class TemperatureScoreControls(PintModel):
-    base_year: int
-    target_end_year: int
-    projection_start_year: int
-    projection_end_year: int
-    tcre: Quantity['delta_degC']
-    carbon_conversion: Quantity['CO2']
-    scenario_target_temperature: Quantity['delta_degC']
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-    @property
-    def tcre_multiplier(self) -> Quantity['delta_degC/CO2']:
-        return self.tcre / self.carbon_conversion
-
-
+    @classmethod
+    def from_ICompanyData(cls, super_instance, scope_company_data):
+        # FIXME: Would love to know how to run these automatically...
+        EmissionsQuantity.validate(scope_company_data['cumulative_budget'])
+        if scope_company_data['cumulative_trajectory']:
+            EmissionsQuantity.validate(scope_company_data['cumulative_trajectory'])
+        if scope_company_data['cumulative_target']:
+            EmissionsQuantity.validate(scope_company_data['cumulative_target'])
+        if not Q_(scope_company_data['benchmark_temperature']).is_compatible_with(ureg('delta_degC')):
+            raise ValueError(f"benchmark temperature {scope_company_data['benchmark_temperature']} is not compatible with delta_degC")
+        else:
+            scope_company_data['benchmark_temperature'] = Q_(scope_company_data['benchmark_temperature'])
+        EmissionsQuantity.validate(scope_company_data['benchmark_global_budget'])
+        if not isinstance(scope_company_data['scope'], EScope):
+            raise ValueError(f"scope {scope_company_data['scope']} is not a valid scope")
+        if not pd.isna(scope_company_data['trajectory_exceedance_year']) and not isinstance(scope_company_data['trajectory_exceedance_year'], int):
+            raise ValueError(f"scope {scope_company_data['trajectory_exceedance_year']} is not a valid trajectory exceedance year value")
+        if not pd.isna(scope_company_data['target_exceedance_year']) and not isinstance(scope_company_data['target_exceedance_year'], int):
+            raise ValueError(f"scope {scope_company_data['target_exceedance_year']} is not a valid target exceedance year value")
+        # ...while not re-running any validation on super_instnace
+        return cls.construct(**scope_company_data, **super_instance.__dict__)

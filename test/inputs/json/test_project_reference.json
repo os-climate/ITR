@@ -5,7 +5,19 @@
         "region": "North America",
         "sector": "Electricity Utilities",
         "target_probability": 0.428571428571428,
-        "target_data": null,
+        "target_data": [
+          {
+            "netzero_year": 2050,
+            "target_type": "intensity",
+            "target_scope": "S1+S2",
+            "target_start_year": 2020,
+            "target_base_year": 2019,
+            "target_end_year": 2030,
+            "target_base_year_qty": 0.131037611,
+            "target_base_year_unit": "t CO2/GJ",
+            "target_reduction_pct": 0.5
+          }
+        ],
         "historic_data": {
             "productions": [
                 {
@@ -289,12 +301,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "MWh"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "377380291.0897404 gigajoule",
         "ghg_s1s2": "49451011.67207839 CO2 * metric_ton",
         "ghg_s3": null,
@@ -311,9 +319,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -446,9 +452,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -581,9 +585,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -903,12 +905,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "MWh"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "2156173206.8114123 gigajoule",
         "ghg_s1s2": "376206003.1541758 CO2 * metric_ton",
         "ghg_s3": null,
@@ -925,9 +923,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -1060,9 +1056,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -1195,9 +1189,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -1458,12 +1450,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "nan gigajoule",
         "ghg_s1s2": "nan CO2 * metric_ton",
         "ghg_s3": null,
@@ -1480,9 +1468,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -1615,9 +1601,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -1750,9 +1734,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -2178,12 +2160,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "360288033.84621 gigajoule",
         "ghg_s1s2": "33390018.80345035 CO2 * metric_ton",
         "ghg_s3": null,
@@ -2200,9 +2178,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -2335,9 +2311,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -2470,9 +2444,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -2898,12 +2870,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "2684119703.3008957 gigajoule",
         "ghg_s1s2": "50260012.94494245 CO2 * metric_ton",
         "ghg_s3": null,
@@ -2920,9 +2888,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -3055,9 +3021,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -3190,9 +3154,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -3618,12 +3580,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "718528321.3548025 gigajoule",
         "ghg_s1s2": "40919641.75266823 CO2 * metric_ton",
         "ghg_s3": null,
@@ -3640,9 +3598,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -3775,9 +3731,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -3910,9 +3864,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -4338,12 +4290,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "1600080489.3093767 gigajoule",
         "ghg_s1s2": "15138054.171876589 CO2 * metric_ton",
         "ghg_s3": null,
@@ -4360,9 +4308,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -4495,9 +4441,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -4630,9 +4574,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -5058,12 +5000,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "5301547203.094344 gigajoule",
         "ghg_s1s2": "1100001.719081218 CO2 * metric_ton",
         "ghg_s3": null,
@@ -5080,9 +5018,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -5215,9 +5151,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -5350,9 +5284,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -5778,12 +5710,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "76114085.42779164 gigajoule",
         "ghg_s1s2": "7000003.01543978 CO2 * metric_ton",
         "ghg_s3": null,
@@ -5800,9 +5728,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -5935,9 +5861,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -6070,9 +5994,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -6498,12 +6420,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "3364675203.246948 gigajoule",
         "ghg_s1s2": "226148786.80385956 CO2 * metric_ton",
         "ghg_s3": null,
@@ -6520,9 +6438,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -6655,9 +6571,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -6790,9 +6704,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -7218,12 +7130,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "236895844.15776384 gigajoule",
         "ghg_s1s2": "18468002.30986883 CO2 * metric_ton",
         "ghg_s3": null,
@@ -7240,9 +7148,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -7375,9 +7281,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -7510,9 +7414,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -7938,12 +7840,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "1038312015.4129393 gigajoule",
         "ghg_s1s2": "nan CO2 * metric_ton",
         "ghg_s3": null,
@@ -7960,9 +7858,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -8095,9 +7991,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -8230,9 +8124,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -8658,12 +8550,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "171690299.59138668 gigajoule",
         "ghg_s1s2": "10885050.280992629 CO2 * metric_ton",
         "ghg_s3": null,
@@ -8680,9 +8568,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -8815,9 +8701,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -8950,9 +8834,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -9378,12 +9260,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "GJ"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "1902204004.0657933 gigajoule",
         "ghg_s1s2": "73000002.25877401 CO2 * metric_ton",
         "ghg_s3": null,
@@ -9400,9 +9278,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -9535,9 +9411,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -9670,9 +9544,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -10098,12 +9970,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "MWh"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "GJ",
         "base_year_production": "874385285.6113813 gigajoule",
         "ghg_s1s2": "48669596.11743459 CO2 * metric_ton",
         "ghg_s3": null,
@@ -10120,9 +9988,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -10255,9 +10121,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -10390,9 +10254,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/GJ"
-                },
+                "ei_metric": "CO2\u00b7t/GJ",
                 "projections": [
                     {
                         "year": 2019,
@@ -10706,12 +10568,8 @@
             "emissions_intensities": null
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "71500001.3960884 Fe * metric_ton",
         "ghg_s1s2": "150800002.7921764 CO2 * metric_ton",
         "ghg_s3": null,
@@ -11024,12 +10882,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "nan Fe * metric_ton",
         "ghg_s1s2": "10280008.910463441 CO2 * metric_ton",
         "ghg_s3": null,
@@ -11046,9 +10900,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -11181,9 +11033,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -11316,9 +11166,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -11744,12 +11592,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "nan Fe * metric_ton",
         "ghg_s1s2": "21533599.6290368 CO2 * metric_ton",
         "ghg_s3": null,
@@ -11766,9 +11610,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -11901,9 +11743,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -12036,9 +11876,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -12464,12 +12302,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "12194000.4760821 Fe * metric_ton",
         "ghg_s1s2": "2900043.4711641413 CO2 * metric_ton",
         "ghg_s3": null,
@@ -12486,9 +12320,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -12621,9 +12453,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -12756,9 +12586,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -13184,12 +13012,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "23303009.677026 Fe * metric_ton",
         "ghg_s1s2": "22245019.35405201 CO2 * metric_ton",
         "ghg_s3": null,
@@ -13206,9 +13030,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -13341,9 +13163,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -13476,9 +13296,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -13904,12 +13722,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "28090000.2335485 Fe * metric_ton",
         "ghg_s1s2": "60500000.46709696 CO2 * metric_ton",
         "ghg_s3": null,
@@ -13926,9 +13740,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -14061,9 +13873,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -14196,9 +14006,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -14624,12 +14432,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "12630001.0468216 Fe * metric_ton",
         "ghg_s1s2": "40522212.093643196 CO2 * metric_ton",
         "ghg_s3": null,
@@ -14646,9 +14450,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -14781,9 +14583,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -14916,9 +14716,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -15344,12 +15142,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "22329000.8292913 Fe * metric_ton",
         "ghg_s1s2": "nan CO2 * metric_ton",
         "ghg_s3": null,
@@ -15366,9 +15160,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -15501,9 +15293,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -15636,9 +15426,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -16064,12 +15852,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "47050001.3676141 Fe * metric_ton",
         "ghg_s1s2": "93000002.73522823 CO2 * metric_ton",
         "ghg_s3": null,
@@ -16086,9 +15870,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -16221,9 +16003,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -16356,9 +16136,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -16784,12 +16562,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "15520004.6310296 Fe * metric_ton",
         "ghg_s1s2": "32000009.26205918 CO2 * metric_ton",
         "ghg_s3": null,
@@ -16806,9 +16580,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -16941,9 +16713,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -17076,9 +16846,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -17504,12 +17272,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "nan Fe * metric_ton",
         "ghg_s1s2": "80242000.85133582 CO2 * metric_ton",
         "ghg_s3": null,
@@ -17526,9 +17290,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -17661,9 +17423,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -17796,9 +17556,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -18224,12 +17982,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "11314001.9224849 Fe * metric_ton",
         "ghg_s1s2": "nan CO2 * metric_ton",
         "ghg_s3": null,
@@ -18246,9 +18000,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -18381,9 +18133,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -18516,9 +18266,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -18944,12 +18692,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "14473000.0778486 Fe * metric_ton",
         "ghg_s1s2": "10755000.15569713 CO2 * metric_ton",
         "ghg_s3": null,
@@ -18966,9 +18710,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -19101,9 +18843,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -19236,9 +18976,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -19664,12 +19402,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "28540004.3464472 Fe * metric_ton",
         "ghg_s1s2": "62895845.0 CO2 * metric_ton",
         "ghg_s3": null,
@@ -19686,9 +19420,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -19821,9 +19553,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -19956,9 +19686,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -20384,12 +20112,8 @@
             }
         },
         "country": null,
-        "emissions_metric": {
-            "units": "t CO2"
-        },
-        "production_metric": {
-            "units": "t Steel"
-        },
+        "emissions_metric": "t CO2",
+        "production_metric": "t Steel",
         "base_year_production": "nan Fe * metric_ton",
         "ghg_s1s2": "22700004.74733483 CO2 * metric_ton",
         "ghg_s3": null,
@@ -20406,9 +20130,7 @@
         "projected_targets": null,
         "projected_intensities": {
             "S1": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -20541,9 +20263,7 @@
                 ]
             },
             "S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,
@@ -20676,9 +20396,7 @@
                 ]
             },
             "S1S2": {
-                "ei_metric": {
-                    "units": "CO2\u00b7t/(t Steel)"
-                },
+                "ei_metric": "CO2\u00b7t/(t Steel)",
                 "projections": [
                     {
                         "year": 2019,

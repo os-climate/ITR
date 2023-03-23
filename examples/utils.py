@@ -5,6 +5,8 @@ import random
 
 from collections import ChainMap
 
+import ITR
+
 def print_aggregations(aggregations):
     aggregations = aggregations.dict()
     print("{:<10s} {:<10s} {}".format('Timeframe', 'Scope', 'Temp score'))
@@ -52,10 +54,11 @@ def collect_company_contributions(aggregated_portfolio, amended_portfolio, analy
             temperature_scores.append(contribution.temperature_score)
     company_contributions = pd.DataFrame(data={'company_name': company_names, 'contribution': relative_contributions, 'temperature_score': temperature_scores})
     additional_columns = ['company_name', 'company_id', 'company_market_cap', 'investment_value'] + grouping
-    company_contributions = company_contributions.merge(right=amended_portfolio[additional_columns], how='left', on='company_name')
+    company_contributions = company_contributions.merge(right=amended_portfolio.reset_index()[additional_columns], how='left', on='company_name')
     company_contributions['portfolio_percentage'] = 100 * company_contributions['investment_value'] / company_contributions['investment_value'].sum()
     company_contributions['ownership_percentage'] = 100 * company_contributions['investment_value'] / company_contributions['company_market_cap']
     company_contributions = company_contributions.sort_values(by='contribution', ascending=False)
+    company_contributions.set_index('company_id')
     return company_contributions
 
 
@@ -66,9 +69,9 @@ def plot_grouped_statistics(aggregated_portfolio, company_contributions, analysi
     timeframe = str(timeframe[0]).lower()
 
     sector_investments = company_contributions.groupby(grouping).investment_value.sum().values
-    sector_contributions = [v.m for v in company_contributions.groupby(grouping).contribution.sum().values]
+    sector_contributions = [ITR.nominal_values(v.m) for v in company_contributions.groupby(grouping).contribution.sum().values]
     sector_names = company_contributions.groupby(grouping).contribution.sum().keys()
-    sector_temp_scores = [v.m for scope in scopes for v in [aggregation.score for aggregation in aggregated_portfolio[timeframe][str(scope)]['grouped'].values()]]
+    sector_temp_scores = [ITR.nominal_values(v.m) for scope in scopes for v in [aggregation.score for aggregation in aggregated_portfolio[timeframe][str(scope)]['grouped'].values()]]
 
     sector_temp_scores, sector_names, sector_contributions, sector_investments = \
         zip(*sorted(zip(sector_temp_scores, sector_names, sector_contributions, sector_investments), reverse=True))
@@ -97,6 +100,7 @@ def plot_grouped_statistics(aggregated_portfolio, company_contributions, analysi
 
 
 def anonymize(portfolio, provider):
+    portfolio = portfolio.reset_index()
     portfolio_companies = portfolio['company_name'].unique()
     for index, company_name in enumerate(portfolio_companies):
         portfolio.loc[portfolio['company_name'] == company_name, 'company_id'] = 'C' + str(index + 1)
@@ -115,6 +119,7 @@ def anonymize(portfolio, provider):
             provider.data['fundamental_data'].loc[provider.data['fundamental_data']['company_name'] == company_name, 'company_id'] = '_' + str(index + 1)
             provider.data['fundamental_data'].loc[provider.data['fundamental_data']['company_name'] == company_name, 'company_name'] = 'Company_' + str(
                 index + 1)
+    portfolio = portfolio.set_index('company_id')
     return portfolio, provider
 
 
@@ -144,7 +149,7 @@ def plot_grouped_heatmap(grouped_aggregations, analysis_parameters):
         for j, item_group_1 in enumerate(groups[group_1]):
             key = item_group_1+'-'+item_group_2
             if key in combinations:
-                grid[i, j] = aggregations[item_group_1+'-'+item_group_2].score.m
+                grid[i, j] = ITR.nominal_values(aggregations[item_group_1+'-'+item_group_2].score.m)
             else:
                 grid[i, j] = np.nan
 

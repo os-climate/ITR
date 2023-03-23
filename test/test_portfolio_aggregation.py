@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 import pandas as pd
+import ITR
 from utils import assert_pint_series_equal
 from ITR.portfolio_aggregation import PortfolioAggregationMethod, PortfolioAggregation
 from ITR.configs import ColumnsConfig
@@ -59,8 +60,14 @@ class TestPortfolioAggregation(unittest.TestCase):
         PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.COMPANY_REVENUE)
 
         self.data.loc[0, ColumnsConfig.TEMPERATURE_SCORE] = np.nan
-        with self.assertRaises(ValueError):
-            PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.TEMPERATURE_SCORE)
+        # _check_column no longer raises an exceptiong for null or missing data, because
+        # FOR AGGREGATION PURPOSES, such missing data is treated as zero (just like np.sum
+        # treats missing data as zero, whereas np.add will create np.nan if either
+        # addend is np.nan).  We no longer call _check_column for non-aggregating operations.
+        return
+        # with self.assertRaises(ValueError):
+        #     PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.TEMPERATURE_SCORE)
+        
 
     def test_calculate_aggregate_score_WATS(self):
         pa_WATS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,
