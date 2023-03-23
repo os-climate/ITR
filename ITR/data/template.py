@@ -1,3 +1,4 @@
+import re
 import warnings  # needed until apply behaves better with Pint quantities in arrays
 from typing import Type, List, Optional
 import pandas as pd
@@ -60,7 +61,6 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
     ----------
     y : a pd.Series that arrives via a pd.GroupBy operation.
         The elements of the series are all data (or np.nan) matching a metric/sub-metric.
-        This function 
 
     Returns
     -------
@@ -164,20 +164,34 @@ s3_category_rdict = {
     "1": "Purchased goods and services", 
     "2": "Capital goods",
     "3": "Fuel- and energy-related activities",
+    "3": "Fuel and energy-related activities",
     "4": "Upstream transportation and distribution",
+    "4": "Upstream transportation",
     "5": "Waste generated in operations",
     "6": "Business travel",
     "7": "Employee commuting",
     "8": "Upstream leased assets",
     "9": "Downstream transportation and distribution",
+    "9": "Downstream transportation",
     "10": "Processing of sold products",
     "11": "Use of sold products",
     "12": "End-of-life treatment of sold products",
+    "12": "End of life treatment",
     "13": "Downstream leased assets",
     "14": "Franchises",
     "15": "Investments",
 }
 s3_category_dict = { v.lower():k for k, v in s3_category_rdict.items() }
+
+def maybe_other_s3_mappings(x):
+    if pd.isna(x):
+        return x;
+    if isinstance(x, int):
+        return str(x)
+    if (m := re.match(r'^Cat (\d+):', x, flags=re.IGNORECASE)):
+        return m.group(1)
+    return x
+
 
 # FIXME: Should we change this to derive from ExcelProviderCompany?
 class TemplateProviderCompany(BaseCompanyDataProvider):
@@ -588,11 +602,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 'lng': 'Gas',
                 'ng': 'Gas',
                 'oil': 'Oil',
+                # 'revenue': could be a number of sectors...
             }
             sector_submetric_keys = list(submetric_sector_map.keys())
 
             grouped_prod = (
                 df_esg[df_esg.metric.isin(['production'])]
+                .assign(submetric=lambda x: x['submetric'].str.lower())
                 # .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
                 .assign(sector=lambda x: x[['company_id', 'submetric']].apply(
                     lambda y: submetric_sector_map.get(y.submetric, df_fundamentals.loc[y.company_id].sector), axis=1))
@@ -608,7 +624,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
             # For categoricals, fisrt listed is least and sorts to first in ascending order
             grouped_prod.submetric = pd.Categorical(grouped_prod['submetric'], ordered=True,
-                                                    categories=['operated', 'own', 'generation', 'equity', '', 'gross', 'net', 'full']+sector_submetric_keys)
+                                                    categories=['operated', 'own', 'generation', 'revenue',
+                                                                'equity', '', 'gross', 'net', 'full']+sector_submetric_keys)
             best_prod = (
                 grouped_prod.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
@@ -624,12 +641,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             s3_dict_matches = df_esg[s3_idx].submetric.astype('str').str.lower().isin(s3_category_dict)
             s3_dict_idx = s3_dict_matches[s3_dict_matches].index
             df_esg.loc[s3_dict_idx, 'submetric'] = df_esg.loc[s3_dict_idx].submetric.astype('str').str.lower().map(s3_category_dict)
+            # FIXME: can we make more efficient by just using ':' as index on left-hand side?
+            df_esg.loc[s3_idx.index.difference(s3_dict_idx), 'submetric'] = df_esg.loc[s3_idx.index.difference(s3_dict_idx)].submetric.map(maybe_other_s3_mappings)
 
             # We group, in order to prioritize, emissions according to boundary-like and/or category submetrics.
             grouped_em = (
                 df_esg.loc[em_metrics.index]
                 .assign(metric=df_esg.loc[em_metrics.index].metric.str.upper())
-                .assign(submetric=df_esg.loc[em_metrics.index].submetric.map(lambda x: '' if pd.isna(x) else str(x)))
+                .assign(submetric=df_esg.loc[em_metrics.index].submetric.map(lambda x: '' if pd.isna(x) else str(x).lower()))
                 # .assign(sector=df_esg['company_id'].map(lambda x: df_fundamentals.loc[x].sector))
                 .assign(sector=lambda x: x[['company_id', 'submetric']].apply(
                     lambda y: submetric_sector_map.get(y.submetric, df_fundamentals.loc[y.company_id].sector), axis=1))
@@ -645,7 +664,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
             grouped_non_s3 = grouped_em.loc[grouped_em.index.get_level_values('metric') != 'S3'].copy()
             grouped_non_s3.submetric = pd.Categorical(grouped_non_s3['submetric'], ordered=True,
-                                                      categories=['generation', '', 'all', 'combined', 'total', 'location', 'market']+sector_submetric_keys)
+                                                      categories=['generation', '', 'all', 'combined', 'total', 'location', 'location-based', 'market', 'market-based']+sector_submetric_keys)
             best_em = (
                 grouped_non_s3.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])
