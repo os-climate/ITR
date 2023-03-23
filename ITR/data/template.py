@@ -171,6 +171,7 @@ s3_category_rdict = {
     "6": "Business travel",
     "7": "Employee commuting",
     "8": "Upstream leased assets",
+    "8": "Leased assets (upstream)",
     "9": "Downstream transportation and distribution",
     "9": "Downstream transportation",
     "10": "Processing of sold products",
@@ -178,8 +179,10 @@ s3_category_rdict = {
     "12": "End-of-life treatment of sold products",
     "12": "End of life treatment",
     "13": "Downstream leased assets",
+    "13": "Leased assets (downstream)",
     "14": "Franchises",
     "15": "Investments",
+    "4,9": "Transportation",
 }
 s3_category_dict = { v.lower():k for k, v in s3_category_rdict.items() }
 
@@ -835,7 +838,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             new_ab = df_a.loc[new_ab_idx, historic_years]+df_b.loc[new_ab_idx, historic_years]
             new_ab.insert(0, 'scope', scope_ab)
             new_ab.set_index('scope', append=True, inplace=True)
-            df_ab[df_ab.applymap(lambda x: ITR.isnan(x.m))] = new_ab
+            df_ab[df_ab.applymap(lambda x: ITR.isnan(x.m))] = new_ab.loc[new_ab.index.intersection(df_ab.index)]
             # DF_AB has gaps filled, but not whole new rows that did not exist before
             # Drop rows in NEW_AB already covered by DF_AB and consolidate
             new_ab.drop(index=df_ab.index, inplace=True, errors='ignore')
