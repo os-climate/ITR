@@ -111,10 +111,10 @@ def gen_company_data(company_name, company_id, region, sector, production,
                 pass
             elif EScope.S1S2 in scopes: # and EScope.S3 not in scopes
                 # Compute S3 from S1S2S3 - S1S2
-                company_dict['ghg_s3'] = production * (bm_ei[2019] - bm_ei_scopes.loc[sector, :, EScope.S1S2, 2019].iloc[0])
+                company_dict['ghg_s3'] = production * (bm_ei[2019] - bm_ei_scopes.loc[(sector, slice(None), EScope.S1S2), 2019].iloc[0])
             elif EScope.S3 in scopes: # and EScope.S1S2 not in scopes
                 # Compute S1S2 from S1S2S3 - S3
-                company_dict['ghg_s1s2'] = production * (bm_ei[2019] - bm_ei_scopes.loc[sector, :, EScope.S3, 2019].iloc[0])
+                company_dict['ghg_s1s2'] = production * (bm_ei[2019] - bm_ei_scopes.loc[(sector, slice(None), EScope.S3), 2019].iloc[0])
             else:
                 s1s2_s3_split = random.uniform(0.5,0.9)
                 company_dict['ghg_s1s2'] = (production * bm_ei[2019] * (1-s1s2_s3_split))

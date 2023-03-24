@@ -949,6 +949,13 @@ class EITrajectoryProjector(EIProjector):
 
     # Might return a float, might return a ufloat
     def _year_on_year_ratio(self, arr: np.ndarray):
+        # Subsequent zeroes represent no year-on-year change
+        if arr[0]==0.0 and arr[-1]==0.0:
+            return 0.0
+        # Due to rounding, we might overshoot the zero target and go negative
+        # So round the negative number to zero and treat it as a 100% year-on-year decline
+        if arr[0]>=0.0 and arr[-1]<=0.0:
+            return -1.0
         return (arr[-1] / arr[0]) - 1.0
 
 

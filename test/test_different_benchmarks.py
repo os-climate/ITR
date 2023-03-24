@@ -72,10 +72,17 @@ class TestEIBenchmarks(unittest.TestCase):
             # the last slice(None) gives us all scopes to index against
             bm_ei = asPintDataFrame(EI_df.loc[(sector, region, slice(None)), year_list])
 
+            if len(bm_ei) == 1:
+                adjusted_bm_ei = bm_ei * ei_multiplier + ei_offset
+            else:
+                adjusted_bm_ei = bm_ei.copy()
+                adjusted_idx = adjusted_bm_ei.index.get_level_values('scope').isin([EScope.S1, EScope.S1S2, EScope.S1S2S3])
+                adjusted_bm_ei.loc[adjusted_idx] = adjusted_bm_ei.loc[adjusted_idx].mul(ei_multiplier).add(ei_offset)
+
             # We set intensities to be the wonky things
             company_data = gen_company_data(company_name, company_id, region, sector,
                                             base_production,
-                                            bm_ei * ei_multiplier + ei_offset,
+                                            adjusted_bm_ei,
                                             ei_nz_year, ei_max_negative)
             projected_intensities = company_data.projected_targets
             # We set targets to be the nicely aligned things
@@ -199,10 +206,10 @@ class TestEIBenchmarks(unittest.TestCase):
         print(scores[['company_name', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.029, 1.16, 1.03, 1.03, 1.04], dtype='pint[delta_degC]')
+        expected = pd.Series([1.029, 1.63, 1.42, 1.45, 1.32], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.059, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.37, ureg.delta_degC), places=2)
 
         # TPI below 2
         # portfolio data
@@ -214,10 +221,10 @@ class TestEIBenchmarks(unittest.TestCase):
         print(scores[['company_name', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.14, 1.31, 1.14, 1.14, 1.16], dtype='pint[delta_degC]')
+        expected = pd.Series([1.14, 1.91, 1.64, 1.68, 1.58], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.18, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1.all.score, Q_(1.59, ureg.delta_degC), places=2)
 
         # OECM PC -- This overwrites company data (which it should not)
         self.OECM_PC_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_PC_bm)
@@ -230,10 +237,10 @@ class TestEIBenchmarks(unittest.TestCase):
         print(scores[['company_name', 'temperature_score', 'trajectory_score', 'trajectory_overshoot_ratio', 'target_score', 'target_overshoot_ratio']])
 
         # verify company scores:
-        expected = pd.Series([1.187, 1.87, 1.55, 1.59, 1.45], dtype='pint[delta_degC]')
+        expected = pd.Series([1.187, 1.74, 1.55, 1.58, 1.44], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, scores.temperature_score.values, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.53, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.50, ureg.delta_degC), places=2)
 
 if __name__ == "__main__":
     test = TestEIBenchmarks()

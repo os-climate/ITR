@@ -398,6 +398,7 @@ class DataWarehouse(ABC):
     def estimate_missing_s3_data(self, company: ICompanyData) -> None:
         # We need benchmark data to estimate S3 from projected_intensities (which go back in time to BASE_YEAR).
         # We don't need to estimate further back than that, as we don't rewrite values stored in historic_data.
+        # Benchmarks that don't have S3 emissions (such as TPI for Electricity Utilities) take this early return
         if (company.projected_intensities.S3
             or not self.benchmarks_projected_ei
             or not self.benchmarks_projected_ei._EI_benchmarks.S3):
@@ -417,18 +418,6 @@ class DataWarehouse(ABC):
             if sector=='Construction Buildings':
                 # Construction Buildings don't have an S3 scope defined
                 return
-            elif sector in ['Pharmaceuticals', 'Ag Chem', 'Consumer Products',
-                            'Fibre & Rubber', 'Petrochem & Plastics']:
-                # This is a work-around for missing S3 data in OECM benchmark
-                s3_chemical_weighting = {
-                    'Pharmaceuticals':0.01,
-                    'Ag Chem':0.06,
-                    'Consumer Products':0.08,
-                    'Fibre & Rubber':0.15,
-                    'Petrochem & Plastics':0.70,
-                }
-                bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[("Chemicals", region, EScope.S3)]) * s3_chemical_weighting[sector]
-                bm_ei_s3.name = (sector, region, EScope.S3)
             else:
                 # Some benchmarks don't include S3 for all sectors; so nothing to estimate
                 return
