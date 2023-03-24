@@ -6,6 +6,7 @@ diskcache==5.4.0
 iam-units==2022.10.27
 jupyter==1.0.0
 matplotlib==3.6.1
+osc-ingest-tools==0.4.3
 openpyxl==3.0.10
 openscm-units==0.5.0
 pandas==1.5.3
@@ -17,4 +18,6 @@ Sphinx==5.1.1
 sphinx-autoapi==1.9.0
 sphinx-autodoc-typehints==1.19.1
 sphinx-rtd-theme==1.0.0
+SQLAlchemy==1.4.42
+trino==0.322.0
 xlrd==2.0.1
