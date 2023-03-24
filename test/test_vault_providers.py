@@ -4,21 +4,19 @@ import os
 import pathlib
 import pandas as pd
 from numpy.testing import assert_array_equal
-import ITR
-
-from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.temperature_score import TemperatureScore
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.vault_providers import VaultCompanyDataProvider, VaultProviderProductionBenchmark, \
-    VaultProviderIntensityBenchmark, DataVaultWarehouse
-from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
-    IProductionBenchmarkScopes
 
 from dotenv import load_dotenv
 import trino
 import osc_ingest_trino as osc
 from sqlalchemy.engine import create_engine
+
+import ITR
+from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.temperature_score import TemperatureScore
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
+from ITR.data.data_warehouse import DataWarehouse
+from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
+    IProductionBenchmarkScopes
 
 # Skip because right now this breaks CI/CD
 import pytest
@@ -27,28 +25,36 @@ if pytest.__version__ < "3.0.0":
 else:
   pytestmark = pytest.mark.skip
 
-ingest_catalog = 'osc_datacommons_dev'
-demo_schema = 'demo_dv'
+try:
+    from ITR.data.vault_providers import VaultCompanyDataProvider, VaultProviderProductionBenchmark, \
+        VaultProviderIntensityBenchmark, DataVaultWarehouse
+    vault_initialized = True
+except KeyError:
+    vault_initialized = False
+    
+if vault_initialized:
+    ingest_catalog = 'osc_datacommons_dev'
+    demo_schema = 'demo_dv'
 
-dotenv_dir = os.environ.get('CREDENTIAL_DOTENV_DIR', os.environ.get('PWD', '/opt/app-root/src'))
-dotenv_path = pathlib.Path(dotenv_dir) / 'credentials.env'
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path=dotenv_path,override=True)
+    dotenv_dir = os.environ.get('CREDENTIAL_DOTENV_DIR', os.environ.get('PWD', '/opt/app-root/src'))
+    dotenv_path = pathlib.Path(dotenv_dir) / 'credentials.env'
+    if os.path.exists(dotenv_path):
+        load_dotenv(dotenv_path=dotenv_path,override=True)
 
-sqlstring = 'trino://{user}@{host}:{port}/'.format(
-    user = os.environ['TRINO_USER_USER1'],
-    host = os.environ['TRINO_HOST'],
-    port = os.environ['TRINO_PORT']
-)
-sqlargs = {
-    'auth': trino.auth.JWTAuthentication(os.environ['TRINO_PASSWD_USER1']),
-    'http_scheme': 'https',
-    'catalog': ingest_catalog,
-    'schema': demo_schema,
-}
-engine_init = create_engine(sqlstring, connect_args = sqlargs)
-print("connecting with engine " + str(engine_init))
-connection_init = engine_init.connect()
+    sqlstring = 'trino://{user}@{host}:{port}/'.format(
+        user = os.environ['TRINO_USER_USER1'],
+        host = os.environ['TRINO_HOST'],
+        port = os.environ['TRINO_PORT']
+    )
+    sqlargs = {
+        'auth': trino.auth.JWTAuthentication(os.environ['TRINO_PASSWD_USER1']),
+        'http_scheme': 'https',
+        'catalog': ingest_catalog,
+        'schema': demo_schema,
+    }
+    engine_init = create_engine(sqlstring, connect_args = sqlargs)
+    print("connecting with engine " + str(engine_init))
+    connection_init = engine_init.connect()
 
 class TestVaultProvider(unittest.TestCase):
     """
