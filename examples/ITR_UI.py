@@ -1449,10 +1449,10 @@ def update_graph(
     if sec:
         fig1_kwargs['text'] = 'company_name'
     fig1 = dequantify_plotly(px.scatter, filt_df, **fig1_kwargs)
-    min_xy = min(ITR.nominal_values(filt_df.cumulative_budget.pint.m).min(), ITR.nominal_values(filt_df.cumulative_usage.pint.m).min())/2.0
-    max_xy = max(ITR.nominal_values(filt_df.cumulative_budget.pint.m).max(), ITR.nominal_values(filt_df.cumulative_usage.pint.m).max())*2.0
+    min_xy = min(min(ITR.nominal_values(filt_df.cumulative_budget.pint.m)), min(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))/2.0
+    max_xy = max(max(ITR.nominal_values(filt_df.cumulative_budget.pint.m)), max(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))*2.0
     fig1.add_shape(dict(type='line', line_dash="dash", line_color="red", opacity=0.5, layer='below',
-                        yref='y', xref='x',
+                        yref='y', xref='x', xsizemode='scaled', ysizemode='scaled',
                         y0=min_xy, y1=max_xy, x0=min_xy, x1=max_xy))
     fig1.update_layout({'legend_title_text': '', 'transition_duration': 500})
     fig1.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1, xanchor="center", x=0.5))

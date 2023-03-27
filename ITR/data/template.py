@@ -492,6 +492,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_fundamentals = self.df_fundamentals
         df_target_data = self.df_target_data
         if self.template_version > 1:
+            # self.df_esg = self.df_esg[self.df_esg.company_id=='US3379321074']
             df_esg = self.df_esg
 
         def _fixup_name(x):
@@ -575,7 +576,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_fundamentals.loc[em_units.index, ColumnsConfig.EMISSIONS_METRIC] = em_units.unit
 
             # We solve while we still have valid report_date data.  After we group reports together to find the "best"
-            # the report_date becomes meaningless (and is dropped by _solve_intensities)
+            # by averaging across report dates, the report_date becomes meaningless
             # FIXME: Check use of PRODUCTION_METRIC in _solve_intensities for multi-sector companies
             df_esg = self._solve_intensities(df_fundamentals, df_esg)
 
@@ -657,9 +658,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     lambda y: submetric_sector_map.get(y.submetric, df_fundamentals.loc[y.company_id].sector), axis=1))
                 # first collect things together down to sub-metric category
                 .fillna(np.nan)
+                .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric', 'submetric', 'report_date'],
+                         dropna=False)[esg_year_columns]
+                # Sum the terms that should sum within a given report_date
+                .agg(lambda x: asPintSeries(x, inplace=True).sum(min_count=1))
+                # Then group again across the report_date...
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric', 'submetric'],
                          dropna=False)[esg_year_columns]
-                # then estimate values for each submetric (many/most of which will be NaN)
+                # ...averaging or estimating values for each submetric (many/most of which will be NaN)
                 .agg(_estimated_value)
                 .reset_index(level='submetric')
                 )
@@ -667,7 +673,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Now prioritize the submetrics we want: the best non-NaN values for each company in each column
             grouped_non_s3 = grouped_em.loc[grouped_em.index.get_level_values('metric') != 'S3'].copy()
             grouped_non_s3.submetric = pd.Categorical(grouped_non_s3['submetric'], ordered=True,
-                                                      categories=['generation', '', 'all', 'combined', 'total', 'location', 'location-based', 'market', 'market-based']+sector_submetric_keys)
+                                                      categories=['own', 'generation', '', 'all', 'combined', 'total', 'net', 'location', 'location-based', 'market', 'market-based']+sector_submetric_keys)
             best_em = (
                 grouped_non_s3.sort_values('submetric')
                 .groupby(by=[ColumnsConfig.SECTOR, ColumnsConfig.COMPANY_ID, 'metric'])

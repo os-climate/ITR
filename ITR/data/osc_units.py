@@ -670,6 +670,10 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
     Raises ValueError if there are more than one type of units in the series.
     Silently series if no conversion needed to be done.
     """
+
+    # FIXME: Errors in the imput template can trigger this assertion
+    assert not isinstance(series, pd.DataFrame)
+
     if series.dtype != 'O':
         if errors == 'ignore':
             return series
@@ -718,7 +722,7 @@ def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.Data
     else:
         new_df = pd.DataFrame()
     for col in df.columns:
-        new_df[col] = asPintSeries(df[col], name=col, errors=errors, inplace=inplace)
+        new_df[col] = asPintSeries(df[col].squeeze(), name=col, errors=errors, inplace=inplace)
     new_df.index = df.index
     # When DF.COLUMNS is a MultiIndex, the naive column-by-column construction replaces MultiIndex values
     # with the anonymous tuple of the MultiIndex and DF.COLUMNS becomes just an Index of tuples.
