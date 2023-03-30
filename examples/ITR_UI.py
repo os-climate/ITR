@@ -430,34 +430,6 @@ benchmark_box = dbc.Row(
                      placeholder="Select Emissions Intensity benchmark"),
         html.Div(id='hidden-div', style={'display': 'none'}),
         html.Hr(),  # small space from the top
-        dbc.Row(  # Mean / Median projection
-            [
-                dbc.Col(
-                    dbc.Label("\N{level slider} Select method for projection"),
-                    width=benchmark_width,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target6", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select method of averaging trend of emission intensities projections"),
-                                    id="hover6", target="hover-target6", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.RadioItems(
-            id="projection-method",
-            options=[
-                {'label': 'Median', 'value': 'median'},
-                {'label': 'Mean', 'value': 'mean'},
-            ],
-            value='median',
-            inputStyle={"margin-right": "10px", "margin-left": "30px"},
-            inline=True,
-        ),
-        html.Hr(),  # small space from the top
         dbc.Row(  # Scope selection
             [
                 dbc.Col(
@@ -486,6 +458,34 @@ benchmark_box = dbc.Row(
                 {'label': 'All Scopes', 'value': ''},
             ],
             value='S1S2S3',
+            inputStyle={"margin-right": "10px", "margin-left": "30px"},
+            inline=True,
+        ),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Mean / Median projection
+            [
+                dbc.Col(
+                    dbc.Label("\N{level slider} Select method for projection"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target6", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select method of averaging trend of emission intensities projections"),
+                                    id="hover6", target="hover-target6", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RadioItems(
+            id="projection-method",
+            options=[
+                {'label': 'Median', 'value': 'median'},
+                {'label': 'Mean', 'value': 'mean'},
+            ],
+            value='median',
             inputStyle={"margin-right": "10px", "margin-left": "30px"},
             inline=True,
         ),
@@ -616,8 +616,6 @@ itr_filters_and_benchmarks = dbc.Col(
         dbc.Card(
             [
                 html.H5("Benchmarks", className="macro-filters"),
-                html.P("Here you could adjust benchmarks of calculations",
-                       className="text-black-50"),
                 benchmark_box,
             ], body=True
         ),
@@ -1437,9 +1435,10 @@ def update_graph(
 
     logger.info(f"ready to plot!\n{filt_df}")
 
-    # Scatter plot
+    # Scatter plot; we add one ton CO2e to everything because log/log plotting of zero is problematic
     filt_df.loc[:, 'cumulative_usage'] = (filt_df.cumulative_target.fillna(filt_df.cumulative_trajectory)
-                                          +filt_df.cumulative_trajectory.fillna(filt_df.cumulative_target))/2.0
+                                          +filt_df.cumulative_trajectory.fillna(filt_df.cumulative_target)
+                                          + ureg('t CO2e'))/2.0
     fig1_kwargs = dict(x="cumulative_budget", y="cumulative_usage",
                        size="investment_value",
                        color="sector", labels={"color": "Sector"},
