@@ -1,3 +1,11 @@
+# Skip because right now this breaks CI/CD
+import pytest
+if pytest.__version__ < "3.0.0":
+  pytest.skip()
+else:
+  pytestmark = pytest.mark.skip
+  pytest.skip("skipping vault because Trino auth breaks CI/CD", allow_module_level=True)
+
 import json
 import unittest
 import os
@@ -17,13 +25,6 @@ from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import ICompanyData, EScope, ETimeFrames, PortfolioCompany, IEIBenchmarkScopes, \
     IProductionBenchmarkScopes
-
-# Skip because right now this breaks CI/CD
-import pytest
-if pytest.__version__ < "3.0.0":
-  pytest.skip()
-else:
-  pytestmark = pytest.mark.skip
 
 try:
     from ITR.data.vault_providers import VaultCompanyDataProvider, VaultProviderProductionBenchmark, \

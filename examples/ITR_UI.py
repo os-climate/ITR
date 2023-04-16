@@ -37,7 +37,7 @@ from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
 # from ITR.configs import LoggingConfig
 
-from ITR.data.osc_units import ureg, Q_, asPintSeries
+from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
 from pint import Quantity
 from pint_pandas import PintType
 
@@ -61,6 +61,10 @@ logger.info("Start!")
 cache = diskcache.Cache("./.webassets-cache")
 background_callback_manager = DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=600)
 
+# Some variables to control whether we use background caching or not.  Cannot use with vault nor breakpoints.
+have_breakpoint = False
+use_data_vault = False
+
 examples_dir ='' #'examples'
 data_dir="data"
 root = os.path.abspath('')
@@ -73,8 +77,6 @@ if len(sys.argv)>1:
     company_data_path = args.file
 else:
     company_data_path = os.path.join(root, examples_dir, data_dir, "20220927 ITR V2 Sample Data.xlsx")
-
-use_data_vault = False
 
 # Production benchmark (there's only one, and we have to stretch it from OECM to cover TPI)
 data_json_units_dir="json-units"
@@ -128,7 +130,7 @@ benchmark_EI_TPI_2deg_high_efficiency_file = "benchmark_EI_TPI_2_degrees_high_ef
 benchmark_EI_TPI_2deg_shift_improve_file = "benchmark_EI_TPI_2_degrees_shift_improve.json"
 
 # loading dummy portfolio
-df_portfolio = pd.read_excel(company_data_path, sheet_name="Portfolio")
+df_portfolio = requantify_df_from_columns(pd.read_excel(company_data_path, sheet_name="Portfolio"))
 companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
 logger.info('Load dummy portfolio from {}. You could upload your own portfolio using the template.'.format(company_data_path))
 
@@ -797,7 +799,7 @@ def warehouse_new(banner_title):
             Input("projection-method", "value"),
             Input("scenarios-cutting", "value"), # winzorization slider
             State("benchmark-region", "children"),),
-    background=not use_data_vault,
+    background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=False,)
 # load default intensity benchmarks
 def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
@@ -878,7 +880,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
               State("sector-dropdown", "value"),
               State("region-dropdown", "value"),
               State("scope-options", "value"),),
-    background=not use_data_vault,
+    background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=True,)
 def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector, region, scope, *_):
     '''
@@ -998,7 +1000,7 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
               Input("region-dropdown", "value"),
               State("scope-options", "options"),
               Input("scope-options", "value"),),
-    background=not use_data_vault,
+    background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=True,)
 def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, regions_ty, region_ty, scopes_ty, scope_ty,
                                sectors_dl, sector, regions_dl, region, scopes_dl, scope,):
@@ -1347,6 +1349,13 @@ def calc_temperature_score(warehouse_pickle_json, *_):
     return (amended_portfolio.to_json(orient='split', default_handler=str),
             "Spin-ts",)
 
+def quantify_col(x, col, unit=None):
+    if unit is None:
+        return asPintSeries(x[col].map(Q_))
+    if not unit.startswith('pint['):
+        unit = f"pint[{unit}]"
+    return x[col].map(Q_).astype(unit)
+
 @app.callback(
     Output("co2-usage-vs-budget", "figure"),     # fig1
     Output("itr-coverage", "figure"),            # fig5
@@ -1384,18 +1393,28 @@ def update_graph(
         scope=lambda x: x.scope.map(lambda y: EScope[y]),
         time_frame=lambda x: x.time_frame.map(lambda y: ETimeFrames[y]),
         score_result_type=lambda x: x.score_result_type.map(lambda y: EScoreResultType[y]),
-        temperature_score=lambda x: x.temperature_score.map(Q_).astype('pint[delta_degC]'),
-        ghg_s1s2=lambda x: x.ghg_s1s2.map(Q_).astype('pint[t CO2e]'),
+        temperature_score=lambda x: quantify_col (x, 'temperature_score', 'delta_degC'),
+        ghg_s1s2=lambda x: quantify_col(x, 'ghg_s1s2', 't CO2e'),
         # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
-        ghg_s3=lambda x: x.ghg_s3.map(Q_).astype('pint[t CO2e]'),
-        cumulative_budget=lambda x: x.cumulative_budget.map(Q_).astype('pint[t CO2e]'),
-        cumulative_trajectory=lambda x: x.cumulative_trajectory.map(Q_).astype('pint[t CO2e]'),
-        cumulative_target=lambda x: x.cumulative_target.map(Q_).astype('pint[t CO2e]'),
-        trajectory_score=lambda x: x.trajectory_score.map(Q_).astype('pint[delta_degC]'),
-        target_score=lambda x: x.target_score.map(Q_).astype('pint[delta_degC]'))
-
+        ghg_s3=lambda x: quantify_col(x, 'ghg_s3', 't CO2e'),
+        cumulative_budget=lambda x: quantify_col(x, 'cumulative_budget', 't CO2e'),
+        cumulative_trajectory=lambda x: quantify_col(x, 'cumulative_trajectory', 't CO2e'),
+        cumulative_target=lambda x: quantify_col(x, 'cumulative_target', 't CO2e'),
+        trajectory_score=lambda x: quantify_col(x, 'trajectory_score', 'delta_degC'),
+        trajectory_overshoot_ratio=lambda x: quantify_col(x, 'trajectory_overshoot_ratio', 'dimensionless'),
+        target_score=lambda x: quantify_col(x, 'target_score', 'delta_degC'),
+        target_overshoot_ratio=lambda x: quantify_col(x, 'target_overshoot_ratio', 'dimensionless'),
+        company_market_cap=lambda x: quantify_col(x, 'company_market_cap'),
+        company_revenue = lambda x: quantify_col(x, 'company_revenue'),
+        company_enterprise_value = lambda x: quantify_col(x, 'company_enterprise_value'),
+        company_ev_plus_cash = lambda x: quantify_col(x, 'company_ev_plus_cash'),
+        company_total_assets = lambda x: quantify_col(x, 'company_total_assets'),
+        investment_value = lambda x: quantify_col(x, 'investment_value'),
+        benchmark_temperature=lambda x: quantify_col(x, 'benchmark_temperature', 'delta_degC'),
+        benchmark_global_budget=lambda x: quantify_col(x, 'benchmark_global_budget', 'Gt CO2e'))
     temp_score_mask = (amended_portfolio.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio.temperature_score <= Q_(te_sc[1], 'delta_degC'))
+
     # Dropdown filters
     if sec in ['', '+']:
         # If the benchmark doesn't cover the sector, don't try to plot the company
@@ -1659,17 +1678,25 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
         # scope=lambda x: x.scope.map(lambda y: EScope[y]),
         time_frame=lambda x: x.time_frame.map(lambda y: ETimeFrames[y]),
         score_result_type=lambda x: x.score_result_type.map(lambda y: EScoreResultType[y]),
-        temperature_score=lambda x: x.temperature_score.map(Q_).astype('pint[delta_degC]'),
-        ghg_s1s2=lambda x: x.ghg_s1s2.map(Q_).astype('pint[t CO2e]'),
+        temperature_score=lambda x: quantify_col (x, 'temperature_score', 'delta_degC'),
+        ghg_s1s2=lambda x: quantify_col(x, 'ghg_s1s2', 't CO2e'),
         # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
-                                                 ghg_s3=lambda x: x.ghg_s3.map(Q_).astype('pint[t CO2e]'),
-        cumulative_budget=lambda x: x.cumulative_budget.map(Q_).astype('pint[t CO2e]'),
-        cumulative_trajectory=lambda x: x.cumulative_trajectory.map(Q_).astype('pint[t CO2e]'),
-        cumulative_target=lambda x: x.cumulative_target.map(Q_).astype('pint[t CO2e]'),
-        trajectory_score=lambda x: x.trajectory_score.map(Q_).astype('pint[delta_degC]'),
-        target_score=lambda x: x.target_score.map(Q_).astype('pint[delta_degC]'),
-        benchmark_temperature=lambda x: x.benchmark_temperature.map(Q_).astype('pint[delta_degC]'),
-        benchmark_global_budget=lambda x: x.benchmark_global_budget.map(Q_).astype('pint[Gt CO2e]'))
+        ghg_s3=lambda x: quantify_col(x, 'ghg_s3', 't CO2e'),
+        cumulative_budget=lambda x: quantify_col(x, 'cumulative_budget', 't CO2e'),
+        cumulative_trajectory=lambda x: quantify_col(x, 'cumulative_trajectory', 't CO2e'),
+        cumulative_target=lambda x: quantify_col(x, 'cumulative_target', 't CO2e'),
+        trajectory_score=lambda x: quantify_col(x, 'trajectory_score', 'delta_degC'),
+        trajectory_overshoot_ratio=lambda x: quantify_col(x, 'trajectory_overshoot_ratio', 'dimensionless'),
+        target_score=lambda x: quantify_col(x, 'target_score', 'delta_degC'),
+        target_overshoot_ratio=lambda x: quantify_col(x, 'target_overshoot_ratio', 'dimensionless'),
+        company_market_cap=lambda x: quantify_col(x, 'company_market_cap'),
+        company_revenue = lambda x: quantify_col(x, 'company_revenue'),
+        company_enterprise_value = lambda x: quantify_col(x, 'company_enterprise_value'),
+        company_ev_plus_cash = lambda x: quantify_col(x, 'company_ev_plus_cash'),
+        company_total_assets = lambda x: quantify_col(x, 'company_total_assets'),
+        investment_value = lambda x: quantify_col(x, 'investment_value'),
+        benchmark_temperature=lambda x: quantify_col(x, 'benchmark_temperature', 'delta_degC'),
+        benchmark_global_budget=lambda x: quantify_col(x, 'benchmark_global_budget', 'Gt CO2e'))
     temp_score_mask = (amended_portfolio.temperature_score >= Q_(te_sc[0], 'delta_degC')) & (
         amended_portfolio.temperature_score <= Q_(te_sc[1], 'delta_degC'))
     # Dropdown filters
@@ -1686,6 +1713,15 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
     filt_df = amended_portfolio.loc[temp_score_mask & sec_mask & reg_mask].pint.dequantify()  # filtering
     if len(filt_df) == 0:  # if after filtering the dataframe is empty
         raise PreventUpdate
+    # If there are uncertainties, put them in separate columns (Excel doesn't handle uncertainties)
+    if ITR.HAS_UNCERTAINTIES:
+        for i, col in reversed(list(enumerate(filt_df.columns))):
+            if col[1] == 'No Unit':
+                continue
+            if isinstance(filt_df[col].iloc[0], ITR.UFloat):
+                filt_df.insert(i+1, (f"{col[0]}_std_dev", col[1]), ITR.std_devs(filt_df[col]))
+                filt_df[col] = ITR.nominal_values(filt_df[col])
+
     return (dcc.send_data_frame(filt_df.to_excel, "ITR_calculations.xlsx", sheet_name="ITR_calculations"),
             "Spin-xlsx")
 

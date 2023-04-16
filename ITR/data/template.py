@@ -356,41 +356,25 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg = df_esg[~esg_missing_fundamentals]
 
         # testing if all data is in the same currency
+        fundamental_metrics = ['company_market_cap', 'company_revenue', 'company_enterprise_value', 'company_ev_plus_cash', 'company_total_assets']
+        col_num = df_fundamentals.columns.get_loc('report_date')
+        missing_fundamental_metrics = [fm for fm in fundamental_metrics if fm not in df_fundamentals.columns[col_num+1:]]
+        if len(missing_fundamental_metrics)>0:
+            raise KeyError(f"Expected fundamental metrics {missing_fundamental_metrics}")
         if ColumnsConfig.TEMPLATE_FX_QUOTE in df_fundamentals.columns:
             fx_quote = df_fundamentals[ColumnsConfig.TEMPLATE_FX_QUOTE].notna()
-            if len(df_fundamentals.loc[~fx_quote, ColumnsConfig.TEMPLATE_CURRENCY].unique()) > 1 \
+            if len(df_fundamentals.loc[~fx_quote, ColumnsConfig.COMPANY_CURRENCY].unique()) > 1 \
                or len(df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].unique()) > 1 \
                or (fx_quote.any() and (~fx_quote).any() and not \
-                   (df_fundamentals.loc[~fx_quote, ColumnsConfig.TEMPLATE_CURRENCY].iloc[0] == \
+                   (df_fundamentals.loc[~fx_quote, ColumnsConfig.COMPANY_CURRENCY].iloc[0] == \
                     df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0])):
                 error_message = f"All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
             elif fx_quote.any():
-                fundamental_metrics = ['company_market_cap', 'company_revenue', 'company_enterprise_value', 'company_ev_plus_cash', 'company_total_assets']
-                col_num = df_fundamentals.columns.get_loc('report_date')
-                missing_fundamental_metrics = [fm for fm in fundamental_metrics if fm not in df_fundamentals.columns[col_num+1:]]
-                if len(missing_fundamental_metrics)>0:
-                    raise KeyError(f"Expected fundamental metrics {missing_fundamental_metrics}")
-                for col in fundamental_metrics:
-                    df_fundamentals[col] = df_fundamentals[col].astype('Float64')
-                    df_fundamentals[f"{col}_base"] = df_fundamentals[col]
-                with warnings.catch_warnings():
-                    # Setting values in-place is fine, ignore the warning in Pandas >= 1.5.0
-                    # This can be removed, if Pandas 1.5.0 does not need to be supported any longer.
-                    # See also: https://stackoverflow.com/q/74057367/859591
-                    warnings.filterwarnings(
-                        "ignore",
-                        category=DeprecationWarning,
-                        message=(
-                            ".*will attempt to set the values inplace instead of always setting a new array. "
-                            "To retain the old behavior, use either.*"
-                        ),
-                    )
-                    df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'] * df_fundamentals.loc[fx_quote, f"{col}_base"]
                 # create context for currency conversions
                 # df_fundamentals defines 'report_date', 'currency', 'fx_quote', and 'fx_rate'
-                # our base currency is USD, but european reports may be denominated in EUR.  We crosswalk from report_base to pint_base currency.
+                # our base currency default is USD, but european reports may be denominated in EUR.  We crosswalk from report_base to pint_base currency.
 
                 def convert_prefix_to_scalar(x):
                     try:
@@ -409,11 +393,23 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                             axis=1)
                 ureg.add_context(fx_ctx)
                 ureg.enable_contexts('FX')
+
+                for col in fundamental_metrics:
+                    df_fundamentals[col] = df_fundamentals[col].astype('Float64')
+                    df_fundamentals[f"{col}_base"] = df_fundamentals[col]
+                    df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'] * df_fundamentals.loc[fx_quote, f"{col}_base"]
+                    df_fundamentals[col] = df_fundamentals[col].astype(f"pint[{df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0]}]")
+            else:
+                # Degenerate case where we have fx_quote column and no actual fx_quote conversions to do
+                for col in fundamental_metrics:
+                    df_fundamentals[col] = df_fundamentals[col].astype(f"pint[{df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].iloc[0]}]")
         else:
-            if len(df_fundamentals[ColumnsConfig.TEMPLATE_CURRENCY].unique()) != 1:
+            if len(df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].unique()) != 1:
                 error_message = f"All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
+            for col in fundamental_metrics:
+                df_fundamentals[col] = df_fundamentals[col].astype(f"pint[{df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].iloc[0]}]")
 
         # are there empty sectors?
         comp_with_missing_sectors = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.SECTOR].isnull()].to_list()

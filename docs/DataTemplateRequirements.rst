@@ -231,7 +231,7 @@ The brackets listed near the top left corner of each executable cell will change
 Filing Issues and Updating the ITR Repository
 ---------------------------------------------
 
-Once you are able to run the `quick_template_score_calc.ipynb` sample notebook with the provided sample data (:code:`examples/data/20220720 ITR Tool Sample Data.xlsx`), you are ready to start trying things with your own data.  The notebook explains how to do this at the heading labeled :code:`Download/load the sample template data` before Cell 6.  As you try loading your own data, you will inevitably find errors--sometimes with the data you receive, sometimes with the data you present to the tool, sometimes with the way the tool loads or does not load your data, sometimes with the way the tool interprets or presents your data.  It is the goal of the Data Commons to streamline and simplify access to data so as to reduce the first to cases of errors, and it is the goal of the ITR project team to continuously improve the ITR tool to reduce the other cases of errors.  In all cases, the correction of errors begins with an error reporting process and ends with an effective update process.
+Once you are able to run the `quick_template_score_calc.ipynb` sample notebook with the provided sample data (:code:`examples/data/20230106 ITR Tool Sample Data.xlsx`), you are ready to start trying things with your own data.  The notebook explains how to do this at the heading labeled :code:`Download/load the sample template data` before Cell 6.  As you try loading your own data, you will inevitably find errors--sometimes with the data you receive, sometimes with the data you present to the tool, sometimes with the way the tool loads or does not load your data, sometimes with the way the tool interprets or presents your data.  It is the goal of the Data Commons to streamline and simplify access to data so as to reduce the first to cases of errors, and it is the goal of the ITR project team to continuously improve the ITR tool to reduce the other cases of errors.  In all cases, the correction of errors begins with an error reporting process and ends with an effective update process.
 
 To report errors, please use the GitHub Issues interface for the ITR tool: https://github.com/os-climate/ITR/issues
 
@@ -245,8 +245,8 @@ At some point you will receive notice that your issue has been addressed with a 
 2. Change your directory to the top of your ITR tree: :code:`cd ~/os-climate/ITR` (or some such)
 3. Pull changes from upstream: git pull
 4. If git complains that you have modified some files (such as your notebook, which is "modified" every time you run it), you can
-   1. remove the notebook file: :code:`rm examples/data/20220720\ ITR\ Tool\ Sample\ Data.xlsx`
-   2. restore it from the updated repository: :code:`git restore examples/data/20220720\ ITR\ Tool\ Sample\ Data.xlsx`
+   1. remove the notebook file: :code:`rm examples/data/20230106\ ITR\ Tool\ Sample\ Data.xlsx`
+   2. restore it from the updated repository: :code:`git restore examples/data/20230106\ ITR\ Tool\ Sample\ Data.xlsx`
 5. Restart your jupyter-lab server
 
 Over time you may do other things to your local repository that makes it difficult to sync with git.  You can file an issue for help, you can do your own research (many of us find answers on github community forums or StackOverflow), or you can go with Option #1: run the installation process from top to bottom in a new directory.

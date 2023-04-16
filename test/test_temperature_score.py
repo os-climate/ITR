@@ -5,10 +5,11 @@ import pandas as pd
 import numpy as np
 
 import ITR
+from ITR.configs import ColumnsConfig
 from ITR.interfaces import ETimeFrames, EScope
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.data.osc_units import ureg, Q_
+from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
 from utils import assert_pint_frame_equal
 
 
@@ -25,19 +26,24 @@ class TestTemperatureScore(unittest.TestCase):
         """
         self.temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG], scopes=EScope.get_result_scopes())
         df = pd.read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "inputs",
-                                             "data_test_temperature_score.csv"), sep=";")
+                                      "data_test_temperature_score.csv"), sep=";")
+        # Take care of INVESTMENT_VALUE
+        requantify_df_from_columns(df, inplace=True)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # FIXME: should update CSV data to include a SCOPE column
-            df['scope'] = EScope.S1S2
-            df.loc[df.company_name.eq("Company E"), 'scope'] = EScope.S3
-            df.loc[df.company_name.eq("Company AA"), 'scope'] = EScope.S1S2
-            df['ghg_s1s2'] = df['ghg_s1s2'].astype('pint[t CO2]')
-            df['ghg_s3'] = df['ghg_s3'].astype('pint[t CO2]')
-            for cumulative in ['cumulative_budget', 'cumulative_target', 'cumulative_trajectory']:
+            df[ColumnsConfig.SCOPE] = EScope.S1S2
+            df.loc[df.company_name.eq("Company E"), ColumnsConfig.SCOPE] = EScope.S3
+            df.loc[df.company_name.eq("Company AA"), ColumnsConfig.SCOPE] = EScope.S1S2
+            df[ColumnsConfig.GHG_SCOPE12] = df[ColumnsConfig.GHG_SCOPE3].astype('pint[t CO2]')
+            df[ColumnsConfig.GHG_SCOPE3] = df[ColumnsConfig.GHG_SCOPE3].astype('pint[t CO2]')
+            for cumulative in [ColumnsConfig.CUMULATIVE_BUDGET, ColumnsConfig.CUMULATIVE_TARGET, ColumnsConfig.CUMULATIVE_TRAJECTORY]:
                 df[cumulative] = df[cumulative].astype('pint[Mt CO2]')
-            df['benchmark_global_budget'] = df['benchmark_global_budget'].astype('pint[Gt CO2]')
-            df['benchmark_temperature'] = df['benchmark_temperature'].astype('pint[delta_degC]')
+            df[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET].astype('pint[Gt CO2]')
+            df[ColumnsConfig.BENCHMARK_TEMP] = df[ColumnsConfig.BENCHMARK_TEMP].astype('pint[delta_degC]')
+            for col in [ColumnsConfig.COMPANY_REVENUE, ColumnsConfig.COMPANY_MARKET_CAP, ColumnsConfig.COMPANY_ENTERPRISE_VALUE, ColumnsConfig.COMPANY_EV_PLUS_CASH, ColumnsConfig.COMPANY_TOTAL_ASSETS, ColumnsConfig.COMPANY_CASH_EQUIVALENTS]:
+                df[col] = df[col].astype('pint[USD]')
+            df[ColumnsConfig.INVESTMENT_VALUE] = df[ColumnsConfig.INVESTMENT_VALUE].astype('pint[USD]')
         self.data = df.set_index(['company_id'])
 
     def test_temp_score(self) -> None:

@@ -253,6 +253,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
                     'projections': self._convert_series_to_projections (df_ei.loc[company_id, :], ICompanyEIProjection),
                     'ei_metric': intensity_metric}}
 
+                fundamental_metrics = [ColumnsConfig.COMPANY_MARKET_CAP, ColumnsConfig.COMPANY_REVENUE, ColumnsConfig.COMPANY_ENTERPRISE_VALUE,
+                                       ColumnsConfig.COMPANY_TOTAL_ASSETS, ColumnsConfig.COMPANY_CASH_EQUIVALENTS]
+                for col in fundamental_metrics:
+                    company_data[col] = Q_(company_data[col], company_data[ColumnsConfig.COMPANY_CURRENCY])
+                company_data[ColumnsConfig.COMPANY_EV_PLUS_CASH] = company_data[ColumnsConfig.COMPANY_ENTERPRISE_VALUE] + company_data[ColumnsConfig.COMPANY_CASH_EQUIVALENTS]
                 if df_historic is not None:
                     company_data[TabsConfig.HISTORIC_DATA] = dict(self._convert_historic_data(
                         df_historic.loc[company_id, :]))

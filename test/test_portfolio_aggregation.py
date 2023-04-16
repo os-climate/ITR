@@ -18,16 +18,16 @@ class TestPortfolioAggregation(unittest.TestCase):
         """
         self.data = pd.DataFrame()
         self.data.loc[:, ColumnsConfig.COMPANY_NAME] = ["Company A", "Company B", "Company C"]
-        self.data.loc[:, ColumnsConfig.COMPANY_REVENUE] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.COMPANY_MARKET_CAP] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.COMPANY_REVENUE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_MARKET_CAP] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
         self.data.loc[:, ColumnsConfig.SCOPE] = [EScope.S1S2, EScope.S1S2, EScope.S1S2S3]
         self.data.loc[:, ColumnsConfig.GHG_SCOPE12] = pd.Series([1.0, 2.0, 3.0], dtype='pint[t CO2]')
         self.data.loc[:, ColumnsConfig.GHG_SCOPE3] = pd.Series([1.0, 2.0, 3.0], dtype='pint[t CO2]')
-        self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.CASH_EQUIVALENTS] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_CASH_EQUIVALENTS] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
         self.data.loc[:, ColumnsConfig.TEMPERATURE_SCORE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[delta_degC]')
 
     def test_is_emissions_based(self):

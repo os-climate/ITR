@@ -2,6 +2,7 @@
 This module handles initialization of pint functionality
 """
 
+import re
 import numpy as np
 import pandas as pd
 import pint
@@ -376,6 +377,7 @@ schema_extra = dict(definitions=[
         ProductionQuantity=dict(type="string"),
         EI_Quantity=dict(type="string"),
         BenchmarkQuantity=dict(type="string"),
+        MonetaryQuantity=dict(type="string"),
     )
 ])
 
@@ -451,7 +453,7 @@ class EmissionsQuantity(Quantity):
         # the returned value will be ignored
         field_schema.update(
             # simplified regex here for brevity, see the wikipedia link above
-            dimensionaltiy='t CO2',
+            dimensionality='t CO2',
             # some example postcodes
             examples=['g CO2', 'kg CO2', 't CO2', 'Mt CO2'],
         )
@@ -504,7 +506,7 @@ class ProductionQuantity(str):
         # the returned value will be ignored
         field_schema.update(
             # simplified regex here for brevity, see the wikipedia link above
-            dimensionaltiy='[production_units]',
+            dimensionality='[production_units]',
             # some example postcodes
             examples=_production_units,
         )
@@ -561,7 +563,7 @@ class EI_Quantity(str):
         # the returned value will be ignored
         field_schema.update(
             # simplified regex here for brevity, see the wikipedia link above
-            dimensionaltiy='ei units',
+            dimensionality='ei units',
             # some example postcodes
             examples=_ei_units,
         )
@@ -618,7 +620,7 @@ class BenchmarkQuantity(str):
         # the returned value will be ignored
         field_schema.update(
             # simplified regex here for brevity, see the wikipedia link above
-            dimensionaltiy='ei units',
+            dimensionality='ei units',
             # some example postcodes
             examples=_ei_units,
         )
@@ -643,6 +645,57 @@ class BenchmarkQuantity(str):
 
     def __repr__(self):
         return f'BenchmarkQuantity({super().__repr__()})'
+
+    class Config:
+        validate_assignment = True
+        schema_extra = schema_extra
+        json_encoders = {
+            Quantity: str,
+        }
+
+
+class MonetaryQuantity(str):
+    """A method for making a pydantic compliant Pint Financial quantity (which is basically some amount of money denominated in a currency)."""
+
+    def __new__(cls, value, units=None):
+        # Re-used the instance we are passed.  Do we need to copy?
+        return value
+
+    @classmethod
+    def __get_validators__(cls):
+        # one or more validators may be yielded which will be called in the
+        # order to validate the input, each validator will receive as an input
+        # the value returned from the previous validator
+        yield cls.validate
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        # __modify_schema__ should mutate the dict it receives in place,
+        # the returned value will be ignored
+        field_schema.update(
+            # simplified regex here for brevity, see the wikipedia link above
+            dimensionality='[currency]',
+            # some example currencies
+            examples=['USD', 'EUR', 'JPY'],
+        )
+
+    @classmethod
+    def validate(cls, quantity):
+        if isinstance(quantity, str):
+            v, u = quantity.split(' ', 1)
+            try:
+                q = Q_(float(v), u)
+            except ValueError:
+                raise ValueError(f"cannot convert '{quantity}' to quantity")
+            quantity = q
+        if not isinstance(quantity, Quantity):
+            raise TypeError('pint.Quantity required')
+        if quantity.is_compatible_with('USD'):
+            return quantity
+        raise DimensionalityError (quantity, 'USD', dim1='', dim2='', extra_msg=f"Dimensionality must be 'dimensionless' or compatible with [{ITR.data.currency_dict.values()}]")
+
+    def __repr__(self):
+        return f'MonetaryQuantity({super().__repr__()})'
 
     class Config:
         validate_assignment = True
@@ -729,3 +782,28 @@ def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.Data
     # We need to restore the MultiIndex or lose information.
     new_df.columns = df.columns
     return new_df
+
+def requantify_df_from_columns(df: pd.DataFrame, inplace=False) -> pd.DataFrame:
+    """
+    Parameters
+    ----------
+    df: pd.DataFrame
+    inplace: bool, default False
+             If True, perform operation in-place.
+
+    Returns
+    -------
+    A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed
+    to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka 'pint[UNITS]')
+    """
+    p = re.compile(r'^(.*)\s*\[(.*)\]\s*$')
+    if not inplace:
+        df = df.copy()
+    for column in df.columns:
+        m = p.match(column)
+        if m:
+            name = m.group(1).strip()
+            unit = m.group(2).strip()
+            df.rename(columns={column: name}, inplace=True)
+            df[name] = pd.Series(df[name], dtype='pint[' + unit + ']')
+    return df

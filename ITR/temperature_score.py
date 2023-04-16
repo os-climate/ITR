@@ -188,8 +188,10 @@ class TemperatureScore(PortfolioAggregation):
                     lambda row: self.get_score(row), axis=1))
 
         # Fix up dtypes for the new columns we just added
-        for c in [self.c.COLS.TEMPERATURE_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TARGET_SCORE]:
-            scoring_data[c] = scoring_data[c].astype('pint[delta_degC]')
+        for col in [self.c.COLS.TEMPERATURE_SCORE, self.c.COLS.TRAJECTORY_SCORE, self.c.COLS.TARGET_SCORE]:
+            scoring_data[col] = scoring_data[col].astype('pint[delta_degC]')
+        for col in [self.c.COLS.TARGET_OVERSHOOT, self.c.COLS.TRAJECTORY_OVERSHOOT]:
+            scoring_data[col] = scoring_data[col].astype('pint[dimensionless]')
 
         scoring_data = self.cap_scores(scoring_data)
         return scoring_data
@@ -278,8 +280,8 @@ class TemperatureScore(PortfolioAggregation):
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
                                                           self.aggregation_method) # .astype('pint[delta_degC]')
         assert isinstance(weighted_scores.dtype, PintType)
-        # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
-        data[self.c.COLS.CONTRIBUTION_RELATIVE] = (weighted_scores / weighted_scores.fillna(0).sum()).astype('pint[percent]')
+        # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(1.0) to make sum work
+        data[self.c.COLS.CONTRIBUTION_RELATIVE] = (weighted_scores / weighted_scores.fillna(1.0).sum()).astype('pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

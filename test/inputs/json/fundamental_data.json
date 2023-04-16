@@ -287,11 +287,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 20248547996.8143,
-    "company_market_cap": 10464805624.2886,
-    "company_enterprise_value": 20370723452.9736,
-    "company_total_assets": 814618.205724596,
-    "company_cash_equivalents": 4528467714.72676
+    "company_revenue": "20248547996.8143 EUR",
+    "company_market_cap": "10464805624.2886 EUR",
+    "company_enterprise_value": "20370723452.9736 EUR",
+    "company_total_assets": "814618.205724596 EUR",
+    "company_cash_equivalents": "4528467714.72676 EUR"
   },
   {
     "company_name": "Company AH",
@@ -581,11 +581,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 276185899.614351,
-    "company_market_cap": 170431377.0111033,
-    "company_enterprise_value": 348843699.94010025,
-    "company_total_assets": 27314.648029499283,
-    "company_cash_equivalents": 69006940.99809252
+    "company_revenue": "276185899.614351 EUR",
+    "company_market_cap": "170431377.0111033 EUR",
+    "company_enterprise_value": "348843699.94010025 EUR",
+    "company_total_assets": "27314.648029499283 EUR",
+    "company_cash_equivalents": "69006940.99809252 EUR"
   },
   {
     "company_name": "Company AI",
@@ -875,11 +875,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 10283015131.798985,
-    "company_market_cap": 3087133686.0634212,
-    "company_enterprise_value": 4800604056.581685,
-    "company_total_assets": 343642.4737086049,
-    "company_cash_equivalents": 1163119848.4230556
+    "company_revenue": "10283015131.798985 EUR",
+    "company_market_cap": "3087133686.0634212 EUR",
+    "company_enterprise_value": "4800604056.581685 EUR",
+    "company_total_assets": "343642.4737086049 EUR",
+    "company_cash_equivalents": "1163119848.4230556 EUR"
   },
   {
     "company_name": "Company AJ",
@@ -1169,11 +1169,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 1860376238.2982879,
-    "company_market_cap": 1395966780.8786128,
-    "company_enterprise_value": 1849921444.2644947,
-    "company_total_assets": 159262.60935025438,
-    "company_cash_equivalents": 117630751.45422383
+    "company_revenue": "1860376238.2982879 EUR",
+    "company_market_cap": "1395966780.8786128 EUR",
+    "company_enterprise_value": "1849921444.2644947 EUR",
+    "company_total_assets": "159262.60935025438 EUR",
+    "company_cash_equivalents": "117630751.45422383 EUR"
   },
   {
     "company_name": "Company AK",
@@ -1463,11 +1463,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 31781332590.123966,
-    "company_market_cap": 20377644507.874138,
-    "company_enterprise_value": 34890123636.20844,
-    "company_total_assets": 43112605.77960962,
-    "company_cash_equivalents": 28933197273.168182
+    "company_revenue": "31781332590.123966 EUR",
+    "company_market_cap": "20377644507.874138 EUR",
+    "company_enterprise_value": "34890123636.20844 EUR",
+    "company_total_assets": "43112605.77960962 EUR",
+    "company_cash_equivalents": "28933197273.168182 EUR"
   },
   {
     "company_name": "Company AL",
@@ -1757,11 +1757,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 22080444055.73389,
-    "company_market_cap": 89487875452.40962,
-    "company_enterprise_value": 142815816841.33038,
-    "company_total_assets": 12916972.788158268,
-    "company_cash_equivalents": 51876930016.31418
+    "company_revenue": "22080444055.73389 EUR",
+    "company_market_cap": "89487875452.40962 EUR",
+    "company_enterprise_value": "142815816841.33038 EUR",
+    "company_total_assets": "12916972.788158268 EUR",
+    "company_cash_equivalents": "51876930016.31418 EUR"
   },
   {
     "company_name": "Company AM",
@@ -2051,11 +2051,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 940141306.0207825,
-    "company_market_cap": 81646651.50551033,
-    "company_enterprise_value": 1803870072.9332182,
-    "company_total_assets": 24970.460312431045,
-    "company_cash_equivalents": 2214490.9702577037
+    "company_revenue": "940141306.0207825 EUR",
+    "company_market_cap": "81646651.50551033 EUR",
+    "company_enterprise_value": "1803870072.9332182 EUR",
+    "company_total_assets": "24970.460312431045 EUR",
+    "company_cash_equivalents": "2214490.9702577037 EUR"
   },
   {
     "company_name": "Company AN",
@@ -2345,11 +2345,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 7175786054.992616,
-    "company_market_cap": 3440335994.5862403,
-    "company_enterprise_value": 65904184518.99241,
-    "company_total_assets": 981839.2186555777,
-    "company_cash_equivalents": 203940251.1185415
+    "company_revenue": "7175786054.992616 KRW",
+    "company_market_cap": "3440335994.5862403 KRW",
+    "company_enterprise_value": "65904184518.99241 KRW",
+    "company_total_assets": "981839.2186555777 KRW",
+    "company_cash_equivalents": "203940251.1185415 KRW"
   },
   {
     "company_name": "Company AO",
@@ -2639,11 +2639,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 23960680689.116013,
-    "company_market_cap": 70745916655.31746,
-    "company_enterprise_value": 73065684225.78769,
-    "company_total_assets": 62472439.55564904,
-    "company_cash_equivalents": 42950453116.50563
+    "company_revenue": "23960680689.116013 GBP",
+    "company_market_cap": "70745916655.31746 GBP",
+    "company_enterprise_value": "73065684225.78769 GBP",
+    "company_total_assets": "62472439.55564904 GBP",
+    "company_cash_equivalents": "42950453116.50563 GBP"
   },
   {
     "company_name": "Company AP",
@@ -2933,11 +2933,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 3219109002.8957133,
-    "company_market_cap": 2496486713.6419,
-    "company_enterprise_value": 5824358695.194101,
-    "company_total_assets": 1524416.4350418877,
-    "company_cash_equivalents": 5520000408.487849
+    "company_revenue": "3219109002.8957133 INR",
+    "company_market_cap": "2496486713.6419 INR",
+    "company_enterprise_value": "5824358695.194101 INR",
+    "company_total_assets": "1524416.4350418877 INR",
+    "company_cash_equivalents": "5520000408.487849 INR"
   },
   {
     "company_name": "Company AQ",
@@ -3227,11 +3227,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 2270961652.5606284,
-    "company_market_cap": 2706457656.025761,
-    "company_enterprise_value": 6515964879.946278,
-    "company_total_assets": 1952107.22158874,
-    "company_cash_equivalents": 505519258.45795137
+    "company_revenue": "2270961652.5606284 AUD",
+    "company_market_cap": "2706457656.025761 AUD",
+    "company_enterprise_value": "6515964879.946278 AUD",
+    "company_total_assets": "1952107.22158874 AUD",
+    "company_cash_equivalents": "505519258.45795137 AUD"
   },
   {
     "company_name": "Company AR",
@@ -3521,11 +3521,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 2923800677.472364,
-    "company_market_cap": 664730339.0584776,
-    "company_enterprise_value": 835883594.7677848,
-    "company_total_assets": 2411999.9946857756,
-    "company_cash_equivalents": 462245314.1145333
+    "company_revenue": "2923800677.472364 EUR",
+    "company_market_cap": "664730339.0584776 EUR",
+    "company_enterprise_value": "835883594.7677848 EUR",
+    "company_total_assets": "2411999.9946857756 EUR",
+    "company_cash_equivalents": "462245314.1145333 EUR"
   },
   {
     "company_name": "Company AS",
@@ -3815,11 +3815,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 13732514101.607698,
-    "company_market_cap": 3691311949.146696,
-    "company_enterprise_value": 5115075673.0843115,
-    "company_total_assets": 11668515.241009872,
-    "company_cash_equivalents": 1853875026.0311818
+    "company_revenue": "13732514101.607698 HKD",
+    "company_market_cap": "3691311949.146696 HKD",
+    "company_enterprise_value": "5115075673.0843115 HKD",
+    "company_total_assets": "11668515.241009872 HKD",
+    "company_cash_equivalents": "1853875026.0311818 HKD"
   },
   {
     "company_name": "Company AT",
@@ -4109,11 +4109,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 209346393.1699769,
-    "company_market_cap": 4230199159.3241043,
-    "company_enterprise_value": 4360171694.819017,
-    "company_total_assets": 17677610.033387754,
-    "company_cash_equivalents": 3272481697.8285317
+    "company_revenue": "209346393.1699769 EUR",
+    "company_market_cap": "4230199159.3241043 EUR",
+    "company_enterprise_value": "4360171694.819017 EUR",
+    "company_total_assets": "17677610.033387754 EUR",
+    "company_cash_equivalents": "3272481697.8285317 EUR"
   },
   {
     "company_name": "Company AU",
@@ -4403,11 +4403,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 1273070098.4773746,
-    "company_market_cap": 4968986648.627988,
-    "company_enterprise_value": 7465409801.551762,
-    "company_total_assets": 2598718.909952181,
-    "company_cash_equivalents": 518880676.89759755
+    "company_revenue": "1273070098.4773746 EUR",
+    "company_market_cap": "4968986648.627988 EUR",
+    "company_enterprise_value": "7465409801.551762 EUR",
+    "company_total_assets": "2598718.909952181 EUR",
+    "company_cash_equivalents": "518880676.89759755 EUR"
   },
   {
     "company_name": "Company AV",
@@ -4697,11 +4697,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 7370536918.381833,
-    "company_market_cap": 7318942238.108914,
-    "company_enterprise_value": 24392175674.038094,
-    "company_total_assets": 21337139.680116065,
-    "company_cash_equivalents": 990719858.473371
+    "company_revenue": "7370536918.381833 EUR",
+    "company_market_cap": "7318942238.108914 EUR",
+    "company_enterprise_value": "24392175674.038094 EUR",
+    "company_total_assets": "21337139.680116065 EUR",
+    "company_cash_equivalents": "990719858.473371 EUR"
   },
   {
     "company_name": "Company AW",
@@ -4991,11 +4991,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 7275042285.236163,
-    "company_market_cap": 9570757347.846252,
-    "company_enterprise_value": 12112090004.878937,
-    "company_total_assets": 9846733.135934643,
-    "company_cash_equivalents": 470283632.88013947
+    "company_revenue": "7275042285.236163 AUD",
+    "company_market_cap": "9570757347.846252 AUD",
+    "company_enterprise_value": "12112090004.878937 AUD",
+    "company_total_assets": "9846733.135934643 AUD",
+    "company_cash_equivalents": "470283632.88013947 AUD"
   },
   {
     "company_name": "Company A",
@@ -5285,11 +5285,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 1236962789.3246891,
-    "company_market_cap": 938015347.697118,
-    "company_enterprise_value": 1252496335.1625824,
-    "company_total_assets": 4084768.6436157217,
-    "company_cash_equivalents": 963039844.5036674
+    "company_revenue": "1236962789.3246891 TWD",
+    "company_market_cap": "938015347.697118 TWD",
+    "company_enterprise_value": "1252496335.1625824 TWD",
+    "company_total_assets": "4084768.6436157217 TWD",
+    "company_cash_equivalents": "963039844.5036674 TWD"
   },
   {
     "company_name": "Company B",
@@ -5579,11 +5579,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 261404023.8424081,
-    "company_market_cap": 662870771.9690096,
-    "company_enterprise_value": 1167174030.7255652,
-    "company_total_assets": 472694.85008635663,
-    "company_cash_equivalents": 23467516.32994597
+    "company_revenue": "261404023.8424081 BRL",
+    "company_market_cap": "662870771.9690096 BRL",
+    "company_enterprise_value": "1167174030.7255652 BRL",
+    "company_total_assets": "472694.85008635663 BRL",
+    "company_cash_equivalents": "23467516.32994597 BRL"
   },
   {
     "company_name": "Company C",
@@ -5873,11 +5873,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 3077369259.962948,
-    "company_market_cap": 2939810093.711022,
-    "company_enterprise_value": 13093340767.11665,
-    "company_total_assets": 13536767.267073056,
-    "company_cash_equivalents": 457926390.7271148
+    "company_revenue": "3077369259.962948 KRW",
+    "company_market_cap": "2939810093.711022 KRW",
+    "company_enterprise_value": "13093340767.11665 KRW",
+    "company_total_assets": "13536767.267073056 KRW",
+    "company_cash_equivalents": "457926390.7271148 KRW"
   },
   {
     "company_name": "Company D",
@@ -6167,11 +6167,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 23244037103.494522,
-    "company_market_cap": 2098673804.5958335,
-    "company_enterprise_value": 14963947966.837791,
-    "company_total_assets": 8645431.929301228,
-    "company_cash_equivalents": 469617764.2483638
+    "company_revenue": "23244037103.494522 JPY",
+    "company_market_cap": "2098673804.5958335 JPY",
+    "company_enterprise_value": "14963947966.837791 JPY",
+    "company_total_assets": "8645431.929301228 JPY",
+    "company_cash_equivalents": "469617764.2483638 JPY"
   },
   {
     "company_name": "Company E",
@@ -6461,11 +6461,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 1728429611.5289557,
-    "company_market_cap": 295280720.0118176,
-    "company_enterprise_value": 1576360518.0586846,
-    "company_total_assets": 2020519.8719741097,
-    "company_cash_equivalents": 209706066.6328014
+    "company_revenue": "1728429611.5289557 INR",
+    "company_market_cap": "295280720.0118176 INR",
+    "company_enterprise_value": "1576360518.0586846 INR",
+    "company_total_assets": "2020519.8719741097 INR",
+    "company_cash_equivalents": "209706066.6328014 INR"
   },
   {
     "company_name": "Company F",
@@ -6755,11 +6755,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 11389577659.555063,
-    "company_market_cap": 9120141519.595299,
-    "company_enterprise_value": 12030116674.248018,
-    "company_total_assets": 11516548.098293064,
-    "company_cash_equivalents": 80140338.55221638
+    "company_revenue": "11389577659.555063 EUR",
+    "company_market_cap": "9120141519.595299 EUR",
+    "company_enterprise_value": "12030116674.248018 EUR",
+    "company_total_assets": "11516548.098293064 EUR",
+    "company_cash_equivalents": "80140338.55221638 EUR"
   },
   {
     "company_name": "Company G",
@@ -7049,11 +7049,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 1367677977.4270518,
-    "company_market_cap": 19415557155.05172,
-    "company_enterprise_value": 19753012111.679474,
-    "company_total_assets": 44134141.77217996,
-    "company_cash_equivalents": 1863069356.136927
+    "company_revenue": "1367677977.4270518 JPY",
+    "company_market_cap": "19415557155.05172 JPY",
+    "company_enterprise_value": "19753012111.679474 JPY",
+    "company_total_assets": "44134141.77217996 JPY",
+    "company_cash_equivalents": "1863069356.136927 JPY"
   },
   {
     "company_name": "Company H",
@@ -7343,11 +7343,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 26686529634.595795,
-    "company_market_cap": 5602526037.038002,
-    "company_enterprise_value": 13449017632.306343,
-    "company_total_assets": 28682928.807853833,
-    "company_cash_equivalents": 802015633.4125073
+    "company_revenue": "26686529634.595795 EUR",
+    "company_market_cap": "5602526037.038002 EUR",
+    "company_enterprise_value": "13449017632.306343 EUR",
+    "company_total_assets": "28682928.807853833 EUR",
+    "company_cash_equivalents": "802015633.4125073 EUR"
   },
   {
     "company_name": "Company I",
@@ -7637,11 +7637,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 2631856604.6076617,
-    "company_market_cap": 3041544901.99725,
-    "company_enterprise_value": 3932507690.064404,
-    "company_total_assets": 18254077.867497787,
-    "company_cash_equivalents": 1090445581.1975896
+    "company_revenue": "2631856604.6076617 KRW",
+    "company_market_cap": "3041544901.99725 KRW",
+    "company_enterprise_value": "3932507690.064404 KRW",
+    "company_total_assets": "18254077.867497787 KRW",
+    "company_cash_equivalents": "1090445581.1975896 KRW"
   },
   {
     "company_name": "Company J",
@@ -7931,11 +7931,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 1955329090.5211396,
-    "company_market_cap": 1202043687.03022,
-    "company_enterprise_value": 4172635345.018464,
-    "company_total_assets": 22152151.290723033,
-    "company_cash_equivalents": 408632883.32140654
+    "company_revenue": "1955329090.5211396 EUR",
+    "company_market_cap": "1202043687.03022 EUR",
+    "company_enterprise_value": "4172635345.018464 EUR",
+    "company_total_assets": "22152151.290723033 EUR",
+    "company_cash_equivalents": "408632883.32140654 EUR"
   },
   {
     "company_name": "Company K",
@@ -8225,11 +8225,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 679399572.3480997,
-    "company_market_cap": 989091472.7085501,
-    "company_enterprise_value": 1824699389.5965521,
-    "company_total_assets": 12700301.946414873,
-    "company_cash_equivalents": 223357269.54921383
+    "company_revenue": "679399572.3480997 SEK",
+    "company_market_cap": "989091472.7085501 SEK",
+    "company_enterprise_value": "1824699389.5965521 SEK",
+    "company_total_assets": "12700301.946414873 SEK",
+    "company_cash_equivalents": "223357269.54921383 SEK"
   },
   {
     "company_name": "Company L",
@@ -8519,11 +8519,11 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 4733667268.946122,
-    "company_market_cap": 6559712908.822652,
-    "company_enterprise_value": 7869272284.65931,
-    "company_total_assets": 60818049.223066434,
-    "company_cash_equivalents": 1279584288.1275206
+    "company_revenue": "4733667268.946122 INR",
+    "company_market_cap": "6559712908.822652 INR",
+    "company_enterprise_value": "7869272284.65931 INR",
+    "company_total_assets": "60818049.223066434 INR",
+    "company_cash_equivalents": "1279584288.1275206 INR"
   },
   {
     "company_name": "Company M",
@@ -8813,10 +8813,10 @@
     "industry_level_2": null,
     "industry_level_3": null,
     "industry_level_4": null,
-    "company_revenue": 9338027130.327995,
-    "company_market_cap": 933460072.7871801,
-    "company_enterprise_value": 2521235187.1692467,
-    "company_total_assets": 18868083.741257884,
-    "company_cash_equivalents": 259739897.26190066
+    "company_revenue": "9338027130.327995 EUR",
+    "company_market_cap": "933460072.7871801 EUR",
+    "company_enterprise_value": "2521235187.1692467 EUR",
+    "company_total_assets": "18868083.741257884 EUR",
+    "company_cash_equivalents": "259739897.26190066 EUR"
   }
 ]

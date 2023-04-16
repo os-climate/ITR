@@ -13,7 +13,8 @@ from pydantic import BaseModel, parse_obj_as, validator, root_validator, Validat
 import ITR
 
 from ITR.data.osc_units import ureg, Q_, M_, PA_, \
-    BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, quantity
+    BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, \
+    MonetaryQuantity, quantity
 from ITR.configs import ProjectionControls, LoggingConfig
 
 import logging
@@ -176,7 +177,7 @@ class PortfolioCompany(BaseModel):
     company_name: str
     company_id: str
     company_isin: Optional[str]
-    investment_value: float
+    investment_value: MonetaryQuantity
     user_fields: Optional[dict]
 
 
@@ -502,12 +503,12 @@ class ICompanyData(BaseModel):
     industry_level_3: Optional[str]
     industry_level_4: Optional[str]
 
-    company_revenue: Optional[float]
-    company_market_cap: Optional[float]
-    company_enterprise_value: Optional[float]
-    company_ev_plus_cash: Optional[float]
-    company_total_assets: Optional[float]
-    company_cash_equivalents: Optional[float]
+    company_revenue: Optional[MonetaryQuantity]
+    company_market_cap: Optional[MonetaryQuantity]
+    company_enterprise_value: Optional[MonetaryQuantity]
+    company_ev_plus_cash: Optional[MonetaryQuantity]
+    company_total_assets: Optional[MonetaryQuantity]
+    company_cash_equivalents: Optional[MonetaryQuantity]
 
     # Initialized later when we have benchmark information.  It is OK to initialize as None and fix later.
     # They will show up as {'S1S2': { 'projections': [ ... ] }}
