@@ -402,14 +402,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             else:
                 # Degenerate case where we have fx_quote column and no actual fx_quote conversions to do
                 for col in fundamental_metrics:
-                    df_fundamentals[col] = df_fundamentals[col].astype(f"pint[{df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].iloc[0]}]")
+                    # PintPandas 0.3 (without OS-Climate enhancements) cannot deal with Float64DTypes that contain pd.NA
+                    df_fundamentals[col] = df_fundamentals[col].astype('float64').astype(f"pint[{df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].iloc[0]}]")
         else:
             if len(df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].unique()) != 1:
                 error_message = f"All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
             for col in fundamental_metrics:
-                df_fundamentals[col] = df_fundamentals[col].astype(f"pint[{df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].iloc[0]}]")
+                # PintPandas 0.3 (without OS-Climate enhancements) cannot deal with Float64DTypes that contain pd.NA
+                df_fundamentals[col] = df_fundamentals[col].astype('float64').astype(f"pint[{df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].iloc[0]}]")
 
         # are there empty sectors?
         comp_with_missing_sectors = df_fundamentals[ColumnsConfig.COMPANY_ID][df_fundamentals[ColumnsConfig.SECTOR].isnull()].to_list()
