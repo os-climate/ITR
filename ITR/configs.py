@@ -26,6 +26,7 @@ class ColumnsConfig:
     COMPANY_LEI = "company_lei"
     COMPANY_ISIN = "company_isin"
     COMPANY_ISIC = "isic"
+    COMPANY_CURRENCY = 'currency'
     COMPANY_MARKET_CAP = "company_market_cap"
     INVESTMENT_VALUE = "investment_value"
     COMPANY_ENTERPRISE_VALUE = "company_enterprise_value"
@@ -42,7 +43,6 @@ class ColumnsConfig:
     COUNTRY = 'country'
     SECTOR = 'sector'
     TEMPLATE_EXPOSURE = 'exposure'
-    TEMPLATE_CURRENCY = 'currency'
     TEMPLATE_FX_QUOTE = 'fx_quote'
     TEMPLATE_FX_RATE = 'fx_rate'
     TEMPLATE_REPORT_DATE = 'report_date'
@@ -60,7 +60,7 @@ class ColumnsConfig:
     TARGET_DATA = "target_data"
     TEMPLATE_PRODUCTION = 'production'
     COMPANY_REVENUE = 'company_revenue'
-    CASH_EQUIVALENTS = 'company_cash_equivalents'
+    COMPANY_CASH_EQUIVALENTS = 'company_cash_equivalents'
     BASE_YEAR = 'base_year'
     END_YEAR = 'end_year'
     ISIC = 'isic'

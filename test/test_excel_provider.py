@@ -10,7 +10,7 @@ from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 
-from ITR.data.osc_units import ureg, Q_, PA_
+from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries
 from test_base_providers import assert_pint_frame_equal, assert_pint_series_equal
 
 
@@ -68,7 +68,7 @@ class TestExcelProvider(unittest.TestCase):
             portfolio.append(PortfolioCompany(
                 company_name=company,
                 company_id=company,
-                investment_value=100,
+                investment_value=Q_(100, 'USD'),
                 company_isin=company,
             )
             )
@@ -201,14 +201,14 @@ class TestExcelProvider(unittest.TestCase):
         self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40328.21470703568, 'Mt CO2'), places=4)
 
     def test_get_value(self):
-        expected_data = pd.Series([20248547997.0,
-                                   276185899.0,
-                                   10283015132.0],
+        expected_data = pd.Series([20248547996.8143,
+                                     276185899.614351,
+                                   10283015131.798985],
                                   index=pd.Index(self.company_ids, name='company_id'),
-                                  name='company_revenue')
+                                  name='company_revenue').astype('pint[EUR]')
         pd.testing.assert_series_equal(
-            self.excel_company_data.get_value(company_ids=self.company_ids,
-                                              variable_name=ColumnsConfig.COMPANY_REVENUE),
+            asPintSeries(self.excel_company_data.get_value(company_ids=self.company_ids,
+                                                           variable_name=ColumnsConfig.COMPANY_REVENUE)),
             expected_data)
 
 

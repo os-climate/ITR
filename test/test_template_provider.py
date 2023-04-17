@@ -3,7 +3,7 @@ import unittest
 import pandas as pd
 
 import ITR
-from ITR.data.osc_units import ureg, Q_
+from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.temperature_score import TemperatureScore
@@ -85,6 +85,7 @@ class TestTemplateProvider(unittest.TestCase):
 
     def test_temp_score(self):
         df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
+        requantify_df_from_columns(df_portfolio, inplace=True)
         # df_portfolio = df_portfolio[df_portfolio.company_id=='US00130H1059']
         portfolio = ITR.utils.dataframe_to_portfolio(df_portfolio)
 
@@ -116,7 +117,7 @@ class TestTemplateProvider(unittest.TestCase):
             portfolio.append(PortfolioCompany(
                 company_name=company,
                 company_id=company,
-                investment_value=100,
+                investment_value=Q_(100, 'USD'),
                 company_isin=company,
             ))
         # portfolio data
@@ -126,11 +127,11 @@ class TestTemplateProvider(unittest.TestCase):
 
         # verify company scores
         if ITR.HAS_UNCERTAINTIES:
-            expected = pd.Series([2.282152261331467, 2.1493519311051412, 2.630169813911337, 2.6668124335887886,
+            expected = pd.Series([2.306933854610998, 2.1493519311051412, 2.630169813911337, 2.6668124335887886,
                                   3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
                                   ], dtype='pint[delta_degC]')
         else:
-            expected = pd.Series([2.282152261331467, 2.1493519311051412, 1.92594402, 2.6668124335887886,
+            expected = pd.Series([2.306933854610998, 2.1493519311051412, 1.92594402, 2.6668124335887886,
                                   3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
                                   ], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, pd.Series(ITR.nominal_values(scores.temperature_score.pint.m), dtype='pint[delta_degC]'), expected, places=2)
@@ -138,7 +139,7 @@ class TestTemplateProvider(unittest.TestCase):
         if ITR.HAS_UNCERTAINTIES:
             self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.56633381, ureg.delta_degC), places=2)
         else:
-            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.42548865, ureg.delta_degC), places=2)
+            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.43044497, ureg.delta_degC), places=2)
 
         # Calculate Temp Scores
         temp_score_s1 = TemperatureScore(
@@ -152,9 +153,9 @@ class TestTemplateProvider(unittest.TestCase):
 
         # verify company scores; ALLETE, Inc. (US0185223007) and Ameren Corp. (US0236081024) have no S1 data
         if ITR.HAS_UNCERTAINTIES:
-            expected_s1 = pd.Series([2.2842705319208187, 3.2, 2.05035998, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
+            expected_s1 = pd.Series([2.3001523322883024, 3.2, 2.05035998, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
         else:
-            expected_s1 = pd.Series([2.2842705319208187, 3.2, 1.98174, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
+            expected_s1 = pd.Series([2.3001523322883024, 3.2, 1.981747725145536, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, pd.Series(ITR.nominal_values(scores_s1.temperature_score.pint.m), dtype='pint[delta_degC]'), expected_s1, places=2)
         # verify that results exist
         if ITR.HAS_UNCERTAINTIES:
@@ -166,17 +167,14 @@ class TestTemplateProvider(unittest.TestCase):
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
         expected_data = pd.DataFrame([pd.Series(
-            [ 408.8060718270887, 373.94579022576573, 571.7541911066631,
-              547.3764806440538, 524.0381552469889, 501.69489896889394,
-              480.30428534880036, 459.82569684991995, 440.22024773309175,
-              421.45071021865056, 403.4814437965095, 386.27832755022746,
-              369.8086953665541, 354.0412739074268, 338.9461232266362,
-              324.49457991840114, 310.65920268990067, 297.4137202544135,
-              284.732981446122, 272.5929074618559, 260.9704461390909,
-              249.8435281833816, 239.19102526211304, 228.99270988499552,
-              219.22921699512295, 209.8820071976618, 200.9333315563469,
-              192.36619789093874, 184.16433851164564, 176.31217932924386,
-              168.79481028224, 161.59795702492144, ],
+            [ 612.11123408, 574.12151172, 551.01302759, 528.8346637 ,
+              507.54898256, 487.12005355, 467.51339224, 448.69590225,
+              430.63581928, 413.30265758, 396.66715846, 380.70124088,
+              365.37795408, 350.67143206, 336.55684994, 323.01038205,
+              310.00916169, 297.53124256, 285.55556171, 274.06190395,
+              263.03086779, 252.44383262, 242.28292734, 232.53100015,
+              223.17158961, 214.18889687, 205.56775897, 197.29362327,
+              189.35252288, 181.73105307, 174.41634865, 167.39606228, ],
             name='US0079031078', dtype='pint[t CO2/GWh]'),
                                       pd.Series(
             [2.1951083625828733, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0,
@@ -253,13 +251,13 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(49451.0, ureg('kt CO2')), places=4)
+        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(45935.0, ureg('kt CO2')), places=4)
         self.assertAlmostEqual(company_2.ghg_s1s2, Q_(78.8, ureg('Mt CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(398.30303257827985, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(247.098007132110327, ureg('Mt CO2')), places=4)
         self.assertAlmostEqual(company_2.cumulative_budget, Q_(759.2723660499346, ureg('Mt CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(750.40861348673923, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(478.351516647167385, ureg('Mt CO2')), places=4)
         self.assertAlmostEqual(company_2.cumulative_target, Q_(1488.4755301213377, ureg('Mt CO2')), places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(2037.724019591887, ureg('Mt CO2')), places=4)
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(1290.48691123870087, ureg('Mt CO2')), places=4)
         self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(2695.3049563868919, ureg('Mt CO2')), places=4)
         assert len(company_1.projected_targets.S1S2.projections)==len(company_1.projected_intensities.S1S2.projections)
         assert len(company_2.projected_targets.S1S2.projections)==len(company_2.projected_intensities.S1S2.projections)
@@ -267,12 +265,12 @@ class TestTemplateProvider(unittest.TestCase):
     def test_get_value(self):
         expected_data = pd.Series([10189000000.0,
                                    25079000000.0,
-                                   55955872344.1],
+                                   55955872344.10088],
                                   index=pd.Index(self.company_ids, name='company_id'),
-                                  name='company_revenue')
+                                  name='company_revenue').astype('pint[USD]')
         pd.testing.assert_series_equal(
-            self.template_company_data.get_value(company_ids=self.company_ids,
-                                                 variable_name=ColumnsConfig.COMPANY_REVENUE),
+            asPintSeries(self.template_company_data.get_value(company_ids=self.company_ids,
+                                                              variable_name=ColumnsConfig.COMPANY_REVENUE)),
             expected_data)
 
 

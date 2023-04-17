@@ -54,7 +54,7 @@ class PortfolioAggregationMethod(Enum):
             PortfolioAggregationMethod.AOTS: column_config.COMPANY_TOTAL_ASSETS,
             PortfolioAggregationMethod.ROTS: column_config.COMPANY_REVENUE,
 
-            # The test case tells us these shoule be correct
+            # The test case tells us these should be correct
             PortfolioAggregationMethod.WATS: column_config.COMPANY_MARKET_CAP,
             PortfolioAggregationMethod.TETS: column_config.COMPANY_MARKET_CAP,
         }
@@ -101,10 +101,11 @@ class PortfolioAggregation(ABC):
         :param portfolio_aggregation_method: The method to use
         :return: The aggregates score as a pd.Series
         """
-        assert data[input_column].dtype.kind in ['f', 'i'] or isinstance(data[input_column].dtype, PintType)
+        # Used to test against data[input_column].dtype.kind in ['f', 'i']
+        assert isinstance(data[input_column].dtype, PintType)
         if portfolio_aggregation_method == PortfolioAggregationMethod.WATS:
-            # If ever we push currency datatypes into this column, we must ensure it is a PintArray, lest nan quantities spoil the sum.
-            assert data[self.c.COLS.INVESTMENT_VALUE].dtype.kind in ['f', 'i']
+            # Used to test against data[self.c.COLS.INVESTMENT_VALUE].dtype.kind in ['f', 'i']
+            assert isinstance(data[self.c.COLS.INVESTMENT_VALUE].dtype, PintType)
             total_investment_weight = data[self.c.COLS.INVESTMENT_VALUE].sum()
             try:
                 with warnings.catch_warnings():
@@ -147,7 +148,8 @@ class PortfolioAggregation(ABC):
         elif PortfolioAggregationMethod.is_emissions_based(portfolio_aggregation_method):
             # These four methods only differ in the way the company is valued.
             value_column = PortfolioAggregationMethod.get_value_column(portfolio_aggregation_method, self.c.COLS)
-            assert data[value_column].dtype.kind in ['f', 'i'] or isinstance(data[value_column].dtype, PintType)
+            # Used to check data[value_column].dtype.kind in ['f', 'i']
+            assert isinstance(data[value_column].dtype, PintType)
 
             # Calculate the total owned emissions of all companies
             try:

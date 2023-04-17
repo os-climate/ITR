@@ -106,9 +106,10 @@ def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
 def create_table_from_df (df: pd.DataFrame, schemaname: str, tablename: str, engine: sqlalchemy.engine.base.Engine, verbose=False):
     drop_table = f"drop table if exists {schemaname}.{tablename}"
     qres = osc._do_sql(drop_table, engine, verbose)
-    print(df.dtypes)
-    print(df.columns)
-    print(df.index)
+    logger.debug("dtypes, columns, and index of create_table_from_df(df...)")
+    logger.debug(df.dtypes)
+    logger.debug(df.columns)
+    logger.debug(df.index)
     new_df = dequantify_df (df)
     new_df.to_sql(tablename, con=engine, schema=schemaname, if_exists='append',
                   index=False,
@@ -131,7 +132,7 @@ def read_quantified_sql (sql: str, tablename, schemaname, engine: sqlalchemy.eng
     if extra_unit_columns:
         extra_unit_columns_positions = [ (i, extra_unit_columns[i][0], extra_unit_columns[i][1]) for i in range(len(extra_unit_columns)) ]
         for col_tuple in extra_unit_columns_positions:
-            print(f"Missing units column '{col_tuple[2]}' after original column '{sql_df.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)")
+            logger.error(f"Missing units column '{col_tuple[2]}' after original column '{sql_df.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)")
         raise ValueError
     else:
         return requantify_df(sql_df).convert_dtypes()

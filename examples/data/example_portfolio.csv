@@ -1,4 +1,4 @@
-company_name;company_id;company_isin;investment_value
+company_name;company_id;company_isin;investment_value [USD]
 Company AG;US0079031078;US0079031078;35000000
 Company AH;US00724F1012;US00724F1012;10000000
 Company AI;FR0000125338;FR0000125338;10000000

@@ -10,10 +10,12 @@ company, the score is calculated based on the publicly announced
 targets, which are mapped to regression models based on IPCC climate
 scenarios. The company is then awarded a score for each period and scope
 based on the ambition and coverage of the relevant targets. For more
-information, refer to the methodology `here <https://sciencebasedtargets.org/wp-content/uploads/2020/10/Financial-Sector-Science-Based-Targets-Guidance-Pilot-Version.pdf>`__\ .
+information, refer to the methodology `here <https://sciencebasedtargets.org/resources/files/SBTi-TCFD-reporting-guidance.pdf>`__\ .
 
 Time Frames
 ~~~~~~~~~~~
+
+*This documentation and/or functionality needs to be tested and updated.*
 
 By default, the ITR temperature scoring tool reports temperature scores
 on the mid-term time frames (i.e. based on emissions reduction targets
@@ -24,9 +26,21 @@ years).
 Scopes
 ~~~~~~
 
-ITR temperature scoring tool reports on the scores for Scope 1+2 and
-Scope 1+2+3, however it is also possible to inspect the Scope 3 score
-individually.
+ITR temperature scoring tool reports on a selected scope or set of
+scopes (S1, S2, S3, S1+S2, S1+S2+S3).  If companies disclose data for
+the selected scope, the copmany's ITR score (and other analyses) will
+be displayed by the tool.  If the company does not set a target for
+that particular scope, then the tool will use only trajectory
+information in its calculations.
+
+The *All Scopes* option causes the tool to display any temperature,
+trajectory, target, or other calculations it can for any scope.  If a
+company discloses S1, S2, S1+S2, and S3 data, the tool will display
+calculations for each of those four scopes (it will not syntehsize
+S1+S2+S3).  This option creates confusing graphical information, but
+it can be helpful when outputing a spreadsheet that allows users to
+subsequently filter on scopes as part of a subsequent analytic step
+outside of the tool.
 
 Aggregation methods
 ~~~~~~~~~~~~~~~~~~~
@@ -79,6 +93,8 @@ and target).
 
 What-If Analyses
 ~~~~~~~~~~~~~~~~
+
+*This documentation and/or functionality needs to be tested and updated.*
 
 To analyze the effect of engagement on your portfolio temperature score
 it is possible to run “what-if” analyses. In these scenarios, the
@@ -162,6 +178,7 @@ underlying data.
 -  Used target and all its parameters
 
 -  Values used during calculation such as the Linear annual reduction
-   (LAR), mapped regression scenario, and parameters for the formula to
-   calculate the temperature score.
+   (LAR), compound annual growth/reduction (CAGR), mapped regression
+   scenario, and parameters for the formula to calculate the
+   temperature score.
 

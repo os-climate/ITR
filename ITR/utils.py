@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import ITR
-from ITR.data.osc_units import ureg, Q_
+from ITR.data.osc_units import ureg, Q_, asPintSeries
 import pint
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
@@ -90,6 +90,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     """
     df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio
                                               if c.company_id not in data_warehouse.company_data.missing_ids])
+    df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(df_portfolio[ColumnsConfig.INVESTMENT_VALUE])
 
     if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
         raise ValueError(f"Portfolio contains no company_id data")
@@ -104,16 +105,16 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data])
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
     df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
-    s3_data_invalid = df_company_data.ghg_s3.isna()
-    df_company_data.loc[s3_data_invalid, 'ghg_s3'] = pd.Series([Q_(np.nan, 'Mt CO2e')] * len(df_company_data), index=df_company_data.index)
-    df_company_data.ghg_s3 = df_company_data.ghg_s3.astype('pint[Mt CO2e]')
-    df_company_data.cumulative_budget = df_company_data.cumulative_budget.astype('pint[Mt CO2e]')
-    df_company_data.cumulative_target = df_company_data.cumulative_target.astype('pint[Mt CO2e]')
-    df_company_data.cumulative_trajectory = df_company_data.cumulative_trajectory.astype('pint[Mt CO2e]')
-    df_company_data.benchmark_temperature = df_company_data.benchmark_temperature.astype('pint[delta_degC]')
-    df_company_data.benchmark_global_budget = df_company_data.benchmark_global_budget.astype('pint[Gt CO2e]')
-    portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop("company_name", axis=1), how="left",
-                              on=["company_id"]).set_index(['company_id', 'scope'])
+    s3_data_invalid = df_company_data[ColumnsConfig.GHG_SCOPE3].isna()
+    df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = pd.Series([Q_(np.nan, 'Mt CO2e')] * len(df_company_data), index=df_company_data.index)
+    for col in [ColumnsConfig.GHG_SCOPE3, ColumnsConfig.CUMULATIVE_BUDGET, ColumnsConfig.CUMULATIVE_TARGET, ColumnsConfig.CUMULATIVE_TRAJECTORY]:
+        df_company_data[col] = df_company_data[col].astype('pint[Mt CO2e]')
+    for col in [ColumnsConfig.COMPANY_REVENUE, ColumnsConfig.COMPANY_MARKET_CAP, ColumnsConfig.COMPANY_ENTERPRISE_VALUE, ColumnsConfig.COMPANY_EV_PLUS_CASH, ColumnsConfig.COMPANY_TOTAL_ASSETS, ColumnsConfig.COMPANY_CASH_EQUIVALENTS]:
+        df_company_data[col] = asPintSeries(df_company_data[col])
+    df_company_data[ColumnsConfig.BENCHMARK_TEMP] = df_company_data[ColumnsConfig.BENCHMARK_TEMP].astype('pint[delta_degC]')
+    df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET].astype('pint[Gt CO2e]')
+    portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop(ColumnsConfig.COMPANY_NAME, axis=1), how="left",
+                              on=[ColumnsConfig.COMPANY_ID]).set_index([ColumnsConfig.COMPANY_ID, ColumnsConfig.SCOPE])
     return portfolio_data
 
 

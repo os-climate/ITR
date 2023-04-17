@@ -176,7 +176,7 @@ class TestEIBenchmarks(unittest.TestCase):
             portfolio.append(PortfolioCompany(
                 company_name=company,
                 company_id=company,
-                investment_value=100,
+                investment_value=Q_(100, 'USD'),
                 company_isin=company,
             )
             )

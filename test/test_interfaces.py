@@ -64,7 +64,7 @@ class TestInterfaces(unittest.TestCase):
             ghg_s1s2=Q_(89800001.4,"t CO2"),
             ghg_s3="89800001.4 t CO2",
             base_year_production="71500001.3960884 t Steel",
-            company_revenue=7370536918
+            company_revenue=Q_(7370536918, 'USD')
         )
 
     def test_ITargetData(self):

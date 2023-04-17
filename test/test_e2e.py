@@ -57,11 +57,11 @@ class EndToEndTest(unittest.TestCase):
             ghg_s3=Q_('0.0 t CO2'),
             emissions_metric='t CO2',
             production_metric='t Steel',
-            company_revenue=100,
-            company_market_cap=100,
-            company_enterprise_value=100,
-            company_total_assets=100,
-            company_cash_equivalents=100,
+            company_revenue=Q_('100 USD'),
+            company_market_cap=Q_('100 USD'),
+            company_enterprise_value=Q_('100 USD'),
+            company_total_assets=Q_('100 USD'),
+            company_cash_equivalents=Q_('100 USD'),
             cumulative_budget=Q_("345325664.840567 t CO2"),
             cumulative_trajectory=Q_("3745094638.52858 t CO2"),
             cumulative_target=Q_("3769096510.09909 t CO2"),
@@ -116,7 +116,7 @@ class EndToEndTest(unittest.TestCase):
         self.pf_base = PortfolioCompany(
             company_name=company_id,
             company_id=company_id,
-            investment_value=100,
+            investment_value=Q_(100, 'USD'),
             company_isin=company_id,
         )
 
@@ -195,7 +195,7 @@ class EndToEndTest(unittest.TestCase):
             pf_company = PortfolioCompany(
                 company_name=company_id,
                 company_id=company_id,
-                investment_value=100,
+                investment_value=Q_(100, 'USD'),
                 company_isin=company_id,
             )
             pf_companies.append(pf_company)
@@ -288,7 +288,7 @@ class EndToEndTest(unittest.TestCase):
             pf_company = PortfolioCompany(
                 company_name=company_id,
                 company_id=company_id,
-                investment_value=100,
+                investment_value=Q_(100, 'USD'),
                 company_isin=company_id,
                 region='Europe',
                 sector='Steel'
