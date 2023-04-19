@@ -1454,6 +1454,12 @@ def update_graph(
 
     logger.info(f"ready to plot!\n{filt_df}")
 
+    if ITR.HAS_UNCERTAINTIES and isinstance(filt_df.cumulative_target.iloc[0].m, ITR.UFloat) != isinstance(filt_df.cumulative_trajectory.iloc[0].m, ITR.UFloat):
+        # Promote to UFloats if needed
+        if isinstance(filt_df.cumulative_target.iloc[0].m, ITR.UFloat):
+            filt_df = filt_df.assign(cumulative_trajectory=lambda x: x.cumulative_trajectory + ITR.ufloat(0, 0))
+        else:
+            filt_df = filt_df.assign(cumulative_target=lambda x: x.cumulative_target + ITR.ufloat(0, 0))
     # Scatter plot; we add one ton CO2e to everything because log/log plotting of zero is problematic
     filt_df.loc[:, 'cumulative_usage'] = (filt_df.cumulative_target.fillna(filt_df.cumulative_trajectory)
                                           +filt_df.cumulative_trajectory.fillna(filt_df.cumulative_target)
@@ -1600,11 +1606,14 @@ def update_graph(
     port_score_diff_methods_fig.update_layout(transition_duration=500)
 
     # input for the dash table
-    common_columns = set(filt_df.columns) & {
+    common_columns = [
         'company_name', 'company_id', 'region', 'sector', 'scope', 'cumulative_budget', 'investment_value',
         'trajectory_score', 'trajectory_exceedance_year', 'target_score', 'target_exceedance_year',
-        'temperature_score'}
-    df_for_output_table = filt_df.reset_index('company_id')[list(common_columns)].copy()
+        'temperature_score']
+    for col in ['trajectory_exceedance_year', 'target_exceedance_year']:
+        if col not in filt_df.columns:
+            common_columns.remove(col)
+    df_for_output_table = filt_df.reset_index('company_id')[common_columns].copy()
     for col in ['temperature_score', 'trajectory_score', 'target_score', 'cumulative_budget']:
         df_for_output_table[col] = ITR.nominal_values(df_for_output_table[col].pint.m).round(2)  # f"{q:.2f~#P}"
         # pd.to_numeric(...).round(2)

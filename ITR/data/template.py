@@ -517,7 +517,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                    .set_index('company_id'))
             df2.loc[df2[ColumnsConfig.SCOPE] == 'production', ColumnsConfig.VARIABLE] = VariablesConfig.PRODUCTIONS
             df2.loc[df2[ColumnsConfig.SCOPE] != 'production', ColumnsConfig.VARIABLE] = VariablesConfig.EMISSIONS
-            df3 = df2.reset_index().set_index(['company_id', 'variable', 'scope'])
+            df3 = df2.reset_index().set_index(['company_id', 'variable', 'scope']).dropna(how='all')
             df3 = pd.concat([df3.xs(VariablesConfig.PRODUCTIONS, level=1, drop_level=False)
                 .apply(
                 lambda x: x.map(lambda y: Q_(float(y) if y is not pd.NA else np.nan,
