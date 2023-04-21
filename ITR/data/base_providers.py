@@ -1075,7 +1075,6 @@ class EITargetProjector(EIProjector):
                                             target_base_year_unit=str(s2_ei[s2_target_base_year].u),
                                             target_reduction_pct=1.0-(s2_ei[target.target_end_year] / s2_ei[s2_target_base_year]))
                     targets.append(s2_target)
-                    print(f"added S2 to {company.company_name}")
                     
         nz_target_years = self.calculate_nz_target_years(targets)
 
