@@ -2,6 +2,7 @@
 This package helps companies and financial institutions to assess the temperature alignment of investment and lending
 portfolios.
 """
+import pandas as pd
 from .data import osc_units
 from . import data
 from . import utils
@@ -34,3 +35,11 @@ except (ImportError, ModuleNotFoundError):
 
     def umean(unquantified_data):
         return mean(unquantified_data)
+
+def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
+    assert HAS_UNCERTAINTIES
+    if std.sum()== 0:
+        return nom
+    assert not std.isna().any()
+    return pd.Series(data=uarray(nom.values, std.values), index=nom.index, name=nom.name)
+

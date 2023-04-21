@@ -467,6 +467,7 @@ class ITargetData(BaseModel):
     target_end_year: int
 
     target_base_year_qty: float
+    target_base_year_err: Optional[float]
     target_base_year_unit: str
     target_reduction_pct: float # This is actually a fraction, not a percentage.  1.0 = complete reduction to zero.
 

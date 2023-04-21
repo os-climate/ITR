@@ -151,7 +151,7 @@ class TestProjector(unittest.TestCase):
         company_data[0].target_data = [ target_0 ]
         for i, c in enumerate(company_data):
             if c.target_data:
-                projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)])
+                projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)], ei_df=None)
                 test_projection = projected_targets.S1S2
                 if isinstance(test_projection.projections, pd.Series):
                     test_projection = test_projection.projections

@@ -91,4 +91,3 @@ pint.Context = ureg.Context
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
 from pint_pandas import PintType
 PintType.ureg = ureg
-

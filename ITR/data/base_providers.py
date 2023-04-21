@@ -441,12 +441,13 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             else:
                 projections = company_dict[feature][list(projection_scopes.keys())[0]]['projections']
 
-    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark):
+    def _calculate_target_projections(self, production_bm: BaseProviderProductionBenchmark, ei_bm: BaseProviderIntensityBenchmark = None):
         """
         We cannot calculate target projections until after we have loaded benchmark data.
         We do so when companies are associated with benchmarks, in the DataWarehouse construction
         
         :param production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
+        :param ei_bm: Intensity Benchmarks for all sectors and scopes defined by the benchmark, 2020-2050
         """        
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -469,7 +470,17 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     # FIXME: Should we fix region info upstream when setting up comopany data?
                     co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.AnyScope] * base_year_production
                 try:
-                    c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(c, co_cumprod)
+                    if ei_bm:
+                        if (c.sector, c.region) in ei_bm._EI_df.index:
+                            ei_df = ei_bm._EI_df.loc[(c.sector, c.region)]
+                        elif (c.sector, "Global") in ei_bm._EI_df.index:
+                            ei_df = ei_bm._EI_df.loc[(c.sector, "Global")]
+                        else:
+                            logger.error(f"company {c.company_name} with ID {c.company_id} sector={c.sector} region={c.region} not in EI benchmark")
+                            ei_df = None
+                    else:
+                        ei_df = None
+                    c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(c, co_cumprod, ei_df)
                 except Exception as err:
                     import traceback
                     logger.error(f"While calculating target projections for {c.company_id}, raised {err} (possible intensity vs. absolute unit mis-match?)")
@@ -873,19 +884,11 @@ class EITrajectoryProjector(EIProjector):
             axis='columns'
         )
 
-        def recombine_nom_and_std(nom, std):
-            if std.sum()== 0:
-                return nom
-            assert not std.isna().any()
-            return pd.Series(data=ITR.uarray(nom.values, std.values),
-                             index=nom.index,
-                             name=nom.name)
-
         if ITR.HAS_UNCERTAINTIES:
             # FIXME: the clipping process can properly introduce uncertainties.  The low and high values that are clipped could be
             # replaced by the clipped values +/- the lower and upper percentile values respectively.
             wnominal_values = winsorized.apply(lambda col: col.interpolate(method='linear', inplace=False, limit_direction='forward', limit_area='inside'))
-            uwinsorized = wnominal_values.combine(uncertain_intensities, recombine_nom_and_std)
+            uwinsorized = wnominal_values.combine(uncertain_intensities, ITR.recombine_nom_and_std)
             return uwinsorized
 
         # FIXME: If we have S1, S2, and S1S2 intensities, should we treat winsorized(S1)+winsorized(S2) as winsorized(S1S2)?
@@ -1040,7 +1043,7 @@ class EITargetProjector(EIProjector):
             model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
         return model_ei_projections
 
-    def project_ei_targets(self, company: ICompanyData, production_proj: pd.Series) -> ICompanyEIProjectionsScopes:
+    def project_ei_targets(self, company: ICompanyData, production_proj: pd.Series, ei_df: pd.DataFrame) -> ICompanyEIProjectionsScopes:
         """Input:
         @company: Company-specific data: target_data and base_year_production
         @production_proj: company's production projection computed from region-sector benchmark growth rates
@@ -1049,7 +1052,31 @@ class EITargetProjector(EIProjector):
         If successful, it returns the full set of historic emissions intensities and projections based on targets
         """
         targets = company.target_data
+        target_scopes = {t.target_scope for t in targets}
         ei_projection_scopes = {'S1': None, 'S2': None, 'S1S2': None, 'S3': None, 'S1S2S3': None}
+        if EScope.S1 in target_scopes and EScope.S2 not in target_scopes and EScope.S1S2 not in target_scopes:
+            # We could create an S1S2 target based on S1 and S2 targets, but we don't yet
+            # Syntehsize an S2 target using benchmark-aligned data
+            s2_ei = asPintSeries(ei_df.loc[EScope.S2])
+            s2_netzero_year = s2_ei.idxmin()
+            for target in targets:
+                if target.target_scope==EScope.S1:
+                    s2_target_base_year = max(target.target_base_year,s2_ei.index[0])
+                    s2_target_base_m = s2_ei[s2_target_base_year].m
+                    if ITR.HAS_UNCERTAINTIES:
+                        s2_target_base_err = s2_ei[s2_target_base_year].m
+                    else:
+                        s2_target_base_err = None
+                    s2_target = ITargetData(netzero_year=s2_netzero_year, target_type='intensity', target_scope=EScope.S2,
+                                            target_start_year=target.target_start_year,
+                                            target_base_year=s2_target_base_year, target_end_year=target.target_end_year,
+                                            target_base_year_qty=s2_target_base_m,
+                                            target_base_year_err=s2_target_base_err,
+                                            target_base_year_unit=str(s2_ei[s2_target_base_year].u),
+                                            target_reduction_pct=1.0-(s2_ei[target.target_end_year] / s2_ei[s2_target_base_year]))
+                    targets.append(s2_target)
+                    print(f"added S2 to {company.company_name}")
+                    
         nz_target_years = self.calculate_nz_target_years(targets)
 
         for scope_name in ei_projection_scopes:
@@ -1152,7 +1179,10 @@ class EITargetProjector(EIProjector):
                         if ei_realizations == []:
                             # Alas, we have no data to align with constituent or containing scope
                             last_ei_year = target.target_base_year
-                            last_ei_value = Q_(target.target_base_year_qty, target_base_year_unit)
+                            target_base_year_m = target.target_base_year_qty
+                            if ITR.HAS_UNCERTAINTIES and target.target_base_year_err is not None:
+                                target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
+                            last_ei_value = Q_(target_base_year_m, target_base_year_unit)
                         else:
                             for i in range(len(ei_realizations)-1, -1, -1):
                                 last_ei_year, last_ei_value = ei_realizations[i].year, ei_realizations[i].value
@@ -1169,7 +1199,10 @@ class EITargetProjector(EIProjector):
                                 raise ValueError
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
-                    target_ei_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
+                    target_base_year_m = target.target_base_year_qty
+                    if ITR.HAS_UNCERTAINTIES and target.target_base_year_err is not None:
+                        target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
+                    target_ei_value = Q_(target_base_year_m * (1 - target.target_reduction_pct),
                                          target_base_year_unit)
                     if target_ei_value >= last_ei_value:
                         # We've already achieved target, so aim for the next one
@@ -1200,7 +1233,10 @@ class EITargetProjector(EIProjector):
                         skip_first_year = 0
                         if em_realizations == []:
                             last_ei_year = target.target_base_year
-                            last_em_value = Q_(target.target_base_year_qty, target_base_year_unit)
+                            target_base_year_m = target.target_base_year_qty
+                            if ITR.HAS_UNCERTAINTIES and target.target_base_year_err is not None:
+                                target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
+                            last_em_value = Q_(target_base_year_m, target_base_year_unit)
                             # FIXME: should be target.base_year_production !!
                             last_prod_value = company.base_year_production
                         else:
@@ -1232,7 +1268,10 @@ class EITargetProjector(EIProjector):
 
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
-                    target_em_value = Q_(target.target_base_year_qty * (1 - target.target_reduction_pct),
+                    target_base_year_m = target.target_base_year_qty
+                    if ITR.HAS_UNCERTAINTIES and target.target_base_year_err is not None:
+                        target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
+                    target_em_value = Q_(target_base_year_m * (1 - target.target_reduction_pct),
                                          target_base_year_unit)
                     if target_em_value >= last_em_value:
                         # We've already achieved target, so aim for the next one
@@ -1340,13 +1379,32 @@ class EITargetProjector(EIProjector):
         if last_value < first_value * CAGR_limit:
             # - If CAGR target > 90% reduction, blend a linear reduction with CAGR to get CAGR-like shape that actually hits the target
             cagr_factor = CAGR_limit ** (1 / period)
-            cagr_data = [cagr_factor ** y * first_value.m - (CAGR_limit * first_value.m - last_value.m) * (y / period)
+            linear_factor = (CAGR_limit * first_value.m - last_value.m)
+            cagr_data = [cagr_factor ** y * first_value.m - linear_factor * (y / period)
                          for y, year in enumerate(range(first_year, last_year+1))]
         else:
-            # - If CAGR target <= 90% reduction, use CAGR model directly
-            cagr_factor = (last_value / first_value).m ** (1 / period)
-            cagr_data = [cagr_factor ** y * first_value.m
-                         for y, year in enumerate(range(first_year, last_year+1))]
+            if ITR.HAS_UNCERTAINTIES and (isinstance(first_value.m, ITR.UFloat) or isinstance(last_value.m, ITR.UFloat)):
+                if isinstance(first_value.m, ITR.UFloat):
+                    first_nom = first_value.m.n
+                    first_err = first_value.m.s
+                else:
+                    first_nom = first_value.m
+                    first_err = 0.0
+                if isinstance(last_value.m, ITR.UFloat):
+                    last_nom = last_value.m.n
+                    last_err = last_value.m.s
+                else:
+                    last_nom = last_value.m
+                    last_err = 0.0
+                cagr_factor_nom = (last_nom / first_nom) ** (1 / period)
+                cagr_data = [ITR.ufloat(cagr_factor_nom ** y * first_nom,
+                                        first_err * (period-y)/period  + last_err * (y/period))
+                             for y, year in enumerate(range(first_year, last_year+1))]
+            else:
+                # - If CAGR target <= 90% reduction, use CAGR model directly
+                cagr_factor = (last_value / first_value).m ** (1 / period)
+                cagr_data = [cagr_factor ** y * first_value.m
+                             for y, year in enumerate(range(first_year, last_year+1))]
         cagr_result = pd.Series(PA_(cagr_data, dtype=f"{last_value.u:~P}"),
                                 index=range(first_year, last_year+1),
                                 name='CAGR')
