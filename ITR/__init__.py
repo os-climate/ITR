@@ -38,7 +38,7 @@ except (ImportError, ModuleNotFoundError):
 
 def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
     assert HAS_UNCERTAINTIES
-    if std.sum()== 0:
+    if std.sum()==0:
         return nom
     assert not std.isna().any()
     return pd.Series(data=uarray(nom.values, std.values), index=nom.index, name=nom.name)

@@ -703,7 +703,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             s3_all_nan = best_s3.apply(lambda x: x.drop('submetric').map(lambda y: ITR.isnan(y.m)).all(), axis=1)
             missing_s3 = best_s3[s3_all_nan]
             if len(missing_s3):
-                logger.warning(f"Scope 3 Emissions data missing for {missing_s3.index}")
+                logger.warning(f"Scope 3 Emissions data missing for {missing_s3.index.droplevel('metric')}")
                 # We cannot fill in missing data here, because we don't yet know what benchmark(s) will in use
                 best_s3 = best_s3[~s3_all_nan].copy()
             best_s3[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS

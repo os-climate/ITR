@@ -122,7 +122,6 @@ class DataWarehouse(ABC):
         # Target projections rely both on Production benchmark data and S3 estimated data
         # Production-centric benchmarks shift S3 data after trajectory and targets have been projected
         if new_production_bm:
-            # Note that _validate_projected_trajectories overwrites fields of companies, so no need to use return value
             logger.info(f"new_production_bm calculating trajectories for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
             self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
 
@@ -611,6 +610,8 @@ class DataWarehouse(ABC):
             scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
                                                                                 lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
             projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
+            # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
+            projected_t_CO2e[projected_t_CO2e.applymap(lambda x: ITR.isnan(x))] = ITR.ufloat(np.nan, 0.0)
         if ITR.HAS_UNCERTAINTIES:
             # Sum both the nominal and std_dev values, because these series are completely correlated
             nom_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.nominal_values(x)).cumsum(axis=1)

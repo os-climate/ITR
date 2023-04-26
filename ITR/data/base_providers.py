@@ -323,18 +323,18 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         # Initially we don't have to do any allocation of emissions across multiple sectors, but if we do, we'll update the index here.
         self._bm_allocation_index = pd.DataFrame().index
 
-    def _validate_projected_trajectories(self, companies: List[ICompanyData], df_bm_ei: pd.DataFrame) -> List[ICompanyData]:
+    def _validate_projected_trajectories(self, companies: List[ICompanyData], df_bm_ei: pd.DataFrame):
         """
         Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
         COMPANIES are a list of companies with historic data that need to be projected.
         DF_BM_EI is bemchmark data that is needed only for normalizing EI_METRICs of the projections.
         In previous incarnations of this function, no benchmark data was needed for any reason.
         """
-        companies_without_data = [c.company_id for c in companies if
+        company_ids_without_data = [c.company_id for c in companies if
                                   not c.historic_data and not c.projected_intensities]
-        if companies_without_data:
+        if company_ids_without_data:
             error_message = f"Provide either historic emission data or projections for companies with " \
-                            f"IDs {companies_without_data}"
+                            f"IDs {company_ids_without_data}"
             logger.error(error_message)
             raise ValueError(error_message)
         companies_without_historic_data = [c for c in companies if not c.historic_data]
@@ -367,11 +367,22 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 productions=[IProductionRealization(year=base_year, value=company.base_year_production)],
                 emissions=IHistoricEmissionsScopes(**scope_em),
                 emissions_intensities=IHistoricEIScopes(**scope_ei))
-        companies_without_projections = [c for c in companies if not c.projected_intensities]
+        companies_with_base_year_production = []
+        companies_without_base_year_production = []
+        for c in companies:
+            if [c_base_year_production for c_base_year_production in c.historic_data.productions if c_base_year_production.year==base_year and not ITR.isnan(c_base_year_production.value)]:
+                companies_with_base_year_production.append(c)
+            else:
+                companies_without_base_year_production.append(c)
+        if companies_without_base_year_production:
+            logger.error(f"Companies without base year production: {[c.company_id for c in companies_without_base_year_production]}")
+        companies_without_projections = [c for c in companies_with_base_year_production if not c.projected_intensities]
         if companies_without_projections:
-            companies_with_projections = [c for c in companies if c.projected_intensities]
+            companies_with_projections = [c for c in companies_with_base_year_production if c.projected_intensities]
             companies = companies_with_projections + EITrajectoryProjector(self.projection_controls).project_ei_trajectories(
                 companies_without_projections)
+        else:
+            companies = companies_with_base_year_production
         # Normalize all intensity metrics to match benchmark intensity metrics (as much as we can)
         logger.info("Normalizing intensity metrics")
         for company in companies:
@@ -393,7 +404,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                         logger.error(f"intensity values for company {company.company_id} not compatible with benchmark ({ei_metric})")
                         break
         logger.info("Done normalizing intensity metrics")
-        return companies
+        self._companies = companies
 
     # Because this presently defaults to S1S2 always, targets spec'd for S1 only, S2 only, or S1+S2+S3 are not well-handled.
     def _convert_projections_to_series(self, company: ICompanyData, feature: str,
@@ -692,9 +703,12 @@ class EITrajectoryProjector(EIProjector):
                 logger.warning(f"some data backfilled to {self.projection_controls.BASE_YEAR} for company_ids in list {historic_ei_t.compare(backfilled_t).columns.get_level_values('company_id').unique().tolist()}")
                 historic_ei_t = backfilled_t.sort_index(axis=1)
                 for company in companies:
+                    if company.base_year_production is None or ITR.isnan(company.base_year_production):
+                        # If we have no valid production data, we cannot use EI data to compute emissions
+                        continue
                     if company.ghg_s3 is None or ITR.isnan(company.ghg_s3):
                         try:
-                            idx = (company.company_id, 'Emissions Ei', EScope.S3)
+                            idx = (company.company_id, 'Emissions Intensities', EScope.S3)
                             company.ghg_s3 = Q_(historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
                                                 historic_ei_t[idx].columns[0]) * company.base_year_production
                         except KeyError:
