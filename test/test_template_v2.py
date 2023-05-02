@@ -21,7 +21,7 @@ pd.options.display.width=999
 pd.options.display.max_columns=99
 pd.options.display.min_rows=30
 
-class TestTemplateProvider(unittest.TestCase):
+class TestTemplateProviderV2(unittest.TestCase):
     """
     Test the excel template provider
     """
@@ -232,7 +232,7 @@ class TestTemplateProvider(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    test = TestTemplateProvider()
+    test = TestTemplateProviderV2()
     test.setUp()
     test.test_temp_score()
     test.test_target_projections()

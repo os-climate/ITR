@@ -648,8 +648,7 @@ itr_main_figures = dbc.Col(
                                 html.H1(id="evic-info"),
                                 html.Div('Enterprise Value incl. Cash of selected portfolio',
                                          style={'color': 'black', 'fontSize': 16}),
-                                html.Div('in billions of template curr',
-                                         style={'color': 'grey', 'fontSize': 10}),
+                                html.Strong('(billions)'),
                             ], body=True
                         ),
                     ),
@@ -659,8 +658,7 @@ itr_main_figures = dbc.Col(
                                 html.H1(id="pf-info"),
                                 html.Div('Total Notional of a selected portfolio',
                                          style={'color': 'black', 'fontSize': 16}),
-                                html.Div('in millions of template curr',
-                                         style={'color': 'grey', 'fontSize': 10}),
+                                html.Strong('(millions)'),
                             ], body=True
                         ),
                     ),
@@ -852,6 +850,11 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
                         else:
                             parsed_json[scope_name]['benchmarks'] += extra_json[scope_name]['benchmarks']
         EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
+        if eibm.startswith('OECM'):
+            # Synthesize Oil & Gas sector
+            df = EI_bm._EI_df
+            oil_and_gas_df = df.loc['Gas'].applymap(lambda x: x.to('t CO2e/PJ')) + df.loc['Oil'].applymap(lambda x: x.to('t CO2e/PJ'))
+            EI_bm._EI_df = pd.concat([df, pd.concat([oil_and_gas_df], keys=['Oil & Gas'], names=['sector'])]).sort_index()
         # This updates benchmarks and all that depends on them (including trajectories)
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
         bm_region = eibm
@@ -1653,7 +1656,7 @@ def update_graph(
         "Spin-graph",            # fake for spinner
         "{:.2f}".format(scores), # portfolio score
         {'color': 'ForestGreen'} if scores < 2 else {'color': 'Red'}, # conditional color
-        str(round((filt_df.company_ev_plus_cash.sum())/10**9,0)), # sum of total EVIC for companies in portfolio
+        str(round((filt_df.company_ev_plus_cash.sum())/10**9,1)), # sum of total EVIC for companies in portfolio
         str(round((filt_df.investment_value.sum())/10**6,1)), # portfolio notional
         str(len(filt_df)), # num of companies
         dbc.Table.from_dataframe(df_for_output_table,

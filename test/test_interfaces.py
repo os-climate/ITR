@@ -88,7 +88,7 @@ class TestInterfaces(unittest.TestCase):
                 target_scope=EScope.S1S2,
                 target_start_year=2020,
                 target_base_year=2018,
-                target_end_year=2020,  # This value should be larger than 2022
+                target_end_year=2020,  # This value should be larger than start year
                 target_base_year_qty=2.0,
                 target_base_year_unit='t CO2',
                 target_reduction_pct=0.2

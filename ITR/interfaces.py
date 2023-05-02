@@ -472,9 +472,13 @@ class ITargetData(BaseModel):
     target_reduction_pct: float # This is actually a fraction, not a percentage.  1.0 = complete reduction to zero.
 
     @root_validator
-    def must_be_greater_than_2022(cls, v):
-        if v['target_end_year'] < 2023:
-            raise ValueError(f"Scope {v['target_scope']}: Target end year ({v['target_end_year']}) must be greater than 2022")
+    def start_end_base_order(cls, v):
+        if v['target_start_year'] < v['target_base_year']:
+            raise ValueError(f"Scope {v['target_scope']}: Target start year ({v['target_start_year']}) must be equal or greater than base year {v['target_base_year']}")
+        if v['target_end_year'] <= v['target_base_year']:
+            raise ValueError(f"Scope {v['target_scope']}: Target end year ({v['target_end_year']}) must be greater than base year {v['target_base_year']}")
+        if v['target_end_year'] <= v['target_start_year']:
+            raise ValueError(f"Scope {v['target_scope']}: Target end year ({v['target_end_year']}) must be greater than start year {v['target_start_year']}")
         return v
 
 
@@ -529,7 +533,7 @@ class ICompanyData(BaseModel):
             'Coal': { 'Global': 't Coal' },
             'Oil': { 'Global': 'bbl/d' },
             'Gas': { 'Global': 'bcm' },
-            # 'Oil & Gas': { 'Global': 'mmboe' },
+            'Oil & Gas': { 'Global': 'PJ' },
             'Autos': { 'Global': 'pkm' },
             'Trucking': { 'Global': 'tkm' },
             'Cement': { 'Global': 't Cement' },

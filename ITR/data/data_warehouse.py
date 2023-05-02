@@ -194,7 +194,8 @@ class DataWarehouse(ABC):
                 # The alignment calculation: Company Scope-Sector emissions = Total Company Scope emissions * (BM Scope Sector / SUM(All Scope Sectors of Company))
                 aligned_em = [(sector, [(scope, list(map(lambda em: (em[0], em[1] * sector_em_df.loc[(sector, scope)].squeeze() / em_tot.loc[scope].squeeze()),
                                                          [(em.year, em.value) for em in historic_dict['+'.join([orig_id, sector])].emissions[scope.name]])))
-                                        for scope in em_tot.index])
+                                        for scope in em_tot.index
+                                        if em_tot.loc[scope].squeeze().m != 0.0])
                               for sector in sectors]
 
                 # Having done all scopes and sectors for this company above, replace historic Em and EI data below
@@ -610,9 +611,9 @@ class DataWarehouse(ABC):
             scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
                                                                                 lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
             projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
-            # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
-            projected_t_CO2e[projected_t_CO2e.applymap(lambda x: ITR.isnan(x))] = ITR.ufloat(np.nan, 0.0)
         if ITR.HAS_UNCERTAINTIES:
+            # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
+            projected_t_CO2e[projected_t_CO2e.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR.ufloat(np.nan, 0.0)
             # Sum both the nominal and std_dev values, because these series are completely correlated
             nom_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.nominal_values(x)).cumsum(axis=1)
             err_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.std_devs(x)).cumsum(axis=1)

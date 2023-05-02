@@ -102,7 +102,7 @@ class SectorsConfig:
     STEEL = "Steel"
     ALUMINUM = "Aluminum"
     ENERGY = "Energy"
-    # OIL_AND_GAS = "Oil & Gas"
+    OIL_AND_GAS = "Oil & Gas"
     COAL = "Coal"
     OIL = "Oil"
     GAS = "Gas"
@@ -133,7 +133,7 @@ class SectorsConfig:
         return [SectorsConfig.POWER_UTILITY, SectorsConfig.GAS_UTILITY, SectorsConfig.UTILITY,
                 SectorsConfig.STEEL, SectorsConfig.ALUMINUM,
                 SectorsConfig.ENERGY, SectorsConfig.COAL, SectorsConfig.OIL, SectorsConfig.GAS,
-                # SectorsConfig.OIL_AND_GAS,
+                SectorsConfig.OIL_AND_GAS,
                 SectorsConfig.AUTOMOBILE, SectorsConfig.TRUCKING,
                 SectorsConfig.CEMENT,
                 SectorsConfig.BUILDINGS_CONSTRUCTION, SectorsConfig.BUILDINGS_RESIDENTIAL, SectorsConfig.BUILDINGS_COMMERCIAL,
