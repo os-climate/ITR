@@ -41,8 +41,19 @@ currency_dict = {
     'RM':'MYR',
 }
 
+def escape_currency_symbols(text):
+    if '$' in text:
+        escaped_text = re.escape(text)
+    else:
+        escaped_text = text
+    if escaped_text[0].isalpha():
+        if escaped_text[-1].isalpha():
+            return r'\b' + escaped_text + r'\b'
+        return r'\b' + escaped_text
+    return escaped_text
+
 currency_keep_regexp = re.compile(fr"({'|'.join([cur_abbrev for cur_abbrev in currency_dict.values()])})")
-currency_split_regexp = re.compile(fr"(\$|US\$|{'|'.join([re.escape(currency_symbol) for currency_symbol in currency_dict])})")
+currency_split_regexp = re.compile(fr"(\$|\bUS\$|{'|'.join([escape_currency_symbols(currency_symbol) for currency_symbol in currency_dict])})")
 
 def translate_currency_symbols_1(text):
     split_text = re.split(currency_split_regexp, text)
@@ -91,4 +102,3 @@ pint.Context = ureg.Context
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
 from pint_pandas import PintType
 PintType.ureg = ureg
-

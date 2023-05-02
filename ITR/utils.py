@@ -106,7 +106,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
     df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
     s3_data_invalid = df_company_data[ColumnsConfig.GHG_SCOPE3].isna()
-    df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = pd.Series([Q_(np.nan, 'Mt CO2e')] * len(df_company_data), index=df_company_data.index)
+    df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = pd.Series([np.nan] * len(df_company_data), index=df_company_data.index).astype('pint[Mt CO2e]')
     for col in [ColumnsConfig.GHG_SCOPE3, ColumnsConfig.CUMULATIVE_BUDGET, ColumnsConfig.CUMULATIVE_TARGET, ColumnsConfig.CUMULATIVE_TRAJECTORY]:
         df_company_data[col] = df_company_data[col].astype('pint[Mt CO2e]')
     for col in [ColumnsConfig.COMPANY_REVENUE, ColumnsConfig.COMPANY_MARKET_CAP, ColumnsConfig.COMPANY_ENTERPRISE_VALUE, ColumnsConfig.COMPANY_EV_PLUS_CASH, ColumnsConfig.COMPANY_TOTAL_ASSETS, ColumnsConfig.COMPANY_CASH_EQUIVALENTS]:

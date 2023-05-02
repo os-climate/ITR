@@ -75,11 +75,18 @@ class TestTemplateProvider(unittest.TestCase):
         # FIXME: We should pre-compute some of these target projections and make them reference data
         for c in company_data:
             # This equality test does not work for scopes that have NaN values
-            temp = EITargetProjector(self.template_company_data.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)]).S1S2
+            ei_bm = self.excel_EI_bm
+            if (c.sector, c.region) in ei_bm._EI_df.index:
+                ei_df = ei_bm._EI_df.loc[(c.sector, c.region)]
+            elif (c.sector, "Global") in ei_bm._EI_df.index:
+                ei_df = ei_bm._EI_df.loc[(c.sector, "Global")]
+            else:
+                raise ValueError(f"company {c.company_name} with ID {c.company_id} sector={c.sector} region={c.region} not in EI benchmark")
+            temp = EITargetProjector(self.template_company_data.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)], ei_df).S1S2
             if c.projected_targets.S1S2 is None and temp is None:
                 continue
             if isinstance(c.projected_targets.S1S2.projections, pd.Series):
-                assert all(c.projected_targets.S1S2.projections.values.data==(ITR.nominal_values(temp.projections.values.data)))
+                assert all(ITR.nominal_values(c.projected_targets.S1S2.projections.values.data)==ITR.nominal_values(temp.projections.values.data))
             else:
                 assert c.projected_targets.S1S2 == temp
 
@@ -128,18 +135,20 @@ class TestTemplateProvider(unittest.TestCase):
         # verify company scores
         if ITR.HAS_UNCERTAINTIES:
             expected = pd.Series([2.306933854610998, 2.1493519311051412, 2.630169813911337, 2.6668124335887886,
-                                  3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
+                                  2.4920219 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
+                                            # When we estimate an S2 target based on benchmark-aligned targets, we get a valid S1S2 target
                                   ], dtype='pint[delta_degC]')
         else:
             expected = pd.Series([2.306933854610998, 2.1493519311051412, 1.92594402, 2.6668124335887886,
-                                  3.1031826242959024 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
+                                  2.4920219 # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
+                                            # When we estimate an S2 target based on benchmark-aligned targets, we get a valid S1S2 target
                                   ], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, pd.Series(ITR.nominal_values(scores.temperature_score.pint.m), dtype='pint[delta_degC]'), expected, places=2)
         # verify that results exist
         if ITR.HAS_UNCERTAINTIES:
-            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.56633381, ureg.delta_degC), places=2)
+            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(ITR.ufloat(2.44906, 0.00014), ureg.delta_degC), places=2)
         else:
-            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.43044497, ureg.delta_degC), places=2)
+            self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.30821283, ureg.delta_degC), places=2)
 
         # Calculate Temp Scores
         temp_score_s1 = TemperatureScore(
@@ -153,15 +162,17 @@ class TestTemplateProvider(unittest.TestCase):
 
         # verify company scores; ALLETE, Inc. (US0185223007) and Ameren Corp. (US0236081024) have no S1 data
         if ITR.HAS_UNCERTAINTIES:
-            expected_s1 = pd.Series([2.3001523322883024, 3.2, 2.05035998, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
+            expected_s1 = pd.Series([2.3001523322883024, 2.05035998, 2.1509743549550446], dtype='pint[delta_degC]')
         else:
-            expected_s1 = pd.Series([2.3001523322883024, 3.2, 1.981747725145536, 3.2, 2.1509743549550446], dtype='pint[delta_degC]')
+            expected_s1 = pd.Series([2.3001523322883024, 1.981747725145536, 2.1509743549550446], dtype='pint[delta_degC]')
         assert_pint_series_equal(self, pd.Series(ITR.nominal_values(scores_s1.temperature_score.pint.m), dtype='pint[delta_degC]'), expected_s1, places=2)
         # verify that results exist
         if ITR.HAS_UNCERTAINTIES:
-            self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.57712097, ureg.delta_degC), places=2)
+            # If we treat missing S1 as default 3.2C, we get 2.57712097˚C
+            self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.1671622229062195, ureg.delta_degC), places=2)
         else:
-            self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.56339852, ureg.delta_degC), places=2)
+            # If we treat missing S1 as default 3.2C, we get 2.56339852˚C
+            self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.14429147, ureg.delta_degC), places=2)
         
 
     def test_get_projected_value(self):

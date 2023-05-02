@@ -161,7 +161,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)])
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df=None)
 
         target_ah_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -176,7 +176,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)])
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df=None)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -202,7 +202,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)])
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df=None)
 
         target_aj_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -228,7 +228,7 @@ class TestTargets(unittest.TestCase):
         })
         company_aj.target_data = [ target_aj_0, target_aj_1 ]
         company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)])
+            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df=None)
 
         plot_dict = {
             # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
@@ -331,7 +331,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0, target_ag_1 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)])
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df=None)
 
         target_ah_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -357,7 +357,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0, target_ah_1 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)])
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df=None)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -383,7 +383,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)])
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df=None)
 
         target_aj_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -409,7 +409,7 @@ class TestTargets(unittest.TestCase):
         })
         company_aj.target_data = [ target_aj_0, target_aj_1 ]
         company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)])
+            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df=None)
 
         plot_dict = {
             # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
@@ -513,7 +513,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0, target_ag_1 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)])
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df=None)
 
         target_ah_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -539,7 +539,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0, target_ah_1 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)])
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df=None)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -565,7 +565,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)])
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df=None)
 
         target_aj_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -591,7 +591,7 @@ class TestTargets(unittest.TestCase):
         })
         company_aj.target_data = [ target_aj_0, target_aj_1 ]
         company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)])
+            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df=None)
 
         plot_dict = {
             # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
@@ -786,7 +786,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0, target_ag_1 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.AnyScope)])
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.AnyScope)], ei_df=None)
 
         # Same, since copied from company_ag...
         # intensity_s1s2 = company_ah.ghg_s1s2 / company_ah.base_year_production
@@ -816,7 +816,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0, target_ah_1 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.AnyScope)])
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.AnyScope)], ei_df=None)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -842,11 +842,11 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)])
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)], ei_df=None)
 
         self.base_company_data = BaseCompanyDataProvider (company_data)
         # Since we are not using a Data Warehouse to compute our graphics, we have to do this projection manually, with the benchmark's internal dataframe.
-        self.base_company_data._companies = self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, self.OECM_EI_S3_bm._EI_df)
+        self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, self.OECM_EI_S3_bm._EI_df)
 
         co_pp = bm_production_data.droplevel('scope')
 

@@ -20,6 +20,9 @@ PintType.ureg = ureg
 PA_ = PintArray
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
+# openscm_units does this for all gas species...we just have to keep up.
+ureg.define("tCO2e = t CO2e")
+
 ureg.define("LNG = 3.44 / 2.75 CH4")
 # with ureg.context("CH4_conversions"):
 #     print(ureg("t LNG").to("t CO2"))
@@ -46,7 +49,8 @@ ureg.define('fraction = [] = frac')
 ureg.define('percent = 1e-2 frac = pct = percentage')
 ureg.define('ppm = 1e-6 fraction')
 
-# USD are the reserve currency of the ITR tool
+# By default, USD are the reserve currency of the ITR tool.  But data template can change that
+base_currency_unit = 'USD'
 ureg.define("USD = [currency] = $")
 for currency_symbol, currency_abbrev in ITR.data.currency_dict.items():
     ureg.define(f"{currency_abbrev} = nan USD = {currency_symbol}")
@@ -690,8 +694,14 @@ class MonetaryQuantity(str):
             quantity = q
         if not isinstance(quantity, Quantity):
             raise TypeError('pint.Quantity required')
-        if quantity.is_compatible_with('USD'):
-            return quantity
+        try:
+            if quantity.is_compatible_with('USD'):
+                return quantity
+        except RecursionError:
+            breakpoint()
+        for currency in ITR.data.currency_dict.values():
+            if quantity.is_compatible_with(currency):
+                return quantity
         raise DimensionalityError (quantity, 'USD', dim1='', dim2='', extra_msg=f"Dimensionality must be 'dimensionless' or compatible with [{ITR.data.currency_dict.values()}]")
 
     def __repr__(self):

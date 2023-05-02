@@ -1,5 +1,6 @@
 import re
 import warnings  # needed until apply behaves better with Pint quantities in arrays
+import datetime
 from typing import Type, List, Optional
 import pandas as pd
 import numpy as np
@@ -33,6 +34,14 @@ def ITR_country_to_region(country:str) -> str:
     if len(country)==2:
         if country=='UK':
             country='GB'
+        elif country=='SP':
+            country='ES'
+        elif country=='LX':
+            country='LU'
+        elif country=='JN':
+            country='JP'
+        elif country=='PO':
+            country='PT'
         regions = df_country_regions[df_country_regions.alpha_2==country].region_ar6_10
     elif len(country)==3:
         regions = df_country_regions[df_country_regions.alpha_3==country].region_ar6_10
@@ -45,6 +54,8 @@ def ITR_country_to_region(country:str) -> str:
             return 'Europe'
         else:
             raise ValueError(f"country {country} not found")
+    if len(regions)==0:
+        raise ValueError(f"country {country} not found")
     region = regions.squeeze()
     if region in ['North America', 'Europe']:
         return region
@@ -127,7 +138,7 @@ def prioritize_submetric(x: pd.Series) -> pint.Quantity:
             if x.submetric[p] == '3':
                 pinned_priority = p
                 break
-    elif x.name[0] in ['Autos', 'Oil & Gas', 'Coal', 'Oil', 'Gas', 'Gas Utilities']:
+    elif x.name[0] in ['Autos', 'Energy', 'Oil & Gas', 'Coal', 'Oil', 'Gas', 'Gas Utilities']:
         for p in range(0, len(x.submetric)):
             if x.submetric[p] == '11':
                 pinned_priority = p
@@ -308,10 +319,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             except KeyError as e:
                 logger.error(f"Tab {esg_data_sheet} is required in input Excel file.")
                 raise KeyError
+            # Change year column names to integers if they come in as strings
+            df_esg.rename(columns=lambda x: int(x) if isinstance(x, str) and x>='1000' and x<='2999' else x, inplace=True)
             if 'base_year' in df_esg.columns:
                 self.template_v2_start_year = df_esg.columns[df_esg.columns.get_loc('base_year')+1]
             else:
                 self.template_v2_start_year = df_esg.columns[df_esg.columns.map(lambda col: isinstance(col, int))][0]
+            # Make sure that if all NaN these columns are not represented as float64
+            df_esg.submetric = df_esg.submetric.fillna('').astype('string')
+            if 'boundary' in df_esg.columns:
+                df_esg['boundary'] = df_esg['boundary'].fillna('').astype('string')
             # In the V2 template, the COMPANY_NAME and COMPANY_ID are merged cells and need to be filled forward
             # For convenience, we also fill forward Report Date, which is often expressed in the first row of a fresh report,
             # but sometimes omitted in subsequent rows (because it's "redundant information")
@@ -384,12 +401,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     return unit, ureg._prefixes[prefix].value if prefix else 1.0
 
                 fx_df = df_fundamentals.loc[fx_quote, ['report_date', 'currency', 'fx_quote', 'fx_rate']].drop_duplicates().set_index('report_date')
-                fx_df = fx_df.assign(currency_tuple=lambda x: x['currency'].map(convert_prefix_to_scalar),
-                                     fx_quote_tuple=lambda x: x['fx_quote'].map(convert_prefix_to_scalar))
+                fx_conversion_mask = fx_df.currency!=fx_df.fx_quote
+                assert fx_df[~fx_conversion_mask].fx_rate.eq(1.0).all()
+                fx_df = fx_df[fx_conversion_mask].assign(currency_tuple=lambda x: x['currency'].map(convert_prefix_to_scalar),
+                                                         fx_quote_tuple=lambda x: x['fx_quote'].map(convert_prefix_to_scalar))
 
                 # FIXME: These simple rules don't take into account different conversion rates at different time periods.
                 fx_df.apply(lambda x: fx_ctx.redefine(f"{x.currency_tuple[0]} = {x.fx_rate * x.fx_quote_tuple[1] / x.currency_tuple[1]} {x.fx_quote_tuple[0]}")
-                            if x.currency != 'USD' else fx_ctx.redefine(f"{x.fx_quote_tuple[0]} = {x.currency_tuple[1]/(x.fx_rate * x.fx_quote_tuple[1])} {x.currency_tuple[0]}"),
+                            if x.currency_tuple[0] != 'USD'
+                            else fx_ctx.redefine(f"{x.fx_quote_tuple[0]} = {x.currency_tuple[1]/(x.fx_rate * x.fx_quote_tuple[1])} {x.currency_tuple[0]}"),
                             axis=1)
                 ureg.add_context(fx_ctx)
                 ureg.enable_contexts('FX')
@@ -398,7 +418,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     df_fundamentals[col] = df_fundamentals[col].astype('Float64')
                     df_fundamentals[f"{col}_base"] = df_fundamentals[col]
                     df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'] * df_fundamentals.loc[fx_quote, f"{col}_base"]
-                    df_fundamentals[col] = df_fundamentals[col].astype(f"pint[{df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0]}]")
+                    quote_currency,  quote_scalar = convert_prefix_to_scalar(df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0])
+                    df_fundamentals[col] = df_fundamentals[col].mul(quote_scalar).astype(f"pint[{quote_currency}]")
             else:
                 # Degenerate case where we have fx_quote column and no actual fx_quote conversions to do
                 for col in fundamental_metrics:
@@ -517,7 +538,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                    .set_index('company_id'))
             df2.loc[df2[ColumnsConfig.SCOPE] == 'production', ColumnsConfig.VARIABLE] = VariablesConfig.PRODUCTIONS
             df2.loc[df2[ColumnsConfig.SCOPE] != 'production', ColumnsConfig.VARIABLE] = VariablesConfig.EMISSIONS
-            df3 = df2.reset_index().set_index(['company_id', 'variable', 'scope'])
+            df3 = df2.reset_index().set_index(['company_id', 'variable', 'scope']).dropna(how='all')
             df3 = pd.concat([df3.xs(VariablesConfig.PRODUCTIONS, level=1, drop_level=False)
                 .apply(
                 lambda x: x.map(lambda y: Q_(float(y) if y is not pd.NA else np.nan,
@@ -703,7 +724,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             s3_all_nan = best_s3.apply(lambda x: x.drop('submetric').map(lambda y: ITR.isnan(y.m)).all(), axis=1)
             missing_s3 = best_s3[s3_all_nan]
             if len(missing_s3):
-                logger.warning(f"Scope 3 Emissions data missing for {missing_s3.index}")
+                logger.warning(f"Scope 3 Emissions data missing for {missing_s3.index.droplevel('metric')}")
                 # We cannot fill in missing data here, because we don't yet know what benchmark(s) will in use
                 best_s3 = best_s3[~s3_all_nan].copy()
             best_s3[ColumnsConfig.VARIABLE]=VariablesConfig.EMISSIONS
@@ -815,7 +836,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             if len(df3.index):
                 assert 'sector' not in df3.index.names and 'submetric' not in df3.index.names
 
-            df4 = df3.xs(VariablesConfig.EMISSIONS, level=1) / df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[1,2])
+            # Avoid division by zero problems with zero-valued production metrics
+            df4 = df3.xs(VariablesConfig.EMISSIONS, level=1) / df3.xs((VariablesConfig.PRODUCTIONS, 'production'),
+                                                                      level=[1,2]).applymap(lambda x: x if x.m != 0 else Q_(np.nan, x.u))
             df4['variable'] = VariablesConfig.EMISSIONS_INTENSITIES
             df4 = df4.reset_index().set_index(['company_id', 'variable', 'scope'])
             df5 = pd.concat([df3, df4])
@@ -879,19 +902,51 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :param target_data:
         :return:
         """
+
+        def unique_ids(mask):
+            return target_data[mask].index.unique().tolist()
+
         # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
-        c_ids_without_start_year = list(target_data[target_data['target_start_year'].isna()].index)
-        if c_ids_without_start_year:
-            target_data.loc[target_data.target_start_year.isna(), 'target_start_year'] = 2021
+        mask = target_data['target_start_year'].isna()
+        if mask.any():
+            c_ids_without_start_year = unique_ids(mask)
+            target_data.loc[mask, 'target_start_year'] = 2021
             logger.warning(f"Missing target start year set to 2021 for companies with ID: {c_ids_without_start_year}")
 
-        c_ids_invalid_netzero_year = list(target_data[target_data['netzero_year'] > ProjectionControls.TARGET_YEAR].index)
-        if c_ids_invalid_netzero_year:
-            error_message = f"Invalid net-zero target years (>{ProjectionControls.TARGET_YEAR}) are entered for companies with ID: " \
-                            f"{c_ids_invalid_netzero_year}"
-            logger.error(error_message)
-            raise ValueError(error_message)
-        target_data.loc[target_data.netzero_year.isna(), 'netzero_year'] = ProjectionControls.TARGET_YEAR
+        target_data.target_start_year = target_data.target_start_year.map(lambda x: int(x.year) if isinstance(x, datetime.datetime) else x)
+
+        mask = target_data['target_base_year'].isna()
+        if mask.any():
+            c_ids_without_base_year = unique_ids(mask)
+            logger.warning(f"Missing target base year for companies with ID: {c_ids_without_base_year}")
+            target_data = target_data[~mask]
+
+        mask = target_data['target_base_year_qty'].isna()
+        if mask.any():
+            c_ids_without_base_year_qty = unique_ids(mask)
+            logger.warning(f"Missing target base year qty for companies with ID: {c_ids_without_base_year_qty}")
+            target_data = target_data[~mask]
+
+        target_data.loc[target_data.target_type.str.lower().str.contains('absolute'), 'target_type'] = 'absolute'
+        target_data.loc[target_data.target_type.str.lower().str.contains('intensity'), 'target_type'] = 'intensity'
+        mask = ~target_data.target_type.isin(['absolute', 'intensity'])
+        if mask.any():
+            c_ids_with_invalid_target_type = unique_ids(mask)
+            logger.warning(f"Invalid target types: {target_data[mask].target_type}")
+            target_data = target_data[~mask]
+
+        mask = target_data['netzero_year'] > ProjectionControls.TARGET_YEAR
+        if mask.any():
+            c_ids_invalid_netzero_year = unique_ids(mask)
+            warning_message = f"Invalid net-zero target years (>{ProjectionControls.TARGET_YEAR}) are entered for companies with ID: {c_ids_invalid_netzero_year}"
+            logger.warning(warning_message)
+            target_data = target_data[~mask]
+
+        mask = target_data.netzero_year.isna()
+        if mask.any():
+            c_ids_without_netzero_year = unique_ids(mask)
+            warning_message = f"Companies without netzero targets: {c_ids_without_netzero_year}"
+            # target_data.loc[mask, 'netzero_year'] = ProjectionControls.TARGET_YEAR
 
         c_ids_with_nonnumeric_target = list(target_data[target_data['target_reduction_ambition'].map(lambda x: isinstance(x, str))].index)
         if c_ids_with_nonnumeric_target:
@@ -920,8 +975,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ),
             )
 
-            target_data.loc[:, 'target_scope'] = (
-                target_data.target_scope.str.replace(r'\bs([123])', r'S\1', regex=True)
+            target_data.target_scope = (
+                target_data.target_scope.replace(r'[\n\r]+', '+', regex=True)
+                .replace(r'\bs([123])', r'S\1', regex=True)
                 .str.strip()
                 .replace(r' ?\+ ?', '+', regex=True)
             )
@@ -1049,6 +1105,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         :return: IHistoricData Pydantic object
         """
         target_data = target_data.rename(columns={'target_year': 'target_end_year', 'target_reduction_ambition': 'target_reduction_pct',})
+        target_data = target_data.assign(netzero_year=target_data.netzero_year.astype('object').replace({pd.NA:None}))
         return [ITargetData(**td) for td in target_data.to_dict('records')]
 
     def _get_historic_data(self, company_ids: List[str], historic_data: pd.DataFrame) -> pd.DataFrame:

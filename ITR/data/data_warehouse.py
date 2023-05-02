@@ -94,7 +94,7 @@ class DataWarehouse(ABC):
             c.projected_targets = orig_data['projected_targets']
 
     def update_benchmarks(self, benchmark_projected_production: ProductionBenchmarkDataProvider,
-                         benchmarks_projected_ei: IntensityBenchmarkDataProvider):
+                          benchmarks_projected_ei: IntensityBenchmarkDataProvider):
         """
         Update the benchmark data used in this instance of the DataWarehouse.  If there is no change, do nothing.
         """
@@ -122,7 +122,6 @@ class DataWarehouse(ABC):
         # Target projections rely both on Production benchmark data and S3 estimated data
         # Production-centric benchmarks shift S3 data after trajectory and targets have been projected
         if new_production_bm:
-            # Note that _validate_projected_trajectories overwrites fields of companies, so no need to use return value
             logger.info(f"new_production_bm calculating trajectories for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
             self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
 
@@ -195,7 +194,8 @@ class DataWarehouse(ABC):
                 # The alignment calculation: Company Scope-Sector emissions = Total Company Scope emissions * (BM Scope Sector / SUM(All Scope Sectors of Company))
                 aligned_em = [(sector, [(scope, list(map(lambda em: (em[0], em[1] * sector_em_df.loc[(sector, scope)].squeeze() / em_tot.loc[scope].squeeze()),
                                                          [(em.year, em.value) for em in historic_dict['+'.join([orig_id, sector])].emissions[scope.name]])))
-                                        for scope in em_tot.index])
+                                        for scope in em_tot.index
+                                        if em_tot.loc[scope].squeeze().m != 0.0])
                               for sector in sectors]
 
                 # Having done all scopes and sectors for this company above, replace historic Em and EI data below
@@ -223,7 +223,7 @@ class DataWarehouse(ABC):
         # Changes to production benchmark requires re-calculating targets (which are production-dependent)
         if new_production_bm:
             logger.info(f"projecting targets for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
-            self.company_data._calculate_target_projections(benchmark_projected_production)
+            self.company_data._calculate_target_projections(benchmark_projected_production, benchmarks_projected_ei)
 
         # If our benchmark is production-centric, migrate S3 data (including estimated S3 data) into S1S2
         # If we shift before we project, then S3 targets will not be projected correctly.
@@ -611,9 +611,16 @@ class DataWarehouse(ABC):
             scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
                                                                                 lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
             projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
-        # At the last instance, convert our magnitudes to t CO2e everywhere
-        cumulative_emissions = projected_t_CO2e.cumsum(axis=1).astype('pint[t CO2e]')
-        return cumulative_emissions
+        if ITR.HAS_UNCERTAINTIES:
+            # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
+            projected_t_CO2e[projected_t_CO2e.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR.ufloat(np.nan, 0.0)
+            # Sum both the nominal and std_dev values, because these series are completely correlated
+            nom_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.nominal_values(x)).cumsum(axis=1)
+            err_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.std_devs(x)).cumsum(axis=1)
+            cumulative_emissions = nom_t_CO2e.combine(err_t_CO2e, ITR.recombine_nom_and_std)
+        else:
+            cumulative_emissions = projected_t_CO2e.cumsum(axis=1)
+        return cumulative_emissions.astype('pint[t CO2e]')
 
     def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, budget_year: int=None) -> pd.Series:
         """
