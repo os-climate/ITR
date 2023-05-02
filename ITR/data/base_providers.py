@@ -379,7 +379,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             if c.base_year_production and not ITR.isnan(c.base_year_production.m):
                 companies_with_base_year_production.append(c)                
             elif c.historic_data.productions and (base_year_production_list := [p for p in c.historic_data.productions if p.year==base_year and not ITR.isnan(p.value.m)]):
-                c.base_year_production = base_year_production_list[0]
+                c.base_year_production = base_year_production_list[0].value
                 companies_with_base_year_production.append(c)
             else:
                 companies_without_base_year_production.append(c)
