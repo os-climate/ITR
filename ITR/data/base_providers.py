@@ -774,9 +774,9 @@ class EITrajectoryProjector(EIProjector):
             raise ValueError("No historic data anywhere")
         df = pd.DataFrame.from_records(data).set_index(
             [ColumnsConfig.COMPANY_ID, ColumnsConfig.VARIABLE, ColumnsConfig.SCOPE])
+        
         # Note that the first valid index may well be Quantity with a NaN value--that's fine
         # We just need to fill in the pure NaNs that arise from very ragged data
-        
         with warnings.catch_warnings():
             # TODO: need to investigate whether there is a more sane way to avoid unit warnings
             warnings.simplefilter("ignore")
@@ -815,6 +815,8 @@ class EITrajectoryProjector(EIProjector):
     def _compute_missing_historic_ei(self, companies: List[ICompanyData], historic_df: pd.DataFrame):
         scopes = [EScope[scope_name] for scope_name in EScope.get_scopes()]
         missing_data = []
+        # https://github.com/pandas-dev/pandas/issues/53053
+        index_names = historic_df.index.names
         for company in companies:
             # Create keys to index historic_df DataFrame for readability
             production_key = (company.company_id, VariablesConfig.PRODUCTIONS, 'Production')
@@ -839,6 +841,8 @@ class EITrajectoryProjector(EIProjector):
             # This only happens if ALL scope data is missing.  If ANY scope data is present, we'll work with what we get.
             if this_missing_data and append_this_missing_data:
                 missing_data.extend(this_missing_data)
+        # https://github.com/pandas-dev/pandas/issues/53053
+        historic_df.index.names = index_names
         if missing_data:
             error_message = f"Provide either historic emissions intensity data, or historic emission and " \
                             f"production data for these company - scope combinations: {missing_data}"
