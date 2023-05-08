@@ -798,7 +798,7 @@ def warehouse_new(banner_title):
             Input("scenarios-cutting", "value"), # winzorization slider
             State("benchmark-region", "children"),),
     background=not use_data_vault and not have_breakpoint,
-    prevent_initial_call=False,)
+    prevent_initial_call=True,)
 # load default intensity benchmarks
 def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
     '''
