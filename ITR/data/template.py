@@ -415,9 +415,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ureg.enable_contexts('FX')
 
                 for col in fundamental_metrics:
-                    df_fundamentals[col] = df_fundamentals[col].astype('Float64')
+                    # PintPandas 0.3 (without OS-Climate enhancements) cannot deal with Float64DTypes that contain pd.NA
+                    df_fundamentals[col] = df_fundamentals[col].astype('float64')
                     df_fundamentals[f"{col}_base"] = df_fundamentals[col]
-                    df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'] * df_fundamentals.loc[fx_quote, f"{col}_base"]
+                    df_fundamentals.loc[fx_quote, col] = df_fundamentals.loc[fx_quote, 'fx_rate'].astype('float64') * df_fundamentals.loc[fx_quote, f"{col}_base"]
                     quote_currency,  quote_scalar = convert_prefix_to_scalar(df_fundamentals.loc[fx_quote, ColumnsConfig.TEMPLATE_FX_QUOTE].iloc[0])
                     df_fundamentals[col] = df_fundamentals[col].mul(quote_scalar).astype(f"pint[{quote_currency}]")
             else:
