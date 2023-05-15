@@ -1,3 +1,6 @@
+# PyScaffold Termplates
+*.pyscaffold
+
 # Credentials / Secrets
 credentials.env
 
