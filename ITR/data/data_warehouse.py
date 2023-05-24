@@ -208,7 +208,8 @@ class DataWarehouse(ABC):
                         setattr(historic_sector.emissions, scope.name,
                                 list(map(lambda em: IEmissionRealization(year=em[0], value=em[1].to('Mt CO2e')), em_list)))
                         prod_list = historic_sector.productions
-                        ei_list = list(map(lambda em_p: IEIRealization(year=em_p[0].year, value=em_p[0].value/em_p[1].value),
+                        ei_list = list(map(lambda em_p: IEIRealization(year=em_p[0].year,
+                                                                       value=Q_(np.nan, f"({em_p[0].value.u}) / ({em_p[1].value.u})") if em_p[1].value.m==0.0 else em_p[0].value/em_p[1].value),
                                            zip(historic_sector.emissions[scope.name], prod_list)))
                         setattr(historic_sector.emissions_intensities, scope.name, ei_list)
                     # print(f"Historic {sector} adjusted\n{historic_dict['+'.join([orig_id, sector])].emissions}")

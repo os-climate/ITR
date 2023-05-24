@@ -72,6 +72,7 @@ ureg.define("scf = ft**3")
 ureg.define("mscf = 1000 scf = Mscf")
 ureg.define("mmscf = 1000000 scf = MMscf")
 ureg.define("bscf = 1000000000 scf = Bscf")
+ureg.define("MMMscf = 1000000000 scf")
 ureg.define("bcm = 1000000000 m**3")
 # ureg.define("bcm = 38.2 PJ") # Also bcm = 17 Mt CO2e, but that wrecks CO2e emissions intensities (which would devolve to dimensionless numbers)
 
