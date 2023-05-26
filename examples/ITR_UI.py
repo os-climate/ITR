@@ -1417,12 +1417,14 @@ def quantify_col(x, col, unit=None):
     Input("region-dropdown", "value"),
     State("scope-options", "options"),
     Input("scope-options", "value"),
+    Input("budget-method", "value"),
 
     prevent_initial_call=True,)
 def update_graph(
         portfolio_json,
         te_sc,
         sectors_dl, sec, regions_dl, reg, scopes_dl, scope,
+        budget_meth,
 ):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     amended_portfolio = pd.read_json(portfolio_json, orient='split')
@@ -1504,7 +1506,8 @@ def update_graph(
     filt_df.loc[:, 'cumulative_usage'] = (filt_df.cumulative_target.fillna(filt_df.cumulative_trajectory)
                                           +filt_df.cumulative_trajectory.fillna(filt_df.cumulative_target)
                                           + ureg('t CO2e'))/2.0
-    fig1_kwargs = dict(x="cumulative_budget", y="cumulative_usage",
+    budget_column=ColumnsConfig.CUMULATIVE_SCALED_BUDGET if budget_meth=='contraction' else ColumnsConfig.CUMULATIVE_BUDGET
+    fig1_kwargs = dict(x=budget_column, y="cumulative_usage",
                        size="investment_value",
                        color="sector", labels={"color": "Sector"},
                        hover_data=["company_name", "investment_value", "temperature_score"],
@@ -1513,8 +1516,8 @@ def update_graph(
     if sec:
         fig1_kwargs['text'] = 'company_name'
     fig1 = dequantify_plotly(px.scatter, filt_df, **fig1_kwargs)
-    min_xy = min(min(ITR.nominal_values(filt_df.cumulative_budget.pint.m)), min(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))/2.0
-    max_xy = max(max(ITR.nominal_values(filt_df.cumulative_budget.pint.m)), max(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))*2.0
+    min_xy = min(min(ITR.nominal_values(filt_df[budget_column].pint.m)), min(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))/2.0
+    max_xy = max(max(ITR.nominal_values(filt_df[budget_column].pint.m)), max(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))*2.0
     fig1.add_shape(dict(type='line', line_dash="dash", line_color="red", opacity=0.5, layer='below',
                         yref='y', xref='x', xsizemode='scaled', ysizemode='scaled',
                         y0=min_xy, y1=max_xy, x0=min_xy, x1=max_xy))
@@ -1647,14 +1650,14 @@ def update_graph(
 
     # input for the dash table
     common_columns = [
-        'company_name', 'company_id', 'region', 'sector', 'scope', 'cumulative_budget', 'investment_value',
+        'company_name', 'company_id', 'region', 'sector', 'scope', 'cumulative_budget', 'cumulative_scaled_budget', 'investment_value',
         'trajectory_score', 'trajectory_exceedance_year', 'target_score', 'target_exceedance_year',
         'temperature_score']
     for col in ['trajectory_exceedance_year', 'target_exceedance_year']:
         if col not in filt_df.columns:
             common_columns.remove(col)
     df_for_output_table = filt_df.reset_index('company_id')[common_columns].copy()
-    for col in ['temperature_score', 'trajectory_score', 'target_score', 'cumulative_budget']:
+    for col in ['temperature_score', 'trajectory_score', 'target_score', 'cumulative_budget', 'cumulative_scaled_budget']:
         df_for_output_table[col] = ITR.nominal_values(df_for_output_table[col].pint.m).round(2)  # f"{q:.2f~#P}"
         # pd.to_numeric(...).round(2)
     df_for_output_table['investment_value'] = df_for_output_table['investment_value'].apply(
@@ -1662,7 +1665,8 @@ def update_graph(
     df_for_output_table['scope'] = df_for_output_table['scope'].map(str)
     df_for_output_table.rename(
         columns={'company_name': 'Name', 'company_id': 'ISIN', 'region': 'Region', 'sector': 'Industry',
-                 'cumulative_budget': 'Emissions budget', 'investment_value': 'Notional',
+                 'cumulative_budget': 'Emissions budget', 'cumulative_scaled_budget': 'Emissions budget (scaled)',
+                 'investment_value': 'Notional',
                  'trajectory_score': 'Historical emissions score',
                  'trajectory_exceedance_year': 'Year historic emissions > 2050 budget',
                  'target_score': 'Target score',
