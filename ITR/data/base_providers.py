@@ -244,10 +244,15 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :param: A Series with a company's intensity benchmarks per calendar year per row
         :return: A pd.Series with a company's decarbonisation paths per calendar year per row
         """
-        last_ei = intensity_benchmark_ser[self.projection_controls.TARGET_YEAR]
-        ei_diff = intensity_benchmark_ser[self.projection_controls.BASE_YEAR] - last_ei
-        # TODO: does this still throw a warning when processing a NaN?  convert to base units before accessing .magnitude
-        return (intensity_benchmark_ser - last_ei) / ei_diff
+        ei_units = intensity_benchmark_ser.dtype.units
+        last_ei = intensity_benchmark_ser[self.projection_controls.TARGET_YEAR].to(ei_units)
+        ei_diff = (intensity_benchmark_ser[self.projection_controls.BASE_YEAR] - last_ei).to(ei_units)
+        # We treat zero divided by zero as zero, not NaN.
+        # Because our starting units are homogeneous and our target units are dimensionless, we do our math with magnitudes only.
+        numerator_m = intensity_benchmark_ser.pint.m - last_ei.m
+        mask = numerator_m == 0.0
+        decarb_m = numerator_m.where(mask, numerator_m / ei_diff.m)
+        return decarb_m.astype('pint[dimensionless]')
 
     def _convert_benchmark_to_series(self, benchmark: IBenchmark, scope: EScope) -> pd.Series:
         """

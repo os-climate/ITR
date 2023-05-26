@@ -14,7 +14,7 @@ from .interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, Aggr
     ScoreAggregation, \
     ScoreAggregationScopes, ScoreAggregations, PortfolioCompany
 from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-from .configs import TemperatureScoreConfig, LoggingConfig
+from .configs import TemperatureScoreConfig, ColumnsConfig, LoggingConfig
 
 import logging
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ class TemperatureScore(PortfolioAggregation):
     def __init__(self, time_frames: List[ETimeFrames], scopes: List[EScope],
                  fallback_score: float = Q_(3.2, ureg.delta_degC),
                  aggregation_method: PortfolioAggregationMethod = PortfolioAggregationMethod.WATS,
+                 budget_column: str = ColumnsConfig.CUMULATIVE_BUDGET,
                  grouping: Optional[List] = None, config: Type[TemperatureScoreConfig] = TemperatureScoreConfig):
         super().__init__(config)
         self.c: Type[TemperatureScoreConfig] = config
@@ -44,7 +45,8 @@ class TemperatureScore(PortfolioAggregation):
         self.time_frames = time_frames
         self.scopes = scopes
 
-        self.aggregation_method: PortfolioAggregationMethod = aggregation_method
+        self.aggregation_method = aggregation_method
+        self.budget_column = budget_column
         self.grouping: list = []
         if grouping is not None:
             self.grouping = grouping
@@ -62,15 +64,14 @@ class TemperatureScore(PortfolioAggregation):
         # If both trajectory and target data missing assign default value
         if (ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
             ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
-                scorable_row[self.c.COLS.CUMULATIVE_BUDGET].m <= 0:
+                scorable_row[self.budget_column].m <= 0:
             return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
 
         # If only target data missing assign only trajectory_score to final score
         elif ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
             target_overshoot_ratio = np.nan
             target_temperature_score = np.nan
-            trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
-                self.c.COLS.CUMULATIVE_BUDGET]
+            trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[self.budget_column]
             trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                 (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
                     self.c.CONTROLS_CONFIG.tcre_multiplier)
@@ -78,10 +79,8 @@ class TemperatureScore(PortfolioAggregation):
             return score, trajectory_temperature_score, trajectory_overshoot_ratio, \
                 target_temperature_score, target_overshoot_ratio, EScoreResultType.TRAJECTORY_ONLY
         else:
-            target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[
-                self.c.COLS.CUMULATIVE_BUDGET]
-            trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[
-                self.c.COLS.CUMULATIVE_BUDGET]
+            target_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TARGET] / scorable_row[self.budget_column]
+            trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[self.budget_column]
 
             target_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                 (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (target_overshoot_ratio - 1.0) *

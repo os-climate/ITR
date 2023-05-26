@@ -512,24 +512,28 @@ class DataWarehouse(ABC):
         # Ensure we haven't set any targets for scopes we are not prepared to deal with
         projected_targets = projected_targets.loc[projected_production.index.intersection(projected_targets.index)]
         # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
-        for col, year_data in projected_targets.items():
-            # year_data is an unruly collection of unit types, so need to check NaN values row by row
-            mask = year_data.apply(lambda x: ITR.isnan(x.m))
+        for year_col, company_ei_data in projected_targets.items():
+            # company_ei_data is an unruly collection of unit types, so need to check NaN values row by row
+            mask = company_ei_data.apply(lambda x: ITR.isnan(x.m))
             if mask.all():
                 # No sense trying to do anything with left-side all-NaN columns
-                projected_targets = projected_targets.drop(columns=col)
+                projected_targets = projected_targets.drop(columns=year_col)
                 continue
             if mask.any():
-                projected_targets.loc[mask[mask].index, col] = projected_trajectories.loc[mask[mask].index, col]
+                projected_targets.loc[mask[mask].index, year_col] = projected_trajectories.loc[mask[mask].index, year_col]
             else:
                 break
 
         df_target = self._get_cumulative_emissions(
             projected_ei=projected_targets,
             projected_production=projected_production)
+        budgeted_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year)
         df_budget = self._get_cumulative_emissions(
-            projected_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
+            projected_ei=budgeted_ei,
             projected_production=projected_production)
+        base_year = self.company_data.projection_controls.BASE_YEAR
+        base_year_scale = df_trajectory[base_year] * df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m==0.0 else 1/x)
+        df_scaled_budget = df_budget.mul(base_year_scale, axis=0)
         # df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, None)
         # df_target_exceedance = self._get_exceedance_year(df_target, df_budget, None)
         df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR)
@@ -537,6 +541,7 @@ class DataWarehouse(ABC):
         df_scope_data = pd.concat([df_trajectory.iloc[:, -1].rename(self.column_config.CUMULATIVE_TRAJECTORY),
                                    df_target.iloc[:, -1].rename(self.column_config.CUMULATIVE_TARGET),
                                    df_budget.iloc[:, -1].rename(self.column_config.CUMULATIVE_BUDGET),
+                                   df_scaled_budget.iloc[:, -1].rename(self.column_config.CUMULATIVE_SCALED_BUDGET),
                                    df_trajectory_exceedance.rename(f"{self.column_config.TRAJECTORY_EXCEEDANCE_YEAR}"),
                                    df_target_exceedance.rename(f"{self.column_config.TARGET_EXCEEDANCE_YEAR}")],
                                   axis=1)
@@ -559,7 +564,7 @@ class DataWarehouse(ABC):
         aggregate_company_data = [ICompanyAggregates.from_ICompanyData(company, scope_company_data)
                                   for company in company_data
                                   for scope_company_data in df_company_data.loc[[company.company_id]][[
-                                          'cumulative_budget', 'cumulative_trajectory', 'cumulative_target',
+                                          'cumulative_budget', 'cumulative_scaled_budget', 'cumulative_trajectory', 'cumulative_target',
                                           'benchmark_temperature', 'benchmark_global_budget', 'scope',
                                           'trajectory_exceedance_year', 'target_exceedance_year',
                                   ]].to_dict(orient="records")]
@@ -654,7 +659,8 @@ class DataWarehouse(ABC):
             df_aligned = pd.concat([df_aligned,
                                     pd.Series(data=[pd.NA] * len(missing_subjects),
                                               index=missing_subjects)])
-        df_exceedance = df_aligned.map(lambda x: self.company_data.projection_controls.BASE_YEAR if pd.isna(x)
+        base_year = self.company_data.projection_controls.BASE_YEAR
+        df_exceedance = df_aligned.map(lambda x: base_year if pd.isna(x)
                                        else pd.NA if x>=self.company_data.projection_controls.TARGET_YEAR
                                        else x).astype('Int64')
         return df_exceedance

@@ -70,6 +70,7 @@ class ColumnsConfig:
     INDUSTRY_LVL4 = "industry_level_4"
     REGION = 'region'
     CUMULATIVE_BUDGET = 'cumulative_budget'
+    CUMULATIVE_SCALED_BUDGET = 'cumulative_scaled_budget'
     CUMULATIVE_TRAJECTORY = 'cumulative_trajectory'
     CUMULATIVE_TARGET = 'cumulative_target'
     TRAJECTORY_EXCEEDANCE_YEAR = 'trajectory_exceedance_year'

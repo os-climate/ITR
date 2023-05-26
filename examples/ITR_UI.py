@@ -27,7 +27,7 @@ import plotly.graph_objects as go
 
 import ITR
 
-from ITR.configs import ITR_median, ITR_mean
+from ITR.configs import ITR_median, ITR_mean, ColumnsConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
@@ -468,6 +468,32 @@ benchmark_box = dbc.Row(
             inline=True,
         ),
         html.Hr(),  # small space from the top
+        dbc.Row(  # Set ProjectionControls TARGET_YEAR
+            [
+                dbc.Col(
+                    dbc.Label("\N{wrench} Select projection end year (2025-2050)"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{calendar}", id="hover-target9", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select the ending year of the benchmark analysis"),
+                                    id="hover9", target="hover-target9", trigger="hover"),
+                    ], width=4,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Slider(
+            id="target-year",
+            min=2025, max=2050,
+            value=2050,
+            step=5,
+            marks={i: str(i) for i in range(2025, 2051, 5)},
+        ),
+        html.Div(id="bm-budgets-target-year"),
+        html.Hr(),  # small space from the top
         dbc.Row(  # Mean / Median projection
             [
                 dbc.Col(
@@ -492,6 +518,34 @@ benchmark_box = dbc.Row(
                 {'label': 'Mean', 'value': 'mean'},
             ],
             value='median',
+            inputStyle={"margin-right": "10px", "margin-left": "30px"},
+            inline=True,
+        ),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Absolute vs. Contraction budget methodology
+            [
+                dbc.Col(
+                    dbc.Label("\N{Sun Behind Cloud} Select budget methodology"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target11", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select benchmark scaling methodology"),
+                                    id="hover11", target="hover-target11", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RadioItems(
+            id="budget-method",
+            options=[
+                {'label': 'Absolute', 'value': 'absolute'},
+                {'label': 'Contraction', 'value': 'contraction'},
+            ],
+            value='absolute',
             inputStyle={"margin-right": "10px", "margin-left": "30px"},
             inline=True,
         ),
@@ -521,32 +575,6 @@ benchmark_box = dbc.Row(
             marks={i: str(i) for i in range(0, 101, 10)},
             allowCross=False
         ),
-        html.Hr(),  # small space from the top
-        dbc.Row(  # Set ProjectionControls TARGET_YEAR
-            [
-                dbc.Col(
-                    dbc.Label("\N{wrench} Select projection end year (2025-2050)"),
-                    width=benchmark_width,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{calendar}", id="hover-target9", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select the ending year of the benchmark analysis"),
-                                    id="hover9", target="hover-target9", trigger="hover"),
-                    ], width=4,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.Slider(
-            id="target-year",
-            min=2025, max=2050,
-            value=2050,
-            step=5,
-            marks={i: str(i) for i in range(2025, 2051, 5)},
-        ),
-        html.Div(id="bm-budgets-target-year")
     ],
 )
 
@@ -798,17 +826,19 @@ def warehouse_new(banner_title):
             Output("spinner-eibm", "value"),),  # fake for spinner
     inputs=(Input("warehouse", "data"),
             Input("eibm-dropdown", "value"),
+            Input("budget-method", "value"),
             Input("projection-method", "value"),
             Input("scenarios-cutting", "value"), # winzorization slider
             State("benchmark-region", "children"),),
     background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=True,)
 # load default intensity benchmarks
-def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
+def recalculate_individual_itr(warehouse_pickle_json, eibm, budget_meth, proj_meth, winz, bm_region):
     '''
     Reload Emissions Intensity benchmark from a selected file
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
     :param eibm: Emissions Intensity benchmark identifier
+    :param budget_meth: Budget scaling methodology (absolute or contraction)
     :param proj_meth: Trajectory projection method (median or mean)
     :param winz: Winsorization parameters (limit of outlier data)
     '''
@@ -1337,10 +1367,11 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
     output = (Output("portfolio-df", "data"),
               Output("spinner-ts", "value"),),  # fake for spinner
 
-    inputs = (Input("warehouse-ty", "data"),),
+    inputs = (Input("warehouse-ty", "data"),
+              Input("budget-method", "value"),),
 
     prevent_initial_call=True,)
-def calc_temperature_score(warehouse_pickle_json, *_):
+def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
     global companies
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
@@ -1348,7 +1379,8 @@ def calc_temperature_score(warehouse_pickle_json, *_):
         time_frames = [ETimeFrames.LONG],
         scopes=None, # None means "use the appropriate scopes for the benchmark
         # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
-        aggregation_method=PortfolioAggregationMethod.WATS
+        aggregation_method=PortfolioAggregationMethod.WATS,
+        budget_column=ColumnsConfig.CUMULATIVE_SCALED_BUDGET if budget_meth=='contraction' else ColumnsConfig.CUMULATIVE_BUDGET,
     )
     df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
     df = df.drop(columns=['historic_data', 'target_data'])
@@ -1405,6 +1437,7 @@ def update_graph(
         # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
         ghg_s3=lambda x: quantify_col(x, 'ghg_s3', 't CO2e'),
         cumulative_budget=lambda x: quantify_col(x, 'cumulative_budget', 't CO2e'),
+        cumulative_scaled_budget=lambda x: quantify_col(x, 'cumulative_scaled_budget', 't CO2e'),
         cumulative_trajectory=lambda x: quantify_col(x, 'cumulative_trajectory', 't CO2e'),
         cumulative_target=lambda x: quantify_col(x, 'cumulative_target', 't CO2e'),
         trajectory_score=lambda x: quantify_col(x, 'trajectory_score', 'delta_degC'),
@@ -1699,6 +1732,7 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
         # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
         ghg_s3=lambda x: quantify_col(x, 'ghg_s3', 't CO2e'),
         cumulative_budget=lambda x: quantify_col(x, 'cumulative_budget', 't CO2e'),
+        cumulative_scaled_budget=lambda x: quantify_col(x, 'cumulative_scaled_budget', 't CO2e'),
         cumulative_trajectory=lambda x: quantify_col(x, 'cumulative_trajectory', 't CO2e'),
         cumulative_target=lambda x: quantify_col(x, 'cumulative_target', 't CO2e'),
         trajectory_score=lambda x: quantify_col(x, 'trajectory_score', 'delta_degC'),
@@ -1743,6 +1777,7 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
 
 @app.callback( # reseting dropdowns
     Output("temp-score-range", "value"),
+    Output("budget-method", "value"),
     Output("projection-method", "value"),
     Output("scenarios-cutting", "value"),
     Output("target-year", "value"),
@@ -1767,6 +1802,7 @@ def reset_filters(n_clicks_reset):
 
     return ( # if button is clicked, reset filters
         [0,4],                  # Elsewhere we have this as 8.5
+        'absolute',
         'median',
         [ProjectionControls.LOWER_PERCENTILE*100,ProjectionControls.UPPER_PERCENTILE*100],
         2050,
