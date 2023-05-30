@@ -3,6 +3,7 @@ dash_bootstrap_components==1.4.1
 diskcache==5.6.1
 iam-units==2022.10.27
 jupyter==1.0.0
+kaleido==0.2.1
 matplotlib==3.7.1
 multiprocess==0.70.14
 openpyxl==3.0.10
