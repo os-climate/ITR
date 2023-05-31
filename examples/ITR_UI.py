@@ -494,34 +494,6 @@ benchmark_box = dbc.Row(
         ),
         html.Div(id="bm-budgets-target-year"),
         html.Hr(),  # small space from the top
-        dbc.Row(  # Mean / Median projection
-            [
-                dbc.Col(
-                    dbc.Label("\N{level slider} Select method for projection"),
-                    width=benchmark_width,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{books}", id="hover-target6", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select method of averaging trend of emission intensities projections"),
-                                    id="hover6", target="hover-target6", trigger="hover"),
-                    ], width=2,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.RadioItems(
-            id="projection-method",
-            options=[
-                {'label': 'Median', 'value': 'median'},
-                {'label': 'Mean', 'value': 'mean'},
-            ],
-            value='median',
-            inputStyle={"margin-right": "10px", "margin-left": "30px"},
-            inline=True,
-        ),
-        html.Hr(),  # small space from the top
         dbc.Row(  # Absolute vs. Contraction budget methodology
             [
                 dbc.Col(
@@ -546,6 +518,34 @@ benchmark_box = dbc.Row(
                 {'label': 'Contraction', 'value': 'contraction'},
             ],
             value='absolute',
+            inputStyle={"margin-right": "10px", "margin-left": "30px"},
+            inline=True,
+        ),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Mean / Median projection
+            [
+                dbc.Col(
+                    dbc.Label("\N{level slider} Select method for projection"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target6", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select method of averaging trend of emission intensities projections"),
+                                    id="hover6", target="hover-target6", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RadioItems(
+            id="projection-method",
+            options=[
+                {'label': 'Median', 'value': 'median'},
+                {'label': 'Mean', 'value': 'mean'},
+            ],
+            value='median',
             inputStyle={"margin-right": "10px", "margin-left": "30px"},
             inline=True,
         ),

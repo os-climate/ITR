@@ -532,8 +532,10 @@ class DataWarehouse(ABC):
             projected_ei=budgeted_ei,
             projected_production=projected_production)
         base_year = self.company_data.projection_controls.BASE_YEAR
-        base_year_scale = df_trajectory[base_year] * df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m==0.0 else 1/x)
+        base_year_scale = df_trajectory.loc[df_budget.index][base_year].mul(
+            df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m==0.0 else 1/x))
         df_scaled_budget = df_budget.mul(base_year_scale, axis=0)
+        # FIXME: we calculate exceedance only against df_budget, not also df_scaled_budget
         # df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, None)
         # df_target_exceedance = self._get_exceedance_year(df_target, df_budget, None)
         df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR)
