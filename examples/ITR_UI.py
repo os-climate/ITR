@@ -27,7 +27,7 @@ import plotly.graph_objects as go
 
 import ITR
 
-from ITR.configs import ITR_median, ITR_mean
+from ITR.configs import ITR_median, ITR_mean, ColumnsConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
@@ -468,6 +468,60 @@ benchmark_box = dbc.Row(
             inline=True,
         ),
         html.Hr(),  # small space from the top
+        dbc.Row(  # Set ProjectionControls TARGET_YEAR
+            [
+                dbc.Col(
+                    dbc.Label("\N{wrench} Select projection end year (2025-2050)"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{calendar}", id="hover-target9", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select the ending year of the benchmark analysis"),
+                                    id="hover9", target="hover-target9", trigger="hover"),
+                    ], width=4,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Slider(
+            id="target-year",
+            min=2025, max=2050,
+            value=2050,
+            step=5,
+            marks={i: str(i) for i in range(2025, 2051, 5)},
+        ),
+        html.Div(id="bm-budgets-target-year"),
+        html.Hr(),  # small space from the top
+        dbc.Row(  # Absolute vs. Contraction budget methodology
+            [
+                dbc.Col(
+                    dbc.Label("\N{Sun Behind Cloud} Select budget methodology"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target11", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select benchmark scaling methodology"),
+                                    id="hover11", target="hover-target11", trigger="hover"),
+                    ], width=2,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.RadioItems(
+            id="budget-method",
+            options=[
+                {'label': 'Absolute', 'value': 'absolute'},
+                {'label': 'Contraction', 'value': 'contraction'},
+            ],
+            value='absolute',
+            inputStyle={"margin-right": "10px", "margin-left": "30px"},
+            inline=True,
+        ),
+        html.Hr(),  # small space from the top
         dbc.Row(  # Mean / Median projection
             [
                 dbc.Col(
@@ -521,32 +575,6 @@ benchmark_box = dbc.Row(
             marks={i: str(i) for i in range(0, 101, 10)},
             allowCross=False
         ),
-        html.Hr(),  # small space from the top
-        dbc.Row(  # Set ProjectionControls TARGET_YEAR
-            [
-                dbc.Col(
-                    dbc.Label("\N{wrench} Select projection end year (2025-2050)"),
-                    width=benchmark_width,
-                ),
-                dbc.Col(
-                    [
-                        dbc.Button("\N{calendar}", id="hover-target9", color="link", n_clicks=0),
-                        dbc.Popover(dbc.PopoverBody(
-                            "Select the ending year of the benchmark analysis"),
-                                    id="hover9", target="hover-target9", trigger="hover"),
-                    ], width=4,
-                ),
-            ],
-            align="center",
-        ),
-        dcc.Slider(
-            id="target-year",
-            min=2025, max=2050,
-            value=2050,
-            step=5,
-            marks={i: str(i) for i in range(2025, 2051, 5)},
-        ),
-        html.Div(id="bm-budgets-target-year")
     ],
 )
 
@@ -1337,10 +1365,16 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
     output = (Output("portfolio-df", "data"),
               Output("spinner-ts", "value"),),  # fake for spinner
 
-    inputs = (Input("warehouse-ty", "data"),),
+    inputs = (Input("warehouse-ty", "data"),
+              Input("budget-method", "value"),),
 
     prevent_initial_call=True,)
-def calc_temperature_score(warehouse_pickle_json, *_):
+def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
+    '''
+    Calculate temperature scores according to the carbon budget methodology
+    :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
+    :param budget_meth: Budget scaling methodology (absolute or contraction)
+    '''
     global companies
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
@@ -1348,7 +1382,8 @@ def calc_temperature_score(warehouse_pickle_json, *_):
         time_frames = [ETimeFrames.LONG],
         scopes=None, # None means "use the appropriate scopes for the benchmark
         # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
-        aggregation_method=PortfolioAggregationMethod.WATS
+        aggregation_method=PortfolioAggregationMethod.WATS,
+        budget_column=ColumnsConfig.CUMULATIVE_SCALED_BUDGET if budget_meth=='contraction' else ColumnsConfig.CUMULATIVE_BUDGET,
     )
     df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
     df = df.drop(columns=['historic_data', 'target_data'])
@@ -1385,12 +1420,14 @@ def quantify_col(x, col, unit=None):
     Input("region-dropdown", "value"),
     State("scope-options", "options"),
     Input("scope-options", "value"),
+    Input("budget-method", "value"),
 
     prevent_initial_call=True,)
 def update_graph(
         portfolio_json,
         te_sc,
         sectors_dl, sec, regions_dl, reg, scopes_dl, scope,
+        budget_meth,
 ):
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     amended_portfolio = pd.read_json(portfolio_json, orient='split')
@@ -1405,6 +1442,7 @@ def update_graph(
         # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
         ghg_s3=lambda x: quantify_col(x, 'ghg_s3', 't CO2e'),
         cumulative_budget=lambda x: quantify_col(x, 'cumulative_budget', 't CO2e'),
+        cumulative_scaled_budget=lambda x: quantify_col(x, 'cumulative_scaled_budget', 't CO2e'),
         cumulative_trajectory=lambda x: quantify_col(x, 'cumulative_trajectory', 't CO2e'),
         cumulative_target=lambda x: quantify_col(x, 'cumulative_target', 't CO2e'),
         trajectory_score=lambda x: quantify_col(x, 'trajectory_score', 'delta_degC'),
@@ -1471,7 +1509,8 @@ def update_graph(
     filt_df.loc[:, 'cumulative_usage'] = (filt_df.cumulative_target.fillna(filt_df.cumulative_trajectory)
                                           +filt_df.cumulative_trajectory.fillna(filt_df.cumulative_target)
                                           + ureg('t CO2e'))/2.0
-    fig1_kwargs = dict(x="cumulative_budget", y="cumulative_usage",
+    budget_column=ColumnsConfig.CUMULATIVE_SCALED_BUDGET if budget_meth=='contraction' else ColumnsConfig.CUMULATIVE_BUDGET
+    fig1_kwargs = dict(x=budget_column, y="cumulative_usage",
                        size="investment_value",
                        color="sector", labels={"color": "Sector"},
                        hover_data=["company_name", "investment_value", "temperature_score"],
@@ -1480,8 +1519,8 @@ def update_graph(
     if sec:
         fig1_kwargs['text'] = 'company_name'
     fig1 = dequantify_plotly(px.scatter, filt_df, **fig1_kwargs)
-    min_xy = min(min(ITR.nominal_values(filt_df.cumulative_budget.pint.m)), min(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))/2.0
-    max_xy = max(max(ITR.nominal_values(filt_df.cumulative_budget.pint.m)), max(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))*2.0
+    min_xy = min(min(ITR.nominal_values(filt_df[budget_column].pint.m)), min(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))/2.0
+    max_xy = max(max(ITR.nominal_values(filt_df[budget_column].pint.m)), max(ITR.nominal_values(filt_df.cumulative_usage.pint.m)))*2.0
     fig1.add_shape(dict(type='line', line_dash="dash", line_color="red", opacity=0.5, layer='below',
                         yref='y', xref='x', xsizemode='scaled', ysizemode='scaled',
                         y0=min_xy, y1=max_xy, x0=min_xy, x1=max_xy))
@@ -1614,14 +1653,14 @@ def update_graph(
 
     # input for the dash table
     common_columns = [
-        'company_name', 'company_id', 'region', 'sector', 'scope', 'cumulative_budget', 'investment_value',
+        'company_name', 'company_id', 'region', 'sector', 'scope', 'cumulative_budget', 'cumulative_scaled_budget', 'investment_value',
         'trajectory_score', 'trajectory_exceedance_year', 'target_score', 'target_exceedance_year',
         'temperature_score']
     for col in ['trajectory_exceedance_year', 'target_exceedance_year']:
         if col not in filt_df.columns:
             common_columns.remove(col)
     df_for_output_table = filt_df.reset_index('company_id')[common_columns].copy()
-    for col in ['temperature_score', 'trajectory_score', 'target_score', 'cumulative_budget']:
+    for col in ['temperature_score', 'trajectory_score', 'target_score', 'cumulative_budget', 'cumulative_scaled_budget']:
         df_for_output_table[col] = ITR.nominal_values(df_for_output_table[col].pint.m).round(2)  # f"{q:.2f~#P}"
         # pd.to_numeric(...).round(2)
     df_for_output_table['investment_value'] = df_for_output_table['investment_value'].apply(
@@ -1629,7 +1668,8 @@ def update_graph(
     df_for_output_table['scope'] = df_for_output_table['scope'].map(str)
     df_for_output_table.rename(
         columns={'company_name': 'Name', 'company_id': 'ISIN', 'region': 'Region', 'sector': 'Industry',
-                 'cumulative_budget': 'Emissions budget', 'investment_value': 'Notional',
+                 'cumulative_budget': 'Emissions budget', 'cumulative_scaled_budget': 'Emissions budget (scaled)',
+                 'investment_value': 'Notional',
                  'trajectory_score': 'Historical emissions score',
                  'trajectory_exceedance_year': 'Year historic emissions > 2050 budget',
                  'target_score': 'Target score',
@@ -1699,6 +1739,7 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
         # FIXME: we're going to have to deal with NULL ghg_s3, and possible ghg_s1s2
         ghg_s3=lambda x: quantify_col(x, 'ghg_s3', 't CO2e'),
         cumulative_budget=lambda x: quantify_col(x, 'cumulative_budget', 't CO2e'),
+        cumulative_scaled_budget=lambda x: quantify_col(x, 'cumulative_scaled_budget', 't CO2e'),
         cumulative_trajectory=lambda x: quantify_col(x, 'cumulative_trajectory', 't CO2e'),
         cumulative_target=lambda x: quantify_col(x, 'cumulative_target', 't CO2e'),
         trajectory_score=lambda x: quantify_col(x, 'trajectory_score', 'delta_degC'),
@@ -1743,6 +1784,7 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
 
 @app.callback( # reseting dropdowns
     Output("temp-score-range", "value"),
+    Output("budget-method", "value"),
     Output("projection-method", "value"),
     Output("scenarios-cutting", "value"),
     Output("target-year", "value"),
@@ -1767,6 +1809,7 @@ def reset_filters(n_clicks_reset):
 
     return ( # if button is clicked, reset filters
         [0,4],                  # Elsewhere we have this as 8.5
+        'absolute',
         'median',
         [ProjectionControls.LOWER_PERCENTILE*100,ProjectionControls.UPPER_PERCENTILE*100],
         2050,

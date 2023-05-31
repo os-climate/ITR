@@ -681,6 +681,7 @@ class ICompanyData(BaseModel):
 # These aggregate terms are all derived from the benchmark being used
 class ICompanyAggregates(ICompanyData):
     cumulative_budget: Optional[EmissionsQuantity]
+    cumulative_scaled_budget: Optional[EmissionsQuantity]
     cumulative_trajectory: Optional[EmissionsQuantity]
     cumulative_target: Optional[EmissionsQuantity]
     benchmark_temperature: Optional[quantity('delta_degC')]
@@ -709,6 +710,7 @@ class ICompanyAggregates(ICompanyData):
     def from_ICompanyData(cls, super_instance, scope_company_data):
         # FIXME: Would love to know how to run these automatically...
         EmissionsQuantity.validate(scope_company_data['cumulative_budget'])
+        EmissionsQuantity.validate(scope_company_data['cumulative_scaled_budget'])
         if scope_company_data['cumulative_trajectory']:
             EmissionsQuantity.validate(scope_company_data['cumulative_trajectory'])
         if scope_company_data['cumulative_target']:
