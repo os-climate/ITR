@@ -826,19 +826,17 @@ def warehouse_new(banner_title):
             Output("spinner-eibm", "value"),),  # fake for spinner
     inputs=(Input("warehouse", "data"),
             Input("eibm-dropdown", "value"),
-            Input("budget-method", "value"),
             Input("projection-method", "value"),
             Input("scenarios-cutting", "value"), # winzorization slider
             State("benchmark-region", "children"),),
     background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=True,)
 # load default intensity benchmarks
-def recalculate_individual_itr(warehouse_pickle_json, eibm, budget_meth, proj_meth, winz, bm_region):
+def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
     '''
     Reload Emissions Intensity benchmark from a selected file
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
     :param eibm: Emissions Intensity benchmark identifier
-    :param budget_meth: Budget scaling methodology (absolute or contraction)
     :param proj_meth: Trajectory projection method (median or mean)
     :param winz: Winsorization parameters (limit of outlier data)
     '''
@@ -1372,6 +1370,11 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
 
     prevent_initial_call=True,)
 def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
+    '''
+    Calculate temperature scores according to the carbon budget methodology
+    :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
+    :param budget_meth: Budget scaling methodology (absolute or contraction)
+    '''
     global companies
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
