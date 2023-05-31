@@ -1,6 +1,7 @@
 dash==2.9.3
 dash_bootstrap_components==1.4.1
 diskcache==5.6.1
+flask==2.2.5
 iam-units==2022.10.27
 jupyter==1.0.0
 kaleido==0.2.1
