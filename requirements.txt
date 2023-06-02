@@ -4,7 +4,7 @@ diskcache==5.6.1
 flask==2.2.5
 iam-units==2022.10.27
 jupyter==1.0.0
-kaleido==0.1.0.post1
+kaleido==0.1.0post1
 matplotlib==3.7.1
 multiprocess==0.70.14
 openpyxl==3.0.10
