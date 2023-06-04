@@ -555,9 +555,9 @@ class DataWarehouse(ABC):
                 f"Dropping companies with no scope data: {df_company_scope[na_company_mask].index.get_level_values(level='company_id').to_list()}"
             )
             df_company_data = df_company_data[~na_company_mask]
+        global_budget = self.benchmarks_projected_ei.benchmark_global_budget
         df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
-            pd.Series([self.benchmarks_projected_ei.benchmark_global_budget] * len(df_company_data),
-                      dtype='pint[Gt CO2]',
+            pd.Series(PA_([global_budget.m] * len(df_company_data), dtype=str(global_budget.u)),
                       index=df_company_data.index)
         # ICompanyAggregates wants this Quantity as a `str`
         df_company_data[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df_company_data)

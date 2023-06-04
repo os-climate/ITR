@@ -764,7 +764,8 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
     if name:
         new_series.name = name
     na_index = na_values[na_values].index
-    new_series.loc[na_index] = pd.Series(Q_(np.nan, unit), index=na_index)
+    if len(na_index)>0:
+        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: Q_(np.nan, unit))
     return new_series.astype(f"pint[{unit}]")
 
 def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.DataFrame:
@@ -813,8 +814,8 @@ def requantify_df_from_columns(df: pd.DataFrame, inplace=False) -> pd.DataFrame:
     for column in df.columns:
         m = p.match(column)
         if m:
-            name = m.group(1).strip()
+            col = m.group(1).strip()
             unit = m.group(2).strip()
-            df.rename(columns={column: name}, inplace=True)
-            df[name] = pd.Series(df[name], dtype='pint[' + unit + ']')
+            df.rename(columns={column: col}, inplace=True)
+            df[col] = pd.Series(PA_(df[col], unit))
     return df
