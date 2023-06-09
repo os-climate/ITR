@@ -85,34 +85,8 @@ benchmark_prod_json = os.path.join(root, examples_dir, data_dir, data_json_units
 with open(benchmark_prod_json) as json_file:
     parsed_json = json.load(json_file)
 
-oil_prod_bm_regions = [bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Oil']
-gas_prod_bm_regions = [bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Gas']
 # coal_prod_bm_regions = [bm for bm in parsed_json['AnyScope']['benchmarks'] if bm['sector']=='Coal']
-
-for oil_prod_bm in oil_prod_bm_regions:
-    for gas_prod_bm in gas_prod_bm_regions:
-        if oil_prod_bm['region']==gas_prod_bm['region']:
-            oil_base_prod = ureg(oil_prod_bm['base_year_production']).to('MJ')
-            oil_prod_series = pd.DataFrame({**{'year': [oil_prod['year'] for oil_prod in oil_prod_bm['projections_nounits']]},
-                                            **{'value': [oil_prod['value'] for oil_prod in oil_prod_bm['projections_nounits']]}}).set_index('year').squeeze()
-            oil_prod_series = oil_prod_series.add(1).cumprod().mul(oil_base_prod.m)
-
-            gas_base_prod = ureg(gas_prod_bm['base_year_production']).to('MJ')
-            gas_prod_series = pd.DataFrame({**{'year': [gas_prod['year'] for gas_prod in gas_prod_bm['projections_nounits']]},
-                                            **{'value': [gas_prod['value'] for gas_prod in gas_prod_bm['projections_nounits']]}}).set_index('year').squeeze()
-            gas_prod_series = gas_prod_series.add(1).cumprod().mul(gas_base_prod.m)
-
-            oil_and_gas_prod_series = oil_prod_series.add(gas_prod_series).div(oil_base_prod.m + gas_base_prod.m)
-            oil_and_gas_prod_series = oil_and_gas_prod_series.div(oil_and_gas_prod_series.shift(1))
-            oil_and_gas_prod_series.iloc[0] = 1.0
-            oil_and_gas_prod_series = oil_and_gas_prod_series.sub(1)
-
-            oil_and_gas_bm = dict(oil_prod_bm)
-            oil_and_gas_bm['sector'] = 'Oil & Gas'
-            oil_and_gas_bm['base_year_production'] = f"{oil_base_prod + gas_base_prod:~P}"
-            oil_and_gas_bm['projections_nounits'] = [ {'year': year, 'value': value} for year,value in oil_and_gas_prod_series.to_dict().items() ]
-            parsed_json['AnyScope']['benchmarks'].append(oil_and_gas_bm)
-
+# 
 # for coal_prod_bm in coal_prod_bm_regions:
 #     coal_base_prod = ureg(coal_prod_bm['base_year_production']).to('MJ')
 #     coal_prod_bm['sector'] = 'Diversified Mining'
@@ -882,11 +856,6 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
                         else:
                             parsed_json[scope_name]['benchmarks'] += extra_json[scope_name]['benchmarks']
         EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
-        if eibm.startswith('OECM'):
-            # Synthesize Oil & Gas sector
-            df = EI_bm._EI_df
-            oil_and_gas_df = df.loc['Oil'].applymap(lambda x: x.to('t CO2e/PJ')) + df.loc['Gas'].applymap(lambda x: x.to('t CO2e/PJ'))
-            EI_bm._EI_df = pd.concat([df, pd.concat([oil_and_gas_df], keys=['Oil & Gas'], names=['sector'])]).sort_index()
         # This updates benchmarks and all that depends on them (including trajectories)
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
         bm_region = eibm

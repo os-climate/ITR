@@ -276,7 +276,7 @@ class TestBaseProvider(unittest.TestCase):
 
     def test_production_benchmark_any_scope(self):
         pbm = self.base_production_bm._productions_benchmarks
-        self.assertEqual(len(pbm.AnyScope.benchmarks), 66)
+        self.assertEqual(len(pbm.AnyScope.benchmarks), 69)
 
 
 if __name__ == "__main__":
