@@ -9111,6 +9111,420 @@
             "value": 0.019
           }
         ]
+      },
+      {
+        "sector": "Oil & Gas",
+        "region": "Global",
+        "benchmark_metric": "dimensionless",
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "base_year_production": "309157.6887288884 PJ",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 0
+          },
+          {
+            "year": 2020,
+            "value": -0.00957
+          },
+          {
+            "year": 2021,
+            "value": -0.00956
+          },
+          {
+            "year": 2022,
+            "value": -0.00955
+          },
+          {
+            "year": 2023,
+            "value": -0.00954
+          },
+          {
+            "year": 2024,
+            "value": -0.00953
+          },
+          {
+            "year": 2025,
+            "value": -0.00952
+          },
+          {
+            "year": 2026,
+            "value": -0.0339
+          },
+          {
+            "year": 2027,
+            "value": -0.0338
+          },
+          {
+            "year": 2028,
+            "value": -0.0337
+          },
+          {
+            "year": 2029,
+            "value": -0.0335
+          },
+          {
+            "year": 2030,
+            "value": -0.0334
+          },
+          {
+            "year": 2031,
+            "value": -0.08
+          },
+          {
+            "year": 2032,
+            "value": -0.0782
+          },
+          {
+            "year": 2033,
+            "value": -0.0763
+          },
+          {
+            "year": 2034,
+            "value": -0.0745
+          },
+          {
+            "year": 2035,
+            "value": -0.0727
+          },
+          {
+            "year": 2036,
+            "value": -0.0756
+          },
+          {
+            "year": 2037,
+            "value": -0.0755
+          },
+          {
+            "year": 2038,
+            "value": -0.0755
+          },
+          {
+            "year": 2039,
+            "value": -0.0755
+          },
+          {
+            "year": 2040,
+            "value": -0.0755
+          },
+          {
+            "year": 2041,
+            "value": -0.0878
+          },
+          {
+            "year": 2042,
+            "value": -0.0944
+          },
+          {
+            "year": 2043,
+            "value": -0.102
+          },
+          {
+            "year": 2044,
+            "value": -0.112
+          },
+          {
+            "year": 2045,
+            "value": -0.124
+          },
+          {
+            "year": 2046,
+            "value": -0.0718
+          },
+          {
+            "year": 2047,
+            "value": -0.0773
+          },
+          {
+            "year": 2048,
+            "value": -0.0837
+          },
+          {
+            "year": 2049,
+            "value": -0.0912
+          },
+          {
+            "year": 2050,
+            "value": -0.1
+          }
+        ]
+      },
+      {
+        "sector": "Oil & Gas",
+        "region": "Europe",
+        "benchmark_metric": "dimensionless",
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "base_year_production": "41469.855251754314 PJ",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 0
+          },
+          {
+            "year": 2020,
+            "value": -0.0396
+          },
+          {
+            "year": 2021,
+            "value": -0.0393
+          },
+          {
+            "year": 2022,
+            "value": -0.0389
+          },
+          {
+            "year": 2023,
+            "value": -0.0386
+          },
+          {
+            "year": 2024,
+            "value": -0.0382
+          },
+          {
+            "year": 2025,
+            "value": -0.0378
+          },
+          {
+            "year": 2026,
+            "value": -0.0626
+          },
+          {
+            "year": 2027,
+            "value": -0.0665
+          },
+          {
+            "year": 2028,
+            "value": -0.0709
+          },
+          {
+            "year": 2029,
+            "value": -0.076
+          },
+          {
+            "year": 2030,
+            "value": -0.0818
+          },
+          {
+            "year": 2031,
+            "value": -0.0867
+          },
+          {
+            "year": 2032,
+            "value": -0.0865
+          },
+          {
+            "year": 2033,
+            "value": -0.0864
+          },
+          {
+            "year": 2034,
+            "value": -0.0863
+          },
+          {
+            "year": 2035,
+            "value": -0.0862
+          },
+          {
+            "year": 2036,
+            "value": -0.0953
+          },
+          {
+            "year": 2037,
+            "value": -0.0947
+          },
+          {
+            "year": 2038,
+            "value": -0.0942
+          },
+          {
+            "year": 2039,
+            "value": -0.0937
+          },
+          {
+            "year": 2040,
+            "value": -0.0932
+          },
+          {
+            "year": 2041,
+            "value": -0.094
+          },
+          {
+            "year": 2042,
+            "value": -0.103
+          },
+          {
+            "year": 2043,
+            "value": -0.114
+          },
+          {
+            "year": 2044,
+            "value": -0.128
+          },
+          {
+            "year": 2045,
+            "value": -0.147
+          },
+          {
+            "year": 2046,
+            "value": -0.0809
+          },
+          {
+            "year": 2047,
+            "value": -0.0879
+          },
+          {
+            "year": 2048,
+            "value": -0.0963
+          },
+          {
+            "year": 2049,
+            "value": -0.106
+          },
+          {
+            "year": 2050,
+            "value": -0.119
+          }
+        ]
+      },
+      {
+        "sector": "Oil & Gas",
+        "region": "North America",
+        "benchmark_metric": "dimensionless",
+        "scenario name": "OECM 1.5 Degrees",
+        "release date": "2022",
+        "base_year_production": "77833.53278711095 PJ",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 0
+          },
+          {
+            "year": 2020,
+            "value": -0.0442
+          },
+          {
+            "year": 2021,
+            "value": -0.0439
+          },
+          {
+            "year": 2022,
+            "value": -0.0436
+          },
+          {
+            "year": 2023,
+            "value": -0.0434
+          },
+          {
+            "year": 2024,
+            "value": -0.0431
+          },
+          {
+            "year": 2025,
+            "value": -0.0429
+          },
+          {
+            "year": 2026,
+            "value": -0.118
+          },
+          {
+            "year": 2027,
+            "value": -0.125
+          },
+          {
+            "year": 2028,
+            "value": -0.135
+          },
+          {
+            "year": 2029,
+            "value": -0.147
+          },
+          {
+            "year": 2030,
+            "value": -0.163
+          },
+          {
+            "year": 2031,
+            "value": -0.0583
+          },
+          {
+            "year": 2032,
+            "value": -0.0579
+          },
+          {
+            "year": 2033,
+            "value": -0.0575
+          },
+          {
+            "year": 2034,
+            "value": -0.057
+          },
+          {
+            "year": 2035,
+            "value": -0.0566
+          },
+          {
+            "year": 2036,
+            "value": -0.0939
+          },
+          {
+            "year": 2037,
+            "value": -0.0933
+          },
+          {
+            "year": 2038,
+            "value": -0.0926
+          },
+          {
+            "year": 2039,
+            "value": -0.0919
+          },
+          {
+            "year": 2040,
+            "value": -0.0912
+          },
+          {
+            "year": 2041,
+            "value": -0.063
+          },
+          {
+            "year": 2042,
+            "value": -0.0617
+          },
+          {
+            "year": 2043,
+            "value": -0.0605
+          },
+          {
+            "year": 2044,
+            "value": -0.0592
+          },
+          {
+            "year": 2045,
+            "value": -0.058
+          },
+          {
+            "year": 2046,
+            "value": -0.0401
+          },
+          {
+            "year": 2047,
+            "value": -0.0393
+          },
+          {
+            "year": 2048,
+            "value": -0.0385
+          },
+          {
+            "year": 2049,
+            "value": -0.0377
+          },
+          {
+            "year": 2050,
+            "value": -0.037
+          }
+        ]
       }
     ]
   }

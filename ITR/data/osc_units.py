@@ -66,6 +66,7 @@ ureg.define("mmbtu = 1e6 btu")
 ureg.define("boe = 6.1178632 GJ = BoE")
 ureg.define("mboe = 1e3 boe")
 ureg.define("mmboe = 1e6 boe")
+ureg.define("Mbbl = 1e3 bbl")
 ureg.define("MMbbl = 1e6 bbl")
 
 ureg.define("scf = ft**3")
@@ -699,7 +700,8 @@ class MonetaryQuantity(str):
             if quantity.is_compatible_with('USD'):
                 return quantity
         except RecursionError:
-            breakpoint()
+            # breakpoint()
+            raise
         for currency in ITR.data.currency_dict.values():
             if quantity.is_compatible_with(currency):
                 return quantity
