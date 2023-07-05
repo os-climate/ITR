@@ -297,7 +297,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], # theme s
 app.title = "ITR Tool" # this puts text to the browser tab
 server = app.server
 
-filter_width = 6
+filter_width = 10
 filter_box = dbc.Row( # We are a row of the left-side column box
     children=[
         dbc.Row(
@@ -312,7 +312,7 @@ filter_box = dbc.Row( # We are a row of the left-side column box
                         dbc.Popover(dbc.PopoverBody(
                             "Focus on companies from portfolio with specific temperature score"), id="hover2",
                                     target="hover-target2", trigger="hover"),
-                    ], width=2, align="center",
+                    ], width=2, #align="center",
                 ),
             ],
             align="center",
@@ -375,7 +375,8 @@ filter_box = dbc.Row( # We are a row of the left-side column box
     ],
 )
 
-benchmark_width = 6
+
+benchmark_width = 10
 benchmark_box = dbc.Row(
     children=[
         dbc.Row(  # Select Benchmark
@@ -549,8 +550,38 @@ benchmark_box = dbc.Row(
             marks={i: str(i) for i in range(0, 101, 10)},
             allowCross=False
         ),
+         html.Hr(),  # small space from the top
+        dbc.Row(  # Winsorization of scenarios
+            [
+                dbc.Col(
+                    dbc.Label("\N{wrench} Select target probability"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target12", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select default probability of achieving target"),
+                                    id="hover12", target="hover-target12", trigger="hover"),
+                    ], width=1,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Slider(
+            min=0, max=100,
+            value=50,
+            step=10,
+            id="target_probability",
+            marks={
+                i: str(i)+ "%" for i in range (0,101,10)
+            },
+        ),
     ],
 )
+
+
+
 
 itr_titlebar = dbc.Row(  # upload portfolio
     [
@@ -569,7 +600,7 @@ itr_titlebar = dbc.Row(  # upload portfolio
                     html.A("OS-Climate Sector Alignment Tool", href="https://github.com/plotly/dash-svm",
                            style={"text-decoration": "none", "color": "inherit"})]),
                 html.Div(
-                    children='Prototype tool for calculating the Implied Temperature Rise of investor portfolio in the steel and electric utilities sectors \N{deciduous tree}'),
+                    children='Tool for calculating the Implied Temperature Rise for a sector-specific investment portfolio such as steel, utilities, chemicals, etc.  \N{deciduous tree}'),
             ],
             width=8,
         ),
@@ -631,7 +662,7 @@ itr_filters_and_benchmarks = dbc.Col(
     width=3,
 )
 
-itr_main_width = 9
+itr_main_width = 7
 itr_main_figures = dbc.Col(
     [  # main pane
         dbc.Card([
@@ -683,7 +714,7 @@ itr_main_figures = dbc.Col(
             dbc.Row(  # row with 2 graphs
                 [
                     dbc.Col(dcc.Graph(id="co2-usage-vs-budget"), width=8),  # big bubble graph
-                    dbc.Col(dcc.Graph(id="itr-coverage"), width=3),  # covered stacked bar graph
+                    dbc.Col(dcc.Graph(id="itr-coverage"), width=4),  # covered stacked bar graph
                 ],
             ),
             dbc.Row(  # row with 2 graphs
