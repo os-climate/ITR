@@ -34,7 +34,7 @@ from ITR.temperature_score import TemperatureScore
 
 from ITR.data.base_providers import BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
-from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
+from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls, ICompanyData
 # from ITR.configs import LoggingConfig
 
 from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
@@ -297,7 +297,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], # theme s
 app.title = "ITR Tool" # this puts text to the browser tab
 server = app.server
 
-filter_width = 6
+filter_width = 10
 filter_box = dbc.Row( # We are a row of the left-side column box
     children=[
         dbc.Row(
@@ -312,7 +312,7 @@ filter_box = dbc.Row( # We are a row of the left-side column box
                         dbc.Popover(dbc.PopoverBody(
                             "Focus on companies from portfolio with specific temperature score"), id="hover2",
                                     target="hover-target2", trigger="hover"),
-                    ], width=2, align="center",
+                    ], width=2, #align="center",
                 ),
             ],
             align="center",
@@ -375,7 +375,8 @@ filter_box = dbc.Row( # We are a row of the left-side column box
     ],
 )
 
-benchmark_width = 6
+
+benchmark_width = 10
 benchmark_box = dbc.Row(
     children=[
         dbc.Row(  # Select Benchmark
@@ -549,8 +550,38 @@ benchmark_box = dbc.Row(
             marks={i: str(i) for i in range(0, 101, 10)},
             allowCross=False
         ),
+         html.Hr(),  # small space from the top
+        dbc.Row(  # Winsorization of scenarios
+            [
+                dbc.Col(
+                    dbc.Label("\N{wrench} Select target probability"),
+                    width=benchmark_width,
+                ),
+                dbc.Col(
+                    [
+                        dbc.Button("\N{books}", id="hover-target12", color="link", n_clicks=0),
+                        dbc.Popover(dbc.PopoverBody(
+                            "Select default probability of achieving target"),
+                                    id="hover12", target="hover-target12", trigger="hover"),
+                    ], width=1,
+                ),
+            ],
+            align="center",
+        ),
+        dcc.Slider(
+            min=0, max=100,
+            value=50,
+            step=10,
+            id="target_probability",
+            marks={
+                i: str(i)+ "%" for i in range (0,101,10)
+            },
+        ),
     ],
 )
+
+
+
 
 itr_titlebar = dbc.Row(  # upload portfolio
     [
@@ -569,7 +600,7 @@ itr_titlebar = dbc.Row(  # upload portfolio
                     html.A("OS-Climate Sector Alignment Tool", href="https://github.com/plotly/dash-svm",
                            style={"text-decoration": "none", "color": "inherit"})]),
                 html.Div(
-                    children='Prototype tool for calculating the Implied Temperature Rise of investor portfolio in the steel and electric utilities sectors \N{deciduous tree}'),
+                    children='Tool for calculating the Implied Temperature Rise for a sector-specific investment portfolio such as steel, utilities, chemicals, etc.  \N{deciduous tree}'),
             ],
             width=8,
         ),
@@ -631,7 +662,7 @@ itr_filters_and_benchmarks = dbc.Col(
     width=3,
 )
 
-itr_main_width = 9
+itr_main_width = 7
 itr_main_figures = dbc.Col(
     [  # main pane
         dbc.Card([
@@ -683,7 +714,7 @@ itr_main_figures = dbc.Col(
             dbc.Row(  # row with 2 graphs
                 [
                     dbc.Col(dcc.Graph(id="co2-usage-vs-budget"), width=8),  # big bubble graph
-                    dbc.Col(dcc.Graph(id="itr-coverage"), width=3),  # covered stacked bar graph
+                    dbc.Col(dcc.Graph(id="itr-coverage"), width=4),  # covered stacked bar graph
                 ],
             ),
             dbc.Row(  # row with 2 graphs
@@ -802,11 +833,12 @@ def warehouse_new(banner_title):
             Input("eibm-dropdown", "value"),
             Input("projection-method", "value"),
             Input("scenarios-cutting", "value"), # winzorization slider
+            Input("target_probability", "value"), # target_probability slider,
             State("benchmark-region", "children"),),
     background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=True,)
 # load default intensity benchmarks
-def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
+def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, target_prob, bm_region):
     '''
     Reload Emissions Intensity benchmark from a selected file
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
@@ -821,6 +853,10 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
         Warehouse.company_data.projection_controls.TREND_CALC_METHOD = ITR_median if proj_meth == 'median' else ITR_mean
         Warehouse.company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
         Warehouse.company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
+    
+    if "target_probability" in changed_id:
+        Warehouse.company_data.projection_controls.target_probability = target_prob/100
+        #Warehouse.company_data.ICompanyData.target_probability = target_prob/100
 
     if 'eibm-dropdown' in changed_id or Warehouse.benchmarks_projected_ei is None:
         show_oecm_bm = 'no'
@@ -859,7 +895,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
         # This updates benchmarks and all that depends on them (including trajectories)
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
         bm_region = eibm
-    elif 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:
+    elif 'scenarios-cutting' in changed_id or 'projection-method' in changed_id: 
         # Trajectories are company-specific, but ultimately do depend on benchmarks (for units/scopes)
         Warehouse.update_trajectories()
 
@@ -1335,10 +1371,12 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
               Output("spinner-ts", "value"),),  # fake for spinner
 
     inputs = (Input("warehouse-ty", "data"),
-              Input("budget-method", "value"),),
+              Input("budget-method", "value"),
+              Input("target_probability", "value"), # target_probability slider,
+              ),
 
     prevent_initial_call=True,)
-def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
+def calc_temperature_score(warehouse_pickle_json, budget_meth, target_prob, *_):
     '''
     Calculate temperature scores according to the carbon budget methodology
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
@@ -1347,6 +1385,11 @@ def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
     global companies
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
+    
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
+    if "target_probability" in changed_id:
+        Warehouse.company_data.projection_controls.target_probability = target_prob/100
+
     temperature_score = TemperatureScore(
         time_frames = [ETimeFrames.LONG],
         scopes=None, # None means "use the appropriate scopes for the benchmark
@@ -1756,6 +1799,7 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
     Output("budget-method", "value"),
     Output("projection-method", "value"),
     Output("scenarios-cutting", "value"),
+    Output("target_probability", "value"),
     Output("target-year", "value"),
     Output("reset-sector-region-scope", "children"),
     Output("spinner-reset", "value"),
@@ -1768,10 +1812,12 @@ def reset_filters(n_clicks_reset):
     if (ProjectionControls.TREND_CALC_METHOD != ITR_median
         or ProjectionControls.LOWER_PERCENTILE != 0.1
         or ProjectionControls.UPPER_PERCENTILE != 0.9
-        or ProjectionControls.TARGET_YEAR != 2050):
+        or ProjectionControls.TARGET_YEAR != 2050
+        or ICompanyData.target_probability != 0.5):
         ProjectionControls.TREND_CALC_METHOD=ITR_median
         ProjectionControls.LOWER_PERCENTILE = 0.1
         ProjectionControls.UPPER_PERCENTILE = 0.9
+        ICompanyData.target_probability = 0.5
 
     # All the other things that are reset do not actually change the portfolio itself
     # (thought they may change which parts of the portfolio are plotted next)
@@ -1781,6 +1827,7 @@ def reset_filters(n_clicks_reset):
         'absolute',
         'median',
         [ProjectionControls.LOWER_PERCENTILE*100,ProjectionControls.UPPER_PERCENTILE*100],
+        50,
         2050,
         "Reset Sector, Region, Scope",
         "Spin-reset",
