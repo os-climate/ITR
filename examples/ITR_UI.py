@@ -34,7 +34,7 @@ from ITR.temperature_score import TemperatureScore
 
 from ITR.data.base_providers import BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
-from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
+from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls, ICompanyData
 # from ITR.configs import LoggingConfig
 
 from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
@@ -833,11 +833,12 @@ def warehouse_new(banner_title):
             Input("eibm-dropdown", "value"),
             Input("projection-method", "value"),
             Input("scenarios-cutting", "value"), # winzorization slider
+            Input("target_probability", "value"), # target_probability slider,
             State("benchmark-region", "children"),),
     background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=True,)
 # load default intensity benchmarks
-def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
+def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, target_prob, bm_region):
     '''
     Reload Emissions Intensity benchmark from a selected file
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
@@ -852,6 +853,10 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
         Warehouse.company_data.projection_controls.TREND_CALC_METHOD = ITR_median if proj_meth == 'median' else ITR_mean
         Warehouse.company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
         Warehouse.company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
+    
+    if "target_probability" in changed_id:
+        Warehouse.company_data.projection_controls.target_probability = target_prob/100
+        #Warehouse.company_data.ICompanyData.target_probability = target_prob/100
 
     if 'eibm-dropdown' in changed_id or Warehouse.benchmarks_projected_ei is None:
         show_oecm_bm = 'no'
@@ -890,7 +895,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
         # This updates benchmarks and all that depends on them (including trajectories)
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
         bm_region = eibm
-    elif 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:
+    elif 'scenarios-cutting' in changed_id or 'projection-method' in changed_id or "target_probability" in changed_id:
         # Trajectories are company-specific, but ultimately do depend on benchmarks (for units/scopes)
         Warehouse.update_trajectories()
 
@@ -1787,6 +1792,7 @@ def download_xlsx(n_clicks, portfolio_json, te_sc, sectors_dl, sec, reg):
     Output("budget-method", "value"),
     Output("projection-method", "value"),
     Output("scenarios-cutting", "value"),
+    Output("target_probability", "value"),
     Output("target-year", "value"),
     Output("reset-sector-region-scope", "children"),
     Output("spinner-reset", "value"),
@@ -1799,10 +1805,12 @@ def reset_filters(n_clicks_reset):
     if (ProjectionControls.TREND_CALC_METHOD != ITR_median
         or ProjectionControls.LOWER_PERCENTILE != 0.1
         or ProjectionControls.UPPER_PERCENTILE != 0.9
-        or ProjectionControls.TARGET_YEAR != 2050):
+        or ProjectionControls.TARGET_YEAR != 2050
+        or ICompanyData.target_probability != 0.5):
         ProjectionControls.TREND_CALC_METHOD=ITR_median
         ProjectionControls.LOWER_PERCENTILE = 0.1
         ProjectionControls.UPPER_PERCENTILE = 0.9
+        ICompanyData.target_probability = 0.5
 
     # All the other things that are reset do not actually change the portfolio itself
     # (thought they may change which parts of the portfolio are plotted next)
@@ -1812,6 +1820,7 @@ def reset_filters(n_clicks_reset):
         'absolute',
         'median',
         [ProjectionControls.LOWER_PERCENTILE*100,ProjectionControls.UPPER_PERCENTILE*100],
+        50,
         2050,
         "Reset Sector, Region, Scope",
         "Spin-reset",
