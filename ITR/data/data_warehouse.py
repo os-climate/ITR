@@ -12,7 +12,7 @@ from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, \
     ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, \
     DF_ICompanyEIProjections, IHistoricData
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, ProjectionControls
 
 import logging
 logger = logging.getLogger(__name__)
@@ -92,6 +92,12 @@ class DataWarehouse(ABC):
             c.historic_data = orig_data['historic_data']
             c.projected_intensities = orig_data['projected_intensities']
             c.projected_targets = orig_data['projected_targets']
+
+
+    def update_target_probability(self, new_prob):
+        for c in self.company_data._companies:
+            c.target_probability = new_prob
+        logger.info(f"Setting target probability to {new_prob}")
 
     def update_benchmarks(self, benchmark_projected_production: ProductionBenchmarkDataProvider,
                           benchmarks_projected_ei: IntensityBenchmarkDataProvider):

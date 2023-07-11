@@ -192,7 +192,9 @@ class ProjectionControls:
 
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050
+    TARGET_PROBABILITY: float = 0.5
     TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = ITR_median
+    
 
 
 class TemperatureScoreControls(BaseModel):

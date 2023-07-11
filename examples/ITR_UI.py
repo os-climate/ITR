@@ -855,9 +855,8 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, tar
         Warehouse.company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
     
     if "target_probability" in changed_id:
-        Warehouse.company_data.projection_controls.target_probability = target_prob/100
-        #Warehouse.company_data.ICompanyData.target_probability = target_prob/100
-
+        Warehouse.update_target_probability(target_prob/100)
+       
     if 'eibm-dropdown' in changed_id or Warehouse.benchmarks_projected_ei is None:
         show_oecm_bm = 'no'
         if eibm == 'OECM_PC':
@@ -895,9 +894,11 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, tar
         # This updates benchmarks and all that depends on them (including trajectories)
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
         bm_region = eibm
+
     elif 'scenarios-cutting' in changed_id or 'projection-method' in changed_id: 
         # Trajectories are company-specific, but ultimately do depend on benchmarks (for units/scopes)
         Warehouse.update_trajectories()
+        
 
     return (json.dumps(pickle.dumps(Warehouse), default=str),
             show_oecm_bm,
@@ -1372,11 +1373,10 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
 
     inputs = (Input("warehouse-ty", "data"),
               Input("budget-method", "value"),
-              Input("target_probability", "value"), # target_probability slider,
               ),
 
     prevent_initial_call=True,)
-def calc_temperature_score(warehouse_pickle_json, budget_meth, target_prob, *_):
+def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
     '''
     Calculate temperature scores according to the carbon budget methodology
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
@@ -1385,10 +1385,6 @@ def calc_temperature_score(warehouse_pickle_json, budget_meth, target_prob, *_):
     global companies
 
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
-    
-    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
-    if "target_probability" in changed_id:
-        Warehouse.company_data.projection_controls.target_probability = target_prob/100
 
     temperature_score = TemperatureScore(
         time_frames = [ETimeFrames.LONG],
@@ -1813,11 +1809,11 @@ def reset_filters(n_clicks_reset):
         or ProjectionControls.LOWER_PERCENTILE != 0.1
         or ProjectionControls.UPPER_PERCENTILE != 0.9
         or ProjectionControls.TARGET_YEAR != 2050
-        or ICompanyData.target_probability != 0.5):
+        or ProjectionControls.TARGET_PROBABILITY != 0.5):
         ProjectionControls.TREND_CALC_METHOD=ITR_median
         ProjectionControls.LOWER_PERCENTILE = 0.1
         ProjectionControls.UPPER_PERCENTILE = 0.9
-        ICompanyData.target_probability = 0.5
+        ProjectionControls.TARGET_PROBABILITY = 0.5
 
     # All the other things that are reset do not actually change the portfolio itself
     # (thought they may change which parts of the portfolio are plotted next)
