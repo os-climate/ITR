@@ -192,7 +192,6 @@ class ProjectionControls:
 
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050
-    TARGET_PROBABILITY: float = 0.5
     TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = ITR_median
     
 
@@ -203,6 +202,7 @@ class TemperatureScoreControls(BaseModel):
     tcre: quantity('delta_degC')
     carbon_conversion: EmissionsQuantity
     scenario_target_temperature: quantity('delta_degC')
+    target_probability: float
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -220,7 +220,8 @@ class TemperatureScoreConfig(PortfolioAggregationConfig):
         target_end_year=ProjectionControls.TARGET_YEAR,
         tcre='2.2 delta_degC',
         carbon_conversion='3664.0 Gt CO2',
-        scenario_target_temperature='1.5 delta_degC'
+        scenario_target_temperature='1.5 delta_degC',
+        target_probability= 0.5
     )
 
 class LoggingConfig:

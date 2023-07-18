@@ -34,7 +34,7 @@ from ITR.temperature_score import TemperatureScore
 
 from ITR.data.base_providers import BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
-from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls, ICompanyData
+from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls, TemperatureScoreConfig
 # from ITR.configs import LoggingConfig
 
 from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
@@ -1809,11 +1809,11 @@ def reset_filters(n_clicks_reset):
         or ProjectionControls.LOWER_PERCENTILE != 0.1
         or ProjectionControls.UPPER_PERCENTILE != 0.9
         or ProjectionControls.TARGET_YEAR != 2050
-        or ProjectionControls.TARGET_PROBABILITY != 0.5):
+        or TemperatureScoreConfig.CONTROLS_CONFIG.target_probability != 0.5):
         ProjectionControls.TREND_CALC_METHOD=ITR_median
         ProjectionControls.LOWER_PERCENTILE = 0.1
         ProjectionControls.UPPER_PERCENTILE = 0.9
-        ProjectionControls.TARGET_PROBABILITY = 0.5
+        TemperatureScoreConfig.CONTROLS_CONFIG.target_probability = 0.5
 
     # All the other things that are reset do not actually change the portfolio itself
     # (thought they may change which parts of the portfolio are plotted next)

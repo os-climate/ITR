@@ -15,7 +15,7 @@ import ITR
 from ITR.data.osc_units import ureg, Q_, M_, PA_, \
     BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, \
     MonetaryQuantity, quantity
-from ITR.configs import ProjectionControls, LoggingConfig
+from ITR.configs import ProjectionControls, LoggingConfig, TemperatureScoreConfig
 
 import logging
 logger = logging.getLogger(__name__)
@@ -488,7 +488,7 @@ class ICompanyData(BaseModel):
 
     sector: str  # TODO: make SortableEnums
     region: str  # TODO: make SortableEnums
-    target_probability: float = ProjectionControls.TARGET_PROBABILITY
+    target_probability: float = TemperatureScoreConfig.CONTROLS_CONFIG.target_probability
 
     target_data: Optional[List[ITargetData]]
     historic_data: Optional[IHistoricData] # IHistoric data can contain None values; need to convert to Quantified NaNs
