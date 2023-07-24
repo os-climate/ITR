@@ -60,7 +60,6 @@ class TemperatureScore(PortfolioAggregation):
         :return: The temperature score, which is a tuple of (TEMPERATURE_SCORE, TRAJECTORY_SCORE, TRAJECTORY_OVERSHOOT,
                         TARGET_SCORE, TARGET_OVERSHOOT, TEMPERATURE_RESULTS])
         """
-
         # If both trajectory and target data missing assign default value
         if (ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
             ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
@@ -144,7 +143,7 @@ class TemperatureScore(PortfolioAggregation):
         """
         return self.fallback_score
 
-    def _prepare_data(self, data: pd.DataFrame):
+    def _prepare_data(self, data: pd.DataFrame, target_probability: float):
         """
         Prepare the data such that it can be used to calculate the temperature score.
 
@@ -153,6 +152,9 @@ class TemperatureScore(PortfolioAggregation):
         """
         company_id_and_scope = [self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE]
         companies = data.index.get_level_values(self.c.COLS.COMPANY_ID).unique()
+
+        # If taregt score not provided, use non-specific probability
+        data = data.fillna({self.c.COLS.TARGET_PROBABILITY: target_probability})
 
         # If scope S1S2S3 is in the list of scopes to calculate, we need to calculate the other two as well
         if self.scopes:
@@ -226,7 +228,8 @@ class TemperatureScore(PortfolioAggregation):
 
     def calculate(self, data: Optional[pd.DataFrame] = None,
                   data_warehouse: Optional[DataWarehouse] = None,
-                  portfolio: Optional[List[PortfolioCompany]] = None):
+                  portfolio: Optional[List[PortfolioCompany]] = None,
+                  target_probability: Optional[float] = TemperatureScoreConfig.CONTROLS_CONFIG.target_probability):
         """
         Calculate the temperature for a dataframe of company data. The columns in the data frame should be a combination
         of IDataProviderTarget and IDataProviderCompany.
@@ -245,7 +248,7 @@ class TemperatureScore(PortfolioAggregation):
                 raise ValueError("You need to pass and either a data set or a datawarehouse and companies")
 
         logger.info(f"temperature score preparing data")
-        data = self._prepare_data(data)
+        data = self._prepare_data(data, target_probability)
         logger.info(f"temperature score data prepared")
 
         if self.scopes:

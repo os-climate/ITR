@@ -833,12 +833,11 @@ def warehouse_new(banner_title):
             Input("eibm-dropdown", "value"),
             Input("projection-method", "value"),
             Input("scenarios-cutting", "value"), # winzorization slider
-            Input("target_probability", "value"), # target_probability slider,
             State("benchmark-region", "children"),),
     background=not use_data_vault and not have_breakpoint,
     prevent_initial_call=True,)
 # load default intensity benchmarks
-def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, target_prob, bm_region):
+def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_region):
     '''
     Reload Emissions Intensity benchmark from a selected file
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
@@ -853,9 +852,6 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, tar
         Warehouse.company_data.projection_controls.TREND_CALC_METHOD = ITR_median if proj_meth == 'median' else ITR_mean
         Warehouse.company_data.projection_controls.LOWER_PERCENTILE = winz[0] / 100
         Warehouse.company_data.projection_controls.UPPER_PERCENTILE = winz[1] / 100
-    
-    if "target_probability" in changed_id:
-        Warehouse.update_target_probability(target_prob/100)
        
     if 'eibm-dropdown' in changed_id or Warehouse.benchmarks_projected_ei is None:
         show_oecm_bm = 'no'
@@ -1373,10 +1369,11 @@ def bm_budget_year_target(show_oecm, target_year, bm_end_use_budget, bm_1e_budge
 
     inputs = (Input("warehouse-ty", "data"),
               Input("budget-method", "value"),
+              Input("target_probability", "value"), # winzorization slider
               ),
 
     prevent_initial_call=True,)
-def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
+def calc_temperature_score(warehouse_pickle_json, budget_meth, target_probability, *_):
     '''
     Calculate temperature scores according to the carbon budget methodology
     :param warehouse_pickle_json: Pickled JSON version of Warehouse containing only company data
@@ -1384,6 +1381,7 @@ def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
     '''
     global companies
 
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
 
     temperature_score = TemperatureScore(
@@ -1393,7 +1391,11 @@ def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
         aggregation_method=PortfolioAggregationMethod.WATS,
         budget_column=ColumnsConfig.CUMULATIVE_SCALED_BUDGET if budget_meth=='contraction' else ColumnsConfig.CUMULATIVE_BUDGET,
     )
-    df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
+
+    if "target_probability" in changed_id:
+        df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies, target_probability=target_probability/100)
+    else:
+        df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
     df = df.drop(columns=['historic_data', 'target_data'])
     amended_portfolio = df
     return (amended_portfolio.to_json(orient='split', default_handler=str),
@@ -1808,12 +1810,10 @@ def reset_filters(n_clicks_reset):
     if (ProjectionControls.TREND_CALC_METHOD != ITR_median
         or ProjectionControls.LOWER_PERCENTILE != 0.1
         or ProjectionControls.UPPER_PERCENTILE != 0.9
-        or ProjectionControls.TARGET_YEAR != 2050
-        or TemperatureScoreConfig.CONTROLS_CONFIG.target_probability != 0.5):
+        or ProjectionControls.TARGET_YEAR != 2050):
         ProjectionControls.TREND_CALC_METHOD=ITR_median
         ProjectionControls.LOWER_PERCENTILE = 0.1
         ProjectionControls.UPPER_PERCENTILE = 0.9
-        TemperatureScoreConfig.CONTROLS_CONFIG.target_probability = 0.5
 
     # All the other things that are reset do not actually change the portfolio itself
     # (thought they may change which parts of the portfolio are plotted next)
@@ -1823,7 +1823,7 @@ def reset_filters(n_clicks_reset):
         'absolute',
         'median',
         [ProjectionControls.LOWER_PERCENTILE*100,ProjectionControls.UPPER_PERCENTILE*100],
-        50,
+        100*TemperatureScoreConfig.CONTROLS_CONFIG.target_probability,
         2050,
         "Reset Sector, Region, Scope",
         "Spin-reset",

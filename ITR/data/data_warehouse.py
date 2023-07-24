@@ -94,11 +94,6 @@ class DataWarehouse(ABC):
             c.projected_targets = orig_data['projected_targets']
 
 
-    def update_target_probability(self, new_prob):
-        for c in self.company_data._companies:
-            c.target_probability = new_prob
-        logger.info(f"Setting target probability to {new_prob}")
-
     def update_benchmarks(self, benchmark_projected_production: ProductionBenchmarkDataProvider,
                           benchmarks_projected_ei: IntensityBenchmarkDataProvider):
         """
