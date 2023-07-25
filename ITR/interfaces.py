@@ -298,9 +298,9 @@ class ICompanyEIProjections(BaseModel):
 
     def __str__(self):
         # Work-around for https://github.com/hgrecco/pint/issues/1687
-        ei_metric = str(ureg.parse_units(self.ei_metric))
-        series = (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1]) \
-                 (list (zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in self.projections])) )
+        ei_metric = ureg.parse_units(self.ei_metric)
+        series = (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=str(ei_metric)), index=idx))[-1]) \
+                 (list (zip(*[(x.year, round(ITR.Q_m_as(x.value, ei_metric), 4)) for x in self.projections])) )
         return str(series)
 
 class DF_ICompanyEIProjections(BaseModel):
@@ -330,11 +330,11 @@ class DF_ICompanyEIProjections(BaseModel):
                 projections = None
         if projections_gen is not None:
             # Work-around for https://github.com/hgrecco/pint/issues/1687
-            ei_metric = str(ureg.parse_units(ei_metric))
-            years, values = list( map(list, zip(*[(x['year'], np.nan if x['value'] is None else pint.Quantity(x['value']).m_as(ei_metric))
+            ei_metric = ureg.parse_units(ei_metric)
+            years, values = list( map(list, zip(*[(x['year'], np.nan if x['value'] is None else ITR.Q_m_as(x['value'], ei_metric, inplace=True))
                                                   for x in projections_gen])) )
-            projections = pd.Series(PA_(values, dtype=ei_metric), index=pd.Index(years, name='year'), name='value')
-        super().__init__(ei_metric=ei_metric, projections=projections)
+            projections = pd.Series(PA_(values, dtype=str(ei_metric)), index=pd.Index(years, name='year'), name='value')
+        super().__init__(ei_metric=str(ei_metric), projections=projections)
 
 
 class ICompanyEIProjectionsScopes(BaseModel):
@@ -355,7 +355,10 @@ class ICompanyEIProjectionsScopes(BaseModel):
             elif isinstance(v, ICompanyEIProjections):
                 setattr(self, k, DF_ICompanyEIProjections(icompany_ei_projections=v))
             elif isinstance(v, pd.Series):
-                setattr(self, k, DF_ICompanyEIProjections(ei_metric=EI_Metric(str(v.dtype)), projections=v))
+                ei_metric = EI_Metric(str(v.dtype))
+                if ei_metric.startswith('pint['):
+                    ei_metric = ei_metric[5:-1]
+                setattr(self, k, DF_ICompanyEIProjections(ei_metric=ei_metric, projections=v))
             elif isinstance(v, DF_ICompanyEIProjections) or v is None:
                 setattr(self, k, v)
             else:
@@ -408,8 +411,8 @@ class IHistoricEmissionsScopes(BaseModel):
         return getattr(self, item)
 
     def __str__(self):
-        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[Mt CO2e]"), index=idx))[-1])
-                             (list(zip(*[(x.year, round(x.value.m_as('Mt CO2e'), 4)) for x in getattr(self, scope)])))
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype="Mt CO2e"), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.to('Mt CO2e').m, 4)) for x in getattr(self, scope)])))
                       for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
                       if getattr(self, scope) is not None}
         return str(pd.DataFrame.from_dict(dict_items))
@@ -444,8 +447,8 @@ class IHistoricEIScopes(BaseModel):
         return getattr(self, item)
 
     def __str__(self):
-        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=f"pint[{ei_metric}]"), index=idx))[-1])
-                             (list(zip(*[(x.year, round(x.value.m_as(ei_metric), 4)) for x in getattr(self, scope)])))
+        dict_items = {scope: (lambda z: (idx:=z[0], values:=z[1], pd.Series(PA_(values, dtype=ei_metric), index=idx))[-1])
+                             (list(zip(*[(x.year, round(x.value.to(ei_metric).m, 4)) for x in getattr(self, scope)])))
                       for scope in ['S1', 'S2', 'S1S2', 'S3', 'S1S2S3']
                       # Work-around for https://github.com/hgrecco/pint/issues/1687
                       for ei_metric in [ str(ureg.parse_units(getattr(self, scope).ei_metric)) ]
@@ -578,6 +581,10 @@ class ICompanyData(BaseModel):
     def _normalize_historic_data(self, historic_data: IHistoricData, production_metric: ProductionMetric, emissions_metric: EmissionsMetric) -> IHistoricData:
         def _normalize(value, metric):
             if value is not None:
+                if value.u==metric:
+                    return value
+                if ITR.isnan(value.m):
+                    return Q_(value.m, metric)
                 # We've pre-conditioned metric so don't need to work around https://github.com/hgrecco/pint/issues/1687
                 return value.to(metric)
             return Q_(np.nan, metric)
@@ -587,11 +594,12 @@ class ICompanyData(BaseModel):
 
         if historic_data.productions:
             # Work-around for https://github.com/hgrecco/pint/issues/1687
-            production_metric = str(ureg.parse_units(production_metric))
-            historic_data.productions = [IProductionRealization(year=p.year, value=_normalize (p.value, production_metric))
+            production_metric = ureg.parse_units(production_metric)
+            historic_data.productions = [IProductionRealization(year=p.year, value=_normalize(p.value, production_metric))
                                          for p in historic_data.productions]
+        emissions_metric = ureg(emissions_metric).u
         # Work-around for https://github.com/hgrecco/pint/issues/1687
-        ei_metric = str(ureg.parse_units(f"{emissions_metric} / ({production_metric})"))
+        ei_metric = ureg.parse_units(f"{emissions_metric} / ({production_metric})")
         for scope_name in EScope.get_scopes():
             if historic_data.emissions:
                 setattr(historic_data.emissions, scope_name, [IEmissionRealization(year=p.year, value=_normalize(p.value, emissions_metric))

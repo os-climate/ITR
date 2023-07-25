@@ -101,11 +101,10 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        units = str(benchmark.benchmark_metric)
         # Benchmarks don't need work-around for https://github.com/hgrecco/pint/issues/1687, but if they did:
         # units = ureg.parse_units(benchmark.benchmark_metric)
-        years, values = list(map(list, zip(*{r.year: r.value.to(units).m for r in benchmark.projections}.items())))
-        return pd.Series(PA_(values, dtype=units),
+        years, values = list(map(list, zip(*{r.year: Q_(r.value) for r in benchmark.projections}.items())))
+        return pd.Series(PA_(np.array(values), dtype='pint[]'),
                          index = years, name=(benchmark.sector, benchmark.region, scope))
 
     # Production benchmarks are dimensionless, relevant for AnyScope
@@ -113,12 +112,12 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         Converts IProductionBenchmarkScopes into dataframe for a scope
         :param scope: a scope
-        :return: pd.DataFrame
+        :return: a pint[dimensionless] pd.DataFrame
         """
         return self._prod_df
     
         # The call to this function generates a 42-row (and counting...) DataFrame for the one row we're going to end up needing...
-        df_bm = pd.DataFrame([self._convert_benchmark_to_series(bm, scope) for bm in self._productions_benchmarks[scope.name].benchmarks])
+        df_bm = pd.DataFrame([self._convert_benchmark_to_series(bm, scope).pint.m for bm in self._productions_benchmarks[scope.name].benchmarks])
         df_bm.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
         
         df_partial_pp = df_bm.add(1).cumprod(axis=1).astype('pint[]')
@@ -154,7 +153,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
         with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
         :param scope: a scope
-        :return: An all-quantified DataFrame with intensity benchmark data per calendar year per row, indexed by company.
+        :return: A pint[dimensionless] DataFrame with partial production benchmark data per calendar year per row, indexed by company.
         """
 
         benchmark_projection = self._get_projected_production(scope)  # TODO optimize performance
@@ -419,12 +418,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 continue
             for scope in EScope.get_scopes():
                 if company.projected_intensities[scope]:
-                    try:
-                        setattr (company.projected_intensities, scope,
-                                 DF_ICompanyEIProjections(ei_metric=ei_metric, projections=company.projected_intensities[scope].projections.astype(f"pint[{ei_metric}]")))
-                    except DimensionalityError:
-                        logger.error(f"intensity values for company {company.company_id} not compatible with benchmark ({ei_metric})")
-                        break
+                    setattr (company.projected_intensities, scope,
+                             DF_ICompanyEIProjections(ei_metric=ei_metric, projections=company.projected_intensities[scope].projections))
         logger.info("Done normalizing intensity metrics")
         self._companies = companies
 
@@ -641,7 +636,6 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     values = projections
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    # FIXME: why cannot Pint and Pandas agree to make a nice DF from a list of PintArray Series?
                     return pd.DataFrame(data=values, index=index)
         return pd.DataFrame()
 
@@ -681,7 +675,7 @@ class EIProjector(object):
     def __init__(self, projection_controls: ProjectionControls = ProjectionControls()):
         self.projection_controls = projection_controls
 
-    def _get_bounded_projections(self, results):
+    def _get_bounded_projections(self, results) -> List[ICompanyEIProjection]:
         if isinstance(results, list):
             projections = [projection for projection in results
                            if projection.year in range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)]
@@ -855,6 +849,7 @@ class EITrajectoryProjector(EIProjector):
             raise ValueError(error_message)
 
     def _add_projections_to_companies(self, companies: List[ICompanyData], extrapolations_t: pd.DataFrame):
+        projection_range = range(self.projection_controls.BASE_YEAR, self.projection_controls.TARGET_YEAR+1)
         for company in companies:
             scope_projections = {}
             scope_dfs = {}
@@ -874,26 +869,16 @@ class EITrajectoryProjector(EIProjector):
                 # if results.isna().all():
                 #     scope_projections[scope_name] = None
                 #     continue
-                units = f"{results.dtype.units:~P}"
                 scope_dfs[scope_name] = results
-                try:
-                    scope_projections[scope_name] = ICompanyEIProjections(ei_metric=units,
-                                                                          projections=self._get_bounded_projections(results))
-                except ValidationError:
-                    logger.error(f"invalid emissions intensity units {units} given for company {company.company_id} ({company.company_name})")
-                    raise
-            if scope_projections['S1'] and scope_projections['S2'] and not scope_projections['S1S2']:
+                scope_projections[scope_name] = results[results.index.isin(projection_range)]
+            if scope_projections['S1S2'] is None and scope_projections['S1'] is not None and scope_projections['S2'] is not None:
                 results = scope_dfs['S1'] + scope_dfs['S2']
-                units = f"{results.values[0].u:~P}"
                 scope_dfs['S1S2'] = results
-                scope_projections['S1S2'] = ICompanyEIProjections(ei_metric=units,
-                                                                  projections=self._get_bounded_projections(results))
-            if scope_projections['S1S2'] and scope_projections['S3'] and not scope_projections['S1S2S3']:
+                scope_projections['S1S2'] = results[results.index.isin(projection_range)]
+            if scope_projections['S1S2S3'] is None and scope_projections['S1S2'] is not None and scope_projections['S3'] is not None:
                 results = scope_dfs['S1S2'] + scope_dfs['S3']
-                units = f"{results.values[0].u:~P}"
                 # We don't need to compute scope_dfs['S1S2S3'] because nothing further depends on accessing it here
-                scope_projections['S1S2S3'] = ICompanyEIProjections(ei_metric=units,
-                                                                    projections=self._get_bounded_projections(results))
+                scope_projections['S1S2S3'] = results[results.index.isin(projection_range)]
             company.projected_intensities = ICompanyEIProjectionsScopes(**scope_projections)
 
     def _standardize(self, intensities_t: pd.DataFrame) -> pd.DataFrame:
@@ -1350,7 +1335,7 @@ class EITargetProjector(EIProjector):
                 else:
                     while model_ei_projections[0].year > self.projection_controls.BASE_YEAR:
                         model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
-                    ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity (f"{target_ei_value.u:~P}"),
+                    ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
                                                                              projections=self._get_bounded_projections(model_ei_projections))
 
                 if scope_targets_intensity and scope_targets_intensity[0].netzero_year:
@@ -1387,8 +1372,8 @@ class EITargetProjector(EIProjector):
                 if ei_projection_scopes[scope_name]:
                     ei_projection_scopes[scope_name].projections.extend(ei_projections)
                 else:
-                    ei_projection_scopes[scope_name] = ICompanyEIProjections(projections=self._get_bounded_projections(ei_projections),
-                                                                             ei_metric=EI_Quantity (f"{target_ei_value.u:~P}"))
+                    ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity (f"{target_ei_value.u:~P}"),
+                                                                             projections=self._get_bounded_projections(ei_projections))
                 target_year = netzero_year
                 target_ei_value = netzero_qty
             if ei_projection_scopes[scope_name] and target_year < ProjectionControls.TARGET_YEAR:
