@@ -63,6 +63,7 @@ class EndToEndTest(unittest.TestCase):
             company_total_assets=Q_('100 USD'),
             company_cash_equivalents=Q_('100 USD'),
             cumulative_budget=Q_("345325664.840567 t CO2"),
+            cumulative_scaled_budget=Q_("345325664.840567 t CO2"),
             cumulative_trajectory=Q_("3745094638.52858 t CO2"),
             cumulative_target=Q_("3769096510.09909 t CO2"),
             target_probability=0.428571428571428,

@@ -32,9 +32,13 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                             if not v.get(scope):
                                 print(f"projection has no scope {scope} for {k}")
                                 is_equal = False
-                            elif json.dumps(v[scope]['projections'], cls=ITR_Encoder) != json.dumps(vref[scope]['projections'], cls=ITR_Encoder):
+                                continue
+                            vproj = v[scope]['projections']
+                            if isinstance(vproj, pd.Series):
+                                vproj = [{'year':k, 'value':' '.join(['{:.5f}'.format(v.m), str(v.u)])} for k, v in vproj.to_dict().items()]
+                            if json.dumps(vproj, cls=ITR_Encoder) != json.dumps(vref[scope]['projections'], cls=ITR_Encoder):
                                 print(f"{k} differ for scope {scope}")
-                                print(f"computed {k}:\n{json.dumps(v[scope]['projections'], cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref[scope]['projections'], cls=ITR_Encoder)}\n\n")
+                                print(f"computed {k}:\n{json.dumps(vproj, cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref[scope]['projections'], cls=ITR_Encoder)}\n\n")
                                 is_equal = False
                         elif v.get(scope):
                             print(f"reference has no scope {scope} for projection_intensities")

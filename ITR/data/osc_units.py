@@ -533,9 +533,13 @@ class ProductionQuantity(str):
         for pu in _production_units:
             if quantity.is_compatible_with(pu):
                 return quantity
+        try:
             quantity_as_annual = convert_to_annual(quantity, errors='ignore')
-            if quantity_as_annual.is_compatible_with(pu):
-                return quantity_as_annual
+            for pu in _production_units:
+                if quantity_as_annual.is_compatible_with(pu):
+                    return quantity_as_annual
+        except DimensionalityError:
+            pass
         raise DimensionalityError (quantity, str(_production_units), dim1='', dim2='', extra_msg=f"Dimensionality must be compatible with [{_production_units}]")
 
     def __repr__(self):
@@ -576,8 +580,6 @@ class EI_Quantity(str):
 
     @classmethod
     def validate(cls, quantity):
-        if quantity is None:
-            raise ValueError
         if isinstance(quantity, str):
             v, u = quantity.split(' ', 1)
             try:
@@ -585,14 +587,18 @@ class EI_Quantity(str):
             except ValueError:
                 raise ValueError(f"cannot convert '{quantity}' to quantity")
             quantity = q
-        if not isinstance(quantity, Quantity):
+        elif not isinstance(quantity, Quantity):
             raise TypeError('pint.Quantity required')
         for ei_u in _ei_units:
             if quantity.is_compatible_with(ei_u):
                 return quantity
-            quantity_as_annual = convert_to_annual(quantity, errors='ignore')
-            if quantity_as_annual.is_compatible_with(ei_u):
-                return quantity_as_annual
+        try:
+            quantity_as_annual = convert_to_annual(quantity, errors='raise')
+            for ei_u in _ei_units:
+                if quantity_as_annual.is_compatible_with(ei_u):
+                    return quantity_as_annual
+        except DimensionalityError:
+            pass
         raise DimensionalityError (quantity, str(_ei_units), dim1='', dim2='', extra_msg=f"Dimensionality must be compatible with [{_ei_units}]")
 
     def __repr__(self):
@@ -738,7 +744,9 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
     """
 
     # FIXME: Errors in the imput template can trigger this assertion
-    assert not isinstance(series, pd.DataFrame)
+    if isinstance(series, pd.DataFrame):
+        assert len(series)==1
+        series = series.iloc[0]
 
     if series.dtype != 'O':
         if errors == 'ignore':
