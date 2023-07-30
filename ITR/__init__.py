@@ -4,7 +4,9 @@ portfolios.
 """
 import pandas as pd
 import numpy as np
+import json
 from .data import osc_units
+from .interfaces import EScope
 from . import data
 from . import utils
 from . import temperature_score
@@ -59,3 +61,16 @@ def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
     assert not std.isna().any()
     return pd.Series(data=uarray(nom.values, std.values), index=nom.index, name=nom.name)
 
+def JSONEncoder(q):
+    if isinstance(q, pint.Quantity):
+        if pd.isna(q.m):
+            return f"nan {q.u}"
+        return f"{q:.5f}"
+    elif isinstance(q, EScope):
+        return q.name
+    elif isinstance(q, pd.Series):
+        # Inside the map function NA values become float64 nans and lose their units
+        res = pd.DataFrame(q.map(lambda x: f"nan {q.pint.u}" if isna(x) else f"{x:.5f}"), columns=['value']).reset_index().to_dict('records')
+        return res
+    else:
+        return str(q)

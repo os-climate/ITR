@@ -1,4 +1,4 @@
-`# Go to folder "examples" and run this app with `python ITR_DV.py` and
+# Go to folder "examples" and run this app with `python ITR_DV.py` and
 # visit http://127.0.0.1:8051/ in your web browser
 
 
@@ -27,7 +27,7 @@ import plotly.graph_objects as go
 
 import ITR
 
-from ITR.configs import ITR_median, ITR_mean
+from ITR.configs import ITR_median, ITR_mean, ColumnsConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
@@ -36,10 +36,6 @@ from ITR.data.base_providers import BaseProviderProductionBenchmark, BaseProvide
 from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
 # from ITR.configs import LoggingConfig
-
-import osc_ingest_trino as osc
-from ITR.data.vault_providers import VaultCompanyDataProvider, VaultProviderProductionBenchmark, \
-    VaultProviderIntensityBenchmark, DataVaultWarehouse, requantify_df
 
 from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
 from pint import Quantity
@@ -65,57 +61,9 @@ logger.info("Start!")
 cache = diskcache.Cache("./.webassets-cache")
 background_callback_manager = DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=600)
 
-# Some variables to control whether we use background caching or not.  Cannot use with vault nor breakpoints.
-have_breakpoint = False
-use_data_vault = True
-
 examples_dir ='' #'examples'
 data_dir="data"
 root = os.path.abspath('')
-
-# Set input filename (from commandline or default)
-parser = argparse.ArgumentParser()
-parser.add_argument('file')
-if len(sys.argv)>1:
-    args = parser.parse_args()
-    company_data_path = args.file
-else:
-    company_data_path = os.path.join(root, examples_dir, data_dir, "20220927 ITR V2 Sample Data.xlsx")
-
-# Load environment variables from credentials.env
-osc.load_credentials_dotenv()
-
-ingest_catalog = 'osc_datacommons_dev'
-ingest_schema = 'mdt_sandbox'
-dera_schema = 'dera'
-dera_prefix = 'dera_'
-gleif_schema = 'sandbox'
-rmi_schema = 'rmi'
-rmi_prefix = ''
-iso3166_schema = 'mdt_sandbox'
-essd_schema = 'essd'
-essd_prefix = ''
-demo_schema = 'demo_dv'
-
-itr_prefix = 'template_'
-
-engine = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=demo_schema)
-
-if use_data_vault:
-    vault_company_data = VaultCompanyDataProvider (engine,
-                                                   company_table=f'{itr_prefix}company_data',
-                                                   target_table=None,
-                                                   trajectory_table=None,
-                                                   company_schema=demo_schema,
-                                                   column_config=None)
-
-    vault_warehouse = DataVaultWarehouse(engine,
-                                         company_data=None,
-                                         benchmark_projected_production=None,
-                                         benchmarks_projected_ei=None,
-                                         ingest_schema = demo_schema,
-                                         itr_prefix=itr_prefix,
-                                         column_config=None)
 
 # Production benchmark (there's only one, and we have to stretch it from OECM to cover TPI)
 data_json_units_dir="json-units"
@@ -136,15 +84,68 @@ prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
 base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file))
 
-# Emission intensities
-benchmark_EI_OECM_PC_file = "benchmark_EI_OECM_PC.json"
-benchmark_EI_OECM_S3_file = "benchmark_EI_OECM_S3.json"
-benchmark_EI_OECM_file = "benchmark_EI_OECM.json" # Deprecated!
-benchmark_EI_TPI_15_file = "benchmark_EI_TPI_1_5_degrees.json"
-benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
-benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
-benchmark_EI_TPI_2deg_high_efficiency_file = "benchmark_EI_TPI_2_degrees_high_efficiency.json"
-benchmark_EI_TPI_2deg_shift_improve_file = "benchmark_EI_TPI_2_degrees_shift_improve.json"
+# Set input filename (from commandline or default)
+parser = argparse.ArgumentParser()
+parser.add_argument('file')
+if len(sys.argv)>1:
+    args = parser.parse_args()
+    company_data_path = args.file
+else:
+    company_data_path = os.path.join(root, examples_dir, data_dir, "20220927 ITR V2 Sample Data.xlsx")
+
+# Some variables to control whether we use background caching or not.  Cannot use with vault nor breakpoints.
+have_breakpoint = True
+use_data_vault = True
+
+if use_data_vault:
+    import osc_ingest_trino as osc
+    from ITR.data.vault_providers import VaultCompanyDataProvider, VaultProviderProductionBenchmark, \
+        VaultProviderIntensityBenchmark, DataVaultWarehouse, requantify_df
+
+    # Load environment variables from credentials.env
+    osc.load_credentials_dotenv()
+
+    ingest_catalog = 'osc_datacommons_dev'
+    ingest_schema = 'mdt_sandbox'
+    dera_schema = 'dera'
+    dera_prefix = 'dera_'
+    gleif_schema = 'sandbox'
+    rmi_schema = 'rmi'
+    rmi_prefix = ''
+    iso3166_schema = 'mdt_sandbox'
+    essd_schema = 'essd'
+    essd_prefix = ''
+    demo_schema = 'demo_dv'
+
+    itr_prefix = 'template_'
+
+    engine = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=demo_schema)
+
+    if use_data_vault:
+        vault_company_data = VaultCompanyDataProvider(engine,
+                                                      company_table=f'{itr_prefix}company_data',
+                                                      target_table=None,
+                                                      trajectory_table=None,
+                                                      company_schema=demo_schema,
+                                                      column_config=None)
+
+        vault_warehouse = DataVaultWarehouse(engine,
+                                             company_data=None,
+                                             benchmark_projected_production=None,
+                                             benchmarks_projected_ei=None,
+                                             ingest_schema = demo_schema,
+                                             itr_prefix=itr_prefix,
+                                             column_config=None)
+else:
+    # Emission intensities
+    benchmark_EI_OECM_PC_file = "benchmark_EI_OECM_PC.json"
+    benchmark_EI_OECM_S3_file = "benchmark_EI_OECM_S3.json"
+    benchmark_EI_OECM_file = "benchmark_EI_OECM.json" # Deprecated!
+    benchmark_EI_TPI_15_file = "benchmark_EI_TPI_1_5_degrees.json"
+    benchmark_EI_TPI_file = "benchmark_EI_TPI_2_degrees.json"
+    benchmark_EI_TPI_below_2_file = "benchmark_EI_TPI_below_2_degrees.json"
+    benchmark_EI_TPI_2deg_high_efficiency_file = "benchmark_EI_TPI_2_degrees_high_efficiency.json"
+    benchmark_EI_TPI_2deg_shift_improve_file = "benchmark_EI_TPI_2_degrees_shift_improve.json"
 
 # loading dummy portfolio
 df_portfolio = requantify_df_from_columns(pd.read_excel(company_data_path, sheet_name="Portfolio"))
@@ -221,7 +222,7 @@ def get_co2_per_sector_region_scope(prod_bm, ei_df, sector, region, scope_list) 
         raise ValueError(f"Scope {sector_scope.name} not in benchmark for sector {sector}")
 
     intensity_df = ei_df.loc[(sector, region, sector_scope)]
-    target_year_cum_co2 = base_prod_ser.mul(intensity_df).cumsum().astype('pint[Gt CO2e]')
+    target_year_cum_co2 = base_prod_ser.mul(intensity_df).pint.m_as('Gt CO2e').cumsum().astype('pint[Gt CO2e]')
     return target_year_cum_co2
 
 energy_activities = {'Energy', 'Coal', 'Gas', 'Oil', 'Oil & Gas'}
@@ -263,6 +264,17 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
     Otherwise, caller is responsible for setting SCOPE_LIST to the specific scope requested (and in the TPI case
     this may limit what sectors can be aggregated).
     '''
+
+    # Pandas 2.0.3 and Pint-Pandas 0.4 don't have fully-working EA support for `reduce`.  So do it by hand until Pandas 2.1 and Pint-Pandas 0.5
+    def keepdims_sum(df_elements, pint_type):
+        from packaging import version
+        if version.parse(pd.__version__) < version.parse("2.1") or version.parse(pint_pandas.__version__) < version.parse("0.5"):
+            df = pd.concat(df_elements, axis=1).astype(pint_type)
+            df = df.pint.dequantify().sum(axis=1).astype(pint_type)
+        else:
+            df = pd.concat(df_elements, axis=1).sum(axis=1).astype(pint_type)
+        return df
+        
     energy_sectors = sectors & energy_activities
     utility_sectors = sectors & utility_activities
     end_use_sectors = sectors - energy_sectors - utility_sectors
@@ -275,7 +287,8 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
         if scope_list and (scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]):
             co2_s1s2_elements = try_get_co2(prod_bm, ei_df, sectors, region, [ EScope.S1S2 ] )
             if co2_s1s2_elements:
-                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                # total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                total_co2_s1s2 = keepdims_sum(co2_s1s2_elements, 'pint[Gt CO2e]')
             else:
                 raise ValueError(f"no benchmark emissions for {sectors} in scope")
             if sectors & {'Utilities'}:
@@ -294,17 +307,20 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
                 else:
                     total_co2_s3_elements = try_get_co2(prod_bm, ei_df, utility_sectors, region, [ EScope.S3 ] )
                 if total_co2_s3_elements:
-                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    # total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2_s3 = keepdims_sum(total_co2_s3_elements, 'pint[Gt CO2e]')
                     total_co2 = total_co2 + total_co2_s3
             return total_co2
         # At this point, either scope_list is None, meaning fish out TPI metrics, or S1, S2, or S3, all of which aggregate within activity under OECM
-        return pd.concat( try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+        # return pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+        return keepdims_sum(try_get_co2(prod_bm, ei_df, sectors, region, scope_list), 'pint[Gt CO2e]')
     # Multi-activity case, so SCOPE sets the rules for OECM
     if scope_list:
         if scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]:
             co2_s1s2_elements = try_get_co2(prod_bm, ei_df, sectors, region, [ EScope.S1S2 ] )
             if co2_s1s2_elements:
-                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                # total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                total_co2_s1s2 = keepdims_sum(co2_s1s2_elements, 'pint[Gt CO2e]')
             else:
                 raise ValueError(f"No S1S2 data for sectors {sectors}")
             # Now subtract out the S1 from Power Generation so we don't double-count that
@@ -318,11 +334,13 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
             if EScope.S1S2S3 in scope_list:
                 total_co2_s3_elements = try_get_co2(prod_bm, ei_df, sectors & end_use_s3_activities, region, [ EScope.S3] )
                 if total_co2_s3_elements:
-                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    # total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2_s3 = keepdims_sum(total_co2_s3_elements, 'pint[Gt CO2e]')
                     total_co2 = total_co2.add(total_co2_s3)
             return total_co2
     # Must be S1 or S2 by itself (or scope_list is None, meaning whatever scope can be found).  try_get_co2 will deal with S3 case.
-    total_co2 = pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+    # total_co2 = pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+    total_co2 = keepdims_sum(try_get_co2(prod_bm, ei_df, sectors, region, scope_list), 'pint[Gt CO2e]')
     return total_co2
 
 # nice cheatsheet for managing layout via className attribute: https://hackerthemes.com/bootstrap-cheatsheet/
@@ -823,19 +841,20 @@ app.layout = dbc.Container(  # always start with container
 
     prevent_initial_call=False,)
 def warehouse_new(banner_title):
-    # load company data
+    '''
+    Load initial corporate data file
+    '''
+    logger.info(f"warehouse_new: start")
     if use_data_vault:
         Warehouse = vault_warehouse
-        return ('warehouse',
-                True,
-                "Spin-warehouse")
     else:
         template_company_data = TemplateProviderCompany(company_data_path, projection_controls = ProjectionControls())
         Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
                                   estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
-        return (json.dumps(pickle.dumps(Warehouse), default=str),
-                True,
-                "Spin-warehouse")
+    logger.info(f"warehouse_new: end")
+    return ('warehouse' if use_data_vault else json.dumps(pickle.dumps(Warehouse), default=str),
+            True,
+            "Spin-warehouse")
 
 @dash.callback(
     output=(Output("warehouse-eibm", "data"),        # Warehouse initialized with benchmark
@@ -866,6 +885,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
                 bm_region,
                 "Spin-eibm")
 
+    logger.info(f"recalculate_individual_itr: start")
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]  # to catch which widgets were pressed
     Warehouse = pickle.loads(ast.literal_eval(json.loads(warehouse_pickle_json)))
 
@@ -914,7 +934,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
     elif 'scenarios-cutting' in changed_id or 'projection-method' in changed_id:
         # Trajectories are company-specific, but ultimately do depend on benchmarks (for units/scopes)
         Warehouse.update_trajectories()
-
+    logger.info(f"recalculate_individual_itr: end")
     return (json.dumps(pickle.dumps(Warehouse), default=str),
             show_oecm_bm,
             bm_region,
@@ -1428,6 +1448,7 @@ def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
     '''
     global companies
 
+    logger.info(f"calc_temperature_score: start")
     if use_data_vault:
         # FIXME: need target year!
         sql_query = f"""
@@ -1442,16 +1463,22 @@ select cd.company_id, cd.sector, cd.region, ts.scope, cd.company_name,
        company_revenue, company_market_cap, company_ev as company_enterprise_value, company_evic as company_ev_plus_cash,
        company_total_assets, company_cash_equivalents, company_debt,
        cumulative_budget, cumulative_budget_units,
+       cumulative_budget as cumulative_scaled_budget, cumulative_budget_units as cumulative_scaled_budget_units,
        cumulative_trajectory, cumulative_trajectory_units,
        cumulative_target, cumulative_target_units,
        trajectory_temperature_score as trajectory_score,
-       target_temperature_score as target_score
+       trajectory_overshoot_ratio,  -- dimensionless
+       target_temperature_score as target_score,
+       target_overshoot_ratio,  -- dimensionless
+       format('%.5f %s', (select distinct benchmark_temp from {itr_prefix}benchmark_ei), (select distinct benchmark_temp_units from {itr_prefix}benchmark_ei)) as benchmark_temperature,
+       format('%d %s', (select distinct global_budget from {itr_prefix}benchmark_ei), (select distinct global_budget_units from {itr_prefix}benchmark_ei)) as benchmark_global_budget
 from {itr_prefix}temperature_scores ts
        join {itr_prefix}production_data pd on ts.company_id=pd.company_id
        join {itr_prefix}emissions_data co2 on ts.company_id=co2.company_id
        join {itr_prefix}company_data cd on ts.company_id=cd.company_id
        join {itr_prefix}cumulative_budget_1 cb on ts.company_id=cb.company_id and ts.scope=cb.scope
        join {itr_prefix}cumulative_emissions ce on ts.company_id=ce.company_id and ts.scope=ce.scope
+       join {itr_prefix}overshoot_ratios overshoot on ts.company_id=overshoot.company_id and ts.scope=overshoot.scope
 where pd.year=2019 and co2.year=2019"""
         sql_temp_score_df = pd.read_sql_query(sql_query, engine, index_col='company_id')
         temp_score_df = requantify_df(sql_temp_score_df, typemap={
@@ -1472,12 +1499,14 @@ where pd.year=2019 and co2.year=2019"""
             time_frames = [ETimeFrames.LONG],
             scopes=None, # None means "use the appropriate scopes for the benchmark
             # Options for the aggregation method are WATS, TETS, AOTS, MOTS, EOTS, ECOTS, and ROTS
-        aggregation_method=PortfolioAggregationMethod.WATS
+            aggregation_method=PortfolioAggregationMethod.WATS,
+            budget_column=ColumnsConfig.CUMULATIVE_SCALED_BUDGET if budget_meth=='contraction' else ColumnsConfig.CUMULATIVE_BUDGET,
         )
         df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
         df = df.drop(columns=['historic_data', 'target_data'])
         amended_portfolio = df
-    return (amended_portfolio.to_json(orient='split', default_handler=str),
+    logger.info(f"calc_temperature_score: end")
+    return (amended_portfolio.to_json(orient='split', default_handler=ITR.JSONEncoder),
             "Spin-ts",)
 
 def quantify_col(x, col, unit=None):
@@ -1485,7 +1514,8 @@ def quantify_col(x, col, unit=None):
         return asPintSeries(x[col].map(Q_))
     if not unit.startswith('pint['):
         unit = f"pint[{unit}]"
-    return x[col].map(Q_).astype(unit)
+    # Fix up data coming back from JSON
+    return x[col].map(lambda x: Q_(np.nan, unit[5:-1]) if pd.isna(x) else Q_(x)).astype(unit)
 
 @app.callback(
     Output("co2-usage-vs-budget", "figure"),     # fig1
@@ -1618,7 +1648,10 @@ def update_graph(
 
     # Covered companies analysis; if we pre-filter portfolio-df, then we'll never have "uncovered" companies here
     coverage = filt_df.reset_index('company_id')[['company_id', 'scope', 'ghg_s1s2', 'ghg_s3', 'cumulative_target']]
-    coverage['ghg'] = coverage.apply(lambda x: x.ghg_s1s2+x.ghg_s3 if x.scope==EScope.S1S2S3 else x.ghg_s3 if x.scope==EScope.S3 else x.ghg_s1s2, axis=1).astype('pint[t CO2e]')
+    coverage['ghg'] = coverage.apply(lambda x: (x.ghg_s1s2+x.ghg_s3 if x.ghg_s3 is not pd.NA and not ITR.isnan(x.ghg_s3)
+                                                else np.nan) if x.scope==EScope.S1S2S3
+                                     else x.ghg_s3 if x.scope==EScope.S3
+                                     else x.ghg_s1s2, axis=1).astype('pint[t CO2e]')
     coverage['coverage_category'] = np.where(coverage['ghg'].isnull(),
                                              np.where(ITR.isnan(coverage['cumulative_target'].pint.m), "Not Covered",
                                                       "Covered only<Br>by target"),

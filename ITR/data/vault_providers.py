@@ -479,57 +479,57 @@ class DataVaultWarehouse(DataWarehouse):
         #    * Cumulative target of emissions
         #    * Cumulative budget of emissions (separately for each benchmark)
 
+        #    Basic pattern for window operations (such as cumulative sum)
+        #    select company_id, year, co2_s1_by_year, co2_s1_by_year_units, sum(co2_s1_by_year) over (order by year), co2_s1_by_year_units from template_emissions_data where company_id='096770.SK';
+
         qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}cumulative_emissions", self._engine, verbose=False)
         qres = osc._do_sql(f"""
 create table {self._schema}.{itr_prefix}cumulative_emissions with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2' as scope,
-       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)) * P.production_by_year) as cumulative_trajectory,
+select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2' as scope, P.year,
+       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)) * P.production_by_year) over (order by P.year) as cumulative_trajectory,
        concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_trajectory_units,
-       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) as cumulative_target,
+       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) over (order by P.year) as cumulative_target,
        concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {company_data._schema}.{company_data._target_table} EI on EI.company_id=C.company_id and EI.year=P.year and EI.ei_s1_by_year is not NULL
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_id=C.company_id and ET.year=P.year and ET.ei_s1_by_year is not NULL
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2',
-         concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units),
-         concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units)
 UNION ALL
-select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2S3' as scope,
-       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)+if(is_nan(ET.ei_s3_by_year),0.0,ET.ei_s3_by_year)) * P.production_by_year) as cumulative_trajectory,
+select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2S3' as scope, P.year,
+       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)+if(is_nan(ET.ei_s3_by_year),0.0,ET.ei_s3_by_year)) * P.production_by_year) over (order by P.year) as cumulative_trajectory,
        concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_trajectory_units,
-       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)+if(is_nan(EI.ei_s3_by_year),0.0,EI.ei_s3_by_year)) * P.production_by_year) as cumulative_target,
+       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)+if(is_nan(EI.ei_s3_by_year),0.0,EI.ei_s3_by_year)) * P.production_by_year) over (order by P.year) as cumulative_target,
        concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {company_data._schema}.{company_data._target_table} EI on EI.company_id=C.company_id and EI.year=P.year and EI.ei_s1_by_year is not NULL
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_id=C.company_id and ET.year=P.year and ET.ei_s1_by_year is not NULL
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2S3',
-         concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units),
-         concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units)
 """, self._engine, verbose=True)
 
-        qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}cumulative_budget_1", self._engine, verbose=False)
+        qres = osc._do_sql(f"drop table if exists {self._schema}.{itr_prefix}cumulative_budgets", self._engine, verbose=False)
         qres = osc._do_sql(f"""
-create table {self._schema}.{itr_prefix}cumulative_budget_1 with (
+create table {self._schema}.{itr_prefix}cumulative_budgets with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select C.company_name, C.company_id, '{company_data._schema}' as source, B.scope, 'benchmark_1' as benchmark,
+select C.company_name, C.company_id, '{company_data._schema}' as source, B.scope, P.year,  -- FIXME: should have scenario_name and year released
        B.global_budget, B.benchmark_temp,
-       sum(B.intensity * P.production_by_year) as cumulative_budget,
-       concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_budget_units
+       sum(B.intensity * P.production_by_year) over (order by P.year) as cumulative_budget,
+       concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_budget_units,
+       (CE_BY.cumulative_trajectory/coalesce(B_BY.intensity * P_BY.production_by_year,0)) * sum(B.intensity * P.production_by_year) over (order by P.year) as cumulative_scaled_budget,
+       concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_scaled_budget_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {self._schema}.{benchmarks_projected_ei.benchmark_name} B on P.year=B.year and C.region=B.region and C.sector=B.sector
+     join {self._schema}.{itr_prefix}cumulative_emissions CE_BY on CE_BY.company_id=C.company_id and B.scope=CE_BY.scope and CE_BY.year=2019
+     join {company_data._schema}.{company_data._production_table} P_BY on P_BY.company_id=C.company_id and CE_BY.year=P_BY.year
+     join {self._schema}.{benchmarks_projected_ei.benchmark_name} B_BY on CE_BY.year=B_BY.year and C.region=B_BY.region and C.sector=B_BY.sector
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', B.scope, 'benchmark_1', B.global_budget, B.benchmark_temp,
-         concat(B.intensity_units, ' * ', P.production_by_year_units)
 """, self._engine, verbose=True)
 
     def quant_init(self,
@@ -547,14 +547,14 @@ create table {self._schema}.{itr_prefix}overshoot_ratios with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select E.company_name, E.company_id, '{company_data._schema}' as source, B.scope, 'benchmark_1' as benchmark,
+select E.company_name, E.company_id, '{company_data._schema}' as source, B.scope, B.year, -- FIXME: should have scenario_name and year released
        B.global_budget, B.benchmark_temp,
        E.cumulative_trajectory/B.cumulative_budget as trajectory_overshoot_ratio,
        concat(E.cumulative_trajectory_units, ' / (', B.cumulative_budget_units, ')') as trajectory_overshoot_ratio_units,
        E.cumulative_target/B.cumulative_budget as target_overshoot_ratio,
        concat(E.cumulative_target_units, ' / (', B.cumulative_budget_units, ')') as target_overshoot_ratio_units
 from {self._schema}.{itr_prefix}cumulative_emissions E
-     join {self._schema}.{itr_prefix}cumulative_budget_1 B on E.company_id=B.company_id and E.scope=B.scope
+     join {self._schema}.{itr_prefix}cumulative_budgets B on E.company_id=B.company_id and E.scope=B.scope and E.year=B.year
 """, self._engine, verbose=True)
 
         qres = osc._do_sql(f"drop table if exists {self._schema}.{self._tempscore_table}", self._engine, verbose=False)
@@ -563,7 +563,7 @@ create table {self._schema}.{self._tempscore_table} with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select R.company_name, R.company_id, '{company_data._schema}' as source, R.scope, 'benchmark_1' as benchmark,
+select R.company_name, R.company_id, '{company_data._schema}' as source, R.scope,   -- FIXME: should have scenario_name and year released
        R.benchmark_temp + R.global_budget * (R.trajectory_overshoot_ratio-1) * 2.2/3664.0 as trajectory_temperature_score,
        'delta_degC' as trajectory_temperature_score_units,
        R.benchmark_temp + R.global_budget * (R.target_overshoot_ratio-1) * 2.2/3664.0 as target_temperature_score,

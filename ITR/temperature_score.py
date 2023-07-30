@@ -23,6 +23,9 @@ LoggingConfig.add_config_to_logger(logger)
 from . import utils
 from .data.data_warehouse import DataWarehouse
 
+nan_delta_degC = Q_(pd.NA, "delta_degC")
+nan_dimensionless = Q_(pd.NA, "dimensionless")
+
 class TemperatureScore(PortfolioAggregation):
     """
     This class is provides a temperature score based on the climate goals.
@@ -65,12 +68,12 @@ class TemperatureScore(PortfolioAggregation):
         if (ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
             ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
                 scorable_row[self.budget_column].m <= 0:
-            return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
+            return self.get_default_score(scorable_row), nan_delta_degC, nan_dimensionless, nan_delta_degC, nan_dimensionless, EScoreResultType.DEFAULT
 
         # If only target data missing assign only trajectory_score to final score
         elif ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
-            target_overshoot_ratio = np.nan
-            target_temperature_score = np.nan
+            target_overshoot_ratio = nan_dimensionless
+            target_temperature_score = nan_delta_degC
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[self.budget_column]
             trajectory_temperature_score = scorable_row[self.c.COLS.BENCHMARK_TEMP] + \
                 (scorable_row[self.c.COLS.BENCHMARK_GLOBAL_BUDGET] * (trajectory_overshoot_ratio - 1.0) *
