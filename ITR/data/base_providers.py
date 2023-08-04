@@ -939,7 +939,7 @@ class EITrajectoryProjector(EIProjector):
 
     def _get_trends(self, intensities_t: pd.DataFrame):
         # FIXME: rolling windows require conversion to float64.  Don't want to be a nuisance...
-        intensities_t = intensities_t.apply(lambda col: col if col.dtype==np.float64 else ITR.nominal_values(col).astype(np.float64))
+        intensities_t = intensities_t.apply(lambda col: col if col.dtype==np.float64 else ITR.nominal_values(col.fillna(np.nan)).astype(np.float64))
         # FIXME: Pandas 2.1
         # Treat NaN ratios as "unchnaged year on year"
             # FIXME Could we ever have UFloat NaNs here?  np.nan is valid UFloat.

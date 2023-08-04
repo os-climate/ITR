@@ -645,7 +645,7 @@ class DataWarehouse(ABC):
                             * Q_(1, ei_pint.iloc[0].u * pp_pint.iloc[0].u).to('t CO2e').m))
         if ITR.HAS_UNCERTAINTIES:
             # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
-            if projected_t_CO2e_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x) and x.u != 0).any().any():
+            if projected_CO2e_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x) and x.u != 0).any().any():
                 breakpoint()
             # Sum both the nominal and std_dev values, because these series are completely correlated
             nom_CO2e_t = projected_CO2e_t.apply(lambda x: ITR.nominal_values(x)).cumsum()
