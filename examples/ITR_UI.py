@@ -182,7 +182,7 @@ def get_co2_per_sector_region_scope(prod_bm, ei_df, sector, region, scope_list) 
         raise ValueError(f"Scope {sector_scope.name} not in benchmark for sector {sector}")
 
     intensity_df = ei_df.loc[(sector, region, sector_scope)]
-    target_year_cum_co2 = base_prod_ser.mul(intensity_df).cumsum().astype('pint[Gt CO2e]')
+    target_year_cum_co2 = base_prod_ser.mul(intensity_df).pint.m_as('Gt CO2e').cumsum().astype('pint[Gt CO2e]')
     return target_year_cum_co2
 
 energy_activities = {'Energy', 'Coal', 'Gas', 'Oil', 'Oil & Gas'}
@@ -788,7 +788,7 @@ def warehouse_new(banner_title):
     template_company_data = TemplateProviderCompany(company_data_path, projection_controls = ProjectionControls())
     Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
                               estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
-    return (json.dumps(pickle.dumps(Warehouse), default=str),
+    return (json.dumps(pickle.dumps(Warehouse), default=ITR.JSONEncoder),
             True,
             "Spin-warehouse")
 
@@ -863,7 +863,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
         # Trajectories are company-specific, but ultimately do depend on benchmarks (for units/scopes)
         Warehouse.update_trajectories()
 
-    return (json.dumps(pickle.dumps(Warehouse), default=str),
+    return (json.dumps(pickle.dumps(Warehouse), default=ITR.JSONEncoder),
             show_oecm_bm,
             bm_region,
             "Spin-eibm")
@@ -940,7 +940,7 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
         scope = ''
 
     return (
-        json.dumps(pickle.dumps(Warehouse), default=str),
+        json.dumps(pickle.dumps(Warehouse), default=ITR.JSONEncoder),
         json.dumps([{"label": i, "value": i} for i in sorted(pf_bm_sectors)] + [{'label': 'All Sectors', 'value': ''}]),
         sector,
         json.dumps([{"label": i, "value": i} for i in sorted(pf_bm_regions)] + [{'label': 'All Regions', 'value': ''}]),
@@ -1357,15 +1357,15 @@ def calc_temperature_score(warehouse_pickle_json, budget_meth, *_):
     df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
     df = df.drop(columns=['historic_data', 'target_data'])
     amended_portfolio = df
-    return (amended_portfolio.to_json(orient='split', default_handler=str),
+    return (amended_portfolio.to_json(orient='split', default_handler=ITR.JSONEncoder),
             "Spin-ts",)
 
-def quantify_col(x, col, unit=None):
+def quantify_col(df: pd.DataFrame, col: str, unit=None):
     if unit is None:
-        return asPintSeries(x[col].map(Q_))
+        return asPintSeries(df[col].map(Q_))
     if not unit.startswith('pint['):
         unit = f"pint[{unit}]"
-    return x[col].map(Q_).astype(unit)
+    return df[col].fillna(f"nan {unit[5:-1]}").map(Q_).astype(unit)
 
 @app.callback(
     Output("co2-usage-vs-budget", "figure"),     # fig1

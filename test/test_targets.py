@@ -3,6 +3,7 @@ import json
 import os
 import re
 import pandas as pd
+import numpy as np
 from numpy.testing import assert_array_equal
 
 import ITR
@@ -850,28 +851,35 @@ class TestTargets(unittest.TestCase):
 
         co_pp = bm_production_data.droplevel('scope')
 
+        def _pint_cumsum(ser: pd.Series) -> pd.Series:
+            return ser.pint.m.cumsum().astype(ser.dtype)
+
         # fig = px.line(df, x='id', y='value', color='variable')
         target_dict = {
             f"Target: {c.company_id} - {c.company_name}": compute_scope_targets (c, 'projected_targets', co_pp.columns)
             for c in company_data
         }
         target_cumulative = {
-            f"TargetCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id].mul(
-                target_dict[f"Target: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).cumsum() for c in company_data
+            f"TargetCumulative: {c.company_id} - {c.company_name}":
+            _pint_cumsum (co_pp.loc[c.company_id].mul(
+                target_dict[f"Target: {c.company_id} - {c.company_name}"].loc[co_pp.columns]))
+            for c in company_data
         }
         trajectory_dict = {
             f"Trajectory: {c.company_id} - {c.company_name}": compute_scope_targets (c, 'projected_intensities', co_pp.columns)
             for c in company_data
         }
         trajectory_cumulative = {
-            f"TrajectoryCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id].mul(
-                trajectory_dict[f"Trajectory: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).cumsum() for c in company_data
+            f"TrajectoryCumulative: {c.company_id} - {c.company_name}":
+            _pint_cumsum (co_pp.loc[c.company_id].mul(
+                trajectory_dict[f"Trajectory: {c.company_id} - {c.company_name}"].loc[co_pp.columns]))
+            for c in company_data
         }
         target_df = asPintDataFrame(pd.concat([pd.DataFrame(target_dict), pd.DataFrame(target_cumulative).astype('pint[Mt CO2e]'),
                                                pd.DataFrame(trajectory_dict), pd.DataFrame(trajectory_cumulative).astype('pint[Mt CO2e]')], axis=1))
         dequantified_df = target_df.pint.dequantify().droplevel(1, axis=1)
-        # May have uncertainties...
-        dequantified_df = dequantified_df.apply(lambda col: col if col.dtype=='float64' else ITR.nominal_values(col))
+        # May have uncertainties...or some columns may be Float64
+        dequantified_df = dequantified_df.apply(lambda col: col if col.dtype=='float64' else ITR.nominal_values(col).astype(np.float64))
         fig_target = px.line(dequantified_df, y=dequantified_df.filter(regex="Target:").columns)
         fig_trajectory = px.line(dequantified_df, y=dequantified_df.filter(regex="Trajectory:").columns)
         fig_trajectory.update_traces(line={'dash':'dash'})
