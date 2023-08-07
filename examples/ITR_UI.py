@@ -27,14 +27,14 @@ import plotly.graph_objects as go
 
 import ITR
 
-from ITR.configs import ITR_median, ITR_mean, ColumnsConfig
+from ITR.configs import ITR_median, ITR_mean, ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
 
 from ITR.data.base_providers import BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
 from ITR.data.template import TemplateProviderCompany
-from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls, TemperatureScoreConfig
+from ITR.interfaces import EScope, ETimeFrames, EScoreResultType, IEIBenchmarkScopes, IProductionBenchmarkScopes, ProjectionControls
 # from ITR.configs import LoggingConfig
 
 from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns

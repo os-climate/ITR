@@ -15,7 +15,7 @@ import ITR
 from ITR.data.osc_units import ureg, Q_, M_, PA_, \
     BenchmarkMetric, BenchmarkQuantity, ProductionMetric, ProductionQuantity, EmissionsMetric, EmissionsQuantity, EI_Metric, EI_Quantity, \
     MonetaryQuantity, quantity
-from ITR.configs import ProjectionControls, LoggingConfig, TemperatureScoreConfig
+from ITR.configs import ProjectionControls, LoggingConfig
 
 import logging
 logger = logging.getLogger(__name__)

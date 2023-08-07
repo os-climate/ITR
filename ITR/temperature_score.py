@@ -229,7 +229,7 @@ class TemperatureScore(PortfolioAggregation):
     def calculate(self, data: Optional[pd.DataFrame] = None,
                   data_warehouse: Optional[DataWarehouse] = None,
                   portfolio: Optional[List[PortfolioCompany]] = None,
-                  target_probability: Optional[float] = TemperatureScoreConfig.CONTROLS_CONFIG.target_probability):
+                  target_probability: Optional[float] = None):
         """
         Calculate the temperature for a dataframe of company data. The columns in the data frame should be a combination
         of IDataProviderTarget and IDataProviderCompany.
@@ -241,6 +241,8 @@ class TemperatureScore(PortfolioAggregation):
         """
         if portfolio is not None:
             logger.info(f"calculating temperature score for {len(portfolio)} companies")
+        if target_probability is None:
+            target_probability = TemperatureScoreConfig.CONTROLS_CONFIG.target_probability
         if data is None:
             if data_warehouse is not None and portfolio is not None:
                 data = utils.get_data(data_warehouse, portfolio)
