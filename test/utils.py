@@ -20,7 +20,8 @@ class ITR_Encoder(json.JSONEncoder):
             return q.value
         elif isinstance(q, pd.Series):
             # Inside the map function NA values become float64 nans and lose their units
-            res = pd.DataFrame(q.map(lambda x: f"nan {q.pint.u}" if ITR.isna(x) else f"{x:.5f}"), columns=['value']).reset_index().to_dict('records')
+            ser = q.map(lambda x: f"nan {q.pint.u}" if ITR.isna(x) else f"{x:.5f}")
+            res = pd.DataFrame(data={'year': ser.index, 'value': ser.values}).to_dict('records')
             return res
         else:
             super().default(q)
