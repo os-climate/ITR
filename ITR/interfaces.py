@@ -491,7 +491,9 @@ class ICompanyData(BaseModel):
 
     sector: str  # TODO: make SortableEnums
     region: str  # TODO: make SortableEnums
-    target_probability: float = 0.5
+    # TemperatureScoreConfig.CONTROLS_CONFIG.target_probability is not company-specific,
+    # while target_probability in ICompanyData is company-specific
+    target_probability: float = np.nan
 
     target_data: Optional[List[ITargetData]]
     historic_data: Optional[IHistoricData] # IHistoric data can contain None values; need to convert to Quantified NaNs
