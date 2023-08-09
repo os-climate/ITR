@@ -945,7 +945,7 @@ class EITrajectoryProjector(EIProjector):
             # FIXME Could we ever have UFloat NaNs here?  np.nan is valid UFloat.
         ratios_t: pd.DataFrame = intensities_t.rolling(window=2, axis='index', closed='right') \
                                               .apply(func=self._year_on_year_ratio, raw=True)
-        ratios_t = ratios_t.apply(lambda col: col.fillna(0) if all(col.map(lambda x: pd.isna(x))) else col)
+        ratios_t = ratios_t.apply(lambda col: col.fillna(0) if all(col.map(lambda x: ITR.isna(x))) else col)
 
         # # Add weight to trend movements across multiple years (normalized to year-over-year, not over two years...)
         # # FIXME: we only want to do this for median, not mean.

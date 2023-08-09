@@ -758,7 +758,7 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
         else:
             raise ValueError ("Series not dtype('O')")
     # NA_VALUEs are true NaNs, missing units
-    na_values = pd.isna(series)
+    na_values = ITR.isna(series)
     units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)
     unit_first_idx = units.first_valid_index()
     if unit_first_idx is None:

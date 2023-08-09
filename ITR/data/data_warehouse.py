@@ -12,7 +12,7 @@ from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, \
     ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, \
     DF_ICompanyEIProjections, IHistoricData
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, ProjectionControls
+from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls
 
 import logging
 logger = logging.getLogger(__name__)

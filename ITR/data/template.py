@@ -203,9 +203,9 @@ s3_category_rdict = {
 }
 s3_category_dict = { v.lower():k for k, v in s3_category_rdict.items() }
 
-def maybe_other_s3_mappings(x):
+def maybe_other_s3_mappings(x: str):
     if pd.isna(x):
-        return x;
+        return ''
     if isinstance(x, int):
         return str(x)
     if (m := re.match(r'^Cat (\d+):', x, flags=re.IGNORECASE)):
@@ -326,7 +326,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             for idx in df5.index:
                 # FIXME: There's got to be a better way...
                 unit = str(df_esg.loc[idx].ffill().iloc[-1].u)
-                if pd.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC]):
+                if ITR.isna(df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC]):
                     df_fundamentals.loc[df_esg.loc[idx].company_id, ColumnsConfig.EMISSIONS_METRIC] = unit
                 df_esg.loc[idx, 'unit'] = unit
         return df_esg

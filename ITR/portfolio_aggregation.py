@@ -11,6 +11,7 @@ import pandas as pd
 import pint
 import pint_pandas
 
+import ITR
 from .data.osc_units import asPintSeries, Q_, PA_
 from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
 
@@ -87,7 +88,7 @@ class PortfolioAggregation(ABC):
         :param column: The column to check
         :return:
         """
-        missing_data = data[pd.isna(data[column])][self.c.COLS.COMPANY_NAME].unique()
+        missing_data = data[ITR.isna(data[column])][self.c.COLS.COMPANY_NAME].unique()
         if len(missing_data):
             logger.error(f"The value for {column} is missing for the following companies: {', '.join(missing_data)}")
 
