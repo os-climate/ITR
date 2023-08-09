@@ -2,22 +2,29 @@
 This package helps companies and financial institutions to assess the temperature alignment of investment and lending
 portfolios.
 """
+import warnings
 import pandas as pd
 import numpy as np
+import json
 from .data import osc_units
+from .interfaces import EScope
 from . import data
 from . import utils
 from . import temperature_score
 import pint
+from pint_pandas import PintType, PintArray
 
 try:
+    # Even if we have uncertainties available as a module, we don't have the right version of pint
+    if hasattr(pint.compat, 'tokenizer'):
+        raise AttributeError
     from uncertainties import ufloat, UFloat
     from uncertainties.unumpy import uarray, isnan, nominal_values, std_devs
     from .utils import umean
-    HAS_UNCERTAINTIES = True
     _ufloat_nan = ufloat(np.nan, 0.0)
     pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
-except (ImportError, ModuleNotFoundError):
+    HAS_UNCERTAINTIES = True
+except (ImportError, ModuleNotFoundError, AttributeError):
     HAS_UNCERTAINTIES = False
     from numpy import isnan
     from statistics import mean
@@ -26,15 +33,26 @@ except (ImportError, ModuleNotFoundError):
         return x
 
     def std_devs(x):
-        if isinstance(x, float):
-            return 0
-        return [0] * len(x)
+        if hasattr(x, '__len__'):
+            return [0] * len(x)
+        return 0
 
     def uarray(nom_vals, std_devs):
         return nom_vals
 
     def umean(unquantified_data):
         return mean(unquantified_data)
+
+def isna(x):
+    '''
+    True if X is either a NaN-like Quantity or otherwise NA-like
+    '''
+    # This function simplifies dealing with NA vs. NaN quantities and magnitudes inside and outside of PintArrays
+    if isinstance(x, pint.Quantity):
+        x = x.m
+    if HAS_UNCERTAINTIES and isinstance(x, UFloat):
+        return isnan(x)
+    return pd.isna(x)
 
 def Q_m_as(value, units, inplace=False):
     '''
@@ -52,10 +70,28 @@ def Q_m_as(value, units, inplace=False):
         return x.m
     return x.to(units).m
 
+
 def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
+    '''
+    A Pandas-friendly way to combine nominal and error terms for uncertainties
+    '''
     assert HAS_UNCERTAINTIES
     if std.sum()==0:
         return nom
-    assert not std.isna().any()
-    return pd.Series(data=uarray(nom.values, std.values), index=nom.index, name=nom.name)
+    return pd.Series(data=uarray(nom.values, np.where(nom.notna(), std.values, 0)), index=nom.index, name=nom.name)
 
+
+def JSONEncoder(q):
+    if isinstance(q, pint.Quantity):
+        if isna(q.m):
+            return f"nan {q.u}"
+        return f"{q:.5f}"
+    elif isinstance(q, EScope):
+        return q.name
+    elif isinstance(q, pd.Series):
+        # Inside the map function NA values become float64 nans and lose their units
+        ser = q.map(lambda x: f"nan {q.pint.u}" if isna(x) else f"{x:.5f}")
+        res = pd.DataFrame(data={'year': ser.index, 'value': ser.values}).to_dict('records')
+        return res
+    else:
+        return str(q)

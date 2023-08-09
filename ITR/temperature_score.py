@@ -61,13 +61,13 @@ class TemperatureScore(PortfolioAggregation):
                         TARGET_SCORE, TARGET_OVERSHOOT, TEMPERATURE_RESULTS])
         """
         # If both trajectory and target data missing assign default value
-        if (ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
-            ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
+        if (ITR.isna(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) and
+            ITR.isna(scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY])) or \
                 scorable_row[self.budget_column].m <= 0:
             return self.get_default_score(scorable_row), np.nan, np.nan, np.nan, np.nan, EScoreResultType.DEFAULT
 
         # If only target data missing assign only trajectory_score to final score
-        elif ITR.isnan(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
+        elif ITR.isna(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
             target_overshoot_ratio = np.nan
             target_temperature_score = np.nan
             trajectory_overshoot_ratio = scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[self.budget_column]
@@ -89,7 +89,7 @@ class TemperatureScore(PortfolioAggregation):
                     self.c.CONTROLS_CONFIG.tcre_multiplier)
 
             # If trajectory data has run away (because trajectory projections are positive, not negative, use only target results
-            if trajectory_overshoot_ratio > 10.0 or ITR.isnan(trajectory_temperature_score):
+            if trajectory_overshoot_ratio > 10.0 or ITR.isna(trajectory_temperature_score):
                 score = target_temperature_score
                 score_result_type = EScoreResultType.TARGET_ONLY
             else:

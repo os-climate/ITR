@@ -235,7 +235,7 @@ ureg.define("Fe_ton = t Steel")
 # List of all the production units we know
 _production_units = [ "Wh", "pkm", "tkm", "bcm CH4", "bbl", "boe", 't Alloys', "t Aluminum", "t Cement", "t Coal", "t Copper",
                       "t Paper", "t Steel", "USD", "m**2", 't Biofuel', 't Petrochemicals', 't Petroleum' ]
-_ei_units = [f"t CO2/({pu})" if ' ' in pu else f"t CO2/{pu}" for pu in _production_units]
+_ei_units = [f"t CO2e/({pu})" if ' ' in pu else f"t CO2e/{pu}" for pu in _production_units]
 
 class ProductionMetric(str):
     """
@@ -758,7 +758,7 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
         else:
             raise ValueError ("Series not dtype('O')")
     # NA_VALUEs are true NaNs, missing units
-    na_values = series.isna()
+    na_values = ITR.isna(series)
     units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)
     unit_first_idx = units.first_valid_index()
     if unit_first_idx is None:

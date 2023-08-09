@@ -7,12 +7,12 @@ from typing import List, Type
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame
+from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame, EmissionsQuantity, quantity
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, \
     ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, \
     DF_ICompanyEIProjections, IHistoricData
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, IntensityBenchmarkDataProvider
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig, ProjectionControls
+from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls
 
 import logging
 logger = logging.getLogger(__name__)
@@ -242,7 +242,7 @@ class DataWarehouse(ABC):
             for c in self.company_data._companies:
                 if c.ghg_s3:
                     # For Production-centric and energy-only data (except for Cement), convert all S3 numbers to S1 numbers
-                    if not ITR.isnan(c.ghg_s3.m):
+                    if not ITR.isna(c.ghg_s3):
                         c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
                     c.ghg_s3 = None # Q_(0.0, c.ghg_s3.u)
                 if c.historic_data:
@@ -472,6 +472,84 @@ class DataWarehouse(ABC):
         logger.info(f"Added S3 estimates for {company.company_id} (sector = {sector}, region = {region})")
 
 
+    @classmethod
+    def _process_company_data(
+            cls,
+            df_company_data: pd.DataFrame,
+            projected_production: pd.DataFrame,
+            projected_trajectories: pd.DataFrame,
+            projected_targets: pd.DataFrame,
+            base_year: int,
+            target_year: int,
+            budgeted_ei: pd.DataFrame,
+            benchmark_temperature: quantity('delta_degC'),
+            global_budget: EmissionsQuantity,
+    ) -> pd.DataFrame:
+        # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
+        # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?  Answer: because the following is inscrutible
+        # (lambda xx: pd.DataFrame(data=list(xx.map(lambda x: { 'scope': x.name } | x.to_dict())), index=xx.index)) \
+        #     (df_company_data.projected_intensities
+        #      .map(lambda x: [pd.Series(x[scope]['projections'], name=getattr(EScope, scope))
+        #                      for scope in ['S1', 'S1S2', 'S3', 'S1S2S3']
+        #                      if x[scope] is not None]).explode()).set_index('scope', append=True)
+
+        # If we have excess projections (compared to projected_production), _get_cumulative_emissions will drop them
+        df_trajectory = DataWarehouse._get_cumulative_emissions(
+            projected_ei=projected_trajectories,
+            projected_production=projected_production)
+
+        # Ensure we haven't set any targets for scopes we are not prepared to deal with
+        projected_targets = projected_targets.loc[projected_production.index.intersection(projected_targets.index)]
+        # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
+        for year_col, company_ei_data in projected_targets.items():
+            # company_ei_data is an unruly collection of unit types, so need to check NaN values row by row
+            mask = company_ei_data.apply(lambda x: ITR.isna(x))
+            if mask.all():
+                # No sense trying to do anything with left-side all-NaN columns
+                projected_targets = projected_targets.drop(columns=year_col)
+                continue
+            if mask.any():
+                projected_targets.loc[mask[mask].index, year_col] = projected_trajectories.loc[mask[mask].index, year_col]
+            else:
+                break
+
+        df_target = DataWarehouse._get_cumulative_emissions(
+            projected_ei=projected_targets,
+            projected_production=projected_production)
+        df_budget = DataWarehouse._get_cumulative_emissions(
+            projected_ei=budgeted_ei,
+            projected_production=projected_production)
+        base_year_scale = df_trajectory.loc[df_budget.index][base_year].mul(
+            df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m==0.0 else 1/x))
+        df_scaled_budget = df_budget.mul(base_year_scale, axis=0)
+        # FIXME: we calculate exceedance only against df_budget, not also df_scaled_budget
+        # df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR, None)
+        # df_target_exceedance = self._get_exceedance_year(df_target, df_budget, self.company_data.projection_controls.TARGET_YEAR, None)
+        df_trajectory_exceedance = DataWarehouse._get_exceedance_year(df_trajectory, df_budget, base_year, target_year, target_year)
+        df_target_exceedance = DataWarehouse._get_exceedance_year(df_target, df_budget, base_year, target_year, target_year)
+        df_scope_data = pd.concat([df_trajectory.iloc[:, -1].rename(ColumnsConfig.CUMULATIVE_TRAJECTORY),
+                                   df_target.iloc[:, -1].rename(ColumnsConfig.CUMULATIVE_TARGET),
+                                   df_budget.iloc[:, -1].rename(ColumnsConfig.CUMULATIVE_BUDGET),
+                                   df_scaled_budget.iloc[:, -1].rename(ColumnsConfig.CUMULATIVE_SCALED_BUDGET),
+                                   df_trajectory_exceedance.rename(f"{ColumnsConfig.TRAJECTORY_EXCEEDANCE_YEAR}"),
+                                   df_target_exceedance.rename(f"{ColumnsConfig.TARGET_EXCEEDANCE_YEAR}")],
+                                  axis=1)
+        df_company_data = df_company_data.join(df_scope_data).reset_index('scope')
+        na_company_mask = df_company_data.scope.isna()
+        if na_company_mask.any():
+            # Happens when the benchmark doesn't cover the company's supplied scopes at all
+            logger.warning(
+                f"Dropping companies with no scope data: {df_company_scope[na_company_mask].index.get_level_values(level='company_id').to_list()}"
+            )
+            df_company_data = df_company_data[~na_company_mask]
+        df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = \
+            pd.Series(PA_([global_budget.m] * len(df_company_data), dtype=str(global_budget.u)),
+                      index=df_company_data.index)
+        # ICompanyAggregates wants this Quantity as a `str`
+        df_company_data[ColumnsConfig.BENCHMARK_TEMP] = [str(benchmark_temperature)] * len(df_company_data)
+        return df_company_data
+
+
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         """
         Get all relevant data for a list of company ids. This method should return a list of ICompanyAggregates
@@ -496,72 +574,17 @@ class DataWarehouse(ABC):
             target_year_loc = projected_production.columns.get_loc(self.company_data.projection_controls.TARGET_YEAR)
             projected_production = projected_production.iloc[:, 0:target_year_loc+1]
 
-        # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
-        # FIXME: we just computed ALL company data above into a dataframe.  Why not use that?  Answer: because the following is inscrutible
-        # (lambda xx: pd.DataFrame(data=list(xx.map(lambda x: { 'scope': x.name } | x.to_dict())), index=xx.index)) \
-        #     (df_company_data.projected_intensities
-        #      .map(lambda x: [pd.Series(x[scope]['projections'], name=getattr(EScope, scope))
-        #                      for scope in ['S1', 'S1S2', 'S3', 'S1S2S3']
-        #                      if x[scope] is not None]).explode()).set_index('scope', append=True)
-        projected_trajectories = self.company_data.get_company_projected_trajectories(valid_company_ids)
-        # If we have excess projections (compared to projected_production), _get_cumulative_emissions will drop them
-        df_trajectory = self._get_cumulative_emissions(
-            projected_ei=projected_trajectories,
-            projected_production=projected_production)
+        df_company_data = self._process_company_data(
+            df_company_data,
+            projected_production=projected_production,
+            projected_trajectories=self.company_data.get_company_projected_trajectories(valid_company_ids),
+            projected_targets=self.company_data.get_company_projected_targets(valid_company_ids),
+            base_year=self.company_data.projection_controls.BASE_YEAR,
+            target_year=self.company_data.projection_controls.TARGET_YEAR,
+            budgeted_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year),
+            benchmark_temperature=self.benchmarks_projected_ei.benchmark_temperature,
+            global_budget=self.benchmarks_projected_ei.benchmark_global_budget)
 
-        projected_targets = self.company_data.get_company_projected_targets(valid_company_ids)
-        # Ensure we haven't set any targets for scopes we are not prepared to deal with
-        projected_targets = projected_targets.loc[projected_production.index.intersection(projected_targets.index)]
-        # Fill in ragged left edge of projected_targets with historic data, interpolating where we need to
-        for year_col, company_ei_data in projected_targets.items():
-            # company_ei_data is an unruly collection of unit types, so need to check NaN values row by row
-            mask = company_ei_data.apply(lambda x: ITR.isnan(x.m))
-            if mask.all():
-                # No sense trying to do anything with left-side all-NaN columns
-                projected_targets = projected_targets.drop(columns=year_col)
-                continue
-            if mask.any():
-                projected_targets.loc[mask[mask].index, year_col] = projected_trajectories.loc[mask[mask].index, year_col]
-            else:
-                break
-
-        df_target = self._get_cumulative_emissions(
-            projected_ei=projected_targets,
-            projected_production=projected_production)
-        budgeted_ei=self.benchmarks_projected_ei.get_SDA_intensity_benchmarks(company_info_at_base_year)
-        df_budget = self._get_cumulative_emissions(
-            projected_ei=budgeted_ei,
-            projected_production=projected_production)
-        base_year = self.company_data.projection_controls.BASE_YEAR
-        base_year_scale = df_trajectory.loc[df_budget.index][base_year].mul(
-            df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m==0.0 else 1/x))
-        df_scaled_budget = df_budget.mul(base_year_scale, axis=0)
-        # FIXME: we calculate exceedance only against df_budget, not also df_scaled_budget
-        # df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, None)
-        # df_target_exceedance = self._get_exceedance_year(df_target, df_budget, None)
-        df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR)
-        df_target_exceedance = self._get_exceedance_year(df_target, df_budget, self.company_data.projection_controls.TARGET_YEAR)
-        df_scope_data = pd.concat([df_trajectory.iloc[:, -1].rename(self.column_config.CUMULATIVE_TRAJECTORY),
-                                   df_target.iloc[:, -1].rename(self.column_config.CUMULATIVE_TARGET),
-                                   df_budget.iloc[:, -1].rename(self.column_config.CUMULATIVE_BUDGET),
-                                   df_scaled_budget.iloc[:, -1].rename(self.column_config.CUMULATIVE_SCALED_BUDGET),
-                                   df_trajectory_exceedance.rename(f"{self.column_config.TRAJECTORY_EXCEEDANCE_YEAR}"),
-                                   df_target_exceedance.rename(f"{self.column_config.TARGET_EXCEEDANCE_YEAR}")],
-                                  axis=1)
-        df_company_data = df_company_data.join(df_scope_data).reset_index('scope')
-        na_company_mask = df_company_data.scope.isna()
-        if na_company_mask.any():
-            # Happens when the benchmark doesn't cover the company's supplied scopes at all
-            logger.warning(
-                f"Dropping companies with no scope data: {df_company_scope[na_company_mask].index.get_level_values(level='company_id').to_list()}"
-            )
-            df_company_data = df_company_data[~na_company_mask]
-        global_budget = self.benchmarks_projected_ei.benchmark_global_budget
-        df_company_data[self.column_config.BENCHMARK_GLOBAL_BUDGET] = \
-            pd.Series(PA_([global_budget.m] * len(df_company_data), dtype=str(global_budget.u)),
-                      index=df_company_data.index)
-        # ICompanyAggregates wants this Quantity as a `str`
-        df_company_data[self.column_config.BENCHMARK_TEMP] = [str(self.benchmarks_projected_ei.benchmark_temperature)] * len(df_company_data)
         companies = df_company_data.to_dict(orient="records")
         # This was WICKED SLOW: aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
         aggregate_company_data = [ICompanyAggregates.from_ICompanyData(company, scope_company_data)
@@ -594,7 +617,8 @@ class DataWarehouse(ABC):
                 pass
         return model_companies
 
-    def _get_cumulative_emissions(self, projected_ei: pd.DataFrame, projected_production: pd.DataFrame) -> pd.DataFrame:
+    @classmethod
+    def _get_cumulative_emissions(cls, projected_ei: pd.DataFrame, projected_production: pd.DataFrame) -> pd.DataFrame:
         """
         get the weighted sum of the projected emission
         :param projected_ei: Rows of projected emissions intensities indexed by (company_id, scope)
@@ -613,25 +637,27 @@ class DataWarehouse(ABC):
         projected_production = projected_production.loc[projected_ei.index]
         # Limit projected_ei to the year range of projected_production
         projected_ei = projected_ei[projected_production.columns]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # Until PintArrays have a map function, we can get UnitStrippedWarning when map tries to convert a PintArray to an array of object type.
-            # As per Pint performance recommendations, compute using magnitudes when we have certainty about units
-            scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
-                                                                                lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
-            projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
+        # As per Pint performance recommendations, compute using magnitudes when we have certainty about unit scaling
+        # Heterogeneous rows (such as `t CO2/MWh * MWh` and `Mt CO2/GJ * GJ` are all converted to `t CO2e` (with scaling)
+        projected_CO2e_t = projected_ei.T.combine(
+            projected_production.T,
+            lambda ei, pp: ((ei_pint:=asPintSeries(ei)).pint.m
+                            * (pp_pint:=asPintSeries(pp)).pint.m
+                            * Q_(1, ei_pint.iloc[0].u * pp_pint.iloc[0].u).to('t CO2e').m))
         if ITR.HAS_UNCERTAINTIES:
             # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
-            projected_t_CO2e[projected_t_CO2e.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR.ufloat(np.nan, 0.0)
+            if projected_CO2e_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x) and x.u != 0).any().any():
+                breakpoint()
             # Sum both the nominal and std_dev values, because these series are completely correlated
-            nom_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.nominal_values(x)).cumsum(axis=1)
-            err_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.std_devs(x)).cumsum(axis=1)
-            cumulative_emissions = nom_t_CO2e.combine(err_t_CO2e, ITR.recombine_nom_and_std)
+            nom_CO2e_t = projected_CO2e_t.apply(lambda x: ITR.nominal_values(x)).cumsum()
+            err_CO2e_t = projected_CO2e_t.apply(lambda x: ITR.std_devs(x)).cumsum()
+            cumulative_emissions_t = nom_CO2e_t.combine(err_CO2e_t, ITR.recombine_nom_and_std)
         else:
-            cumulative_emissions = projected_t_CO2e.cumsum(axis=1)
-        return cumulative_emissions.astype('pint[t CO2e]')
+            cumulative_emissions_t = projected_CO2e_t.cumsum()
+        return cumulative_emissions_t.T.astype('pint[t CO2e]')
 
-    def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, budget_year: int=None) -> pd.Series:
+    @classmethod
+    def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, base_year: int, target_year: int, budget_year: int=None) -> pd.Series:
         """
         :param df_subject: DataFrame of cumulative emissions values over time
         :param df_budget: DataFrame of cumulative emissions budget allowed over time
@@ -662,8 +688,7 @@ class DataWarehouse(ABC):
             df_aligned = pd.concat([df_aligned,
                                     pd.Series(data=[pd.NA] * len(missing_subjects),
                                               index=missing_subjects)])
-        base_year = self.company_data.projection_controls.BASE_YEAR
-        df_exceedance = df_aligned.map(lambda x: base_year if pd.isna(x)
-                                       else pd.NA if x>=self.company_data.projection_controls.TARGET_YEAR
+        df_exceedance = df_aligned.map(lambda x: base_year if ITR.isna(x)
+                                       else pd.NA if x>=target_year
                                        else x).astype('Int64')
         return df_exceedance
