@@ -165,8 +165,7 @@ def prioritize_submetric(x: pd.DataFrame) -> pd.Series:
             # Where TRUE, keep original value
             # FIXME: Pandas 2.1 allows inplace=True
             y = y.where(y.isna() <= z.isna(), z)
-    if any(y.submetric=='*unrecognized*'):
-        breakpoint()
+    assert not any(y.submetric=='*unrecognized*')
     return y.squeeze()
 
 
@@ -1244,4 +1243,3 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # company_ids_idx = pd.Index(company_ids)
         # df = self.df_fundamentals.loc[company_ids_idx]
         return df
-
