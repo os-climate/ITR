@@ -101,7 +101,6 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
     except TypeError:
         # FIXME: can get here if we have garbage units in one row (such as 't/MWh') that don't match another ('t CO2e/MWh')
         # Need to deal with that...
-        breakpoint()
         logger.error(f"type_error({y}), so returning {y.values}[0]")
         return y.iloc[0]
     # This relies on the fact that we can now see Quantity(np.nan, ...) for both float and ufloat magnitudes
