@@ -44,7 +44,7 @@ class DataWarehouse(ABC):
         """
         self.benchmark_projected_production = None
         self.benchmarks_projected_ei = None
-        # benchmarks_projected_ei._EI_df is the EI dataframe for the benchmark
+        # benchmarks_projected_ei._EI_df_t is the (transposed) EI dataframe for the benchmark
         # benchmark_projected_production.get_company_projected_production(company_sector_region_scope) gives production data per company (per year)
         # multiplying these two gives aligned emissions data for the company, in case we want to add missing data based on sector averages
         self.column_config = column_config
@@ -124,13 +124,13 @@ class DataWarehouse(ABC):
         # Production-centric benchmarks shift S3 data after trajectory and targets have been projected
         if new_production_bm:
             logger.info(f"new_production_bm calculating trajectories for {len(self.company_data._companies)} companies (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
-            self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
+            self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df_t)
 
         if new_ei_bm and (new_companies := [c for c in self.company_data._companies if '+' in c.company_id]):
             logger.info("Allocating emissions to align with benchmark data")
             bm_prod_df = benchmark_projected_production._prod_df
-            bm_ei_df = benchmarks_projected_ei._EI_df
-            bm_sectors = bm_ei_df.index.get_level_values('sector').unique().to_list()
+            bm_ei_df_t = benchmarks_projected_ei._EI_df_t
+            bm_sectors = bm_ei_df_t.columns.get_level_values('sector').unique().to_list()
             base_year = self.company_data.projection_controls.BASE_YEAR
 
             from collections import defaultdict
@@ -145,9 +145,9 @@ class DataWarehouse(ABC):
                 else:
                     logger.error(f"No benchmark sector data for {orig_id}: sector = {sector}")
                     continue
-                if (sector, c.region) in bm_ei_df.index:
+                if (sector, c.region) in bm_ei_df_t.columns:
                     region_dict[orig_id] = c.region
-                elif (sector, 'Global') in bm_ei_df.index:
+                elif (sector, 'Global') in bm_ei_df_t.columns:
                     region_dict[orig_id] = 'Global'
                 else:
                     logger.error(f"No benchmark region data for {orig_id}: sector = {sector}; region = {region}")
@@ -160,12 +160,12 @@ class DataWarehouse(ABC):
                 region = region_dict[orig_id]
                 sector_ei = [(sector, scope,
                               # bm_prod_df.loc[(sector, region, EScope.AnyScope)][base_year] is '1.0 dimensionless'
-                              bm_ei_df.loc[(sector, region, scope)][base_year])
+                              bm_ei_df_t.loc[:, (sector, region, scope)][base_year])
                              for scope in EScope.get_result_scopes()
                              # This only saves us from having data about sectorized alignments we might not need.  It doesn't affect the emissions being allocated (or not).
                              if (c.company_id, scope.name) in self.company_data._bm_allocation_index
                              for sector in sectors
-                             if (sector, region, scope) in bm_ei_df.index and historic_dict['+'.join([orig_id, sector])].emissions[scope.name]]
+                             if (sector, region, scope) in bm_ei_df_t.columns and historic_dict['+'.join([orig_id, sector])].emissions[scope.name]]
                 sector_ei_df = pd.DataFrame(sector_ei, columns=['sector', 'scope', 'ei']).set_index(['sector'])
                 sector_prod_df = pd.DataFrame([(sector, prod.value)
                                                for sector in sectors
@@ -356,20 +356,20 @@ class DataWarehouse(ABC):
             self._restore_historic_data()
 
         # Set scope information based on what company reports and what benchmark requres
-        # benchmarks_projected_ei._EI_df makes life a bit easier...
+        # benchmarks_projected_ei._EI_df_t makes life a bit easier...
         missing_company_scopes = []
         for c in self.company_data._companies:
             region = c.region
             try:
-                bm_company_sector_region = benchmarks_projected_ei._EI_df.loc[c.sector, region]
+                bm_company_sector_region = benchmarks_projected_ei._EI_df_t[(c.sector, region)]
             except KeyError:
                 try:
                     region = 'Global'
-                    bm_company_sector_region = benchmarks_projected_ei._EI_df.loc[c.sector, region]
+                    bm_company_sector_region = benchmarks_projected_ei._EI_df_t[(c.sector, region)]
                 except KeyError:
                     missing_company_scopes.append(c.company_id)
                     continue
-            scopes = benchmarks_projected_ei._EI_df.loc[c.sector, region].index.tolist()
+            scopes = benchmarks_projected_ei._EI_df_t[(c.sector, region)].columns.tolist()
             if len(scopes) == 1:
                 self.company_scope[c.company_id] = scopes[0]
                 continue
@@ -394,7 +394,7 @@ class DataWarehouse(ABC):
         logger.info(f"re-calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)")
         for company in self.company_data._companies:
             company.projected_intensities = None
-        self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df)
+        self.company_data._validate_projected_trajectories(self.company_data._companies, self.benchmarks_projected_ei._EI_df_t)
 
 
     def estimate_missing_s3_data(self, company: ICompanyData) -> None:
@@ -410,13 +410,13 @@ class DataWarehouse(ABC):
         # It won't solve S3 = S1S2S3 - S1S2 (which should be done elsewhere)
         sector = company.sector
         region = company.region
-        if (sector, region) in self.benchmarks_projected_ei._EI_df.index:
+        if (sector, region) in self.benchmarks_projected_ei._EI_df_t.columns:
             pass
-        elif (sector, "Global") in self.benchmarks_projected_ei._EI_df.index:
+        elif (sector, "Global") in self.benchmarks_projected_ei._EI_df_t.columns:
             region = "Global"
         else:
             return
-        if EScope.S3 not in self.benchmarks_projected_ei._EI_df.loc[(sector, region)].index:
+        if (sector, region, EScope.S3) not in self.benchmarks_projected_ei._EI_df_t.columns:
             if sector=='Construction Buildings':
                 # Construction Buildings don't have an S3 scope defined
                 return
@@ -424,10 +424,10 @@ class DataWarehouse(ABC):
                 # Some benchmarks don't include S3 for all sectors; so nothing to estimate
                 return
         else:
-            bm_ei_s3 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S3)])
-        if (sector, region, EScope.S1S2) in self.benchmarks_projected_ei._EI_df.index:
+            bm_ei_s3 = self.benchmarks_projected_ei._EI_df_t[(sector, region, EScope.S3)]
+        if (sector, region, EScope.S1S2) in self.benchmarks_projected_ei._EI_df_t.columns:
             # If we have only S1S2S3 emissions, we can "allocate" them according to the benchmark's allocation
-            bm_ei_s1s2 = asPintSeries(self.benchmarks_projected_ei._EI_df.loc[(sector, region, EScope.S1S2)])
+            bm_ei_s1s2 = self.benchmarks_projected_ei._EI_df_t[(sector, region, EScope.S1S2)]
         else:
             bm_ei_s1s2 = None
 
@@ -610,26 +610,23 @@ class DataWarehouse(ABC):
 
         # Ensure that projected_production is ordered the same as projected_ei, preserving order of projected_ei
         # projected_production is constructed to be limited to the years we want to analyze
-        projected_production = projected_production.loc[projected_ei.index]
+        proj_prod_t = asPintDataFrame(projected_production.loc[projected_ei.index].T)
         # Limit projected_ei to the year range of projected_production
-        projected_ei = projected_ei[projected_production.columns]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # Until PintArrays have a map function, we can get UnitStrippedWarning when map tries to convert a PintArray to an array of object type.
-            # As per Pint performance recommendations, compute using magnitudes when we have certainty about units
-            scale_factor = projected_ei.iloc[:, 0].map(lambda ei: ei.u).combine(projected_production.iloc[:, 0].map(lambda pp: pp.u),
-                                                                                lambda ei_u, pp_u: Q_(1.0, (ei_u * pp_u)).to('t CO2e').m)
-            projected_t_CO2e = projected_ei.applymap(lambda x: x.m).mul(projected_production.applymap(lambda x: x.m)).mul(scale_factor, axis=0)
+        proj_ei_t = asPintDataFrame(projected_ei[proj_prod_t.index].T)
+        units_CO2e = 't CO2e'
+        proj_CO2e_m_t = proj_prod_t.combine(
+            proj_ei_t,
+            lambda prod, ei: ITR.data.osc_units.align_production_to_bm(prod, ei).mul(ei).pint.m_as(units_CO2e))
         if ITR.HAS_UNCERTAINTIES:
             # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
-            projected_t_CO2e[projected_t_CO2e.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR.ufloat(np.nan, 0.0)
+            proj_CO2e_m_t[proj_CO2e_m_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR._ufloat_nan
             # Sum both the nominal and std_dev values, because these series are completely correlated
-            nom_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.nominal_values(x)).cumsum(axis=1)
-            err_t_CO2e = projected_t_CO2e.apply(lambda x: ITR.std_devs(x)).cumsum(axis=1)
-            cumulative_emissions = nom_t_CO2e.combine(err_t_CO2e, ITR.recombine_nom_and_std)
+            nom_CO2e_t = proj_CO2e_m_t.apply(lambda x: ITR.nominal_values(x)).cumsum()
+            err_CO2e_t = proj_CO2e_m_t.apply(lambda x: ITR.std_devs(x)).cumsum()
+            cumulative_emissions_t = nom_CO2e_t.combine(err_CO2e_t, ITR.recombine_nom_and_std)
         else:
-            cumulative_emissions = projected_t_CO2e.cumsum(axis=1)
-        return cumulative_emissions.astype('pint[t CO2e]')
+            cumulative_emissions_t = proj_CO2e_m_t.cumsum()
+        return cumulative_emissions_t.T.astype(f"pint[{units_CO2e}]")
 
     def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, budget_year: int=None) -> pd.Series:
         """

@@ -190,6 +190,38 @@ def dimension_as(x, dim_unit):
     except StopIteration:
         raise DimensionalityError (x, dim_unit, extra_msg=f"; no compatible dimension not found")
 
+def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Series:
+    try:
+        if ureg(f"t CO2e/({prod_series.dtype.units})") == ei_bm.iloc[0]:
+            return prod_series
+    except DimensionalityError:
+        breakpoint()
+        pass
+    # Convert the units of production into the denominator of the EI units
+    ei_units = str(ei_bm.dtype.units)
+    (ei_unit_top, ei_unit_bottom) = ei_units.split('/', 1)
+    if '/' in ei_unit_bottom:
+        # Fix reciprocals: t CO2e / CH4 / bcm -> t CO2e / (CH4 * bcm)
+        (bottom_unit_num, bottom_unit_denom) = ei_unit_bottom.split('/', 1)
+        ei_unit_bottom = f"{bottom_unit_num} {bottom_unit_denom}"
+    # We might need to add mass dimension back in if it was simplified out (t CO2e / t Fe, for example)
+    if '[mass]' not in ureg.parse_units(ei_unit_top).dimensionality:
+        try:
+            mass_unit = [unit for unit, exp in pint.util.to_units_container(prod_series.iloc[0].to_base_units()).items()
+                         if exp==1 and ureg(unit).is_compatible_with("kg")][0]
+            ei_unit_bottom = f"{mass_unit} {ei_unit_bottom}"
+        except IndexError:
+            # If no mass term in prod_series, likely a dimensional mismatch between prod_series and ei_unit_bottom
+            breakpoint()
+            raise DimensionalityError (
+                prod_series.iloc[0],
+                '',
+                dim1=str(prod_series.dtype.units),
+                dim2=ei_unit_bottom,
+                extra_msg=f"cannot align units"
+            )
+    return prod_series.pint.to(ei_unit_bottom)
+
 oil = Context('oil')
 oil.add_transformation('[carbon] * [mass] ** 2 / [length] / [time] ** 2', '[carbon] * [mass]',
                       lambda ureg, x: x * ureg('bbl/boe').to_reduced_units())
@@ -775,7 +807,7 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
         new_series.name = name
     na_index = na_values[na_values].index
     if len(na_index)>0:
-        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: Q_(np.nan, unit))
+        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: PintType(unit).na_value)
     return new_series.astype(f"pint[{unit}]")
 
 def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.DataFrame:

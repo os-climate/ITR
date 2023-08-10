@@ -5,6 +5,7 @@ import random
 
 import ITR
 from pint import Quantity
+from pint_pandas import PintType
 from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
 
 from ITR.interfaces import EScope
@@ -87,8 +88,8 @@ def interpolate_value_at_year(y, bm_ei, ei_nz_year, ei_max_negative):
 
 
 def gen_company_data(company_name, company_id, region, sector, production,
-                     bm_ei_scopes, ei_nz_year=2051, ei_max_negative=None) -> ICompanyData:
-    ei_metric = str(bm_ei_scopes.iloc[0].dtype)[5:-1]
+                     bm_ei_scopes_t, ei_nz_year=2051, ei_max_negative=None) -> ICompanyData:
+    ei_metric = str(bm_ei_scopes_t.iloc[:, 0].dtype.units)
     if ei_max_negative is None:
         ei_max_negative = Quantity(0, ei_metric)
     company_dict = {
@@ -98,23 +99,23 @@ def gen_company_data(company_name, company_id, region, sector, production,
         'sector': sector,
         'base_year_production': production,
     }
-    scopes = bm_ei_scopes.droplevel([0,1]).index.tolist()
+    scopes = bm_ei_scopes_t.columns.get_level_values('scope').unique().tolist()
     scope_projections = {}
     for scope in scopes:
         try:
-            bm_ei = asPintSeries(bm_ei_scopes.loc[sector, region, scope])
+            bm_ei = bm_ei_scopes_t.loc[:, (sector, region, scope)]
         except KeyError:
-            bm_ei = asPintSeries(bm_ei_scopes.loc[sector, 'Global', scope])
+            bm_ei = bm_ei_scopes_t.loc[:, (sector, 'Global', scope)]
         if scope == EScope.S1S2S3:
             if EScope.S1S2 in scopes and EScope.S3 in scopes:
                 # Handled below
                 pass
             elif EScope.S1S2 in scopes: # and EScope.S3 not in scopes
                 # Compute S3 from S1S2S3 - S1S2
-                company_dict['ghg_s3'] = production * (bm_ei[2019] - bm_ei_scopes.loc[(sector, slice(None), EScope.S1S2), 2019].iloc[0])
+                company_dict['ghg_s3'] = production * (bm_ei[2019] - bm_ei_scopes_t.loc[2019, (sector, slice(None), EScope.S1S2)].iloc[0])
             elif EScope.S3 in scopes: # and EScope.S1S2 not in scopes
                 # Compute S1S2 from S1S2S3 - S3
-                company_dict['ghg_s1s2'] = production * (bm_ei[2019] - bm_ei_scopes.loc[(sector, slice(None), EScope.S3), 2019].iloc[0])
+                company_dict['ghg_s1s2'] = production * (bm_ei[2019] - bm_ei_scopes_t.loc[2019, (sector, slice(None), EScope.S3)].iloc[0])
             else:
                 s1s2_s3_split = random.uniform(0.5,0.9)
                 company_dict['ghg_s1s2'] = (production * bm_ei[2019] * (1-s1s2_s3_split))

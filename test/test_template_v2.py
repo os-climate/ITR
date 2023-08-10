@@ -69,6 +69,7 @@ class TestTemplateProviderV2(unittest.TestCase):
                   'US69331C1080',
                   'US69349H1077', 'KR7005490008',
                   ]
+        breakpoint()
         company_data = self.template_company_data.get_company_data(comids)
         company_dict = {
             field : [ getattr(c, field) for c in company_data ]
@@ -107,6 +108,7 @@ class TestTemplateProviderV2(unittest.TestCase):
             c_proj_targets = c.projected_targets[scope].projections
             if isinstance(c_proj_targets, pd.Series):
                 c_proj_targets = c_proj_targets[c_proj_targets.index>=2022]
+                breakpoint()
                 assert [round(x, 4) for x in ITR.nominal_values(c_proj_targets.pint.m)] == expected_projection
             else:
                 while c_proj_targets[0].year < 2022:
@@ -185,7 +187,7 @@ class TestTemplateProviderV2(unittest.TestCase):
         assert_pint_frame_equal(self, benchmarks.loc[:, EScope.S1S2, :], expected_data)
 
     def test_get_projected_production(self):
-        expected_data_2025 = pd.Series([Q_(88056.533643, ureg('GWh')), Q_(241.762219, ureg('TWh')), Q_(38.710168585224, ureg('Mt Steel'))],
+        expected_data_2025 = pd.Series([Q_(88056.5336432, ureg('GWh')), Q_(241.762219, ureg('TWh')), Q_(38.710168585224, ureg('Mt Steel'))],
                                        index=self.company_ids,
                                        name=2025)
         production = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]

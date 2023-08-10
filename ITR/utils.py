@@ -9,6 +9,7 @@ from typing import List, Optional, Tuple
 import ITR
 from ITR.data.osc_units import ureg, Q_, asPintSeries
 import pint
+from pint_pandas import PintType
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
 from .configs import ColumnsConfig, TemperatureScoreControls, TemperatureScoreConfig, LoggingConfig

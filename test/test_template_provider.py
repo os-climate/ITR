@@ -76,16 +76,17 @@ class TestTemplateProvider(unittest.TestCase):
         for c in company_data:
             # This equality test does not work for scopes that have NaN values
             ei_bm = self.excel_EI_bm
-            if (c.sector, c.region) in ei_bm._EI_df.index:
-                ei_df = ei_bm._EI_df.loc[(c.sector, c.region)]
-            elif (c.sector, "Global") in ei_bm._EI_df.index:
-                ei_df = ei_bm._EI_df.loc[(c.sector, "Global")]
+            if (c.sector, c.region) in ei_bm._EI_df_t.columns:
+                ei_df_t = ei_bm._EI_df_t.loc[:, (c.sector, c.region)]
+            elif (c.sector, "Global") in ei_bm._EI_df_t.columns:
+                ei_df_t = ei_bm._EI_df_t.loc[:, (c.sector, "Global")]
             else:
                 raise ValueError(f"company {c.company_name} with ID {c.company_id} sector={c.sector} region={c.region} not in EI benchmark")
-            temp = EITargetProjector(self.template_company_data.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)], ei_df).S1S2
+            temp = EITargetProjector(self.template_company_data.projection_controls).project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)], ei_df_t).S1S2
             if c.projected_targets.S1S2 is None and temp is None:
                 continue
             if isinstance(c.projected_targets.S1S2.projections, pd.Series):
+                breakpoint()
                 assert all(ITR.nominal_values(c.projected_targets.S1S2.projections.values.data)==ITR.nominal_values(temp.projections.values.data))
             else:
                 assert c.projected_targets.S1S2 == temp

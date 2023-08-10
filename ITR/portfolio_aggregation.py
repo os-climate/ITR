@@ -7,10 +7,12 @@ from typing import Type
 from pint import Quantity
 from pint_pandas import PintType
 
+import numpy as np
 import pandas as pd
 import pint
 import pint_pandas
 
+import ITR
 from .data.osc_units import asPintSeries, Q_, PA_
 from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
 
@@ -87,7 +89,7 @@ class PortfolioAggregation(ABC):
         :param column: The column to check
         :return:
         """
-        missing_data = data[pd.isna(data[column])][self.c.COLS.COMPANY_NAME].unique()
+        missing_data = data[ITR.isna(data[column])][self.c.COLS.COMPANY_NAME].unique()
         if len(missing_data):
             logger.error(f"The value for {column} is missing for the following companies: {', '.join(missing_data)}")
 
@@ -120,12 +122,14 @@ class PortfolioAggregation(ABC):
         elif portfolio_aggregation_method == PortfolioAggregationMethod.TETS:
             use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1, EScope.S2, EScope.S1S2, EScope.S1S2S3])
             use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
+            assert isinstance(data[self.c.COLS.GHG_SCOPE12].dtype, PintType)
+            assert isinstance(data[self.c.COLS.GHG_SCOPE3].dtype, PintType)
             if use_S3.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE3)
-                use_S3 = use_S3 & pd.notna(data[self.c.COLS.GHG_SCOPE3])
+                use_S3 = use_S3 & ~ITR.isna(data[self.c.COLS.GHG_SCOPE3])
             if use_S1S2.any():
                 self._check_column(data, self.c.COLS.GHG_SCOPE12)
-                use_S1S2 = use_S1S2 & pd.notna(data[self.c.COLS.GHG_SCOPE12])
+                use_S1S2 = use_S1S2 & ~ITR.isna(data[self.c.COLS.GHG_SCOPE12])
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
@@ -136,7 +140,7 @@ class PortfolioAggregation(ABC):
                     # See https://github.com/hgrecco/pint-pandas/issues/130
                     weights_dtype = f"pint[{emissions.u}]"
                     # df_z works around fact that we cannot just insert quantities willy-nilly using Pandas where function
-                    df_z = pd.Series(PA_([0] * len(data.index), dtype='Mt CO2e'), index=data.index)
+                    df_z = pd.Series(PA_(np.zeros(len(data.index)), dtype='Mt CO2e'), index=data.index)
                     weights_series = ((data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, df_z)
                                        + data[self.c.COLS.GHG_SCOPE3].where(use_S3, df_z))
                                       .astype(weights_dtype) / emissions * data[input_column])
@@ -159,10 +163,10 @@ class PortfolioAggregation(ABC):
                 use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
                 if use_S1S2.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE12)
-                    use_S1S2 = use_S1S2 & pd.notna(data[self.c.COLS.GHG_SCOPE12])
+                    use_S1S2 = use_S1S2 & ~ITR.isna(data[self.c.COLS.GHG_SCOPE12])
                 if use_S3.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE3)
-                    use_S3 = use_S3 & pd.notna(data[self.c.COLS.GHG_SCOPE3])
+                    use_S3 = use_S3 & ~ITR.isna(data[self.c.COLS.GHG_SCOPE3])
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     df_z = pd.Series(PA_([0] * len(data.index), dtype='Mt CO2e'), index=data.index)
@@ -176,6 +180,7 @@ class PortfolioAggregation(ABC):
                 # Calculate the MOTS value per company
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
+                    assert isinstance(data[self.c.COLS.OWNED_EMISSIONS].dtype, PintType)
                     owned_emissions = asPintSeries(data[self.c.COLS.OWNED_EMISSIONS])
                     # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
                     total_emissions = owned_emissions.fillna(0).sum()

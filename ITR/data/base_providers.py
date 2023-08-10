@@ -11,7 +11,8 @@ from operator import add
 from typing import List, Type, Dict
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType, EI_Metric
+from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType, EI_Metric, \
+    align_production_to_bm
 
 from ITR.configs import ColumnsConfig, VariablesConfig, ProjectionControls, LoggingConfig
 
@@ -138,7 +139,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         company_production = company_sector_region_scope.set_index(self.column_config.SCOPE, append=True)[self.column_config.BASE_YEAR_PRODUCTION]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            nan_production = company_production.map(lambda x: ITR.isnan(x.m))
+            # We have to use lambda function here because company_production is heterogeneous, not a PintArray
+            nan_production = company_production.map(lambda x: ITR.isna(x))
             if nan_production.any():
                 # If we don't have valid production data for base year, we get back a nan result that's a pain to debug, so nag here
                 logger.error(f"these companies are missing production data: {nan_production[nan_production].index.get_level_values(0).to_list()}")
@@ -193,12 +195,11 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
             except AttributeError:
                 pass
 
-        with warnings.catch_warnings():
-            # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
-            warnings.simplefilter("ignore")
-            self._EI_df = pd.DataFrame(benchmarks_as_series).sort_index()
-        self._EI_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
-        
+        self._EI_df_t = pd.concat(benchmarks_as_series, axis=1)
+        self._EI_df_t.columns.set_names(['sector', 'region', 'scope'], inplace=True)
+        # https://stackoverflow.com/a/56528071/1291237
+        self._EI_df_t.sort_index(axis=1, inplace=True)
+
 
     # SDA stands for Sectoral Decarbonization Approach; see https://sciencebasedtargets.org/resources/files/SBTi-Power-Sector-15C-guide-FINAL.pdf
     def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame, scope_to_calc: EScope = None) -> pd.DataFrame:
@@ -273,7 +274,9 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
         :return: A DataFrame with company and intensity benchmarks; rows are calendar years, columns are company data
         """
-        benchmark_projections = self._EI_df[self._EI_df.columns[self._EI_df.columns.isin(range(self.projection_controls.BASE_YEAR,self.projection_controls.TARGET_YEAR+1))]]
+        # FIXME: Double transpose--should get rid of both!
+        EI_df = self._EI_df_t.T
+        benchmark_projections = EI_df[EI_df.columns[EI_df.columns.isin(range(self.projection_controls.BASE_YEAR,self.projection_controls.TARGET_YEAR+1))]]
         df = company_sector_region_scope[['sector', 'region', 'scope']]
         if scope_to_calc is not None:
             df = df[df.scope.eq(scope_to_calc)]
@@ -327,15 +330,15 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         # Initially we don't have to do any allocation of emissions across multiple sectors, but if we do, we'll update the index here.
         self._bm_allocation_index = pd.DataFrame().index
 
-    def _validate_projected_trajectories(self, companies: List[ICompanyData], ei_bm_df: pd.DataFrame):
+    def _validate_projected_trajectories(self, companies: List[ICompanyData], ei_bm_df_t: pd.DataFrame):
         """
         Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
         COMPANIES are a list of companies with historic data that need to be projected.
-        EI_BM_DF is bemchmark data that is needed only for normalizing EI_METRICs of the projections.
+        EI_BM_DF_T is (transposed) bemchmark data that is needed only for normalizing EI_METRICs of the projections.
         In previous incarnations of this function, no benchmark data was needed for any reason.
         """
-        company_ids_without_data = [c.company_id for c in companies if
-                                  not c.historic_data and not c.projected_intensities]
+        company_ids_without_data = [c.company_id for c in companies
+                                    if not c.historic_data and not c.projected_intensities]
         if company_ids_without_data:
             error_message = f"Provide either historic emission data or projections for companies with " \
                             f"IDs {company_ids_without_data}"
@@ -380,19 +383,23 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 companies_with_projections.append(c)
             else:
                 companies_without_projections.append(c)
-            if c.base_year_production and not ITR.isnan(c.base_year_production.m):
+            if c.base_year_production and not ITR.isna(c.base_year_production):
                 companies_with_base_year_production.append(c)                
-            elif c.historic_data.productions and (base_year_production_list := [p for p in c.historic_data.productions if p.year==base_year and not ITR.isnan(p.value.m)]):
+            elif c.historic_data.productions and (base_year_production_list := [p for p in c.historic_data.productions if p.year==base_year and not ITR.isna(p.value)]):
                 c.base_year_production = base_year_production_list[0].value
                 companies_with_base_year_production.append(c)
             else:
                 companies_without_base_year_production.append(c)
         if companies_without_projections:
-            new_company_projections = EITrajectoryProjector(self.projection_controls).project_ei_trajectories(
+            new_company_projections = EITrajectoryProjector(self.projection_controls, ei_bm_df_t).project_ei_trajectories(
                 companies_without_projections)
             for c in new_company_projections:
-                c.base_year_production = c.ghg_s1s2 / c.projected_intensities.S1S2.projections[base_year]
-                if not ITR.isnan(c.base_year_production.m):
+                if c.projected_intensities.S1S2 is None:
+                    # When Gas Utilities split out S3, they often don't drag along S1S2 (and S3 are the biggies anyway)
+                    c.base_year_production = c.ghg_s3 / c.projected_intensities.S3.projections[base_year]
+                else:
+                    c.base_year_production = c.ghg_s1s2 / c.projected_intensities.S1S2.projections[base_year]
+                if not ITR.isna(c.base_year_production):
                     for i, p in enumerate(c.historic_data.productions):
                         if p.year == base_year:
                             c.historic_data.productions[i] = IProductionRealization(year=base_year, value=c.base_year_production)
@@ -409,17 +416,16 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         for company in companies:
             sector = company.sector
             region = company.region
-            if (sector, region) in ei_bm_df.index:
-                # FIXME: if we change _EI_df to columnar data we could pick up units from dtype
-                ei_metric = str(ei_bm_df.loc[(sector, region)].iat[0, 0].u)
-            elif (sector, 'Global') in ei_bm_df.index:
-                ei_metric = str(ei_bm_df.loc[(sector, 'Global')].iat[0, 0].u)
+            if (sector, region) in ei_bm_df_t.columns:
+                ei_dtype = ei_bm_df_t[(sector, region)].dtypes.iloc[0]
+            elif (sector, 'Global') in ei_bm_df_t.columns:
+                ei_dtype = ei_bm_df_t[(sector, 'Global')].dtypes.iloc[0]
             else:
                 continue
             for scope in EScope.get_scopes():
                 if company.projected_intensities[scope]:
                     setattr (company.projected_intensities, scope,
-                             DF_ICompanyEIProjections(ei_metric=ei_metric, projections=company.projected_intensities[scope].projections))
+                             DF_ICompanyEIProjections(ei_metric=str(ei_dtype.units), projections=company.projected_intensities[scope].projections))
         logger.info("Done normalizing intensity metrics")
         self._companies = companies
 
@@ -499,16 +505,17 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     co_cumprod = df_partial_pp.loc[c.sector, "Global", EScope.AnyScope] * base_year_production
                 try:
                     if ei_bm:
-                        if (c.sector, c.region) in ei_bm._EI_df.index:
-                            ei_df = ei_bm._EI_df.loc[(c.sector, c.region)]
-                        elif (c.sector, "Global") in ei_bm._EI_df.index:
-                            ei_df = ei_bm._EI_df.loc[(c.sector, "Global")]
+                        if (c.sector, c.region) in ei_bm._EI_df_t.columns:
+                            ei_df_t = ei_bm._EI_df_t.loc[:, (c.sector, c.region)]
+                        elif (c.sector, "Global") in ei_bm._EI_df_t.columns:
+                            ei_df_t = ei_bm._EI_df_t.loc[:, (c.sector, "Global")]
                         else:
                             logger.error(f"company {c.company_name} with ID {c.company_id} sector={c.sector} region={c.region} not in EI benchmark")
-                            ei_df = None
+                            ei_df_t = None
                     else:
-                        ei_df = None
-                    c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(c, co_cumprod, ei_df)
+                        ei_df_t = None
+                    c.projected_targets = EITargetProjector(self.projection_controls).project_ei_targets(
+                        c, align_production_to_bm(co_cumprod, ei_df_t.iloc[:, 0]), ei_df_t)
                 except IndexError as err:
                     import traceback
                     logger.error(f"While calculating target projections for {c.company_id}, raised IndexError({err})")
@@ -694,13 +701,17 @@ class EITrajectoryProjector(EIProjector):
     It returns the full set of both historic emissions intensities and projected emissions intensities.
     """
 
-    def __init__(self, projection_controls: ProjectionControls = ProjectionControls()):
+    # EI benchmark data indexed by SECTOR, REGION, and SCOPE
+
+    def __init__(self, projection_controls: ProjectionControls = ProjectionControls(),
+                 ei_bm_df_t=None, *args, **kwargs):
         super().__init__(projection_controls=projection_controls)
+        self._EI_df_t = pd.DataFrame() if ei_bm_df_t is None else ei_bm_df_t
 
     def project_ei_trajectories(self, companies: List[ICompanyData], backfill_needed=True) -> List[ICompanyData]:
         historic_df = self._extract_historic_df(companies)
         # This modifies historic_df in place...which feeds the intensity extrapolations below
-        self._compute_missing_historic_ei(companies, historic_df)
+        self._align_and_compute_missing_historic_ei(companies, historic_df)
         historic_years = [column for column in historic_df.columns if type(column) == int]
         projection_years = range(max(historic_years), self.projection_controls.TARGET_YEAR+1)
         with warnings.catch_warnings():
@@ -725,10 +736,10 @@ class EITrajectoryProjector(EIProjector):
                 logger.warning(f"some data backfilled to {self.projection_controls.BASE_YEAR} for company_ids in list {historic_ei_t.compare(backfilled_t).columns.get_level_values('company_id').unique().tolist()}")
                 historic_ei_t = backfilled_t.sort_index(axis=1)
                 for company in companies:
-                    if company.base_year_production is None or ITR.isnan(company.base_year_production.m):
+                    if ITR.isna(company.base_year_production):
                         # If we have no valid production data, we cannot use EI data to compute emissions
                         continue
-                    if company.ghg_s3 is None or ITR.isnan(company.ghg_s3.m):
+                    if ITR.isna(company.ghg_s3):
                         try:
                             idx = (company.company_id, 'Emissions Intensities', EScope.S3)
                             company.ghg_s3 = Q_(historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
@@ -736,7 +747,7 @@ class EITrajectoryProjector(EIProjector):
                         except KeyError:
                             # If it's not there, we'll complain later
                             pass
-                    if company.ghg_s1s2 is None or ITR.isnan(company.ghg_s1s2.m):
+                    if ITR.isna(company.ghg_s1s2):
                         try:
                             idx = (company.company_id, 'Emissions Intensities', EScope.S1S2)
                             company.ghg_s1s2 = Q_(historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
@@ -809,11 +820,14 @@ class EITrajectoryProjector(EIProjector):
         return data
 
     # Each benchmark defines its own scope requirements on a per-sector/per-region basis.
-    # The purpose of this function is not to infer scope data that might be interesting,
-    # but rather to impute the scope data that is actually required, no more, no less.
-    def _compute_missing_historic_ei(self, companies: List[ICompanyData], historic_df: pd.DataFrame):
+    # The benchmark EI metrics (t CO2e/GJ) may not align with disclosed EI (t CO2/ CH4 / bcm)
+    # So we both align the disclosed EI data to the benchmark metrics, and we fill data
+    # gaps where EI can be immediately computed from emissions and production metrics.
+    # No fancy estimations or allocations here.
+    def _align_and_compute_missing_historic_ei(self, companies: List[ICompanyData], historic_df: pd.DataFrame) -> None:
         scopes = [EScope[scope_name] for scope_name in EScope.get_scopes()]
         missing_data = []
+        misaligned_data = []
         # https://github.com/pandas-dev/pandas/issues/53053
         index_names = historic_df.index.names
         for company in companies:
@@ -822,26 +836,55 @@ class EITrajectoryProjector(EIProjector):
             emissions_keys = {scope: (company.company_id, VariablesConfig.EMISSIONS, scope) for scope in scopes}
             ei_keys = {scope: (company.company_id, VariablesConfig.EMISSIONS_INTENSITIES, scope) for scope in scopes}
             this_missing_data = []
+            this_misaligned_data = []
             append_this_missing_data = True
+            try:
+                aligned_production = asPintSeries(historic_df.loc[production_key])
+            except KeyError:
+                this_missing_data.append(f"{company.company_id} - Production")
+                continue
+            if self._EI_df_t.empty:
+                pass
+            else:
+                if (company.sector, company.region) in self._EI_df_t.columns:
+                    ei_df_t = self._EI_df_t.loc[:, (company.sector, company.region)]
+                else:
+                    ei_df_t = self._EI_df_t.loc[:, (company.sector, "Global")]
+                # This assumes all benchmark scopes have the same units, so we can just choose the first
+                # and lift this computation out of a loop
+                try:
+                    aligned_production = align_production_to_bm(aligned_production, ei_df_t.iloc[0])
+                except DimensionalityError:
+                    if not this_misaligned_data:
+                        # We only need one such for our error report
+                        this_misaligned_data.append(f"{company.company_id} - {aligned_production.iloc[0].units} vs {ei_df_t.iloc[0].dtype.units}")
+                    continue
             for scope in scopes:
                 if ei_keys[scope] in historic_df.index:
                     assert company.historic_data.emissions_intensities[scope.name]
+                    # We could check that our EI calculations agree with our disclosed EI data, but bad reference data in test cases would cause tests to fail
+                    # assert all([historic_df.loc[emissions_keys[scope]].loc[item.year] / aligned_production.loc[item.year] == item.value for item in company.historic_data.emissions_intensities[scope.name] if not pd.isna(item.value)])
                     append_this_missing_data = False
                     continue
                 # Emissions intensities not yet computed for this scope
                 try:  # All we will try is computing EI from Emissions / Production
-                    historic_df.loc[ei_keys[scope]] = (
-                        historic_df.loc[emissions_keys[scope]] / historic_df.loc[production_key])
+                    historic_df.loc[ei_keys[scope]] = historic_df.loc[emissions_keys[scope]] / aligned_production
                     append_this_missing_data = False
                 except KeyError:
                     this_missing_data.append(f"{company.company_id} - {scope.name}")
                     continue
-                # Note that we don't actually add new-found data to historic data...only the starting point for projections
+                # Note that we don't actually add new-found data to company.historic data
+                # ...only as the starting point for projections (in historic_df)
+            if this_misaligned_data:
+                misaligned_data.extend(this_misaligned_data)
             # This only happens if ALL scope data is missing.  If ANY scope data is present, we'll work with what we get.
             if this_missing_data and append_this_missing_data:
                 missing_data.extend(this_missing_data)
         # https://github.com/pandas-dev/pandas/issues/53053
         historic_df.index.names = index_names
+        if misaligned_data:
+            warning_message = f"Ignoring unalignable production metrics with benchmark intensity metrics for these companies: {misaligned_data}"
+            logger.warning(warning_message)
         if missing_data:
             error_message = f"Provide either historic emissions intensity data, or historic emission and " \
                             f"production data for these company - scope combinations: {missing_data}"
@@ -898,8 +941,8 @@ class EITrajectoryProjector(EIProjector):
         # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
         if ITR.HAS_UNCERTAINTIES:
             try:
-                nominal_intensities = historic_intensities.apply(lambda col: pd.Series(ITR.nominal_values(col), index=col.index, name=col.name))
-                uncertain_intensities = historic_intensities.apply(lambda col: pd.Series(ITR.std_devs(col), index=col.index, name=col.name))
+                nominal_intensities = historic_intensities.apply(lambda col: col.map(ITR.nominal_values, na_action='ignore'))
+                uncertain_intensities = historic_intensities.apply(lambda col: col.map(ITR.std_devs, na_action='ignore'))
             except ValueError:
                 logger.error(f"ValueError in _winsorize")
                 raise
@@ -933,10 +976,13 @@ class EITrajectoryProjector(EIProjector):
 
     def _get_trends(self, intensities_t: pd.DataFrame):
         # FIXME: rolling windows require conversion to float64.  Don't want to be a nuisance...
-        if ITR.HAS_UNCERTAINTIES:
-            intensities_t = intensities_t.apply(lambda col: ITR.nominal_values(col))
+        intensities_t = intensities_t.apply(lambda col: col if col.dtype==np.float64 else ITR.nominal_values(col.fillna(np.nan)).astype(np.float64))
+        # FIXME: Pandas 2.1
+        # Treat NaN ratios as "unchnaged year on year"
+            # FIXME Could we ever have UFloat NaNs here?  np.nan is valid UFloat.
         ratios_t: pd.DataFrame = intensities_t.rolling(window=2, axis='index', closed='right') \
                                               .apply(func=self._year_on_year_ratio, raw=True)
+        ratios_t = ratios_t.apply(lambda col: col.fillna(0) if all(col.map(lambda x: ITR.isna(x))) else col)
 
         # # Add weight to trend movements across multiple years (normalized to year-over-year, not over two years...)
         # # FIXME: we only want to do this for median, not mean.
@@ -961,12 +1007,20 @@ class EITrajectoryProjector(EIProjector):
         # We need to do a mini-extrapolation if we don't have complete historic data
 
         def _extrapolate_mini(col, trend):
+            from pandas.api.types import is_numeric_dtype
             # Inside these functions, columns are numeric PintArrays, not quantity-based Series
-            col_na = col.map(ITR.isnan)
+            col_na = col.isna()
             col_na_idx = col_na[col_na].index
-            last_valid = col[~col_na].tail(1)
-            mini_trend = pd.Series([trend + 1] * len(col_na[col_na]), index=col_na_idx, dtype='float64').cumprod()
-            col.loc[col_na_idx] = last_valid.squeeze() * mini_trend
+            last_valid = col[~col_na].tail(1).squeeze()
+            if np.isnan(trend):
+                # If there's no visible trend, just assume it doesn't decrease and copy results forward
+                col.loc[col_na_idx] = last_valid
+            else:
+                mini_trend = pd.Series([trend + 1] * len(col_na[col_na]), index=col_na_idx, dtype='float64').cumprod()
+                col.loc[col_na_idx] = last_valid * mini_trend
+            if col.dtype != np.float64 and is_numeric_dtype(col.dtype):
+                # FIXME: Pandas 2.1 we prefer NaNs to NA in Arrays for now
+                return col.astype(np.float64)
             return col
 
         historic_intensities_t = historic_intensities_t.apply(lambda col: _extrapolate_mini(col, trends_t[col.name]))
@@ -1066,7 +1120,7 @@ class EITargetProjector(EIProjector):
 
     def _get_ei_projections_from_ei_realizations(self, ei_realizations, i):
         for j in range(0,i+1):
-            if ei_realizations[j].year >= self.projection_controls.BASE_YEAR and not ITR.isnan(ei_realizations[j].value.m):
+            if ei_realizations[j].year >= self.projection_controls.BASE_YEAR and not ITR.isna(ei_realizations[j].value):
                 break
         model_ei_projections = [ICompanyEIProjection(year=ei_realizations[k].year, value=ei_realizations[k].value)
                                 # NaNs in the middle may still be a problem!
@@ -1075,7 +1129,7 @@ class EITargetProjector(EIProjector):
             model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
         return model_ei_projections
 
-    def project_ei_targets(self, company: ICompanyData, production_proj: pd.Series, ei_df: pd.DataFrame) -> ICompanyEIProjectionsScopes:
+    def project_ei_targets(self, company: ICompanyData, production_proj: pd.Series, ei_df_t: pd.DataFrame = None) -> ICompanyEIProjectionsScopes:
         """Input:
         @company: Company-specific data: target_data and base_year_production
         @production_proj: company's production projection computed from region-sector benchmark growth rates
@@ -1086,10 +1140,10 @@ class EITargetProjector(EIProjector):
         targets = company.target_data
         target_scopes = {t.target_scope for t in targets}
         ei_projection_scopes = {'S1': None, 'S2': None, 'S1S2': None, 'S3': None, 'S1S2S3': None}
-        if EScope.S1 in target_scopes and EScope.S2 not in target_scopes and EScope.S1S2 not in target_scopes:
+        if not ei_df_t.empty and EScope.S1 in target_scopes and EScope.S2 not in target_scopes and EScope.S1S2 not in target_scopes:
             # We could create an S1S2 target based on S1 and S2 targets, but we don't yet
             # Syntehsize an S2 target using benchmark-aligned data
-            s2_ei = asPintSeries(ei_df.loc[EScope.S2])
+            s2_ei = ei_df_t.loc[:, (EScope.S2)]
             s2_netzero_year = s2_ei.idxmin()
             for target in targets:
                 if target.target_scope==EScope.S1:
@@ -1144,12 +1198,12 @@ class EITargetProjector(EIProjector):
                     # If there's a proper target for this scope, historic values will be replaced by target values
                     for i in range(len(ei_realizations)-1, -1, -1):
                         target_ei_value = ei_realizations[i].value
-                        if ITR.isnan(target_ei_value.m):
+                        if ITR.isna(target_ei_value):
                             continue
                         model_ei_projections = self._get_ei_projections_from_ei_realizations(ei_realizations, i)
                         ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
                                                                                  projections=self._get_bounded_projections(model_ei_projections))
-                        if not ITR.isnan(target_ei_value.m):
+                        if not ITR.isna(target_ei_value):
                             target_year = ei_realizations[i].year
                             break
                     if target_year is None:
@@ -1190,6 +1244,7 @@ class EITargetProjector(EIProjector):
                 target_base_year_unit = ureg.parse_units(target.target_base_year_unit)
 
                 # Put these variables into scope
+                # Note that reported EI and benchmark EI may need to be aligned
                 last_ei_year = None
                 last_ei_value = None
 
@@ -1219,7 +1274,7 @@ class EITargetProjector(EIProjector):
                         else:
                             for i in range(len(ei_realizations)-1, -1, -1):
                                 last_ei_year, last_ei_value = ei_realizations[i].year, ei_realizations[i].value
-                                if ITR.isnan(last_ei_value.m):
+                                if ITR.isna(last_ei_value):
                                     continue
                                 model_ei_projections = self._get_ei_projections_from_ei_realizations(ei_realizations, i)
                                 ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{last_ei_value.u:~P}"),
@@ -1237,6 +1292,7 @@ class EITargetProjector(EIProjector):
                         target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
                     target_ei_value = Q_(target_base_year_m * (1 - target.target_reduction_pct),
                                          target_base_year_unit)
+                    last_ei_value = last_ei_value.to(target_base_year_unit)
                     if target_ei_value >= last_ei_value:
                         # We've already achieved target, so aim for the next one
                         target_year = last_ei_year
@@ -1264,22 +1320,22 @@ class EITargetProjector(EIProjector):
                         else:
                             em_realizations = company.historic_data.emissions[scope_name]
                         skip_first_year = 0
-                        if em_realizations == []:
-                            last_ei_year = target.target_base_year
-                            target_base_year_m = target.target_base_year_qty
-                            if ITR.HAS_UNCERTAINTIES and target.target_base_year_err is not None:
-                                target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
-                            last_em_value = Q_(target_base_year_m, target_base_year_unit)
-                            # FIXME: should be target.base_year_production !!
-                            last_prod_value = company.base_year_production
-                        else:
+                        # Put these variables into scope with initial conditions that will be overwritten if we have em_realizations
+                        last_ei_year = target.target_base_year
+                        target_base_year_m = target.target_base_year_qty
+                        if ITR.HAS_UNCERTAINTIES and target.target_base_year_err is not None:
+                            target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
+                        last_em_value = Q_(target_base_year_m, target_base_year_unit)
+                        # FIXME: assert company.base_year_production == target.base_year_production
+                        last_prod_value = company.base_year_production
+                        if em_realizations:
                             for i in range(len(em_realizations)-1, -1, -1):
                                 last_ei_year, last_em_value = em_realizations[i].year, em_realizations[i].value
-                                if ITR.isnan(last_em_value.m):
+                                if ITR.isna(last_em_value):
                                     continue
                                 # Just like _get_ei_projections_from_ei_realizations, except these are based on em_realizations, not ei_realizations
                                 for j in range(0,i+1):
-                                    if em_realizations[j].year >= self.projection_controls.BASE_YEAR and not ITR.isnan(em_realizations[j].value.m):
+                                    if em_realizations[j].year >= self.projection_controls.BASE_YEAR and not ITR.isna(em_realizations[j].value):
                                         break
                                 model_ei_projections = [ICompanyEIProjection(year=em_realizations[k].year, value=em_realizations[k].value / production_proj.loc[em_realizations[k].year])
                                                         # NaNs in the middle may still be a problem!
@@ -1292,12 +1348,7 @@ class EITargetProjector(EIProjector):
                                 skip_first_year = 1
                                 break
                             assert last_ei_year >= target.target_base_year
-                        # FIXME: just have to trust that this particular value ties to the first target's year/value pair
-                        try:
-                            last_ei_value = last_em_value / last_prod_value
-                        except UnboundLocalError:
-                            logger.error(f"crashed out without finding em_realizations for {company.company_id}")
-                            raise
+                        last_ei_value = last_em_value / last_prod_value
 
                     target_year = target.target_end_year
                     # Attribute target_reduction_pct of ITargetData is currently a fraction, not a percentage.
@@ -1401,7 +1452,7 @@ class EITargetProjector(EIProjector):
             return pd.Series(PA_([], dtype=f"pint[{first_value.u:~P}]"))
         if last_value >= first_value or first_value.m == 0:
             # If we have a slack target, i.e., target goal is actually above current data, clamp so CAGR computes as zero
-            return pd.Series(PA_([first_value.m] * (period+1), dtype=f"{first_value.u:~P}"),
+            return pd.Series(PA_(np.ones(period+1) * first_value.m, dtype=f"{first_value.u:~P}"),
                              index=range(first_year, last_year+1),
                              name='CAGR')
 
@@ -1438,7 +1489,7 @@ class EITargetProjector(EIProjector):
                 cagr_factor = (last_value / first_value).m ** (1 / period)
                 cagr_data = [cagr_factor ** y * first_value.m
                              for y, year in enumerate(range(first_year, last_year+1))]
-        cagr_result = pd.Series(PA_(cagr_data, dtype=f"{last_value.u:~P}"),
+        cagr_result = pd.Series(PA_(np.array(cagr_data), dtype=f"{last_value.u:~P}"),
                                 index=range(first_year, last_year+1),
                                 name='CAGR')
         return cagr_result

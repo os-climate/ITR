@@ -94,16 +94,16 @@ class TestTargets(unittest.TestCase):
 
     def gen_company_variation(self, company_name, company_id, region, sector,
                               base_production,
-                              EI_df, ei_multiplier, ei_offset,
+                              ei_df_t, ei_multiplier, ei_offset,
                               ei_nz_year, ei_max_negative=None) -> ICompanyData:
         year_list = [2019, 2025, 2030, 2035, 2040, 2045, 2050]
         # the last slice(None) gives us all scopes to index against
-        bm_ei = asPintDataFrame(EI_df.loc[(sector, region, slice(None)), year_list])
+        bm_ei_t = ei_df_t.loc[year_list, (sector, region, slice(None))]
 
         # We set intensities to be the wonky things
         company_data = gen_company_data(company_name, company_id, region, sector,
                                         base_production,
-                                        bm_ei * ei_multiplier + ei_offset,
+                                        bm_ei_t * ei_multiplier + ei_offset,
                                         ei_nz_year, ei_max_negative)
         # By default, gen_company_data sets targets, but we want to set intensities...
         company_data.projected_intensities = company_data.projected_targets
@@ -115,24 +115,24 @@ class TestTargets(unittest.TestCase):
         # Company AG is over-budget with its intensity projections, targeting netzero intensity by 2040 via targets
         company_ag = self.gen_company_variation('Company AG', 'US0079031078', 'North America', 'Electricity Utilities',
                                                 Q_(10, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                self.OECM_EI_S3_bm._EI_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
         # Company AH is same as Company AG, but targeting netzero absolute by 2040 via targets
         company_ah = self.gen_company_variation('Company AH', 'US00724F1012', 'North America', 'Electricity Utilities',
                                                 Q_(10, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                self.OECM_EI_S3_bm._EI_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         # Company AI is same as Company AG, but targeting 50% intensity reduction by 2030 and netzero by targets in 2040
         company_ai = self.gen_company_variation('Company AI', 'US00130H1059', 'North America', 'Electricity Utilities',
                                                 Q_(10.0, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                self.OECM_EI_S3_bm._EI_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         # Company AJ is same as Company AG, but targeting 50% absolute reduction by 2030 and netzero by targets in 2040
         company_aj = self.gen_company_variation('Company AJ', 'FR0000125338', 'North America', 'Electricity Utilities',
                                                 Q_(10.0, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'kg CO2/MWh'),
+                                                self.OECM_EI_S3_bm._EI_df_t, 1.0, ei_offset = Q_(100, 'kg CO2/MWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         company_data = [ company_ag, company_ah, company_ai, company_aj ]
@@ -148,6 +148,8 @@ class TestTargets(unittest.TestCase):
         intensity = (company_ag.ghg_s1s2 + company_ag.ghg_s3) / company_ag.base_year_production
         absolute = (company_ag.ghg_s1s2 + company_ag.ghg_s3)
 
+        ei_df_t = self.OECM_EI_S3_bm._EI_df_t
+
         target_ag_0 = ITargetData(**{
             'netzero_year': 2050,
             'target_type': 'intensity',
@@ -161,7 +163,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df=None)
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_ah_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -176,7 +178,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df=None)
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -202,7 +204,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df=None)
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_aj_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -228,7 +230,7 @@ class TestTargets(unittest.TestCase):
         })
         company_aj.target_data = [ target_aj_0, target_aj_1 ]
         company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df=None)
+            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         plot_dict = {
             # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
@@ -271,27 +273,29 @@ class TestTargets(unittest.TestCase):
         assert_pint_series_equal(self, self.base_company_data._convert_projections_to_series(company_aj, 'projected_targets'), expected_aj, places=3)
 
     def test_target_2030(self):
+        ei_df_t = self.OECM_EI_S3_bm._EI_df_t
+
         # Company AG is over-budget with its intensity projections, targeting 50% reduction by 2030, another 50% by 2040, NZ by 2050
         company_ag = self.gen_company_variation('Company AG', 'US0079031078', 'North America', 'Electricity Utilities',
                                                 Q_(10, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
         # Company AH is same as Company AG, but targeting 50% absolute reduction by 2030, , another 50% by 2040, NZ by 2050
         company_ah = self.gen_company_variation('Company AH', 'US00724F1012', 'North America', 'Electricity Utilities',
                                                 Q_(10, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         # Company AI is same as Company AG, but targeting 30% absolute reduction by 2030, 50% intensity reduction by 2040, NZ by 2050
         company_ai = self.gen_company_variation('Company AI', 'US00130H1059', 'North America', 'Electricity Utilities',
                                                 Q_(10.0, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         # Company AJ is same as Company AG, but targeting 30% intensity reduction by 2030, 50% absolute reduction by 2040, NZ by 2050
         company_aj = self.gen_company_variation('Company AJ', 'FR0000125338', 'North America', 'Electricity Utilities',
                                                 Q_(10.0, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'kg CO2/MWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'kg CO2/MWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         company_data = [ company_ag, company_ah, company_ai, company_aj ]
@@ -331,7 +335,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0, target_ag_1 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df=None)
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_ah_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -357,7 +361,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0, target_ah_1 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df=None)
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -383,7 +387,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df=None)
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_aj_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -409,7 +413,7 @@ class TestTargets(unittest.TestCase):
         })
         company_aj.target_data = [ target_aj_0, target_aj_1 ]
         company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df=None)
+            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         plot_dict = {
             # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
@@ -453,27 +457,29 @@ class TestTargets(unittest.TestCase):
         assert_pint_series_equal(self, self.base_company_data._convert_projections_to_series(company_aj, 'projected_targets'), expected_aj, places=3)
 
     def test_target_overlaps(self):
+        ei_df_t = self.OECM_EI_S3_bm._EI_df_t
+
         # Company AG is over-budget with its intensity projections, targeting 50% reduction by 2030, another 50% by 2040, NZ by 2050
         company_ag = self.gen_company_variation('Company AG', 'US0079031078', 'North America', 'Electricity Utilities',
                                                 Q_(10, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
         # Company AH is same as Company AG, but targeting 50% absolute reduction by 2030, , another 50% by 2040, NZ by 2050
         company_ah = self.gen_company_variation('Company AH', 'US00724F1012', 'North America', 'Electricity Utilities',
                                                 Q_(10, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         # Company AI is same as Company AG, but targeting 30% absolute reduction by 2030, 50% intensity reduction by 2040, NZ by 2050
         company_ai = self.gen_company_variation('Company AI', 'US00130H1059', 'North America', 'Electricity Utilities',
                                                 Q_(10.0, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         # Company AJ is same as Company AG, but targeting 30% intensity reduction by 2030, 50% absolute reduction by 2040, NZ by 2050
         company_aj = self.gen_company_variation('Company AJ', 'FR0000125338', 'North America', 'Electricity Utilities',
                                                 Q_(10.0, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'kg CO2/MWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(100, 'kg CO2/MWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         company_data = [ company_ag, company_ah, company_ai, company_aj ]
@@ -513,7 +519,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0, target_ag_1 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df=None)
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_ah_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -539,7 +545,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0, target_ah_1 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df=None)
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -565,7 +571,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df=None)
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         target_aj_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -591,7 +597,7 @@ class TestTargets(unittest.TestCase):
         })
         company_aj.target_data = [ target_aj_0, target_aj_1 ]
         company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df=None)
+            company_aj, bm_production_data.loc[(company_aj.company_id, EScope.S1S2)], ei_df_t=ei_df_t)
 
         plot_dict = {
             # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
@@ -635,6 +641,8 @@ class TestTargets(unittest.TestCase):
         assert_pint_series_equal(self, self.base_company_data._convert_projections_to_series(company_aj, 'projected_targets'), expected_aj, places=3)
 
     def test_different_starting_dates_intensity(self):
+        ei_df_t = self.OECM_EI_S3_bm._EI_df_t
+
         # For a company with specific targets, test the effects of under- or over-acheiving those targets
         # durig the first few years of the start-date of the target
 
@@ -645,7 +653,7 @@ class TestTargets(unittest.TestCase):
         
         company_oecm = self.gen_company_variation('OECM Aligned', 'NA-EU-OECM-ALIGNED', 'North America', 'Electricity Utilities',
                                                 Q_(10, "TWh"),
-                                                self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(0, 'g CO2/kWh'),
+                                                ei_df_t, 1.0, ei_offset = Q_(0, 'g CO2/kWh'),
                                                 ei_nz_year = 2050, ei_max_negative = Q_(-1, 'g CO2/kWh'))
         company_oecm.projected_targets = company_oecm.projected_intensities
 
@@ -786,7 +794,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ag.target_data = [ target_ag_0, target_ag_1 ]
         company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.AnyScope)], ei_df=None)
+            company_ag, bm_production_data.loc[(company_ag.company_id, EScope.AnyScope)], ei_df_t=ei_df_t)
 
         # Same, since copied from company_ag...
         # intensity_s1s2 = company_ah.ghg_s1s2 / company_ah.base_year_production
@@ -816,7 +824,7 @@ class TestTargets(unittest.TestCase):
         })
         company_ah.target_data = [ target_ah_0, target_ah_1 ]
         company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.AnyScope)], ei_df=None)
+            company_ah, bm_production_data.loc[(company_ah.company_id, EScope.AnyScope)], ei_df_t=ei_df_t)
 
         target_ai_0 = ITargetData(**{
             'netzero_year': 2050,
@@ -842,11 +850,11 @@ class TestTargets(unittest.TestCase):
         })
         company_ai.target_data = [ target_ai_0, target_ai_1 ]
         company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
-            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)], ei_df=None)
+            company_ai, bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)], ei_df_t=ei_df_t)
 
         self.base_company_data = BaseCompanyDataProvider (company_data)
         # Since we are not using a Data Warehouse to compute our graphics, we have to do this projection manually, with the benchmark's internal dataframe.
-        self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, self.OECM_EI_S3_bm._EI_df)
+        self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, ei_df_t)
 
         co_pp = bm_production_data.droplevel('scope')
 
