@@ -1254,6 +1254,7 @@ class EITargetProjector(EIProjector):
                         target_base_year_m = ITR.ufloat(target_base_year_m, target.target_base_year_err)
                     target_ei_value = Q_(target_base_year_m * (1 - target.target_reduction_pct),
                                          target_base_year_unit)
+                    last_ei_value = last_ei_value.to(target_base_year_unit)
                     if target_ei_value >= last_ei_value:
                         # We've already achieved target, so aim for the next one
                         target_year = last_ei_year

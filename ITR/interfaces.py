@@ -23,7 +23,8 @@ LoggingConfig.add_config_to_logger(logger)
 
 import pint
 from pint.errors import DimensionalityError
-import pint_pandas
+from pint_pandas import PintType
+from pint_pandas.pint_array import PintSeriesAccessor
 
 class SortableEnum(Enum):
     def __str__(self):
@@ -282,7 +283,7 @@ class ICompanyEIProjection(BaseModel):
             # breakpoint()
             raise ValueError(f"EI Projection years not aligned for add(): {self.year} vs. {o.year}")
         return ICompanyEIProjection(year=self.year,
-                                    value = self.value + (0 if ITR.isna(o.value.m) else o.value))
+                                    value = self.value if ITR.isna(o.value.m) else self.value + o.value.to(self.value.units))
 
     def min(self, o):
         if self.year != o.year:
@@ -312,7 +313,7 @@ class DF_ICompanyEIProjections(BaseModel):
 
     @validator('projections')
     def allow_projections(cls, v):
-        if isinstance(v.pint, pint_pandas.pint_array.PintSeriesAccessor):
+        if isinstance(v.pint, PintSeriesAccessor):
             return v
         raise ValidationError(f"{v} is not composed of a PintArray")
 
@@ -397,7 +398,7 @@ class IEmissionRealization(BaseModel):
     def add(self, o):
         assert self.year==o.year
         return IEmissionRealization(year=self.year,
-                                    value = self.value + (0 if ITR.isna(o.value.m) else o.value))
+                                    value = self.value if ITR.isna(o.value.m) else self.value + o.value.to(self.value.units))
 
 
 class IHistoricEmissionsScopes(BaseModel):
@@ -433,7 +434,7 @@ class IEIRealization(BaseModel):
     def add(self, o):
         assert self.year==o.year
         return IEIRealization(year=self.year,
-                              value = self.value + (0 if ITR.isna(o.value.m) else o.value))
+                              value = self.value if ITR.isna(o.value.m) else self.value + o.value.to(self.value.units))
 
 
 class IHistoricEIScopes(BaseModel):
@@ -576,7 +577,7 @@ class ICompanyData(BaseModel):
             retval = realized_values[0].copy()
             retval.year = base_year
             # FIXME: Unless and until we accept uncertainties as input, rather than computed data, we don't need to make this a UFloat here
-            retval.value = pint_pandas.PintType(metric).na_value
+            retval.value = PintType(metric).na_value
             return retval
         return valid_realizations[0]
 
@@ -586,10 +587,10 @@ class ICompanyData(BaseModel):
                 if value.u==metric:
                     return value
                 if ITR.isna(value):
-                    pint_pandas.PintType(metric).na_value
+                    return PintType(metric).na_value
                 # We've pre-conditioned metric so don't need to work around https://github.com/hgrecco/pint/issues/1687
                 return value.to(metric)
-            return pint_pandas.PintType(metric).na_value
+            return PintType(metric).na_value
         
         if historic_data is None:
             return None
@@ -648,7 +649,7 @@ class ICompanyData(BaseModel):
             self.base_year_production = base_realization.value
         else:
             logger.warning(f"missing historic data for base_year_production for {self.company_name}")
-            self.base_year_production = pint_pandas.PintType(self.production_metric).na_value
+            self.base_year_production = PintType(self.production_metric).na_value
         if self.ghg_s1s2 is None and self.historic_data.emissions:
             if self.historic_data.emissions.S1S2:
                 base_realization = self._get_base_realization_from_historic(self.historic_data.emissions.S1S2, self.emissions_metric, base_year)
