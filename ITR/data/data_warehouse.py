@@ -616,7 +616,7 @@ class DataWarehouse(ABC):
         units_CO2e = 't CO2e'
         proj_CO2e_m_t = proj_prod_t.combine(
             proj_ei_t,
-            lambda prod, ei: ITR.data.osc_units.align_production_to_bm(prod, ei).mul(ei).pint.m_as(units_CO2e))
+            lambda prod, ei: asPintSeries(ITR.data.osc_units.align_production_to_bm(prod, ei).mul(ei)).pint.m_as(units_CO2e))
         if ITR.HAS_UNCERTAINTIES:
             # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
             proj_CO2e_m_t[proj_CO2e_m_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR._ufloat_nan

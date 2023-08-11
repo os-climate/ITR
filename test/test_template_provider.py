@@ -86,8 +86,7 @@ class TestTemplateProvider(unittest.TestCase):
             if c.projected_targets.S1S2 is None and temp is None:
                 continue
             if isinstance(c.projected_targets.S1S2.projections, pd.Series):
-                breakpoint()
-                assert all(ITR.nominal_values(c.projected_targets.S1S2.projections.values.data)==ITR.nominal_values(temp.projections.values.data))
+                assert_pint_series_equal(self, ITR.nominal_values(c.projected_targets.S1S2.projections), ITR.nominal_values(temp.projections))
             else:
                 assert c.projected_targets.S1S2 == temp
 

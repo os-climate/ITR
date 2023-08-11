@@ -217,12 +217,13 @@ def try_get_co2(prod_bm, ei_df_t, sectors, region, scope_list):
         # Else we are in TPI, which has no S3 overlaps
     return result
 
-# For OECM, calculate multi-sector footprints in a given activity
+# For OECM, calculate multi-sector footprints in a given activity.
 def get_co2_in_sectors_region_scope(prod_bm, ei_df_t, sectors, region, scope_list) -> pd.DataFrame:
     '''
-    Aggregate benchmark emissions across SECTORS.  If SCOPE_LIST is none, we feel our way through them (TPI).
-    Otherwise, caller is responsible for setting SCOPE_LIST to the specific scope requested (and in the TPI case
-    this may limit what sectors can be aggregated).
+    Aggregate benchmark emissions across SECTORS, returning a cumulative sum indexed by YEAR.
+
+    If SCOPE_LIST is none, we feel our way through them (TPI).  Otherwise, caller is responsible for setting
+    SCOPE_LIST to the specific scope requested.  (The TPI case this may limit what sectors can be aggregated).
     '''
     energy_sectors = sectors & energy_activities
     utility_sectors = sectors & utility_activities
@@ -236,7 +237,7 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df_t, sectors, region, scope_lis
         if scope_list and (scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]):
             co2_s1s2_elements = try_get_co2(prod_bm, ei_df_t, sectors, region, [ EScope.S1S2 ] )
             if co2_s1s2_elements:
-                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                total_co2_s1s2 = pd.concat(co2_s1s2_elements).groupby(level=0).sum()
             else:
                 raise ValueError(f"no benchmark emissions for {sectors} in scope")
             if sectors & {'Utilities'}:
@@ -255,19 +256,19 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df_t, sectors, region, scope_lis
                 else:
                     total_co2_s3_elements = try_get_co2(prod_bm, ei_df_t, utility_sectors, region, [ EScope.S3 ] )
                 if total_co2_s3_elements:
-                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2_s3 = pd.concat(total_co2_s3_elements).groupby(level=0).sum()
                     total_co2 = total_co2 + total_co2_s3
             return total_co2
         # At this point, either scope_list is None, meaning fish out TPI metrics, or S1, S2, or S3, all of which aggregate within activity under OECM
         new_df = pd.concat( try_get_co2(prod_bm, ei_df_t, sectors, region, scope_list ), axis=1)
         # should we use m_as here?
-        return new_df.sum(axis=1).astype('pint[Gt CO2e]')
+        return new_df.groupby(level=0).sum()
     # Multi-activity case, so SCOPE sets the rules for OECM
     if scope_list:
         if scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]:
             co2_s1s2_elements = try_get_co2(prod_bm, ei_df_t, sectors, region, [ EScope.S1S2 ] )
             if co2_s1s2_elements:
-                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                total_co2_s1s2 = pd.concat(co2_s1s2_elements).groupby(level=0).sum()
             else:
                 raise ValueError(f"No S1S2 data for sectors {sectors}")
             # Now subtract out the S1 from Power Generation so we don't double-count that
@@ -281,13 +282,12 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df_t, sectors, region, scope_lis
             if EScope.S1S2S3 in scope_list:
                 total_co2_s3_elements = try_get_co2(prod_bm, ei_df_t, sectors & end_use_s3_activities, region, [ EScope.S3] )
                 if total_co2_s3_elements:
-                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2_s3 = pd.concat(total_co2_s3_elements).groupby(level=0).sum()
                     total_co2 = total_co2.add(total_co2_s3)
             return total_co2
     # Must be S1 or S2 by itself (or scope_list is None, meaning whatever scope can be found).  try_get_co2 will deal with S3 case.
     new_df = pd.concat(try_get_co2(prod_bm, ei_df_t, sectors, region, scope_list ), axis=1)
-    # should we use m_as here?
-    total_co2 = new_df.sum(axis=1).astype('pint[Gt CO2e]')
+    total_co2 = new_df.groupby(level=0).sum()
     return total_co2
 
 # nice cheatsheet for managing layout via className attribute: https://hackerthemes.com/bootstrap-cheatsheet/
@@ -1250,7 +1250,6 @@ def recalculate_target_year_ts(warehouse_pickle_json, sectors_ty, sector_ty, reg
             bm_region = region
     else:
         try:
-            breakpoint()
             if len(df_ei_t.loc[:, (list(sectors), [ region ], scope_list if scope_list else slice(None))]) < len(sectors):
                 # If company-based region fans across multiple regions, set bm_region to 'Global'
                 bm_region = 'Global'
@@ -1412,7 +1411,7 @@ def quantify_col(x, col, unit=None):
         return asPintSeries(x[col].map(Q_))
     if not unit.startswith('pint['):
         unit = f"pint[{unit}]"
-    return x[col].map(Q_).astype(unit)
+    return x[col].replace('<NA>', 'nan', regex=True).map(Q_).astype(unit)
 
 @app.callback(
     Output("co2-usage-vs-budget", "figure"),     # fig1

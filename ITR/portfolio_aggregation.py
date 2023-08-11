@@ -169,7 +169,7 @@ class PortfolioAggregation(ABC):
                     use_S3 = use_S3 & ~ITR.isna(data[self.c.COLS.GHG_SCOPE3])
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    df_z = pd.Series(PA_([0] * len(data.index), dtype='Mt CO2e'), index=data.index)
+                    df_z = pd.Series(PA_(np.zeros(len(data.index)), dtype='Mt CO2e'), index=data.index)
                     data[self.c.COLS.OWNED_EMISSIONS] = (data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]) * (
                         data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, df_z)
                         + data[self.c.COLS.GHG_SCOPE3].where(use_S3, df_z)).astype('pint[Mt CO2e]')

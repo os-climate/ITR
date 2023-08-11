@@ -133,9 +133,6 @@ def prioritize_submetric(x: pd.DataFrame) -> pd.Series:
     if len(x) == 1:
         # Nothing to prioritize
         return x.iloc[0]
-    if x.index[0][2]!='production' and x.index[0][1] in ['DE0005220008']:
-        breakpoint()
-
     # NaN values in pd.Categorical means we did not understand the prioritization of the submetric; *unrecognized* pushes to bottom
     x.submetric = x.submetric.fillna('*unrecognized*')
     x = x.sort_values('submetric')
@@ -262,7 +259,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_emissions_t = asPintDataFrame(df_emissions.T)
             df_productions_t = df_emissions_t.divide(df_intensities_t)
             # FIXME: need to reconcile what happens if multiple scopes all yield the same production metrics
-            df_productions_t = df_productions_t.apply(lambda x: x.astype(f"pint[{ureg(x.dtype.units).to_reduced_units().u}]")).dropna(axis=1, how='all')
+            df_productions_t = df_productions_t.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype.units)).to_reduced_units().u}]")).dropna(axis=1, how='all')
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # pint units don't like being twisted from columns to rows, but it's ok
@@ -304,13 +301,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                          .set_index([ColumnsConfig.SCOPE,'index'], append=True))
             case1_idx = df2.index.intersection(df1_case1.index)
             case2_idx = df2.index.intersection(df1_case2.index)
-            df3 = pd.concat([df2.loc[case1_idx].mul(df1_case1.loc[case1_idx, esg_year_columns]),
-                             df2.loc[case2_idx].mul(df1_case2.loc[case2_idx, esg_year_columns])])
+            # Mulitiplication of quantities results in concatenation of units, but NaNs might not be wrapped with their own units.
+            # When we multiply naked NaNs by quantities, we get a defective concatenation.  Fix this by transposing df3 so we can use
+            # PintArrays.  Those multiplications will create proper unit math for both numbers and NaNs
+            df3_t = pd.concat([asPintDataFrame(df2.loc[case1_idx].T).mul(asPintDataFrame(df1_case1.loc[case1_idx, esg_year_columns].T)),
+                               asPintDataFrame(df2.loc[case2_idx].T).mul(asPintDataFrame(df1_case2.loc[case2_idx, esg_year_columns].T))],
+                              axis=1)
             if ITR.HAS_UNCERTAINTIES:
-                df4 = df3.astype('pint[t CO2e]') # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
+                df4 = df3_t.astype('pint[t CO2e]').T # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
                 # Also https://github.com/pandas-dev/pandas/issues/12693
             else:
-                df4 = df3.astype('pint[t CO2e]').drop_duplicates()
+                df4 = df3_t.astype('pint[t CO2e]').T.drop_duplicates()
             df5 = df4.droplevel([ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]).swaplevel() # .sort_index()
             df_esg.loc[df5.index.get_level_values('index'), 'metric'] = df5.index.get_level_values('scope')
             df5.index = df5.index.droplevel(['scope', 'submetric'])
@@ -853,7 +854,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg = df_esg[~df_esg.company_id.isin(missing_esg_metrics_df.index)]
 
             # We don't yet know our benchmark, so we cannot yet Use benchmark data to align their respective weights
-
             df3 = (pd.concat([best_prod, new_prod, best_esg_em, new_em_to_allocate, new_em_allocated])
                    .reset_index(level='metric')
                    .rename(columns={'metric':'scope'})
@@ -866,18 +866,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 assert 'sector' not in df3.index.names and 'submetric' not in df3.index.names
 
             # Avoid division by zero problems with zero-valued production metrics
-            df3_numerator = df3.xs(VariablesConfig.EMISSIONS, level=1)
-            df3_denominator = df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[1,2])
-            df3_zeros = df3_denominator.map(lambda x: x.m == 0)
-            if len(df3_zeros):
-                breakpoint()
-            df4 = pd.concat([df3_numerator[~df3_zeros].div(df3_denominator[~df3_zeros]),
-                             pd.Series(df3_numerator[df3_zeros].combine(
-                                 df3_denominator[df3_zeros],
-                                 lambda top, bot: Q_(f"0 {top.u}/{bot.u}")))])
+            df3_num_t = asPintDataFrame(df3.xs(VariablesConfig.EMISSIONS, level=1).T)
+            df3_denom_t = asPintDataFrame(df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[1,2]).T)
+            df4 = (df3_num_t * df3_denom_t.rdiv(1.0).apply(lambda x: x.map(lambda y: x.dtype.na_value if ITR.isna(y) else Q_(0, x.dtype.units) if y.m==np.inf else y))).T
             df4['variable'] = VariablesConfig.EMISSIONS_INTENSITIES
             df4 = df4.reset_index().set_index(['company_id', 'variable', 'scope'])
-            df5 = pd.concat([df3, df4])
+            # Build df5 from PintArrays, not object types
+            df3_num_t = pd.concat({VariablesConfig.EMISSIONS: df3_num_t}, names=['variable'], axis=1)
+            df3_num_t.columns = df3_num_t.columns.reorder_levels(['company_id','variable', 'scope'])
+            df3_denom_t = pd.concat({VariablesConfig.PRODUCTIONS: df3_denom_t}, names=['variable'], axis=1)
+            df3_denom_t = pd.concat({"production": df3_denom_t}, names=['scope'], axis=1)
+            df3_denom_t.columns = df3_denom_t.columns.reorder_levels(['company_id','variable', 'scope'])
+            df5 = pd.concat([df3_num_t.T, df3_denom_t.T, df4])
 
             df_historic_data = df5
 

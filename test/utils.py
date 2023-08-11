@@ -14,13 +14,14 @@ from ITR.interfaces import ICompanyData, ICompanyEIProjectionsScopes, ICompanyEI
 class ITR_Encoder(json.JSONEncoder):
     def default(self, q):
         if isinstance(q, Quantity):
-            if ITR.isnan(q.m):
+            if ITR.isna(q):
                 return f"nan {q.u}"
             return f"{q:.5f}"
         elif isinstance(q, EScope):
             return q.value
         elif isinstance(q, pd.Series):
-            res = pd.DataFrame(q.map(lambda x: f"nan {x.u}" if ITR.isnan(x.m) else f"{x:.5f}"), columns=['value']).reset_index().to_dict('records')
+            units = q.dtype.units
+            res = pd.DataFrame({'value': q.map(lambda x: f"nan {units}" if ITR.isna(x) else f"{x:.5f}")}).reset_index().to_dict('records')
             return res
         else:
             super().default(q)

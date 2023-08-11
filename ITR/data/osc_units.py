@@ -192,13 +192,13 @@ def dimension_as(x, dim_unit):
 
 def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Series:
     try:
-        if ureg(f"t CO2e/({prod_series.dtype.units})") == ei_bm.iloc[0]:
+        if ureg(f"t CO2e/({prod_series.iloc[0].units})") == ei_bm.iloc[0]:
             return prod_series
-    except DimensionalityError:
+    except (DimensionalityError, AttributeError):
         breakpoint()
         pass
     # Convert the units of production into the denominator of the EI units
-    ei_units = str(ei_bm.dtype.units)
+    ei_units = str(ei_bm.iloc[0].units)
     (ei_unit_top, ei_unit_bottom) = ei_units.split('/', 1)
     if '/' in ei_unit_bottom:
         # Fix reciprocals: t CO2e / CH4 / bcm -> t CO2e / (CH4 * bcm)
@@ -220,7 +220,7 @@ def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Serie
                 dim2=ei_unit_bottom,
                 extra_msg=f"cannot align units"
             )
-    return prod_series.pint.to(ei_unit_bottom)
+    return asPintSeries(prod_series).pint.to(ei_unit_bottom)
 
 oil = Context('oil')
 oil.add_transformation('[carbon] * [mass] ** 2 / [length] / [time] ** 2', '[carbon] * [mass]',

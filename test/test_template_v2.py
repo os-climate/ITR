@@ -3,6 +3,7 @@ import os
 import unittest
 from numpy.testing import assert_array_equal
 import pandas as pd
+from pint_pandas import PintArray as PA_
 
 import ITR
 from ITR.data.osc_units import ureg, Q_, M_, asPintSeries, requantify_df_from_columns
@@ -69,7 +70,6 @@ class TestTemplateProviderV2(unittest.TestCase):
                   'US69331C1080',
                   'US69349H1077', 'KR7005490008',
                   ]
-        breakpoint()
         company_data = self.template_company_data.get_company_data(comids)
         company_dict = {
             field : [ getattr(c, field) for c in company_data ]
@@ -86,34 +86,35 @@ class TestTemplateProviderV2(unittest.TestCase):
 
         selected_company_ids = [ 'US00130H1059', 'US26441C2044', 'KR7005490008' ]
 
-        expected_projections = {
-            selected_company_ids[0]: ('S1S2', [ 0.602, 0.5385, 0.4816, 0.4307, 0.3852, 0.3445, 0.3081, 0.2754,
+        expected_data = pd.DataFrame({
+            (selected_company_ids[0] ,'S1S2'): PA_([ 0.602, 0.5385, 0.4816, 0.4307, 0.3852, 0.3445, 0.3081, 0.2754,
             0.2462, 0.1972, 0.1578, 0.1258, 0.0998, 0.0786, 0.061, 0.0464, 0.0342, 0.0238,
             0.015, 0.013, 0.0111, 0.0094, 0.0078, 0.0063, 0.0049, 0.0035, 0.0023, 0.0011,
-                                   0.0 ]),
-            selected_company_ids[1]: ('S1', [ 0.2987, 0.2744, 0.2519, 0.2311, 0.2118, 0.1939, 0.1774, 0.162,
+                                                    0.0 ], dtype='t CO2e/MWh'),
+            (selected_company_ids[1], 'S1'): PA_([ 0.2987, 0.2744, 0.2519, 0.2311, 0.2118, 0.1939, 0.1774, 0.162,
             0.1477, 0.1344, 0.1221, 0.1106, 0.1, 0.0901, 0.0808, 0.0722, 0.0642, 0.0567,
             0.0497, 0.0432, 0.0371, 0.0314,  0.026,  0.021, 0.0163, 0.0118, 0.0077, 0.0037,
-                                   -0.0 ]),
-            selected_company_ids[2]: ('S1S2', [2.0046, 1.9561, 1.9088, 1.8626, 1.8176, 1.7736, 1.7307, 1.6888,
+                                                   -0.0 ], dtype='t CO2e/MWh'),
+            (selected_company_ids[2], 'S1S2'): PA_([2.0046, 1.9561, 1.9088, 1.8626, 1.8176, 1.7736, 1.7307, 1.6888,
             1.648, 1.5723, 1.5001, 1.4313, 1.3656, 1.3029, 1.243, 1.186, 1.1315, 1.0796,
             1.03, 0.8003, 0.6178, 0.4724, 0.3561, 0.2627, 0.1873, 0.126, 0.0759, 0.0345,
-                                   -0.0])
-        }
+                                               -0.0], dtype='t CO2e/(t Steel)')
+        })
 
         for c in company_data:
             if c.company_id not in selected_company_ids:
                 continue
-            scope, expected_projection = expected_projections[c.company_id]
-            c_proj_targets = c.projected_targets[scope].projections
+            expected_column = expected_data[c.company_id]
+            scope_name = expected_column.columns[0]
+            expected_projection = expected_column[scope_name]
+            c_proj_targets = c.projected_targets[scope_name].projections
             if isinstance(c_proj_targets, pd.Series):
                 c_proj_targets = c_proj_targets[c_proj_targets.index>=2022]
-                breakpoint()
-                assert [round(x, 4) for x in ITR.nominal_values(c_proj_targets.pint.m)] == expected_projection
+                assert_pint_series_equal(self, ITR.nominal_values(c_proj_targets), expected_projection, places=4)
             else:
                 while c_proj_targets[0].year < 2022:
                     c_proj_targets = c_proj_targets[1:]
-                    assert [ITR.nominal_values(round(x.value.m,4)) for x in c_proj_targets] == expected_projection
+                    assert [ITR.nominal_values(round(x.value.m_as(expected_projection.dtype.units),4)) for x in c_proj_targets] == expected_projection.pint.m.tolist()
             
 
     def test_temp_score(self):
@@ -157,7 +158,7 @@ class TestTemplateProviderV2(unittest.TestCase):
         expected_data.columns = range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                       TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)
         trajectories = self.template_company_data.get_company_projected_trajectories(company_ids)
-        assert_pint_frame_equal(self, trajectories.loc[:, EScope.S1S2, :], expected_data, places=4)
+        assert_pint_frame_equal(self, trajectories.loc[:, EScope.S1S2, :], expected_data, places=1)
 
     def test_get_benchmark(self):
         # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific

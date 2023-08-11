@@ -859,13 +859,15 @@ class TestTargets(unittest.TestCase):
         co_pp = bm_production_data.droplevel('scope')
 
         # fig = px.line(df, x='id', y='value', color='variable')
+        cumsum_units = 'Mt CO2e'
         target_dict = {
             f"Target: {c.company_id} - {c.company_name}": compute_scope_targets (c, 'projected_targets', co_pp.columns)
             for c in company_data
         }
         target_cumulative = {
             f"TargetCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id].mul(
-                target_dict[f"Target: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).cumsum() for c in company_data
+                target_dict[f"Target: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).pint.m_as(cumsum_units).cumsum()
+            for c in company_data
         }
         trajectory_dict = {
             f"Trajectory: {c.company_id} - {c.company_name}": compute_scope_targets (c, 'projected_intensities', co_pp.columns)
@@ -873,10 +875,11 @@ class TestTargets(unittest.TestCase):
         }
         trajectory_cumulative = {
             f"TrajectoryCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id].mul(
-                trajectory_dict[f"Trajectory: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).cumsum() for c in company_data
+                trajectory_dict[f"Trajectory: {c.company_id} - {c.company_name}"].loc[co_pp.columns]).pint.m_as(cumsum_units).cumsum()
+            for c in company_data
         }
-        target_df = asPintDataFrame(pd.concat([pd.DataFrame(target_dict), pd.DataFrame(target_cumulative).astype('pint[Mt CO2e]'),
-                                               pd.DataFrame(trajectory_dict), pd.DataFrame(trajectory_cumulative).astype('pint[Mt CO2e]')], axis=1))
+        target_df = asPintDataFrame(pd.concat([pd.DataFrame(target_dict), pd.DataFrame(target_cumulative).astype(f"pint[{cumsum_units}]"),
+                                               pd.DataFrame(trajectory_dict), pd.DataFrame(trajectory_cumulative).astype(f"pint[{cumsum_units}]")], axis=1))
         dequantified_df = target_df.pint.dequantify().droplevel(1, axis=1)
         # May have uncertainties...
         dequantified_df = dequantified_df.apply(lambda col: col if col.dtype=='float64' else ITR.nominal_values(col))
