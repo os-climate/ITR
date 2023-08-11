@@ -823,7 +823,7 @@ def warehouse_new(banner_title):
     template_company_data = TemplateProviderCompany(company_data_path, projection_controls = ProjectionControls())
     Warehouse = DataWarehouse(template_company_data, benchmark_projected_production=None, benchmarks_projected_ei=None,
                               estimate_missing_data=DataWarehouse.estimate_missing_s3_data)
-    return (json.dumps(pickle.dumps(Warehouse), default=str),
+    return (json.dumps(pickle.dumps(Warehouse), default=ITR.JSONEncoder),
             True,
             "Spin-warehouse")
 
@@ -900,7 +900,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
         Warehouse.update_trajectories()
         
 
-    return (json.dumps(pickle.dumps(Warehouse), default=str),
+    return (json.dumps(pickle.dumps(Warehouse), default=ITR.JSONEncoder),
             show_oecm_bm,
             bm_region,
             "Spin-eibm")
@@ -977,7 +977,7 @@ def recalculate_warehouse_target_year(warehouse_pickle_json, target_year, sector
         scope = ''
 
     return (
-        json.dumps(pickle.dumps(Warehouse), default=str),
+        json.dumps(pickle.dumps(Warehouse), default=ITR.JSONEncoder),
         json.dumps([{"label": i, "value": i} for i in sorted(pf_bm_sectors)] + [{'label': 'All Sectors', 'value': ''}]),
         sector,
         json.dumps([{"label": i, "value": i} for i in sorted(pf_bm_regions)] + [{'label': 'All Regions', 'value': ''}]),
@@ -1403,12 +1403,12 @@ def calc_temperature_score(warehouse_pickle_json, budget_meth, target_probabilit
         df = temperature_score.calculate(data_warehouse=Warehouse, portfolio=companies)
     df = df.drop(columns=['historic_data', 'target_data'])
     amended_portfolio = df
-    return (amended_portfolio.to_json(orient='split', default_handler=str),
+    return (amended_portfolio.to_json(orient='split', default_handler=ITR.JSONEncoder),
             "Spin-ts",)
 
-def quantify_col(x, col, unit=None):
+def quantify_col(df: pd.DataFrame, col: str, unit=None):
     if unit is None:
-        return asPintSeries(x[col].map(Q_))
+        return asPintSeries(df[col].map(Q_))
     if not unit.startswith('pint['):
         unit = f"pint[{unit}]"
     return x[col].replace('<NA>', 'nan', regex=True).map(Q_).astype(unit)

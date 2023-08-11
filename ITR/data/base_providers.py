@@ -282,6 +282,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
             df = df[df.scope.eq(scope_to_calc)]
 
         df = df.join(benchmark_projections, on=['sector','region','scope'], how='left')
+        # FIXME: would it be more robust to use df.iloc[:, -1].map(lambda x: ITR.isna(x)) ?
         mask = df.iloc[:, -1].isna()
         if mask.any():
             # We have request for benchmark data for either regions or scopes we don't have...

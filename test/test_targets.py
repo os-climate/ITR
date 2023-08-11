@@ -3,6 +3,7 @@ import json
 import os
 import re
 import pandas as pd
+import numpy as np
 from numpy.testing import assert_array_equal
 
 import ITR
@@ -858,6 +859,9 @@ class TestTargets(unittest.TestCase):
 
         co_pp = bm_production_data.droplevel('scope')
 
+        def _pint_cumsum(ser: pd.Series) -> pd.Series:
+            return ser.pint.m.cumsum().astype(ser.dtype)
+
         # fig = px.line(df, x='id', y='value', color='variable')
         cumsum_units = 'Mt CO2e'
         target_dict = {
@@ -881,8 +885,8 @@ class TestTargets(unittest.TestCase):
         target_df = asPintDataFrame(pd.concat([pd.DataFrame(target_dict), pd.DataFrame(target_cumulative).astype(f"pint[{cumsum_units}]"),
                                                pd.DataFrame(trajectory_dict), pd.DataFrame(trajectory_cumulative).astype(f"pint[{cumsum_units}]")], axis=1))
         dequantified_df = target_df.pint.dequantify().droplevel(1, axis=1)
-        # May have uncertainties...
-        dequantified_df = dequantified_df.apply(lambda col: col if col.dtype=='float64' else ITR.nominal_values(col))
+        # May have uncertainties...or some columns may be Float64
+        dequantified_df = dequantified_df.apply(lambda col: col if col.dtype=='float64' else ITR.nominal_values(col).astype(np.float64))
         fig_target = px.line(dequantified_df, y=dequantified_df.filter(regex="Target:").columns)
         fig_trajectory = px.line(dequantified_df, y=dequantified_df.filter(regex="Trajectory:").columns)
         fig_trajectory.update_traces(line={'dash':'dash'})

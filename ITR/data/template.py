@@ -116,6 +116,7 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
     return est_value
 
 # FIXME: Should make this work with a pure PintArray
+
 # Callers have already reduced multiple SUBMETRICS to a single rows using _estimated_value.
 # However, pd.Categorize normalization might set several submetrics to NaN.  Ideally, we
 # have more highly prioritized metrics than that, but if not, we can still fix things here.
@@ -1058,14 +1059,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = df_historic_data.loc[
                         company_id, 'Productions', 'production'][base_year]
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                            company_id, 'Emissions', 'S1S2'][base_year]
+                        company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(df_historic_data.loc[
+                            company_id, 'Emissions', 'S1S2'])[base_year]
                     except KeyError:
                         if (company_id, 'Emissions', 'S2') not in df_historic_data.index:
                             logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
                             try:
-                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                    company_id, 'Emissions', 'S1'][base_year]
+                                company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(df_historic_data.loc[
+                                    company_id, 'Emissions', 'S1'])[base_year]
                                 df_historic_data.loc[company_id, 'Emissions', 'S2'] = 0
                                 df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                                 df_historic_data.loc[company_id, 'Emissions Intensities', 'S2'] = 0
@@ -1074,8 +1075,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                 df_historic_data.loc[(company_id, 'Emissions Intensities', 'S2'), :] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1'] * 0
                             except KeyError:
                                 try:
-                                    company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
-                                        company_id, 'Emissions', 'S1S2S3'][base_year]
+                                    company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(df_historic_data.loc[
+                                        company_id, 'Emissions', 'S1S2S3'])[base_year]
                                     logger.warning(f"Using S1+S2+S3 as GHG_SCOPE12 because no Scope 1 or Scope 2 available for company with ID {company_id}")
                                     # FIXME: we should not allocate these here, but rather in the benchmark alignment code
                                     if False:
@@ -1089,14 +1090,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                             # S1S2 as an emissions total upstream from S1+S2.  While normally done upstream, not done for newly created company_ids.
                             try:
                                 company_data[ColumnsConfig.GHG_SCOPE12] = (
-                                    df_historic_data.loc[company_id, 'Emissions', 'S1'][base_year]
-                                    + df_historic_data.loc[company_id, 'Emissions', 'S2'][base_year])
+                                    asPintSeries(df_historic_data.loc[company_id, 'Emissions', 'S1'])[base_year]
+                                    + asPintSeries(df_historic_data.loc[company_id, 'Emissions', 'S2'])[base_year])
                                 df_historic_data.loc[company_id, 'Emissions', 'S1S2'] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1S2'] = 0
                                 df_historic_data.loc[(company_id, 'Emissions', 'S1S2'), :] = df_historic_data.loc[company_id, 'Emissions', 'S1'] + df_historic_data.loc[company_id, 'Emissions', 'S2']
                                 df_historic_data.loc[(company_id, 'Emissions Intensities', 'S1S2'), :] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S1'] + df_historic_data.loc[company_id, 'Emissions Intensities', 'S2']
                             except KeyError:
                                 logger.error(f"Scope 1 data missing from Company with ID {company_id}; treating as zero")
-                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, 'Emissions', 'S2'][base_year]
+                                company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(df_historic_data.loc[company_id, 'Emissions', 'S2'])[base_year]
                                 df_historic_data.loc[company_id, 'Emissions', 'S1'] = 0
                                 df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                                 df_historic_data.loc[company_id, 'Emissions Intensities', 'S1'] = 0
@@ -1104,8 +1105,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                 df_historic_data.loc[(company_id, 'Emissions', 'S1'), :] = df_historic_data.loc[company_id, 'Emissions', 'S2'] * 0
                                 df_historic_data.loc[(company_id, 'Emissions Intensities', 'S1'), :] = df_historic_data.loc[company_id, 'Emissions Intensities', 'S2'] * 0
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
-                            company_id, 'Emissions', 'S3'][base_year]
+                        company_data[ColumnsConfig.GHG_SCOPE3] = asPintSeries(df_historic_data.loc[
+                            company_id, 'Emissions', 'S3'])[base_year]
                     except KeyError:
                         # If there was no relevant historic S3 data, don't try to use it
                         pass
