@@ -62,7 +62,7 @@ cache = diskcache.Cache("./.webassets-cache")
 background_callback_manager = DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=600)
 
 # Some variables to control whether we use background caching or not.  Cannot use with vault nor breakpoints.
-have_breakpoint = True
+have_breakpoint = False
 use_data_vault = False
 
 examples_dir ='' #'examples'

@@ -158,7 +158,7 @@ class TestTemplateProviderV2(unittest.TestCase):
         expected_data.columns = range(TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
                                       TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1)
         trajectories = self.template_company_data.get_company_projected_trajectories(company_ids)
-        assert_pint_frame_equal(self, trajectories.loc[:, EScope.S1S2, :], expected_data, places=1)
+        assert_pint_frame_equal(self, trajectories.loc[:, EScope.S1S2, :], expected_data, places=4)
 
     def test_get_benchmark(self):
         # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific

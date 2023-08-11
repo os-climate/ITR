@@ -864,7 +864,8 @@ class EITrajectoryProjector(EIProjector):
                 if ei_keys[scope] in historic_df.index:
                     assert company.historic_data.emissions_intensities[scope.name]
                     # We could check that our EI calculations agree with our disclosed EI data, but bad reference data in test cases would cause tests to fail
-                    # assert all([historic_df.loc[emissions_keys[scope]].loc[item.year] / aligned_production.loc[item.year] == item.value for item in company.historic_data.emissions_intensities[scope.name] if not pd.isna(item.value)])
+                    # assert all([historic_df.loc[emissions_keys[scope]].loc[item.year] / aligned_production.loc[item.year] == item.value
+                    #            for item in company.historic_data.emissions_intensities[scope.name] if not pd.isna(item.value)])
                     append_this_missing_data = False
                     continue
                 # Emissions intensities not yet computed for this scope
