@@ -1411,7 +1411,7 @@ def quantify_col(df: pd.DataFrame, col: str, unit=None):
         return asPintSeries(df[col].map(Q_))
     if not unit.startswith('pint['):
         unit = f"pint[{unit}]"
-    return x[col].replace('<NA>', 'nan', regex=True).map(Q_).astype(unit)
+    return df[col].replace('<NA>', 'nan', regex=True).map(Q_).astype(unit)
 
 @app.callback(
     Output("co2-usage-vs-budget", "figure"),     # fig1

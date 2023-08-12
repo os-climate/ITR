@@ -274,37 +274,28 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
         :return: A DataFrame with company and intensity benchmarks; rows are calendar years, columns are company data
         """
-        # FIXME: Double transpose--should get rid of both!
-        EI_df = self._EI_df_t.T
-        benchmark_projections = EI_df[EI_df.columns[EI_df.columns.isin(range(self.projection_controls.BASE_YEAR,self.projection_controls.TARGET_YEAR+1))]]
-        df = company_sector_region_scope[['sector', 'region', 'scope']]
+        sec_reg_scopes = company_sector_region_scope[['sector', 'region', 'scope']]
         if scope_to_calc is not None:
-            df = df[df.scope.eq(scope_to_calc)]
-
-        df = df.join(benchmark_projections, on=['sector','region','scope'], how='left')
-        # FIXME: would it be more robust to use df.iloc[:, -1].map(lambda x: ITR.isna(x)) ?
-        mask = df.iloc[:, -1].isna()
-        if mask.any():
-            # We have request for benchmark data for either regions or scopes we don't have...
-            # Resetting the index gives us row numbers useful for editing DataFrame with fallback data
-            df = df.reset_index()
-            mask = df.iloc[:, -1].isna()
-            benchmark_global = benchmark_projections.loc[:, 'Global', :]
-            # DF1 selects all global data matching sector and scope...
-            df1 = df[mask].iloc[:, 0:4].join(benchmark_global, on=['sector','scope'], how='inner')
-            # ...which we can then mark as 'Global'
-            df1.region = 'Global'
-            df.loc[df1.index, :] = df1
-            # Remove any NaN rows from DF we could not update
-            mask1 = df.iloc[:, -1].isna()
-            df2 = df[~mask1]
-            # Restore the COMPANY_ID index; we no longer need row numbers to keep edits straight
-            company_benchmark_projections = df2.set_index('company_id')
-        else:
-            company_benchmark_projections = df
-        company_benchmark_projections.set_index('scope', append=True, inplace=True)
-        # Drop SECTOR and REGION as the result will be used by math functions operating across the whole DataFrame
-        return asPintDataFrame(company_benchmark_projections.drop(['sector', 'region'], axis=1).T)
+            sec_reg_scopes = sec_reg_scopes[sec_reg_scopes.scope.eq(scope_to_calc)]
+        sec_reg_scopes[~sec_reg_scopes.index.duplicated()]
+        sec_reg_scopes_mi = pd.MultiIndex.from_frame(sec_reg_scopes).unique()
+        bm_proj_t = self._EI_df_t.loc[
+            range(self.projection_controls.BASE_YEAR,self.projection_controls.TARGET_YEAR+1),
+            # Here we gather all requested combos as well as ensuring we have 'Global' regional coverage
+            # for sector/scope combinations that arrive with unknown region values
+            [col for col in sec_reg_scopes_mi.append(pd.MultiIndex.from_frame(sec_reg_scopes.assign(region='Global'))).unique()
+             if col in self._EI_df_t.columns]
+        ]
+        # This piece of work essentially does a column-based join (to avoid extra transpositions)
+        result = pd.concat([pd.Series() if x is None else bm_proj_t[tuple(x[1])].rename((x[0],x[1][-1]))
+                            for y in sec_reg_scopes.iterrows()
+                            # In the happy path, we can use sector/region/scope index as-is
+                            # In the less-happy path, we have to construct sector/'Global'/scope
+                            # In the least happy path, we have to ditch the row because our benchmark does not cover it
+                            for x in [y if tuple(y[1]) in bm_proj_t else (y[0], (y[1][0], 'Global', y[1][2])) if (y[1][0], 'Global', y[1][2]) in bm_proj_t else None]],
+                           axis=1).dropna(axis=1, how='all')
+        result.columns.names=['company_id', 'scope']
+        return result
 
 
 class BaseCompanyDataProvider(CompanyDataProvider):
