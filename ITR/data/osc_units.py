@@ -797,7 +797,7 @@ def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.Data
     else:
         new_df = pd.DataFrame()
     for col in df.columns:
-        new_df[col] = asPintSeries(df[col].squeeze(), name=col, errors=errors, inplace=inplace)
+        new_df[col] = asPintSeries(df[col], name=col, errors=errors, inplace=inplace)
     new_df.index = df.index
     # When DF.COLUMNS is a MultiIndex, the naive column-by-column construction replaces MultiIndex values
     # with the anonymous tuple of the MultiIndex and DF.COLUMNS becomes just an Index of tuples.
