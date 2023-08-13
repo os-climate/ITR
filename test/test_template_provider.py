@@ -1,5 +1,6 @@
 import os
 import unittest
+import numpy as np
 import pandas as pd
 
 import ITR
@@ -86,7 +87,7 @@ class TestTemplateProvider(unittest.TestCase):
             if c.projected_targets.S1S2 is None and temp is None:
                 continue
             if isinstance(c.projected_targets.S1S2.projections, pd.Series):
-                assert_pint_series_equal(self, ITR.nominal_values(c.projected_targets.S1S2.projections), ITR.nominal_values(temp.projections))
+                np.testing.assert_array_almost_equal(ITR.nominal_values(c.projected_targets.S1S2.projections.pint.m_as(temp.projections.dtype.units)), ITR.nominal_values(temp.projections.pint.m))
             else:
                 assert c.projected_targets.S1S2 == temp
 

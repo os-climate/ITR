@@ -110,7 +110,7 @@ class TestTemplateProviderV2(unittest.TestCase):
             c_proj_targets = c.projected_targets[scope_name].projections
             if isinstance(c_proj_targets, pd.Series):
                 c_proj_targets = c_proj_targets[c_proj_targets.index>=2022]
-                assert_pint_series_equal(self, ITR.nominal_values(c_proj_targets), expected_projection, places=4)
+                assert_pint_series_equal(self, c_proj_targets, expected_projection, places=4)
             else:
                 while c_proj_targets[0].year < 2022:
                     c_proj_targets = c_proj_targets[1:]

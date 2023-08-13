@@ -294,7 +294,7 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                             # In the least happy path, we have to ditch the row because our benchmark does not cover it
                             for x in [y if tuple(y[1]) in bm_proj_t else (y[0], (y[1][0], 'Global', y[1][2])) if (y[1][0], 'Global', y[1][2]) in bm_proj_t else None]],
                            axis=1).dropna(axis=1, how='all')
-        result.columns.names=['company_id', 'scope']
+        result.columns = pd.MultiIndex.from_tuples(result.columns, names=['company_id', 'scope'])
         return result
 
 
