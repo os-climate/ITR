@@ -9,8 +9,8 @@ from ITR.configs import ColumnsConfig
 from ITR.interfaces import ETimeFrames, EScope
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
-from utils import assert_pint_frame_equal
+from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns, asPintDataFrame
+from utils import assert_pint_series_equal
 
 
 class TestTemperatureScore(unittest.TestCase):
@@ -156,17 +156,20 @@ class TestTemperatureScore(unittest.TestCase):
                                msg="Long AOTS aggregation failed")
 
     def test_filter_data(self):
-        data = pd.DataFrame(data=[[ETimeFrames.LONG, EScope.S3, 1],
-                                  [ETimeFrames.MID, EScope.S1S2, 2],
-                                  [ETimeFrames.MID, EScope.S3, 3], # this should stay
-                                  [ETimeFrames.MID, EScope.S3, None]],
-                            index=pd.Index(['id0', 'id1', 'id2', 'id3'],
-                                           name='company_id'),
-                            columns=['time_frame', 'scope', 'ghg_s3'])
-        expected = pd.DataFrame(data=[[ETimeFrames.MID, EScope.S3, 3]],
-                                index=pd.Index(['id2'],
-                                               name='company_id'),
-                                columns=['time_frame', 'scope', 'ghg_s3'])
+        # This dataframe is not pure pint, but rather a hetergeoous mix of quantified and non-quantified data
+        data = asPintDataFrame(
+            pd.DataFrame(data=[[ETimeFrames.LONG, EScope.S3, Q_(1, ureg.delta_degC)],
+                               [ETimeFrames.MID, EScope.S1S2, Q_(2, ureg.delta_degC)],
+                               [ETimeFrames.MID, EScope.S3, Q_(3, ureg.delta_degC)], # this should stay
+                               [ETimeFrames.MID, EScope.S3, None]],
+                         index=pd.Index(['id0', 'id1', 'id2', 'id3'],
+                                        name='company_id'),
+                         columns=['time_frame', 'scope', 'ghg_s3']))
+        expected = asPintDataFrame(
+            pd.DataFrame(data=[[ETimeFrames.MID, EScope.S3, Q_(3, ureg.delta_degC)]],
+                         index=pd.Index(['id2'],
+                                        name='company_id'),
+                         columns=['time_frame', 'scope', 'ghg_s3']))
         time_frame = ETimeFrames.MID
         scope = EScope.S3
 
@@ -177,7 +180,11 @@ class TestTemperatureScore(unittest.TestCase):
         filtered_data = filtered_data[filtered_data[self.temperature_score.c.COLS.TIME_FRAME].eq(time_frame)].copy()
         filtered_data[self.temperature_score.grouping] = filtered_data[self.temperature_score.grouping].fillna("unknown")
 
-        assert_pint_frame_equal(self, filtered_data, expected)
+        for col in filtered_data.columns:
+            if isinstance(filtered_data[col], object):
+                pd.testing.assert_series_equal(filtered_data[col], expected[col])
+            else:
+                assert_pint_series_equal(self, filtered_data[col], expected[col])
 
 
 if __name__ == "__main__":
