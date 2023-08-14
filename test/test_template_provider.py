@@ -87,7 +87,7 @@ class TestTemplateProvider(unittest.TestCase):
             if c.projected_targets.S1S2 is None and temp is None:
                 continue
             if isinstance(c.projected_targets.S1S2.projections, pd.Series):
-                np.testing.assert_array_almost_equal(ITR.nominal_values(c.projected_targets.S1S2.projections.pint.m_as(temp.projections.dtype.units)), ITR.nominal_values(temp.projections.pint.m))
+                assert_pint_series_equal(self, c.projected_targets.S1S2.projections, temp.projections)
             else:
                 assert c.projected_targets.S1S2 == temp
 

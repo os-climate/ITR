@@ -113,9 +113,9 @@ class TestTemplateProviderV2(unittest.TestCase):
                 assert_pint_series_equal(self, c_proj_targets, expected_projection, places=4)
             else:
                 while c_proj_targets[0].year < 2022:
+                    # c_proj_targets is a list of nasty BaseModel types so we cannot use Pandas asserters
                     c_proj_targets = c_proj_targets[1:]
                     assert [ITR.nominal_values(round(x.value.m_as(expected_projection.dtype.units),4)) for x in c_proj_targets] == expected_projection.pint.m.tolist()
-            
 
     def test_temp_score(self):
         df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
