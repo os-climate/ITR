@@ -123,7 +123,12 @@ ureg.add_context(coal)
 ureg.enable_contexts('ngas', 'coal')
 
 # from https://github.com/hgrecco/pint/discussions/1697
-def direct_conversions(ureg, unit):
+def direct_conversions(ureg, unit) -> [str]:
+    """
+    Return a LIST of unit names that Pint can convert implicitly from/to UNIT.
+    This does not include the list of additional unit names that can be explicitly
+    converted by using the `Quantity.to` method.
+    """
     def unit_dimensionality(ureg, name):
         unit = getattr(ureg, name, None)
 
@@ -143,7 +148,10 @@ def direct_conversions(ureg, unit):
 # conversions = direct_conversions(ureg, "m / s ** 2")
 # {name: getattr(ureg, name).dimensionality for name in conversions}
 
-def time_dimension(unit, exp):
+def time_dimension(unit, exp) -> bool:
+    """
+    True if UNIT can be converted to something related only to time.
+    """
     return ureg(unit).is_compatible_with("s") # and exp == -1
 
 
@@ -191,6 +199,15 @@ def dimension_as(x, dim_unit):
         raise DimensionalityError (x, dim_unit, extra_msg=f"; no compatible dimension not found")
 
 def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Series:
+    """
+    A timeseries of production unit values can be aligned with a timeseries of Emissions Intensity (EI)
+    metrics that uses different units of production.  For example, the production timeseries might be
+    `bbl` (`Blue Barrels of Oil`) but the EI might be `t CO2e/GJ` (`CO2e * metric_ton / gigajoule`).
+    By converting the production series to gigajoules up front, there are no complex conversions
+    needed later (such as trying to convert `t CO2e * metric_ton / bbl` to
+    `CO2e * metric_ton / gigajoule`, which is not straightfowrard, as the former is
+    `[mass] / [length]**3` whereas the latter is `[seconds] ** 2 / [length] **2`.
+    """
     try:
         if ureg(f"t CO2e/({prod_series.iloc[0].units})") == ei_bm.iloc[0]:
             return prod_series
