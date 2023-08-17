@@ -228,6 +228,16 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
     utility_sectors = sectors & utility_activities
     end_use_sectors = sectors - energy_sectors - utility_sectors
 
+    def co2_sum_across(df: pd.DataFrame) -> pd.Series:
+        ser = df.iloc[:, 0]
+        if len(df.columns)==1:
+            return ser
+        col_units = ser.dtype
+        ser = ser.pint.m
+        for i in range(1, len(df.columns)):
+            ser = ser + df.iloc[:, i].pint.m_as(str(col_units.units))
+        return ser.astype(str(col_units))
+
     if (not energy_sectors) + (not utility_sectors) + (not end_use_sectors) == 2:
         # All sectors are in a single activity, so aggregate by scope.  Caller sets scope!
         if len(sectors)==1:
@@ -236,7 +246,7 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
         if scope_list and (scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]):
             co2_s1s2_elements = try_get_co2(prod_bm, ei_df, sectors, region, [ EScope.S1S2 ] )
             if co2_s1s2_elements:
-                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                total_co2_s1s2 = co2_sum_across(pd.concat(co2_s1s2_elements, axis=1))
             else:
                 raise ValueError(f"no benchmark emissions for {sectors} in scope")
             if sectors & {'Utilities'}:
@@ -255,17 +265,17 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
                 else:
                     total_co2_s3_elements = try_get_co2(prod_bm, ei_df, utility_sectors, region, [ EScope.S3 ] )
                 if total_co2_s3_elements:
-                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2_s3 = co2_sum_across(pd.concat(total_co2_s3_elements, axis=1))
                     total_co2 = total_co2 + total_co2_s3
             return total_co2
         # At this point, either scope_list is None, meaning fish out TPI metrics, or S1, S2, or S3, all of which aggregate within activity under OECM
-        return pd.concat( try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+        return co2_sum_across(pd.concat( try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1))
     # Multi-activity case, so SCOPE sets the rules for OECM
     if scope_list:
         if scope_list[0] in [ EScope.S1S2, EScope.S1S2S3 ]:
             co2_s1s2_elements = try_get_co2(prod_bm, ei_df, sectors, region, [ EScope.S1S2 ] )
             if co2_s1s2_elements:
-                total_co2_s1s2 = pd.concat(co2_s1s2_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                total_co2_s1s2 = co2_sum_across(pd.concat(co2_s1s2_elements, axis=1))
             else:
                 raise ValueError(f"No S1S2 data for sectors {sectors}")
             # Now subtract out the S1 from Power Generation so we don't double-count that
@@ -279,11 +289,11 @@ def get_co2_in_sectors_region_scope(prod_bm, ei_df, sectors, region, scope_list)
             if EScope.S1S2S3 in scope_list:
                 total_co2_s3_elements = try_get_co2(prod_bm, ei_df, sectors & end_use_s3_activities, region, [ EScope.S3] )
                 if total_co2_s3_elements:
-                    total_co2_s3 = pd.concat(total_co2_s3_elements, axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+                    total_co2_s3 = co2_sum_across(pd.concat(total_co2_s3_elements, axis=1))
                     total_co2 = total_co2.add(total_co2_s3)
             return total_co2
     # Must be S1 or S2 by itself (or scope_list is None, meaning whatever scope can be found).  try_get_co2 will deal with S3 case.
-    total_co2 = pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1).sum(axis=1).astype('pint[Gt CO2e]')
+    total_co2 = co2_sum_across(pd.concat(try_get_co2(prod_bm, ei_df, sectors, region, scope_list ), axis=1))
     return total_co2
 
 # nice cheatsheet for managing layout via className attribute: https://hackerthemes.com/bootstrap-cheatsheet/
