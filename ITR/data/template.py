@@ -134,8 +134,6 @@ def prioritize_submetric(x: pd.DataFrame) -> pd.Series:
     if len(x) == 1:
         # Nothing to prioritize
         return x.iloc[0]
-    if x.index[0][2]!='production' and x.index[0][1] in ['DE0005220008']:
-        breakpoint()
 
     # NaN values in pd.Categorical means we did not understand the prioritization of the submetric; *unrecognized* pushes to bottom
     x.submetric = x.submetric.fillna('*unrecognized*')
