@@ -6,23 +6,17 @@ portfolio to make better engagement and investment decisions?*
 
 |image1|
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eleifend, augue ac fringilla mattis, velit libero sagittis nibh, iaculis tempus justo ex at erat. In eu nisl pulvinar, pellentesque felis quis, laoreet dui. Maecenas ornare sollicitudin purus, aliquam commodo justo cursus lobortis. Integer at dui sollicitudin, luctus velit in, pellentesque felis. Morbi sed diam nec neque tempor fringilla. Morbi et porttitor ligula. Ut imperdiet mattis nisi eget malesuada. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Proin non ipsum vel felis vehicula venenatis volutpat non massa. Mauris at dolor orci. Suspendisse potenti. In non dapibus.
-
-An introduction to the technical documentation
-----------------------------------------------
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eleifend, augue ac fringilla mattis, velit libero sagittis nibh, iaculis tempus justo ex at erat. In eu nisl pulvinar, pellentesque felis quis, laoreet dui. Maecenas ornare sollicitudin purus, aliquam commodo justo cursus lobortis. Integer at dui sollicitudin, luctus velit in, pellentesque felis. Morbi sed diam nec neque tempor fringilla. Morbi et porttitor ligula. Ut imperdiet mattis nisi eget malesuada. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Proin non ipsum vel felis vehicula venenatis volutpat non massa. Mauris at dolor orci. Suspendisse potenti. In non dapibus.
 
 +---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **Quickstart**                                                                                                                                                                                                                                    |
 |                                                                                                                                                                                                                                                   |
 | If you prefer to get up and running quickly, we’ve got a no-code and a Python option:                                                                                                                                                             |
 |                                                                                                                                                                                                                                                   |
-| -  **No-code**: Run the project locally as a \ `web application using Docker <https://os-c.github.io/ITR/rest_api.html#locally>`__                                                                                                            |
+| -  **No-code**: Run the project locally as a \ `web application using Docker <https://os-c.github.io/ITR/rest_api.html#locally>`__                                                                                                                |
 |                                                                                                                                                                                                                                                   |
-| -  **Python**: Run a Jupyter notebook, without any installation in \ `Google Colab <https://os-c.github.io/ITR/getting_started.html#google-colab>`__ or `locally <https://os-c.github.io/ITR/getting_started.html#jupyter-notebooks>`__.  |
+| -  **Python**: Run a Jupyter notebook, without any installation in \ `Google Colab <https://os-c.github.io/ITR/getting_started.html#google-colab>`__ or `locally <https://os-c.github.io/ITR/getting_started.html#jupyter-notebooks>`__.          |
 |                                                                                                                                                                                                                                                   |
-| .. rubric::                                                                                                                                                                                                                                       |
+| .. rubric:: Quickstart                                                                                                                                                                                                                            |
 |    :name: section                                                                                                                                                                                                                                 |
 +---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
@@ -102,4 +96,3 @@ enhancing the tool’s functionalities by contributing code.
    contributing
    links
    terms
-   
