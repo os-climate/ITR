@@ -17,6 +17,8 @@ jobs:
           python-version: "3.8"
       - name: Tag test release
         run: |
+          git config --global user.email "test-pypi-publish@os-climate.org"
+          git config --global user.name "PyPi Test User"
           git tag -a v0.0.1 -m "Test version v0.0.1"
       - name: Install pypa/build
         run: >-
