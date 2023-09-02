@@ -169,22 +169,40 @@ def umean(unquantified_data):
     :param: A set of uncertainty values
     :return: The weighted mean of the values, with a freshly calculated error term
     """
+    from math import sqrt
+
     values = np.array(list(map(lambda v: v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0), unquantified_data)), dtype="object")
     values_notnan = [v for v in values if not ITR.isnan(v)]
-    if sum([v.s for v in values_notnan])==0:
-        if len(values_notnan)==0:
-            return np.nan
-        return sum([v.n for v in values_notnan]) / len(values_notnan)
-    minval = min([abs(v.n) for v in values_notnan])
-    if minval==0:
-        epsilon = 1e-12
+    if ITR.HAS_AUTOUNCERTAINTIES:
+        if sum([v._nom for v in values_notnan])==0:
+            if len(values_notnan)==0:
+                return np.nan
+            return sum([v._nom for v in values_notnan]) / len(values_notnan)
+        minval = min([abs(v._nom) for v in values_notnan])
+        if minval==0:
+            epsilon = 1e-12
+        else:
+            epsilon = 1e-12 * minval
+        wavg = ITR.ufloat(sum([v._nom/(v._err**2+epsilon) for v in values])/sum([1/(v._err**2+epsilon) for v in values]), 
+                          np.sqrt(len(values)/sum([1/(v._err**2+epsilon) for v in values])))
+        if wavg._err <= sqrt(epsilon):
+            logger.debug(f"Casting out small uncertainty {wavg._err} from {wavg}; epsilon = {epsilon}.")
+            wavg = wavg._nom
     else:
-        epsilon = 1e-12 * minval
-    wavg = ITR.ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
-                      np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
-    if wavg.s**2 <= epsilon:
-        logger.debug(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
-        wavg = wavg.n
+        if sum([v.s for v in values_notnan])==0:
+            if len(values_notnan)==0:
+                return np.nan
+            return sum([v.n for v in values_notnan]) / len(values_notnan)
+        minval = min([abs(v.n) for v in values_notnan])
+        if minval==0:
+            epsilon = 1e-12
+        else:
+            epsilon = 1e-12 * minval
+        wavg = ITR.ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
+                          np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
+        if wavg.s <= sqrt(epsilon):
+            logger.debug(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
+            wavg = wavg.n
 
     return wavg
 
@@ -193,6 +211,9 @@ def uround(u, ndigits):
     """
     Round an uncertainty to ndigits.
     """
+    if ITR.HAS_AUTOUNCERTAINTIES:
+        breakpoint()
+        return u.round(ndigits)
     if np.isnan(u.n):
         return ITR._ufloat_nan
     if np.isnan(u.s):

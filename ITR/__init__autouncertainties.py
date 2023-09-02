@@ -14,13 +14,23 @@ import pint
 from pint_pandas import PintType, PintArray
 
 try:
-    # Even if we have uncertainties available as a module, we don't have the right version of pint
-    if hasattr(pint.compat, 'tokenizer'):
-        raise AttributeError
-    from uncertainties import ufloat, UFloat
-    from uncertainties.unumpy import uarray, isnan, nominal_values, std_devs
-    _ufloat_nan = ufloat(np.nan, 0.0)
-    pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
+    if pint.compat.HAS_AUTOUNCERTAINTIES:
+        import auto_uncertainties
+        from auto_uncertainties import Uncertainty as ufloat
+        from auto_uncertainties import Uncertainty as UFloat
+        from auto_uncertainties import Uncertainty as uarray
+        from auto_uncertainties import nominal_values, std_devs
+        from numpy import isnan
+        _ufloat_nan = auto_uncertainties.Uncertainty(np.nan, 0.0)
+        from pint.compat import HAS_AUTOUNCERTAINTIES
+    else:
+        # Even if we have uncertainties available as a module, we don't have the right version of pint
+        if hasattr(pint.compat, 'tokenizer'):
+            raise AttributeError
+        from uncertainties import ufloat, UFloat
+        from uncertainties.unumpy import uarray, isnan, nominal_values, std_devs
+        _ufloat_nan = ufloat(np.nan, 0.0)
+        pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
     from .utils import umean
     HAS_UNCERTAINTIES = True
 except (ImportError, ModuleNotFoundError, AttributeError) as exc:
@@ -75,6 +85,8 @@ def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
     A Pandas-friendly way to combine nominal and error terms for uncertainties
     '''
     assert HAS_UNCERTAINTIES
+    if nom.name[0] == 'DE0005190003':
+        breakpoint()
     if std.sum()==0:
         return nom
     return pd.Series(data=uarray(nom.values, np.where(nom.notna(), std.values, 0)), index=nom.index, name=nom.name)

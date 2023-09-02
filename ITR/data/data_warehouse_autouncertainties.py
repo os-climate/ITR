@@ -437,12 +437,20 @@ class DataWarehouse(ABC):
             s1s2_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s1s2/(bm_ei_s1s2+bm_ei_s3)
             s3_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s3/(bm_ei_s1s2+bm_ei_s3)
             if ITR.HAS_UNCERTAINTIES:
-                s1s2_projections = s1s2_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
-                s3_projections = s3_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+                if ITR.HAS_AUTOUNCERTAINTIES:
+                    s1s2_projections = s1s2_projections.map(
+                        lambda x: Q_(ITR.ufloat(x.m._nom, x.m._err + x.m._nom/2.0)
+                                     if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+                    s3_projections = s3_projections.map(
+                        lambda x: Q_(ITR.ufloat(x.m._nom, x.m._err + x.m._nom/2.0)
+                                     if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+                else:
+                    s1s2_projections = s1s2_projections.map(
+                        lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
+                                     if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+                    s3_projections = s3_projections.map(
+                        lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
+                                     if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
             company.projected_intensities.S1S2 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s1s2_projections)
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s3_projections)
             company.ghg_s1s2 = s1s2_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production
@@ -454,9 +462,14 @@ class DataWarehouse(ABC):
             s3_projections = bm_ei_s3 * 2.0
             ei_metric = str(bm_ei_s3.dtype.units)
             if ITR.HAS_UNCERTAINTIES:
-                s3_projections = s3_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(bm_ei_s3.dtype)
+                if ITR.HAS_AUTOUNCERTAINTIES:
+                    s3_projections = s3_projections.map(
+                        lambda x: Q_(ITR.ufloat(x.m._nom, x.m._err + x.m._nom/2.0)
+                                     if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(bm_ei_s3.dtype)
+                else:
+                    s3_projections = s3_projections.map(
+                        lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
+                                     if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(bm_ei_s3.dtype)
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric,
                                                                         projections=s3_projections)
             if company.projected_intensities.S1S2 is not None:

@@ -720,8 +720,12 @@ class EITrajectoryProjector(EIProjector):
         if backfill_needed:
             # Fill in gaps between BASE_YEAR and the first data we have
             if ITR.HAS_UNCERTAINTIES:
-                backfilled_t = historic_ei_t.apply(lambda col: (lambda fvi: col if fvi is None else col.where(col.index.get_level_values('year') >= fvi, col[fvi]))
-                                                   (col.map(lambda x: x.n if isinstance(x, ITR.UFloat) else x).first_valid_index()))
+                if ITR.HAS_AUTOUNCERTAINTIES:
+                    backfilled_t = historic_ei_t.apply(lambda col: (lambda fvi: col if fvi is None else col.where(col.index.get_level_values('year') >= fvi, col[fvi]))
+                                                       (col.map(lambda x: x._nom if isinstance(x, ITR.UFloat) else x).first_valid_index()))
+                else:
+                    backfilled_t = historic_ei_t.apply(lambda col: (lambda fvi: col if fvi is None else col.where(col.index.get_level_values('year') >= fvi, col[fvi]))
+                                                       (col.map(lambda x: x.n if isinstance(x, ITR.UFloat) else x).first_valid_index()))
             else:
                 backfilled_t = historic_ei_t.apply(lambda col: col.fillna(method='bfill'))
             # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases
@@ -1437,18 +1441,32 @@ class EITargetProjector(EIProjector):
                          for y, year in enumerate(range(first_year, last_year+1))]
         else:
             if ITR.HAS_UNCERTAINTIES and (isinstance(first_value.m, ITR.UFloat) or isinstance(last_value.m, ITR.UFloat)):
-                if isinstance(first_value.m, ITR.UFloat):
-                    first_nom = first_value.m.n
-                    first_err = first_value.m.s
+                if ITR.HAS_AUTOUNCERTAINTIES:
+                    if isinstance(first_value.m, ITR.UFloat):
+                        first_nom = first_value.m._nom
+                        first_err = first_value.m._err
+                    else:
+                        first_nom = first_value.m
+                        first_err = 0.0
+                    if isinstance(last_value.m, ITR.UFloat):
+                        last_nom = last_value.m._nom
+                        last_err = last_value.m._err
+                    else:
+                        last_nom = last_value.m
+                        last_err = 0.0
                 else:
-                    first_nom = first_value.m
-                    first_err = 0.0
-                if isinstance(last_value.m, ITR.UFloat):
-                    last_nom = last_value.m.n
-                    last_err = last_value.m.s
-                else:
-                    last_nom = last_value.m
-                    last_err = 0.0
+                    if isinstance(first_value.m, ITR.UFloat):
+                        first_nom = first_value.m.n
+                        first_err = first_value.m.s
+                    else:
+                        first_nom = first_value.m
+                        first_err = 0.0
+                    if isinstance(last_value.m, ITR.UFloat):
+                        last_nom = last_value.m.n
+                        last_err = last_value.m.s
+                    else:
+                        last_nom = last_value.m
+                        last_err = 0.0
                 cagr_factor_nom = (last_nom / first_nom) ** (1 / period)
                 cagr_data = [ITR.ufloat(cagr_factor_nom ** y * first_nom,
                                         first_err * (period-y)/period  + last_err * (y/period))

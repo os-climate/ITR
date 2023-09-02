@@ -8,6 +8,7 @@ import sqlalchemy
 
 import pandas as pd
 from typing import List, Type
+from . import ureg, Q_, PA_
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
 from ITR.data.data_providers import CompanyDataProvider, ProductionBenchmarkDataProvider, \
     IntensityBenchmarkDataProvider
@@ -17,8 +18,6 @@ from ITR.data.base_providers import BaseCompanyDataProvider
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import ICompanyData, EScope, IProductionBenchmarkScopes, IEIBenchmarkScopes, \
     IBenchmark, ICompanyAggregates
-
-from ITR.data.osc_units import *
 
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
 

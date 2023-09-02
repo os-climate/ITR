@@ -8,7 +8,8 @@ import numpy as np
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, fx_ctx, Q_, PA_, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintSeries, asPintDataFrame, ProductionMetric, EmissionsMetric
+from . import ureg, Q_, PA_
+from ITR.data.osc_units import fx_ctx, ProductionQuantity, EmissionsQuantity, EI_Quantity, asPintSeries, asPintDataFrame, ProductionMetric, EmissionsMetric
 import pint
 from pint_pandas import PintType
 
@@ -69,19 +70,15 @@ def ITR_country_to_region(country:str) -> str:
 
 def _estimated_value(y: pd.Series) -> pint.Quantity: 
     """
-    Parameters
-    ----------
-    y : a pd.Series that arrives via a pd.GroupBy operation.
-        The elements of the series are all data (or np.nan) matching a metric/sub-metric.
+    :param y : a pd.Series that arrives via a pd.GroupBy operation.  The elements of the series are all data (or np.nan) matching a metric/sub-metric.
 
-    Returns
-    -------
-    A Quantity which could be either the first or only element from the pd.Series,
-    or an estimate of correct answer.
-        The estimateion is based on the mean of the non-null entries.
+    :return: A Quantity which could be either the first or only element from the pd.Series, or an estimate of correct answer.
+        The estimate is based on the mean of the non-null entries.
         It could be changed to output the last (most recent) value (if the inputs arrive sorted)
     """
 
+    # if 'DE0005190003' in y.index:
+    #     breakpoint()
     try:
         if isinstance(y, pd.DataFrame):
             # Something went wrong with the GroupBy operation and we got a pd.DataFrame
@@ -122,14 +119,9 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
 # have more highly prioritized metrics than that, but if not, we can still fix things here.
 def prioritize_submetric(x: pd.DataFrame) -> pd.Series:
     """
-    Parameters
-    ----------
-    x : pd.DataFrame
-        The index of the DataFrame is (SECTOR, COMPANY_ID, SCOPE)
+    :param x : pd.DataFrame.  The index of the DataFrame is (SECTOR, COMPANY_ID, SCOPE)
 
-    Returns
-    -------
-    y : Based on the SECTOR, pick the highest priority Series based on the SUBMETRIC
+    :return: y : Based on the SECTOR, pick the highest priority Series based on the SUBMETRIC
     """
     if len(x) == 1:
         # Nothing to prioritize
@@ -1232,6 +1224,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
+
         FIXME: Callers want non-fundamental data here: base_year_production, ghg_s1s2, ghg_s3
         """
         excluded_cols = ['projected_targets', 'projected_intensities', 'historic_data', 'target_data']
