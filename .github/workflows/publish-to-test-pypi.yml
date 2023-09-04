@@ -19,7 +19,7 @@ jobs:
         run: |
           git config --global user.email "test-pypi-publish@os-climate.org"
           git config --global user.name "PyPi Test User"
-          git tag -a v1.0.2a -m "Test version v1.0.2a"
+          git tag -a v0.0.1 -m "Test version v0.0.1"
       - name: Install pypa/build
         run: >-
           python -m
