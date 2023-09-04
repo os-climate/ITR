@@ -438,37 +438,46 @@ class DataWarehouse(ABC):
             s1s2_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s1s2/(bm_ei_s1s2+bm_ei_s3)
             s3_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s3/(bm_ei_s1s2+bm_ei_s3)
             if ITR.HAS_UNCERTAINTIES:
-                s1s2_projections = s1s2_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
-                s3_projections = s3_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+                s1s2_projections = pd.Series(
+                    data=PA_(
+                        ITR.uarray(s1s2_projections.pint.quantity.m, s3_projections.pint.quantity.m),
+                        dtype=s1s2_projections.dtype,
+                    ),
+                    index=s1s2_projections.index,
+                )
+                s3_projections = pd.Series(
+                    data=PA_(
+                        ITR.uarray(s3_projections.pint.quantity.m, s3_projections.pint.quantity.m),
+                        dtype=s3_projections.dtype,
+                    ),
+                    index=s3_projections.index,
+                )
             company.projected_intensities.S1S2 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s1s2_projections)
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s3_projections)
-            company.ghg_s1s2 = s1s2_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production
+            company.ghg_s1s2 = (s1s2_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production).to('t CO2e')
         else:
             # Penalize non-disclosure by assuming 2x aligned S3 emissions.  That's still likely undercounting, because
             # most non-disclosing companies are nowhere near the reduction rates of the benchmarks.
             # It would be lovely to use S1S2 or S1 data to inform S3, but that likely adds error on top of error
             assert company.projected_intensities.S1S2S3 == None
-            s3_projections = bm_ei_s3 * 2.0
             ei_metric = str(bm_ei_s3.dtype.units)
-            if ITR.HAS_UNCERTAINTIES:
-                s3_projections = s3_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(bm_ei_s3.dtype)
+            # If we don't have uncertainties, ITR.ufloat just returns the nom value 2.0
+            s3_projections = bm_ei_s3 * ITR.ufloat(2.0, 1.0)
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric,
                                                                         projections=s3_projections)
             if company.projected_intensities.S1S2 is not None:
                 try:
-                    company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(ei_metric=ei_metric,
-                                                                                    # Mismatched dimensionalities are not automatically converted
-                                                                                    projections=s3_projections+company.projected_intensities.S1S2.projections.astype(f"pint[{ei_metric}]"))
+                    company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(
+                        ei_metric=ei_metric,
+                        # Mismatched dimensionalities are not automatically converted
+                        projections=s3_projections+company.projected_intensities.S1S2.projections.astype(f"pint[{ei_metric}]"),
+                    )
                 except DimensionalityError:
-                    logger.error(f"Company {company.company_id}'s S1+S2 intensity units ({company.projected_intensities.S1S2.projections.dtype} )are not compatible with benchmark units ({ei_metric})")
+                    logger.error(f"Company {company.company_id}'s S1+S2 intensity units "
+                                 f"({company.projected_intensities.S1S2.projections.dtype})"
+                                 f"are not compatible with benchmark units ({ei_metric})")
 
-        company.ghg_s3 = s3_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production
+        company.ghg_s3 = (s3_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production).to('t CO2e')
         logger.info(f"Added S3 estimates for {company.company_id} (sector = {sector}, region = {region})")
 
 
