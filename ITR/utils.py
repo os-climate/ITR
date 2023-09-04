@@ -170,24 +170,29 @@ def umean(unquantified_data):
     :param: A set of uncertainty values
     :return: The weighted mean of the values, with a freshly calculated error term
     """
-    values = np.array(list(map(lambda v: v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0), unquantified_data)))
-    values_notnan = [v for v in values if not ITR.isnan(v)]
-    if sum([v.s for v in values_notnan])==0:
-        if len(values_notnan)==0:
-            return np.nan
-        return sum([v.n for v in values_notnan]) / len(values_notnan)
-    minval = min([abs(v.n) for v in values_notnan])
-    if minval==0:
-        epsilon = 1e-12
+    arr = np.array([v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0) for v in unquantified_data if not ITR.isnan(v)])
+    N = len(arr)
+    if N==0:
+        return np.nan
+    if N==1:
+        return arr[0]
+    nominals = ITR.nominal_values(arr)
+    if any(ITR.std_devs(arr)==0):
+        # We cannot mix and match "perfect" measurements with uncertainties
+        # Instead compute the mean and return the "standard error" as the uncertainty
+        # e.g. ITR.umean([100, 200]) = 150 +/- 50
+        w_mean = sum(nominals) / N
+        w_std = np.std(nominals) / np.sqrt(N-1)
     else:
-        epsilon = 1e-12 * minval
-    wavg = ITR.ufloat(sum([v.n/(v.s**2+epsilon) for v in values])/sum([1/(v.s**2+epsilon) for v in values]), 
-                      np.sqrt(len(values)/sum([1/(v.s**2+epsilon) for v in values])))
-    if wavg.s <= sqrt(epsilon):
-        logger.debug(f"Casting out small uncertainty {wavg.s} from {wavg}; epsilon = {epsilon}.")
-        wavg = wavg.n
-
-    return wavg
+        # Compute the "uncertainty of the weighted mean", which apparently
+        # means ignoring whether or not there are large uncertainties
+        # that should be created by elements that disagree
+        # e.g. ITR.umean([100+/-1, 200+/-1]) = 150.0+/-0.7 (!)
+        w_sigma = 1/sum([1/(v.s**2) for v in arr])
+        w_mean = sum([v.n/(v.s**2) for v in arr]) * w_sigma
+        w_std = w_sigma * np.sqrt(sum([1/(v.s**2) for v in arr]))
+    result = ITR.ufloat(w_mean, w_std)
+    return result
 
 
 def uround(u, ndigits):

@@ -641,14 +641,12 @@ class DataWarehouse(ABC):
         # Heterogeneous rows (such as `t CO2/MWh * MWh` and `Mt CO2/GJ * GJ` are all converted to `t CO2e` (with scaling)
         projected_CO2e_t = projected_ei.T.combine(
             projected_production.T,
-            lambda ei, pp: ((ei_pint:=asPintSeries(ei)).pint.m
-                            * (pp_pint:=asPintSeries(pp)).pint.m
+            lambda ei, pp: ((ei_pint:=asPintSeries(ei, errors='raise')).pint.m
+                            * (pp_pint:=asPintSeries(pp, errors='raise')).pint.m
                             * Q_(1, ei_pint.iloc[0].u * pp_pint.iloc[0].u).to('t CO2e').m))
         if ITR.HAS_UNCERTAINTIES:
-            # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
-            if projected_CO2e_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x) and x.u != 0).any().any():
-                breakpoint()
             # Sum both the nominal and std_dev values, because these series are completely correlated
+            # Note that NaNs in this dataframe will be nan+/-nan, showing up in both nom and err
             nom_CO2e_t = projected_CO2e_t.apply(lambda x: ITR.nominal_values(x)).cumsum()
             err_CO2e_t = projected_CO2e_t.apply(lambda x: ITR.std_devs(x)).cumsum()
             cumulative_emissions_t = nom_CO2e_t.combine(err_CO2e_t, ITR.recombine_nom_and_std)
