@@ -738,9 +738,9 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
         if errors == 'ignore':
             return series
         if name:
-            raise ValueError ("'{name}' not dtype('O')")
+            raise ValueError (f"'{name}' not dtype('O')")
         elif series.name:
-            raise ValueError ("Series '{series.name}' not dtype('O')")
+            raise ValueError (f"Series '{series.name}' not dtype('O')")
         else:
             raise ValueError ("Series not dtype('O')")
     # NA_VALUEs are true NaNs, missing units

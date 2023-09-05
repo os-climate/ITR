@@ -28,6 +28,9 @@ except (ImportError, ModuleNotFoundError, AttributeError) as exc:
     from numpy import isnan
     from statistics import mean
 
+    def ufloat(nom_val, std_val):
+        return nom_val
+
     def nominal_values(x):
         return x
 
@@ -77,7 +80,10 @@ def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
     assert HAS_UNCERTAINTIES
     if std.sum()==0:
         return nom
-    return pd.Series(data=uarray(nom.values, np.where(nom.notna(), std.values, 0)), index=nom.index, name=nom.name)
+    result =  pd.Series(data=uarray(nom.values, np.where(nom.notna(), std.values, 0)), index=nom.index, name=nom.name)
+    # Canonicalize NaNs
+    result.values[isna(result)] = np.nan
+    return result
 
 
 def JSONEncoder(q):
