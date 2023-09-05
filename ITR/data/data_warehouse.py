@@ -438,18 +438,14 @@ class DataWarehouse(ABC):
             s1s2_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s1s2/(bm_ei_s1s2+bm_ei_s3)
             s3_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s3/(bm_ei_s1s2+bm_ei_s3)
             if ITR.HAS_UNCERTAINTIES:
+                nominal_s3 = ITR.nominal_values(s3_projections.pint.quantity.m)
+                std_dev_s3 = ITR.uarray(np.zeros(len(nominal_s3)), nominal_s3)
                 s1s2_projections = pd.Series(
-                    data=PA_(
-                        ITR.uarray(s1s2_projections.pint.quantity.m, s3_projections.pint.quantity.m),
-                        dtype=s1s2_projections.dtype,
-                    ),
+                    data=PA_(s1s2_projections.pint.quantity.m + std_dev_s3, dtype=s1s2_projections.dtype),
                     index=s1s2_projections.index,
                 )
                 s3_projections = pd.Series(
-                    data=PA_(
-                        ITR.uarray(s3_projections.pint.quantity.m, s3_projections.pint.quantity.m),
-                        dtype=s3_projections.dtype,
-                    ),
+                    data=PA_(s3_projections.pint.quantity.m + std_dev_s3, dtype=s3_projections.dtype),
                     index=s3_projections.index,
                 )
             company.projected_intensities.S1S2 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s1s2_projections)
