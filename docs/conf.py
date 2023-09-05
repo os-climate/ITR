@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ITR Temperature Alignment tool'
-copyright = '2021, OS-Climate'
+copyright = '2023, OS-Climate'
 author = 'Ortec Finance'
 
 

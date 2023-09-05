@@ -179,7 +179,7 @@ If you don't already have a conda environment, you'll need to download one from 
 If you are installing conda on a Windows system, follow these instructions: https://conda.io/projects/conda/en/latest/user-guide/install/windows.html
 You will want to open the Anaconda PowerShell after installation, which you can do from the Start menu.
 
-If you are on OSX, you will need to install parts of the (utterly massive) Xcode system.  The subset you'll need can be installed by typing :code:`xcode-select --install` into a Terminal window (which you can open from Applications>Utilities>Terminal).  Thought it is tempting to install the :code:`.pkg ` version of miniconda, there's nothing user-friendly about how OSX tries to manage its own concepts of system security.  It is easier to start from the :code:`bash` version and follow those instructions.  For other installation instructions, please read https://conda.io/projects/conda/en/latest/user-guide/install/macos.html
+If you are on OSX, you will need to install parts of the (utterly massive) Xcode system.  The subset you'll need can be installed by typing :code:`xcode-select --install` into a Terminal window (which you can open from Applications>Utilities>Terminal).  Thought it is tempting to install the :code:`.pkg` version of miniconda, there's nothing user-friendly about how OSX tries to manage its own concepts of system security.  It is easier to start from the :code:`bash` version and follow those instructions.  For other installation instructions, please read https://conda.io/projects/conda/en/latest/user-guide/install/macos.html
 
 For Linux: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html.  And note that you don't have to use the fish shell.  You can use bash, csh, sh, zsh, or whatever is your favorite shell.
 
@@ -196,12 +196,12 @@ With your conda shell and environment running,  with git installed, and starting
 1. Set GITHUB_TOKEN to your GitHub access token (windows :code`$Env:GITHUB_TOKEN = "your_github_token"`) (OSX/Linux: :code:`export GITHUB_TOKEN=your_github_token`)
 2. Clone the ITR repository: :code:`git clone https://github.com/os-climate/ITR.git`
 3. Change your directory to the top-level ITR directory: :code:`cd ITR`
-4. Switch to the correct branch: :code:`git checkout develop-pint-steel-projections`
+4. Optionally switch to the development branch: :code:`git checkout develop` (if you don't, you'll be using the branch :code:`origin/main`)
 5. create the conda itr_env: :code:`conda env create -f environment.yml`
 6. Activate that environment: :code:`conda activate itr_env`
-7. Install the ITR libraries to your local environment: :code:`pip install -e .` (you may need :code:--no-cache-dir` on windows to avoid permissions errors; please also note that the `.` character is part of the :code:`pip install -e .` command)
-8. Change to the *examples* directory: :code:`cd ITR/examples`
-9. Start your notebook: code:`jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
+7. Install the ITR libraries to your local environment: :code:`pip install -e .` (you may need :code:`--no-cache-dir` on windows to avoid permissions errors; please also note that the `.` character is part of the :code:`pip install -e .` command)
+8. Change to the *examples* directory: :code:`cd examples`
+9. Start your notebook: :code:`jupyter-lab`.  This should cause your default browser to pop to the front and open a page with a Jupyter Notebook.
 10. Make the file browser to the left of the notebook wide enough to expose the full names of the files in the *examples* directory.  You should see a file named :code:`quick_template_score_calc.ipynb`.  Double click on that file to open it.
 11. Run the notebook with a fresh kernel by pressing the :code:`>>` button.  Accept the option to Restart Kernel and clear all previous variables.
 
@@ -231,7 +231,7 @@ The brackets listed near the top left corner of each executable cell will change
 Filing Issues and Updating the ITR Repository
 ---------------------------------------------
 
-Once you are able to run the `quick_template_score_calc.ipynb` sample notebook with the provided sample data (:code:`examples/data/20220306 ITR Tool Sample Data.xlsx`), you are ready to start trying things with your own data.  The notebook explains how to do this at the heading labeled :code:`Download/load the sample template data` before Cell 6.  As you try loading your own data, you will inevitably find errors--sometimes with the data you receive, sometimes with the data you present to the tool, sometimes with the way the tool loads or does not load your data, sometimes with the way the tool interprets or presents your data.  It is the goal of the Data Commons to streamline and simplify access to data so as to reduce the first to cases of errors, and it is the goal of the ITR project team to continuously improve the ITR tool to reduce the other cases of errors.  In all cases, the correction of errors begins with an error reporting process and ends with an effective update process.
+Once you are able to run the `quick_template_score_calc.ipynb` sample notebook with the provided sample data (:code:`examples/data/20230106 ITR Tool Sample Data.xlsx`), you are ready to start trying things with your own data.  The notebook explains how to do this at the heading labeled :code:`Download/load the sample template data` before Cell 6.  As you try loading your own data, you will inevitably find errors--sometimes with the data you receive, sometimes with the data you present to the tool, sometimes with the way the tool loads or does not load your data, sometimes with the way the tool interprets or presents your data.  It is the goal of the Data Commons to streamline and simplify access to data so as to reduce the first to cases of errors, and it is the goal of the ITR project team to continuously improve the ITR tool to reduce the other cases of errors.  In all cases, the correction of errors begins with an error reporting process and ends with an effective update process.
 
 To report errors, please use the GitHub Issues interface for the ITR tool: https://github.com/os-climate/ITR/issues
 
@@ -245,8 +245,8 @@ At some point you will receive notice that your issue has been addressed with a 
 2. Change your directory to the top of your ITR tree: :code:`cd ~/os-climate/ITR` (or some such)
 3. Pull changes from upstream: git pull
 4. If git complains that you have modified some files (such as your notebook, which is "modified" every time you run it), you can
-   1. remove the notebook file: :code:`rm examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx`
-   2. restore it from the updated repository: :code:`git restore examples/data/20220306\ ITR\ Tool\ Sample\ Data.xlsx`
+   1. remove the notebook file: :code:`rm examples/data/20230106\ ITR\ Tool\ Sample\ Data.xlsx`
+   2. restore it from the updated repository: :code:`git restore examples/data/20230106\ ITR\ Tool\ Sample\ Data.xlsx`
 5. Restart your jupyter-lab server
 
 Over time you may do other things to your local repository that makes it difficult to sync with git.  You can file an issue for help, you can do your own research (many of us find answers on github community forums or StackOverflow), or you can go with Option #1: run the installation process from top to bottom in a new directory.

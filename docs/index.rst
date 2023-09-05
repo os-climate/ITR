@@ -18,9 +18,9 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi eleifend, augue a
 |                                                                                                                                                                                                                                                   |
 | If you prefer to get up and running quickly, we’ve got a no-code and a Python option:                                                                                                                                                             |
 |                                                                                                                                                                                                                                                   |
-| -  **No-code**: Run the project locally as a \ `web application using Docker <https://os-c.github.io/ITR/rest_api.html#locally>`__                                                                                                            |
+| -  **No-code**: Run the project locally as a \ `web application using Docker <https://os-c.github.io/ITR/rest_api.html#locally>`__                                                                                                                |
 |                                                                                                                                                                                                                                                   |
-| -  **Python**: Run a Jupyter notebook, without any installation in \ `Google Colab <https://os-c.github.io/ITR/getting_started.html#google-colab>`__ or `locally <https://os-c.github.io/ITR/getting_started.html#jupyter-notebooks>`__.  |
+| -  **Python**: Run a Jupyter notebook, without any installation in \ `Google Colab <https://os-c.github.io/ITR/getting_started.html#google-colab>`__ or `locally <https://os-c.github.io/ITR/getting_started.html#jupyter-notebooks>`__.          |
 |                                                                                                                                                                                                                                                   |
 | .. rubric::                                                                                                                                                                                                                                       |
 |    :name: section                                                                                                                                                                                                                                 |
@@ -98,6 +98,7 @@ enhancing the tool’s functionalities by contributing code.
    rest_api
    FunctionalOverview
    DataRequirements
+   DataTemplateRequirements
    Legends
    contributing
    links

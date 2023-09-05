@@ -4,7 +4,23 @@
     "company_id": "US0079031078",
     "region": "North America",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.428571428571428,
+    "target_data": [
+      {
+        "netzero_year": 2050,
+        "target_type": "intensity",
+        "target_scope": "S1+S2",
+        "target_start_year": 2020,
+        "target_base_year": 2019,
+        "target_end_year": 2030,
+        "target_base_year_qty": 0.131037611,
+        "target_base_year_err": null,
+        "target_base_year_unit": "t CO2/GJ",
+        "target_reduction_pct": 0.5
+      }
+    ],
     "historic_data": {
       "productions": [
         {
@@ -293,6 +309,8 @@
     "company_id": "US00724F1012",
     "region": "North America",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -476,6 +494,8 @@
     "company_id": "FR0000125338",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "emissions_intensities": {
@@ -598,6 +618,8 @@
     "company_id": "US17275R1023",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -887,6 +909,8 @@
     "company_id": "CH0198251305",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -1176,6 +1200,8 @@
     "company_id": "US1266501006",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -1465,6 +1491,8 @@
     "company_id": "FR0000120644",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -1754,6 +1782,8 @@
     "company_id": "US24703L1035",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2043,6 +2073,8 @@
     "company_id": "TW0002308004",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2332,6 +2364,8 @@
     "company_id": "FR0000120321",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2621,6 +2655,8 @@
     "company_id": "CH0038863350",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -2910,6 +2946,8 @@
     "company_id": "US8356993076",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -3199,6 +3237,8 @@
     "company_id": "JP3401400001",
     "region": "Asia",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -3488,6 +3528,8 @@
     "company_id": "US6541061031",
     "region": "Europe",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -3777,6 +3819,8 @@
     "company_id": "GB0031274896",
     "region": "North America",
     "sector": "Electricity Utilities",
+    "emissions_metric": "t CO2",
+    "production_metric": "GJ",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4066,6 +4110,8 @@
     "company_id": "US6293775085",
     "region": "Europe",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4091,35 +4137,35 @@
         },
         {
           "year": 2014,
-          "value": "91200001.3960884 Fe_ton"
+          "value": "91200001.3960884 t Steel"
         },
         {
           "year": 2015,
-          "value": "92479001.3960884 Fe_ton"
+          "value": "92479001.3960884 t Steel"
         },
         {
           "year": 2016,
-          "value": "90800001.3960884 Fe_ton"
+          "value": "90800001.3960884 t Steel"
         },
         {
           "year": 2017,
-          "value": "93100001.3960884 Fe_ton"
+          "value": "93100001.3960884 t Steel"
         },
         {
           "year": 2018,
-          "value": "92500001.3960884 Fe_ton"
+          "value": "92500001.3960884 t Steel"
         },
         {
           "year": 2019,
-          "value": "89800001.3960884 Fe_ton"
+          "value": "89800001.3960884 t Steel"
         },
         {
           "year": 2020,
-          "value": "71500001.3960884 Fe_ton"
+          "value": "71500001.3960884 t Steel"
         },
         {
           "year": 2021,
-          "value": "71500001.3960884 Fe_ton"
+          "value": "71500001.3960884 t Steel"
         }
       ],
       "emissions": {
@@ -4243,6 +4289,8 @@
     "company_id": "US7134481081",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4532,6 +4580,8 @@
     "company_id": "JP0000000001",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4821,6 +4871,8 @@
     "company_id": "NL0000000002",
     "region": "South America",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -4858,23 +4910,23 @@
         },
         {
           "year": 2017,
-          "value": "16120000.4760821 Fe_ton"
+          "value": "16120000.4760821 t Steel"
         },
         {
           "year": 2018,
-          "value": "15342000.4760821 Fe_ton"
+          "value": "15342000.4760821 t Steel"
         },
         {
           "year": 2019,
-          "value": "12453000.4760821 Fe_ton"
+          "value": "12453000.4760821 t Steel"
         },
         {
           "year": 2020,
-          "value": "12194000.4760821 Fe_ton"
+          "value": "12194000.4760821 t Steel"
         },
         {
           "year": 2021,
-          "value": "12194000.4760821 Fe_ton"
+          "value": "12194000.4760821 t Steel"
         }
       ],
       "emissions": {
@@ -5034,15 +5086,15 @@
           },
           {
             "year": 2019,
-            "value": "0.000727294205076673 t CO2/Fe_ton"
+            "value": "0.000727294205076673 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.000742741899988965 t CO2/Fe_ton"
+            "value": "0.000742741899988965 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.000742741899988965 t CO2/Fe_ton"
+            "value": "0.000742741899988965 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -5088,15 +5140,15 @@
           },
           {
             "year": 2019,
-            "value": "0.232151800012749 t CO2/Fe_ton"
+            "value": "0.232151800012749 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.237082693391115 t CO2/Fe_ton"
+            "value": "0.237082693391115 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.237082693391115 t CO2/Fe_ton"
+            "value": "0.237082693391115 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -5110,6 +5162,8 @@
     "company_id": "IT0000000003",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5135,35 +5189,35 @@
         },
         {
           "year": 2014,
-          "value": "19374009.677026 Fe_ton"
+          "value": "19374009.677026 t Steel"
         },
         {
           "year": 2015,
-          "value": "21182009.677026 Fe_ton"
+          "value": "21182009.677026 t Steel"
         },
         {
           "year": 2016,
-          "value": "22380009.677026 Fe_ton"
+          "value": "22380009.677026 t Steel"
         },
         {
           "year": 2017,
-          "value": "23290009.677026 Fe_ton"
+          "value": "23290009.677026 t Steel"
         },
         {
           "year": 2018,
-          "value": "23763009.677026 Fe_ton"
+          "value": "23763009.677026 t Steel"
         },
         {
           "year": 2019,
-          "value": "23303009.677026 Fe_ton"
+          "value": "23303009.677026 t Steel"
         },
         {
           "year": 2020,
-          "value": "23303009.677026 Fe_ton"
+          "value": "23303009.677026 t Steel"
         },
         {
           "year": 2021,
-          "value": "23303009.677026 Fe_ton"
+          "value": "23303009.677026 t Steel"
         }
       ],
       "emissions": {
@@ -5303,35 +5357,35 @@
           },
           {
             "year": 2014,
-            "value": "0.687364665292674 t CO2/Fe_ton"
+            "value": "0.687364665292674 t CO2/(t Steel)"
           },
           {
             "year": 2015,
-            "value": "0.66835063777639 t CO2/Fe_ton"
+            "value": "0.66835063777639 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "0.698034089460767 t CO2/Fe_ton"
+            "value": "0.698034089460767 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "0.67453856373975 t CO2/Fe_ton"
+            "value": "0.67453856373975 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.694020239909696 t CO2/Fe_ton"
+            "value": "0.694020239909696 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.705574511829511 t CO2/Fe_ton"
+            "value": "0.705574511829511 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.705574511829511 t CO2/Fe_ton"
+            "value": "0.705574511829511 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.705574511829511 t CO2/Fe_ton"
+            "value": "0.705574511829511 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -5357,35 +5411,35 @@
           },
           {
             "year": 2014,
-            "value": "0.282853666761831 t CO2/Fe_ton"
+            "value": "0.282853666761831 t CO2/(t Steel)"
           },
           {
             "year": 2015,
-            "value": "0.255689132410331 t CO2/Fe_ton"
+            "value": "0.255689132410331 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "0.252591922818919 t CO2/Fe_ton"
+            "value": "0.252591922818919 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "0.247703189351473 t CO2/Fe_ton"
+            "value": "0.247703189351473 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.244329727418293 t CO2/Fe_ton"
+            "value": "0.244329727418293 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.249024042707543 t CO2/Fe_ton"
+            "value": "0.249024042707543 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.249024042707543 t CO2/Fe_ton"
+            "value": "0.249024042707543 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.249024042707543 t CO2/Fe_ton"
+            "value": "0.249024042707543 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -5399,6 +5453,8 @@
     "company_id": "SE0000000004",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5424,35 +5480,35 @@
         },
         {
           "year": 2014,
-          "value": "31580000.2335485 Fe_ton"
+          "value": "31580000.2335485 t Steel"
         },
         {
           "year": 2015,
-          "value": "31040000.2335485 Fe_ton"
+          "value": "31040000.2335485 t Steel"
         },
         {
           "year": 2016,
-          "value": "29751000.2335485 Fe_ton"
+          "value": "29751000.2335485 t Steel"
         },
         {
           "year": 2017,
-          "value": "30410000.2335485 Fe_ton"
+          "value": "30410000.2335485 t Steel"
         },
         {
           "year": 2018,
-          "value": "29145000.2335485 Fe_ton"
+          "value": "29145000.2335485 t Steel"
         },
         {
           "year": 2019,
-          "value": "27880000.2335485 Fe_ton"
+          "value": "27880000.2335485 t Steel"
         },
         {
           "year": 2020,
-          "value": "28090000.2335485 Fe_ton"
+          "value": "28090000.2335485 t Steel"
         },
         {
           "year": 2021,
-          "value": "28090000.2335485 Fe_ton"
+          "value": "28090000.2335485 t Steel"
         }
       ],
       "emissions": {
@@ -5600,27 +5656,27 @@
           },
           {
             "year": 2016,
-            "value": "1.83859365413424 t CO2/Fe_ton"
+            "value": "1.83859365413424 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "1.80861558076781 t CO2/Fe_ton"
+            "value": "1.80861558076781 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "1.8836850160788 t CO2/Fe_ton"
+            "value": "1.8836850160788 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "1.87589669280616 t CO2/Fe_ton"
+            "value": "1.87589669280616 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "1.88323245972668 t CO2/Fe_ton"
+            "value": "1.88323245972668 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "1.88323245972668 t CO2/Fe_ton"
+            "value": "1.88323245972668 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -5654,27 +5710,27 @@
           },
           {
             "year": 2016,
-            "value": "0.221841288754589 t CO2/Fe_ton"
+            "value": "0.221841288754589 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "0.21045709254839 t CO2/Fe_ton"
+            "value": "0.21045709254839 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.253902905275342 t CO2/Fe_ton"
+            "value": "0.253902905275342 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.26901004916505 t CO2/Fe_ton"
+            "value": "0.26901004916505 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.270558923829115 t CO2/Fe_ton"
+            "value": "0.270558923829115 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.270558923829115 t CO2/Fe_ton"
+            "value": "0.270558923829115 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -5688,6 +5744,8 @@
     "company_id": "SE0000000005",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5713,35 +5771,35 @@
         },
         {
           "year": 2014,
-          "value": "12170001.0468216 Fe_ton"
+          "value": "12170001.0468216 t Steel"
         },
         {
           "year": 2015,
-          "value": "12630001.0468216 Fe_ton"
+          "value": "12630001.0468216 t Steel"
         },
         {
           "year": 2016,
-          "value": "12630001.0468216 Fe_ton"
+          "value": "12630001.0468216 t Steel"
         },
         {
           "year": 2017,
-          "value": "12630001.0468216 Fe_ton"
+          "value": "12630001.0468216 t Steel"
         },
         {
           "year": 2018,
-          "value": "12630001.0468216 Fe_ton"
+          "value": "12630001.0468216 t Steel"
         },
         {
           "year": 2019,
-          "value": "12630001.0468216 Fe_ton"
+          "value": "12630001.0468216 t Steel"
         },
         {
           "year": 2020,
-          "value": "12630001.0468216 Fe_ton"
+          "value": "12630001.0468216 t Steel"
         },
         {
           "year": 2021,
-          "value": "12630001.0468216 Fe_ton"
+          "value": "12630001.0468216 t Steel"
         }
       ],
       "emissions": {
@@ -5881,35 +5939,35 @@
           },
           {
             "year": 2014,
-            "value": "2.14272792142709 t CO2/Fe_ton"
+            "value": "2.14272792142709 t CO2/(t Steel)"
           },
           {
             "year": 2015,
-            "value": "2.12319864008008 t CO2/Fe_ton"
+            "value": "2.12319864008008 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "2.48931104045582 t CO2/Fe_ton"
+            "value": "2.48931104045582 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "2.89872985054383 t CO2/Fe_ton"
+            "value": "2.89872985054383 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "3.28804414923404 t CO2/Fe_ton"
+            "value": "3.28804414923404 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "3.32053424947068 t CO2/Fe_ton"
+            "value": "3.32053424947068 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "3.17064985967671 t CO2/Fe_ton"
+            "value": "3.17064985967671 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "3.17064985967671 t CO2/Fe_ton"
+            "value": "3.17064985967671 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -5935,35 +5993,35 @@
           },
           {
             "year": 2014,
-            "value": "0.307477463019519 t CO2/Fe_ton"
+            "value": "0.307477463019519 t CO2/(t Steel)"
           },
           {
             "year": 2015,
-            "value": "0.329137031058895 t CO2/Fe_ton"
+            "value": "0.329137031058895 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "0.0523357871761963 t CO2/Fe_ton"
+            "value": "0.0523357871761963 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "0.149262144938302 t CO2/Fe_ton"
+            "value": "0.149262144938302 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.0495646076750823 t CO2/Fe_ton"
+            "value": "0.0495646076750823 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.309577254374461 t CO2/Fe_ton"
+            "value": "0.309577254374461 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.0377593830003368 t CO2/Fe_ton"
+            "value": "0.0377593830003368 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.0377593830003368 t CO2/Fe_ton"
+            "value": "0.0377593830003368 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -5977,6 +6035,8 @@
     "company_id": "NL0000000006",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -5998,39 +6058,39 @@
         },
         {
           "year": 2013,
-          "value": "23001000.8292913 Fe_ton"
+          "value": "23001000.8292913 t Steel"
         },
         {
           "year": 2014,
-          "value": "25222000.8292913 Fe_ton"
+          "value": "25222000.8292913 t Steel"
         },
         {
           "year": 2015,
-          "value": "23424000.8292913 Fe_ton"
+          "value": "23424000.8292913 t Steel"
         },
         {
           "year": 2016,
-          "value": "24100000.8292913 Fe_ton"
+          "value": "24100000.8292913 t Steel"
         },
         {
           "year": 2017,
-          "value": "24193000.8292913 Fe_ton"
+          "value": "24193000.8292913 t Steel"
         },
         {
           "year": 2018,
-          "value": "24328000.8292913 Fe_ton"
+          "value": "24328000.8292913 t Steel"
         },
         {
           "year": 2019,
-          "value": "23779000.8292913 Fe_ton"
+          "value": "23779000.8292913 t Steel"
         },
         {
           "year": 2020,
-          "value": "22329000.8292913 Fe_ton"
+          "value": "22329000.8292913 t Steel"
         },
         {
           "year": 2021,
-          "value": "22329000.8292913 Fe_ton"
+          "value": "22329000.8292913 t Steel"
         }
       ],
       "emissions": {
@@ -6178,27 +6238,27 @@
           },
           {
             "year": 2016,
-            "value": "1.2987551764417 t CO2/Fe_ton"
+            "value": "1.2987551764417 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "1.28433843525816 t CO2/Fe_ton"
+            "value": "1.28433843525816 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "1.21222458993769 t CO2/Fe_ton"
+            "value": "1.21222458993769 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "1.14411875522451 t CO2/Fe_ton"
+            "value": "1.14411875522451 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "1.21841550534596 t CO2/Fe_ton"
+            "value": "1.21841550534596 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "1.21841550534596 t CO2/Fe_ton"
+            "value": "1.21841550534596 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -6266,6 +6326,8 @@
     "company_id": "CN0000000007",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -6287,39 +6349,39 @@
         },
         {
           "year": 2013,
-          "value": "46030001.3676141 Fe_ton"
+          "value": "46030001.3676141 t Steel"
         },
         {
           "year": 2014,
-          "value": "48160001.3676141 Fe_ton"
+          "value": "48160001.3676141 t Steel"
         },
         {
           "year": 2015,
-          "value": "47320001.3676141 Fe_ton"
+          "value": "47320001.3676141 t Steel"
         },
         {
           "year": 2016,
-          "value": "44530001.3676141 Fe_ton"
+          "value": "44530001.3676141 t Steel"
         },
         {
           "year": 2017,
-          "value": "45170001.3676141 Fe_ton"
+          "value": "45170001.3676141 t Steel"
         },
         {
           "year": 2018,
-          "value": "46505001.3676141 Fe_ton"
+          "value": "46505001.3676141 t Steel"
         },
         {
           "year": 2019,
-          "value": "47840001.3676141 Fe_ton"
+          "value": "47840001.3676141 t Steel"
         },
         {
           "year": 2020,
-          "value": "47050001.3676141 Fe_ton"
+          "value": "47050001.3676141 t Steel"
         },
         {
           "year": 2021,
-          "value": "47050001.3676141 Fe_ton"
+          "value": "47050001.3676141 t Steel"
         }
       ],
       "emissions": {
@@ -6467,27 +6529,27 @@
           },
           {
             "year": 2016,
-            "value": "1.9986525630862 t CO2/Fe_ton"
+            "value": "1.9986525630862 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "1.97033426329327 t CO2/Fe_ton"
+            "value": "1.97033426329327 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "1.84926349507656 t CO2/Fe_ton"
+            "value": "1.84926349507656 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "1.81856184950927 t CO2/Fe_ton"
+            "value": "1.81856184950927 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "1.78533472743815 t CO2/Fe_ton"
+            "value": "1.78533472743815 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "1.78533472743815 t CO2/Fe_ton"
+            "value": "1.78533472743815 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -6521,27 +6583,27 @@
           },
           {
             "year": 2016,
-            "value": "0.247024501005612 t CO2/Fe_ton"
+            "value": "0.247024501005612 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "0.221385899155272 t CO2/Fe_ton"
+            "value": "0.221385899155272 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.215030664950761 t CO2/Fe_ton"
+            "value": "0.215030664950761 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.209030122946103 t CO2/Fe_ton"
+            "value": "0.209030122946103 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.191285889606989 t CO2/Fe_ton"
+            "value": "0.191285889606989 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.191285889606989 t CO2/Fe_ton"
+            "value": "0.191285889606989 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -6555,6 +6617,8 @@
     "company_id": "CN0000000008",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -6580,35 +6644,35 @@
         },
         {
           "year": 2014,
-          "value": "15921004.6310296 Fe_ton"
+          "value": "15921004.6310296 t Steel"
         },
         {
           "year": 2015,
-          "value": "15855004.6310296 Fe_ton"
+          "value": "15855004.6310296 t Steel"
         },
         {
           "year": 2016,
-          "value": "16419004.6310296 Fe_ton"
+          "value": "16419004.6310296 t Steel"
         },
         {
           "year": 2017,
-          "value": "16850004.6310296 Fe_ton"
+          "value": "16850004.6310296 t Steel"
         },
         {
           "year": 2018,
-          "value": "17286004.6310296 Fe_ton"
+          "value": "17286004.6310296 t Steel"
         },
         {
           "year": 2019,
-          "value": "15520004.6310296 Fe_ton"
+          "value": "15520004.6310296 t Steel"
         },
         {
           "year": 2020,
-          "value": "15520004.6310296 Fe_ton"
+          "value": "15520004.6310296 t Steel"
         },
         {
           "year": 2021,
-          "value": "15520004.6310296 Fe_ton"
+          "value": "15520004.6310296 t Steel"
         }
       ],
       "emissions": {
@@ -6752,31 +6816,31 @@
           },
           {
             "year": 2015,
-            "value": "1.8416900726653 t CO2/Fe_ton"
+            "value": "1.8416900726653 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "1.77842721207629 t CO2/Fe_ton"
+            "value": "1.77842721207629 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "1.75667634989967 t CO2/Fe_ton"
+            "value": "1.75667634989967 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "1.74707836053789 t CO2/Fe_ton"
+            "value": "1.74707836053789 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "1.82989665958273 t CO2/Fe_ton"
+            "value": "1.82989665958273 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "1.82989665958273 t CO2/Fe_ton"
+            "value": "1.82989665958273 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "1.82989665958273 t CO2/Fe_ton"
+            "value": "1.82989665958273 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -6806,31 +6870,31 @@
           },
           {
             "year": 2015,
-            "value": "0.22705793626727 t CO2/Fe_ton"
+            "value": "0.22705793626727 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "0.231439403083431 t CO2/Fe_ton"
+            "value": "0.231439403083431 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "0.237388933630528 t CO2/Fe_ton"
+            "value": "0.237388933630528 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.231401339778036 t CO2/Fe_ton"
+            "value": "0.231401339778036 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.231958992063184 t CO2/Fe_ton"
+            "value": "0.231958992063184 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.231958992063184 t CO2/Fe_ton"
+            "value": "0.231958992063184 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.231958992063184 t CO2/Fe_ton"
+            "value": "0.231958992063184 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -6844,6 +6908,8 @@
     "company_id": "CN0000000009",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -7133,6 +7199,8 @@
     "company_id": "BR0000000010",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -7154,39 +7222,39 @@
         },
         {
           "year": 2013,
-          "value": "15691492.9224849 Fe_ton"
+          "value": "15691492.9224849 t Steel"
         },
         {
           "year": 2014,
-          "value": "11301980.9224849 Fe_ton"
+          "value": "11301980.9224849 t Steel"
         },
         {
           "year": 2015,
-          "value": "11500001.9224849 Fe_ton"
+          "value": "11500001.9224849 t Steel"
         },
         {
           "year": 2016,
-          "value": "11600001.9224849 Fe_ton"
+          "value": "11600001.9224849 t Steel"
         },
         {
           "year": 2017,
-          "value": "3012108.92248495 Fe_ton"
+          "value": "3012108.92248495 t Steel"
         },
         {
           "year": 2018,
-          "value": "12039001.9224849 Fe_ton"
+          "value": "12039001.9224849 t Steel"
         },
         {
           "year": 2019,
-          "value": "11847001.9224849 Fe_ton"
+          "value": "11847001.9224849 t Steel"
         },
         {
           "year": 2020,
-          "value": "11314001.9224849 Fe_ton"
+          "value": "11314001.9224849 t Steel"
         },
         {
           "year": 2021,
-          "value": "11314001.9224849 Fe_ton"
+          "value": "11314001.9224849 t Steel"
         }
       ],
       "emissions": {
@@ -7334,27 +7402,27 @@
           },
           {
             "year": 2016,
-            "value": "1.99999983426857 t CO2/Fe_ton"
+            "value": "1.99999983426857 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "7.37025203729028 t CO2/Fe_ton"
+            "value": "7.37025203729028 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "1.83570050613659 t CO2/Fe_ton"
+            "value": "1.83570050613659 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "1.97518343253351 t CO2/Fe_ton"
+            "value": "1.97518343253351 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "2.06823386479905 t CO2/Fe_ton"
+            "value": "2.06823386479905 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "2.06823386479905 t CO2/Fe_ton"
+            "value": "2.06823386479905 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -7422,6 +7490,8 @@
     "company_id": "BR0000000011",
     "region": "Europe",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -7459,23 +7529,23 @@
         },
         {
           "year": 2017,
-          "value": "15393000.0778486 Fe_ton"
+          "value": "15393000.0778486 t Steel"
         },
         {
           "year": 2018,
-          "value": "15419000.0778486 Fe_ton"
+          "value": "15419000.0778486 t Steel"
         },
         {
           "year": 2019,
-          "value": "14618000.0778486 Fe_ton"
+          "value": "14618000.0778486 t Steel"
         },
         {
           "year": 2020,
-          "value": "14473000.0778486 Fe_ton"
+          "value": "14473000.0778486 t Steel"
         },
         {
           "year": 2021,
-          "value": "14473000.0778486 Fe_ton"
+          "value": "14473000.0778486 t Steel"
         }
       ],
       "emissions": {
@@ -7627,23 +7697,23 @@
           },
           {
             "year": 2017,
-            "value": "0.641005653735282 t CO2/Fe_ton"
+            "value": "0.641005653735282 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.632661004513705 t CO2/Fe_ton"
+            "value": "0.632661004513705 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.655493229362386 t CO2/Fe_ton"
+            "value": "0.655493229362386 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.662060390127003 t CO2/Fe_ton"
+            "value": "0.662060390127003 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.662060390127003 t CO2/Fe_ton"
+            "value": "0.662060390127003 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -7681,23 +7751,23 @@
           },
           {
             "year": 2017,
-            "value": "0.0789969513219493 t CO2/Fe_ton"
+            "value": "0.0789969513219493 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.0771126578795937 t CO2/Fe_ton"
+            "value": "0.0771126578795937 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.0802435402655439 t CO2/Fe_ton"
+            "value": "0.0802435402655439 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.0810474726414106 t CO2/Fe_ton"
+            "value": "0.0810474726414106 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.0810474726414106 t CO2/Fe_ton"
+            "value": "0.0810474726414106 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -7711,6 +7781,8 @@
     "company_id": "BR0000000012",
     "region": "Asia",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [
@@ -7736,35 +7808,35 @@
         },
         {
           "year": 2014,
-          "value": "9155004.34644718 Fe_ton"
+          "value": "9155004.34644718 t Steel"
         },
         {
           "year": 2015,
-          "value": "9331004.34644718 Fe_ton"
+          "value": "9331004.34644718 t Steel"
         },
         {
           "year": 2016,
-          "value": "20808004.3464472 Fe_ton"
+          "value": "20808004.3464472 t Steel"
         },
         {
           "year": 2017,
-          "value": "21911004.3464472 Fe_ton"
+          "value": "21911004.3464472 t Steel"
         },
         {
           "year": 2018,
-          "value": "25390004.3464472 Fe_ton"
+          "value": "25390004.3464472 t Steel"
         },
         {
           "year": 2019,
-          "value": "27110004.3464472 Fe_ton"
+          "value": "27110004.3464472 t Steel"
         },
         {
           "year": 2020,
-          "value": "30630004.3464472 Fe_ton"
+          "value": "30630004.3464472 t Steel"
         },
         {
           "year": 2021,
-          "value": "28540004.3464472 Fe_ton"
+          "value": "28540004.3464472 t Steel"
         }
       ],
       "emissions": {
@@ -7904,35 +7976,35 @@
           },
           {
             "year": 2014,
-            "value": "2.23141292204059 t CO2/Fe_ton"
+            "value": "2.23141292204059 t CO2/(t Steel)"
           },
           {
             "year": 2015,
-            "value": "2.5011167215762815 t CO2/Fe_ton"
+            "value": "2.5011167215762815 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "1.1196817634257177 t CO2/Fe_ton"
+            "value": "1.1196817634257177 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "1.768855657512769 t CO2/Fe_ton"
+            "value": "1.768855657512769 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "1.8521120894010474 t CO2/Fe_ton"
+            "value": "1.8521120894010474 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "2.0690888235638023 t CO2/Fe_ton"
+            "value": "2.0690888235638023 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "1.9626612298203263 t CO2/Fe_ton"
+            "value": "1.9626612298203263 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "2.1063879763383277 t CO2/Fe_ton"
+            "value": "2.1063879763383277 t CO2/(t Steel)"
           }
         ],
         "S2": [
@@ -7958,35 +8030,35 @@
           },
           {
             "year": 2014,
-            "value": "0.13831724727595748 t CO2/Fe_ton"
+            "value": "0.13831724727595748 t CO2/(t Steel)"
           },
           {
             "year": 2015,
-            "value": "0.07758843240445577 t CO2/Fe_ton"
+            "value": "0.07758843240445577 t CO2/(t Steel)"
           },
           {
             "year": 2016,
-            "value": "0.06775354217189573 t CO2/Fe_ton"
+            "value": "0.06775354217189573 t CO2/(t Steel)"
           },
           {
             "year": 2017,
-            "value": "0.18160395283957864 t CO2/Fe_ton"
+            "value": "0.18160395283957864 t CO2/(t Steel)"
           },
           {
             "year": 2018,
-            "value": "0.13174259265016847 t CO2/Fe_ton"
+            "value": "0.13174259265016847 t CO2/(t Steel)"
           },
           {
             "year": 2019,
-            "value": "0.15262170183097867 t CO2/Fe_ton"
+            "value": "0.15262170183097867 t CO2/(t Steel)"
           },
           {
             "year": 2020,
-            "value": "0.09074510628733878 t CO2/Fe_ton"
+            "value": "0.09074510628733878 t CO2/(t Steel)"
           },
           {
             "year": 2021,
-            "value": "0.09739041964602954 t CO2/Fe_ton"
+            "value": "0.09739041964602954 t CO2/(t Steel)"
           }
         ],
         "S1S2": [],
@@ -8000,6 +8072,8 @@
     "company_id": "AR0000000013",
     "region": "Europe",
     "sector": "Steel",
+    "emissions_metric": "t CO2",
+    "production_metric": "t Steel",
     "target_probability": 0.4285714285714285,
     "historic_data": {
       "productions": [

@@ -2,14 +2,13 @@
 This Python module implements the ITR methodology, elaborated in this [Functional Overview](https://github.com/os-climate/ITR/blob/main/docs/FunctionalOverview.rst).  [A graphical representation](https://github.com/os-climate/ITR/blob/main/docs/Calculation.md) of the fundamental calculations is also available in the [docs](https://github.com/os-climate/ITR/tree/main/docs) directory.
 
 ## Getting started with the user interface:
-If you use Anaconda environments, open an Anaconda prompt window, navigate to the 'examples' directory and run:
+If you use Anaconda environments, open an Anaconda prompt window, navigate to the root of the ITR release (ITR-develop) and run:
 ```
 conda env create -f environment.yml
 conda activate itr_ui
-python ITR_UI.py
 ```
 
-For virtual environments, open a command prompt/terminal window, navigate to the 'examples' directory and run:
+For virtual environments, open a command prompt/terminal window, navigate to the root of the ITR release and run
 ```
 python3 -m venv itr_ui
 ```
@@ -19,14 +18,23 @@ source itr_ui/bin/activate
 ```
 On Windows, activate the environment with
 ```
-itr_ui\Scripts\activate.bat
+itr_ui\Scripts\activate
 ```
 Next, run:
 ```
 python3 -m pip install --upgrade pip
 pip install -r requirements.txt
-python3 ITR_UI.py
+pip install -e .
 ```
+
+Now you are ready to change to the examples directory and run the tool:
+```
+cd examples
+python3 ITR_UI.py
+python3 ITR_UI.py "data/20230106 ITR V2 Sample Data.xlsx"
+```
+
+Note the python commands are ```python``` for windows and ``python3`` for linux/mac.  If no file is specified, the tool uses a default, small ITR dataset.  With a filename given, the ITR tool will load data from that dataset.  The 20230106 data template has over 120 companies across nearly a dozen sectors.
 
 Finally, open a browser window and navigate to `http://127.0.0.1:8050/` to access the user interface.
 
@@ -59,7 +67,7 @@ source itr_env/bin/activate
 ```
 On Windows, activate the environment with
 ```
-itr_env\Scripts\activate.bat
+itr_env\Scripts\activate
 ```
 Next, run:
 ```

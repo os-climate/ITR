@@ -1,0 +1,287 @@
+{
+  "benchmark_temperature": "2.0 delta_degC",
+  "benchmark_global_budget": "1229 Gt CO2",
+  "is_AFOLU_included": false,
+  "S1": {
+    "benchmarks": [
+      {
+        "sector": "Airlines",
+        "region": "Global",
+        "benchmark_metric": "g CO2 / tkm",
+        "scenario name": "TPI 2 Degrees (Shift-Improve)",
+        "release date": "2020-12-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 903.0
+          },
+          {
+            "year": 2020,
+            "value": 877.0
+          },
+          {
+            "year": 2021,
+            "value": 851.0
+          },
+          {
+            "year": 2022,
+            "value": 825.0
+          },
+          {
+            "year": 2023,
+            "value": 799.0
+          },
+          {
+            "year": 2024,
+            "value": 773.0
+          },
+          {
+            "year": 2025,
+            "value": 747.0
+          },
+          {
+            "year": 2026,
+            "value": 722.0
+          },
+          {
+            "year": 2027,
+            "value": 696.0
+          },
+          {
+            "year": 2028,
+            "value": 671.0
+          },
+          {
+            "year": 2029,
+            "value": 645.0
+          },
+          {
+            "year": 2030,
+            "value": 620.0
+          },
+          {
+            "year": 2031,
+            "value": 595.0
+          },
+          {
+            "year": 2032,
+            "value": 571.0
+          },
+          {
+            "year": 2033,
+            "value": 546.0
+          },
+          {
+            "year": 2034,
+            "value": 522.0
+          },
+          {
+            "year": 2035,
+            "value": 497.0
+          },
+          {
+            "year": 2036,
+            "value": 476.0
+          },
+          {
+            "year": 2037,
+            "value": 455.0
+          },
+          {
+            "year": 2038,
+            "value": 435.0
+          },
+          {
+            "year": 2039,
+            "value": 414.0
+          },
+          {
+            "year": 2040,
+            "value": 393.0
+          },
+          {
+            "year": 2041,
+            "value": 375.0
+          },
+          {
+            "year": 2042,
+            "value": 357.0
+          },
+          {
+            "year": 2043,
+            "value": 339.0
+          },
+          {
+            "year": 2044,
+            "value": 320.0
+          },
+          {
+            "year": 2045,
+            "value": 302.0
+          },
+          {
+            "year": 2046,
+            "value": 290.0
+          },
+          {
+            "year": 2047,
+            "value": 279.0
+          },
+          {
+            "year": 2048,
+            "value": 267.0
+          },
+          {
+            "year": 2049,
+            "value": 255.0
+          },
+          {
+            "year": 2050,
+            "value": 243.0
+          }
+        ]
+      }
+    ]
+  },
+  "S3": {
+    "benchmarks": [
+      {
+        "sector": "Autos",
+        "region": "Global",
+        "benchmark_metric": "verage new vehicle emissions (grams of CO2 per kilometre [NEDC]",
+        "scenario name": "TPI 2 Degrees (Shift-Improve)",
+        "release date": "2020-12-01",
+        "projections_nounits": [
+          {
+            "year": 2019,
+            "value": 119.0
+          },
+          {
+            "year": 2020,
+            "value": 113.0
+          },
+          {
+            "year": 2021,
+            "value": 109.0
+          },
+          {
+            "year": 2022,
+            "value": 105.0
+          },
+          {
+            "year": 2023,
+            "value": 102.0
+          },
+          {
+            "year": 2024,
+            "value": 98.0
+          },
+          {
+            "year": 2025,
+            "value": 94.0
+          },
+          {
+            "year": 2026,
+            "value": 91.0
+          },
+          {
+            "year": 2027,
+            "value": 88.0
+          },
+          {
+            "year": 2028,
+            "value": 84.0
+          },
+          {
+            "year": 2029,
+            "value": 81.0
+          },
+          {
+            "year": 2030,
+            "value": 77.0
+          },
+          {
+            "year": 2031,
+            "value": 74.0
+          },
+          {
+            "year": 2032,
+            "value": 72.0
+          },
+          {
+            "year": 2033,
+            "value": 69.0
+          },
+          {
+            "year": 2034,
+            "value": 67.0
+          },
+          {
+            "year": 2035,
+            "value": 64.0
+          },
+          {
+            "year": 2036,
+            "value": 63.0
+          },
+          {
+            "year": 2037,
+            "value": 61.0
+          },
+          {
+            "year": 2038,
+            "value": 59.0
+          },
+          {
+            "year": 2039,
+            "value": 58.0
+          },
+          {
+            "year": 2040,
+            "value": 56.0
+          },
+          {
+            "year": 2041,
+            "value": 55.0
+          },
+          {
+            "year": 2042,
+            "value": 54.0
+          },
+          {
+            "year": 2043,
+            "value": 52.0
+          },
+          {
+            "year": 2044,
+            "value": 51.0
+          },
+          {
+            "year": 2045,
+            "value": 50.0
+          },
+          {
+            "year": 2046,
+            "value": 49.0
+          },
+          {
+            "year": 2047,
+            "value": 47.0
+          },
+          {
+            "year": 2048,
+            "value": 46.0
+          },
+          {
+            "year": 2049,
+            "value": 45.0
+          },
+          {
+            "year": 2050,
+            "value": 43.0
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.8', '3.9', '3.10' ]
+        python-version: [ '3.9', '3.10' ]
     name: Run unit tests
     steps:
       - uses: actions/checkout@v3
@@ -27,4 +27,4 @@ jobs:
           pip install -r requirements.txt
           pip install .
       - name: Run tests
-        run: python -m unittest discover test "test_*.py"
+        run: python -m pytest test

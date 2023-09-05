@@ -1,10 +1,11 @@
 import unittest
 import numpy as np
 import pandas as pd
+import ITR
+from utils import assert_pint_series_equal
 from ITR.portfolio_aggregation import PortfolioAggregationMethod, PortfolioAggregation
 from ITR.configs import ColumnsConfig
 from ITR.interfaces import EScope
-from utils import assert_pint_series_equal
 
 
 class TestPortfolioAggregation(unittest.TestCase):
@@ -17,16 +18,16 @@ class TestPortfolioAggregation(unittest.TestCase):
         """
         self.data = pd.DataFrame()
         self.data.loc[:, ColumnsConfig.COMPANY_NAME] = ["Company A", "Company B", "Company C"]
-        self.data.loc[:, ColumnsConfig.COMPANY_REVENUE] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.COMPANY_MARKET_CAP] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.COMPANY_REVENUE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_MARKET_CAP] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
         self.data.loc[:, ColumnsConfig.SCOPE] = [EScope.S1S2, EScope.S1S2, EScope.S1S2S3]
         self.data.loc[:, ColumnsConfig.GHG_SCOPE12] = pd.Series([1.0, 2.0, 3.0], dtype='pint[t CO2]')
         self.data.loc[:, ColumnsConfig.GHG_SCOPE3] = pd.Series([1.0, 2.0, 3.0], dtype='pint[t CO2]')
-        self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.CASH_EQUIVALENTS] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = [1.0, 2.0, 3.0]
-        self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = [1.0, 2.0, 3.0]
+        self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_CASH_EQUIVALENTS] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
+        self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = pd.Series([1.0, 2.0, 3.0], dtype='pint[USD]')
         self.data.loc[:, ColumnsConfig.TEMPERATURE_SCORE] = pd.Series([1.0, 2.0, 3.0], dtype='pint[delta_degC]')
 
     def test_is_emissions_based(self):
@@ -59,8 +60,14 @@ class TestPortfolioAggregation(unittest.TestCase):
         PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.COMPANY_REVENUE)
 
         self.data.loc[0, ColumnsConfig.TEMPERATURE_SCORE] = np.nan
-        with self.assertRaises(ValueError):
-            PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.TEMPERATURE_SCORE)
+        # _check_column no longer raises an exceptiong for null or missing data, because
+        # FOR AGGREGATION PURPOSES, such missing data is treated as zero (just like np.sum
+        # treats missing data as zero, whereas np.add will create np.nan if either
+        # addend is np.nan).  We no longer call _check_column for non-aggregating operations.
+        return
+        # with self.assertRaises(ValueError):
+        #     PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.TEMPERATURE_SCORE)
+        
 
     def test_calculate_aggregate_score_WATS(self):
         pa_WATS = PortfolioAggregation()._calculate_aggregate_score(data=self.data,

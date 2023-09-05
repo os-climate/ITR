@@ -30,7 +30,9 @@ company. The company identifier is used to link the data from the
 portfolio, the fundamental data and the reported targets to each other.
 This can be any identifier the user wants to deploy, if the same
 identifier is used in all files. 
-See :download:`portfolio data template <PortfolioTemplate.xlsx>` for an example portfolio file.
+See :download:`portfolio data template <PortfolioTemplate.xlsx>`__ for an example portfolio file
+used with the original DataProviderTemplate file.  In the V2 template (see below),
+there is a Portfolio page where you can enter this data.
 
 For additional analyses, you can supplement this data with additional
 fields, which are available for import. For example, you can add the
@@ -47,7 +49,7 @@ portfolio. We split this data in three categories: financial data,
 emissions, and target data.
 
 All three categories are available for import via a single Excel file.
-Here is a template :download:`here <DataProviderTemplate.xlsx>`.
+Here is the template for the latest V2 format: :download:`here <DataProviderTemplate V2.xlsx>`.
 
 .. note :: Please note that the tool requires the data in a specific format. For more detail, see the data provider template and the Data Legends for the required data formats and expect values.
 
@@ -91,7 +93,8 @@ table below outlines required data for all aggregation methods.
 
 The financial data used should be regarding the same period as the
 reported emissions. Preferably the latest reported. For more information
-about the requirements, see the `guidance <https://sciencebasedtargets.org/wp-content/uploads/2020/10/Financial-Sector-Science-Based-Targets-Guidance-Pilot-Version.pdf>`__ documentation.
+about the requirements, see the original `guidance <https://sciencebasedtargets.org/wp-content/uploads/2020/10/Financial-Sector-Science-Based-Targets-Guidance-Pilot-Version.pdf>`__ documentation.
+The latest content related to SBTi's work on financed emissions is here `https://sciencebasedtargets.org/sectors/financial-institutions`.
 
 Target data
 ~~~~~~~~~~~

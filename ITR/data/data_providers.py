@@ -1,18 +1,16 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import List, Dict, Union
 import pandas as pd
 
-import numpy as np
+from pint import Quantity
+from ITR.data.osc_units import ureg
 
-from ITR.configs import TabsConfig, ColumnsConfig, VariablesConfig, TemperatureScoreConfig
 from ITR.interfaces import ICompanyData, EScope, IHistoricData, IProductionRealization, IHistoricEmissionsScopes, \
     IHistoricEIScopes, ICompanyEIProjection, ICompanyEIProjectionsScopes, ICompanyEIProjections
 
-import pint
-from pint import Quantity
-from ITR.data.osc_units import ureg
-from ITR.interfaces import ICompanyData
-
+from ITR.configs import TabsConfig, ColumnsConfig, VariablesConfig, TemperatureScoreControls, TemperatureScoreConfig 
 
 class CompanyDataProvider(ABC):
     """
@@ -45,7 +43,7 @@ class CompanyDataProvider(ABC):
     @abstractmethod
     def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
         """
-        Gets the value of a variable for a list of companies idss
+        Gets the value of a variable for a list of companies ids
         :param company_ids: list of company ids
         :param variable_name: variable name of the projected feature
         :return: series of values
