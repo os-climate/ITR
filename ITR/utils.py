@@ -59,8 +59,7 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
     """
     Convert a data frame to a list of portfolio company objects.
 
-    :param df_portfolio: The data frame to parse. The column names should align with the attribute names of the
-    PortfolioCompany model.
+    :param df_portfolio: The data frame to parse. The column names should align with the attribute names of the PortfolioCompany model.
     :return: A list of portfolio companies
     """
     # Adding some non-empty checks for portfolio upload

@@ -7,7 +7,8 @@ from typing import List, Type
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame, EmissionsQuantity, quantity
+from . import ureg, Q_, PA_
+from ITR.data.osc_units import asPintSeries, asPintDataFrame, EmissionsQuantity, quantity
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, \
     ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, \
     DF_ICompanyEIProjections, IHistoricData
@@ -16,13 +17,11 @@ from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls
 
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 LoggingConfig.add_config_to_logger(logger)
 
 import pint
 from pint import DimensionalityError
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class DataWarehouse(ABC):
@@ -666,6 +665,7 @@ class DataWarehouse(ABC):
         :param df_budget: DataFrame of cumulative emissions budget allowed over time
         :param budget_year: if not None, set the exceedence budget to that year; otherwise budget starts low and grows year-by-year
         :return: The furthest-out year where df_subject < df_budget, or np.nan if none
+
         Where the (df_subject-aligned) budget defines a value but df_subject doesn't have a value, return pd.NA
         Where the benchmark (df_budget) fails to provide a metric for the subject scope, return no rows
         """

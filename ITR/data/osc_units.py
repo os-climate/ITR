@@ -9,15 +9,7 @@ import pint
 from pint import get_application_registry, Context, Quantity, DimensionalityError
 import ITR
 
-ureg = get_application_registry()
-
-Q_ = ureg.Quantity
-M_ = ureg.Measurement
-
-# FIXME: delay loading of pint_pandas until after we've initialized ourselves
-from pint_pandas import PintType, PintArray
-PintType.ureg = ureg
-PA_ = PintArray
+from . import ureg, Q_, M_, PA_
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 # openscm_units does this for all gas species...we just have to keep up.
@@ -726,21 +718,15 @@ class MonetaryQuantity(str):
 
 def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -> pd.Series:
     """
-    Parameters
-    ----------
-    series : pd.Series possibly containing Quantity values, not already in a PintArray.
-    name : the name to give to the resulting series
-    errors : { 'raise', 'ignore' }, default 'ignore'
-    inplace : bool, default False
-             If True, perform operation in-place.
+    :param series : pd.Series possibly containing Quantity values, not already in a PintArray.
+    :param name : the name to give to the resulting series
+    :param errors : { 'raise', 'ignore' }, default 'ignore'
+    :param inplace : bool, default False.  If True, perform operation in-place.
 
-    Returns
-    -------
-    If there is only one type of unit in the series, a PintArray version of the series,
-    replacing NULL values with Quantity (np.nan, unit_type).
+    :return: If there is only one type of unit in the series, a PintArray version of the series, replacing NULL values with Quantity (np.nan, unit_type).
 
     Raises ValueError if there are more than one type of units in the series.
-    Silently series if no conversion needed to be done.
+    Silently returns series if no conversion needed to be done.
     """
 
     # FIXME: Errors in the imput template can trigger this assertion
@@ -780,16 +766,12 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
 
 def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.DataFrame:
     """
-    Parameters
-    ----------
-    df : pd.DataFrame with columns to be converted into PintArrays where possible.
-    errors : { 'raise', 'ignore' }, default 'ignore'
-    inplace : bool, default False
-             If True, perform operation in-place.
+    :param df : pd.DataFrame with columns to be converted into PintArrays where possible.
+    :param errors : { 'raise', 'ignore' }, default 'ignore'
+    :param inplace : bool, default False.  If True, perform operation in-place.
 
-    Returns
-    -------
-    A pd.DataFrame with columns converted to PintArrays where possible.
+    :return: A pd.DataFrame with columns converted to PintArrays where possible.
+
     Raises ValueError if there are more than one type of units in any of the columns.
     """
     if inplace:
@@ -807,16 +789,10 @@ def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.Data
 
 def requantify_df_from_columns(df: pd.DataFrame, inplace=False) -> pd.DataFrame:
     """
-    Parameters
-    ----------
-    df: pd.DataFrame
-    inplace: bool, default False
-             If True, perform operation in-place.
+    :param df: pd.DataFrame
+    :param inplace: bool, default False.  If True, perform operation in-place.
 
-    Returns
-    -------
-    A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed
-    to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka 'pint[UNITS]')
+    :return: A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka 'pint[UNITS]')
     """
     p = re.compile(r'^(.*)\s*\[(.*)\]\s*$')
     if not inplace:

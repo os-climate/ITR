@@ -7,7 +7,7 @@ import numpy as np
 import itertools
 
 import ITR
-from .data.osc_units import ureg, Q_, PA_, PintType
+from .data.osc_units import ureg, Q_, PA_
 from .interfaces import quantity
 
 from .interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, AggregationContribution, \
@@ -283,7 +283,6 @@ class TemperatureScore(PortfolioAggregation):
         data = data.copy()
         weighted_scores = self._calculate_aggregate_score(data, self.c.COLS.TEMPERATURE_SCORE,
                                                           self.aggregation_method) # .astype('pint[delta_degC]')
-        assert isinstance(weighted_scores.dtype, PintType)
         # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(1.0) to make sum work
         data[self.c.COLS.CONTRIBUTION_RELATIVE] = (weighted_scores / weighted_scores.fillna(1.0).sum()).astype('pint[percent]')
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
