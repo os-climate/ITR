@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="ITR",
-    version="2.0.0b2",
+    version="v1.0.3",
     description="Assess the temperature alignment of current targets, commitments, and investment "
     "and lending portfolios.",
     long_description=long_description,
