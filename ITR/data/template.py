@@ -134,8 +134,6 @@ def prioritize_submetric(x: pd.DataFrame) -> pd.Series:
     if len(x) == 1:
         # Nothing to prioritize
         return x.iloc[0]
-    if x.index[0][2]!='production' and x.index[0][1] in ['DE0005220008']:
-        breakpoint()
 
     # NaN values in pd.Categorical means we did not understand the prioritization of the submetric; *unrecognized* pushes to bottom
     x.submetric = x.submetric.fillna('*unrecognized*')
@@ -364,7 +362,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             else:
                 self.template_v2_start_year = df_esg.columns[df_esg.columns.map(lambda col: isinstance(col, int))][0]
             # Make sure that if all NaN these columns are not represented as float64
-            df_esg.submetric = df_esg.submetric.str.strip().fillna('').astype('string')
+            df_esg.submetric = df_esg.submetric.astype('string').str.strip().fillna('')
             if 'boundary' in df_esg.columns:
                 df_esg['boundary'] = df_esg['boundary'].str.strip().fillna('').astype('string')
             # In the V2 template, the COMPANY_NAME and COMPANY_ID are merged cells and need to be filled forward

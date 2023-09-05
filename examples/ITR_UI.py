@@ -1519,12 +1519,6 @@ def update_graph(
 
     logger.info(f"ready to plot!\n{filt_df}")
 
-    if ITR.HAS_UNCERTAINTIES and isinstance(filt_df.cumulative_target.iloc[0].m, ITR.UFloat) != isinstance(filt_df.cumulative_trajectory.iloc[0].m, ITR.UFloat):
-        # Promote to UFloats if needed
-        if isinstance(filt_df.cumulative_target.iloc[0].m, ITR.UFloat):
-            filt_df = filt_df.assign(cumulative_trajectory=lambda x: x.cumulative_trajectory + ITR.ufloat(0, 0))
-        else:
-            filt_df = filt_df.assign(cumulative_target=lambda x: x.cumulative_target + ITR.ufloat(0, 0))
     # Scatter plot; we add one ton CO2e to everything because log/log plotting of zero is problematic
     filt_df.loc[:, 'cumulative_usage'] = (filt_df.cumulative_target.fillna(filt_df.cumulative_trajectory)
                                           +filt_df.cumulative_trajectory.fillna(filt_df.cumulative_target)
