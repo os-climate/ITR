@@ -1,3 +1,12 @@
+"""
+    Setup file for ITR.
+    Use setup.cfg to configure your project.
+
+    This file was generated with PyScaffold 4.5.
+    PyScaffold helps you to put up the scaffold of your new Python project.
+    Learn more under: https://pyscaffold.org/
+"""
+
 from setuptools import setup, find_packages
 
 with open("README.md", "r") as fh:
@@ -48,10 +57,10 @@ setup(
         "pytest==7.3.2",
         "python-dotenv==1.0.0",
         "setuptools>=65.5.1",
-        "Sphinx==5.1.1",
-        "sphinx-autoapi==1.9.0",
-        "sphinx-autodoc-typehints==1.19.1",
-        "sphinx-rtd-theme==1.0.0",
+        "sphinx<8,>=6",
+        "sphinx-autoapi==2.0.1",
+        "sphinx-autodoc-typehints==1.21.0",
+        "sphinx-rtd-theme==1.3.0",
         "SQLAlchemy==1.4.48",
         "trino==0.326.0",
         "wheel>=0.41.0",
