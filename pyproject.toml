@@ -1,0 +1,85 @@
+[project]
+name = "ITR"
+version = "1.0.4"
+description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
+authors = [
+    {name = "Ortec Finance",email = "joris.cramwinckel@ortec-finance.com"},
+]
+dependencies = [
+    "autoapi>=2.0.1",
+    "dash==2.11.1",
+    "dash-bootstrap-components==1.4.2",
+    "diskcache==5.6.1",
+    "flask==2.2.5",
+    "iam-units==2022.10.27",
+    "jupyterlab==4.0.4",
+    "matplotlib==3.7.2",
+    "multiprocess==0.70.14",
+    "numpy==1.24.3",
+    "openpyxl==3.0.10",
+    "openscm-units==0.5.2",
+    "orca==1.8",
+    "osc-ingest-tools==0.4.3",
+    "pandas==2.0.3",
+    "Pint>=0.22",
+    "Pint-Pandas>=0.3",
+    "psutil==5.9.5",
+    "pydantic==1.10.8",
+    "pygithub==1.55",
+    "pytest==7.3.2",
+    "python-dotenv==1.0.0",
+    "setuptools>=68.1.2",
+    "sphinx<8,>=6",
+    "sphinx-autoapi>=2.0.1",
+    "sphinx-autodoc-typehints",
+    "sphinx-rtd-theme==1.3.0",
+    "SQLAlchemy==1.4.48",
+    "trino==0.326.0",
+    "wheel>=0.41",
+    "xlrd==2.0.1",
+    "dash_bootstrap_components==1.4.2",
+    "pandas>=2.0.3",
+    "setuptools>=65.5.1",
+    "sphinx-autoapi==2.0.1",
+    "wheel>=0.41.0",
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+keywords = ["Climate", "ITR", "Finance"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
+]
+[project.urls]
+Homepage = "https://github.com/os-climate/ITR"
+Downloads = "https://github.com/os-climate/ITR/releases"
+"Bug Tracker" = "https://github.com/os-climate/ITR/issues"
+Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
+"Source Code" = "https://github.com/os-climate/ITR"
+[project.optional-dependencies]
+dev = [
+    "nose2",
+]
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+package-dir = "src"
