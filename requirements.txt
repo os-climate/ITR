@@ -1,3 +1,4 @@
+autoapi>=2.0.1
 dash==2.11.1
 dash_bootstrap_components==1.4.2
 diskcache==5.6.1
@@ -20,10 +21,10 @@ pygithub==1.55
 pytest==7.3.2
 python-dotenv==1.0.0
 setuptools>=65.5.1
-Sphinx==5.1.1
-sphinx-autoapi==1.9.0
+sphinx<8,>=6
+sphinx-autoapi>=2.1.1
 sphinx-autodoc-typehints==1.19.1
-sphinx-rtd-theme==1.0.0
+sphinx-rtd-theme==1.1.0
 SQLAlchemy==1.4.48
 trino==0.326.0
 wheel>=0.41
