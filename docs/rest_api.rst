@@ -1,6 +1,7 @@
 ***********************************
 Getting Started Using REST API & UI
 ***********************************
+
 The provided REST API makes it easy to integrate the SBTi temperature alignment tool as a micro-service in your current IT infrastructure.
 Optionally you can also run the REST API with a small frontend, which makes testing easier.
 
@@ -10,7 +11,7 @@ The complete REST API reference is available `here <https://os-c.github.io/ITR/s
 
 Installation
 ====================
-The tool is containerized in a Docker container, which enables easy cloud and on premise deployments. 
+The tool is containerized in a Docker container, which enables easy cloud and on premise deployments.
 We will provide instructions here for installing the REST API either on your local machine or on Amazon AWS.
 
 Locally
@@ -18,13 +19,14 @@ Locally
 
 * **Step 1**: Install Docker desktop
 
-For testing locally on your own Windows or Mac PC you first need to have a Docker engine running. 
+For testing locally on your own Windows or Mac PC you first need to have a Docker engine running.
 For Linux users, this is natively available in your OS and you can skip step 1.  Docker provides installation
 instructions for `Windows <https://docs.docker.com/docker-for-windows/install/>`_ and
 `Mac <https://docs.docker.com/docker-for-mac/install/>`_. After you have finished these installation guides, continue
 to step 2.
 
 * **Step 2**: Download and run the SBTi container.
+
 The project consists of two containers, the `API <https://hub.docker.com/r/sbti/api>`_ and the `UI <https://hub.docker.com/r/sbti/ui>`_, both of which are available on Docker Hub.
 You can choose whether you only want to run the API or also the UI. To run them, you need to download a compose file. If you only want to run the API, you need to use `this file <https://raw.githubusercontent.com/OFBDABV/SBTi_api/master/docker-compose.yml>`_, if you also want the UI, you should use `this file <https://raw.githubusercontent.com/OFBDABV/SBTi_api/master/docker-compose-ui.yml>`_.
 
