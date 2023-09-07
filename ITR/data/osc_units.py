@@ -10,6 +10,7 @@ from pint import get_application_registry, Context, Quantity, DimensionalityErro
 import ITR
 
 from . import ureg, Q_, M_, PA_
+from pint_pandas import PintType
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 # openscm_units does this for all gas species...we just have to keep up.
