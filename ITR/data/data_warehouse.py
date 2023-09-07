@@ -645,8 +645,8 @@ class DataWarehouse(ABC):
             # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
             proj_CO2e_m_t[proj_CO2e_m_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR._ufloat_nan
             # Sum both the nominal and std_dev values, because these series are completely correlated
-            nom_CO2e_t = proj_CO2e_m_t.apply(lambda x: ITR.nominal_values(x)).cumsum()
-            err_CO2e_t = proj_CO2e_m_t.apply(lambda x: ITR.std_devs(x)).cumsum()
+            nom_CO2e_t = proj_CO2e_m_t.apply(ITR.nominal_values).cumsum()
+            err_CO2e_t = proj_CO2e_m_t.apply(ITR.std_devs).cumsum()
             cumulative_emissions_t = nom_CO2e_t.combine(err_CO2e_t, ITR.recombine_nom_and_std)
         else:
             cumulative_emissions_t = proj_CO2e_m_t.cumsum()

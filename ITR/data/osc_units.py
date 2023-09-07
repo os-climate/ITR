@@ -208,12 +208,8 @@ def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Serie
     `CO2e * metric_ton / gigajoule`, which is not straightfowrard, as the former is
     `[mass] / [length]**3` whereas the latter is `[seconds] ** 2 / [length] **2`.
     """
-    try:
-        if ureg(f"t CO2e/({prod_series.iloc[0].units})") == ei_bm.iloc[0]:
-            return prod_series
-    except (DimensionalityError, AttributeError):
-        breakpoint()
-        pass
+    if ureg(f"t CO2e/({prod_series.iloc[0].units})") == ei_bm.iloc[0]:
+        return prod_series
     # Convert the units of production into the denominator of the EI units
     ei_units = str(ei_bm.iloc[0].units)
     (ei_unit_top, ei_unit_bottom) = ei_units.split('/', 1)
@@ -229,7 +225,6 @@ def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Serie
             ei_unit_bottom = f"{mass_unit} {ei_unit_bottom}"
         except IndexError:
             # If no mass term in prod_series, likely a dimensional mismatch between prod_series and ei_unit_bottom
-            breakpoint()
             raise DimensionalityError (
                 prod_series.iloc[0],
                 '',
