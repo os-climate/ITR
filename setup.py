@@ -59,7 +59,7 @@ setup(
         "setuptools>=65.5.1",
         "sphinx<8,>=6",
         "sphinx-autoapi==2.0.1",
-        "sphinx-autodoc-typehints,
+        "sphinx-autodoc-typehints",
         "sphinx-rtd-theme==1.3.0",
         "SQLAlchemy==1.4.48",
         "trino==0.326.0",
