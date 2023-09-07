@@ -7,7 +7,8 @@ from typing import List, Type
 from pydantic import ValidationError
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame, EmissionsQuantity, quantity
+from . import ureg, Q_, PA_
+from ITR.data.osc_units import asPintSeries, asPintDataFrame, EmissionsQuantity, quantity
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, \
     ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, \
     DF_ICompanyEIProjections, IHistoricData
@@ -16,13 +17,11 @@ from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls
 
 import logging
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 LoggingConfig.add_config_to_logger(logger)
 
 import pint
 from pint import DimensionalityError
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 class DataWarehouse(ABC):
@@ -438,37 +437,42 @@ class DataWarehouse(ABC):
             s1s2_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s1s2/(bm_ei_s1s2+bm_ei_s3)
             s3_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s3/(bm_ei_s1s2+bm_ei_s3)
             if ITR.HAS_UNCERTAINTIES:
-                s1s2_projections = s1s2_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
-                s3_projections = s3_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(f"pint[{ei_metric}]")
+                nominal_s3 = ITR.nominal_values(s3_projections.pint.quantity.m)
+                std_dev_s3 = ITR.uarray(np.zeros(len(nominal_s3)), nominal_s3)
+                s1s2_projections = pd.Series(
+                    data=PA_(s1s2_projections.pint.quantity.m + std_dev_s3, dtype=s1s2_projections.dtype),
+                    index=s1s2_projections.index,
+                )
+                s3_projections = pd.Series(
+                    data=PA_(s3_projections.pint.quantity.m + std_dev_s3, dtype=s3_projections.dtype),
+                    index=s3_projections.index,
+                )
             company.projected_intensities.S1S2 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s1s2_projections)
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric, projections=s3_projections)
-            company.ghg_s1s2 = s1s2_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production
+            company.ghg_s1s2 = (s1s2_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production).to('t CO2e')
         else:
             # Penalize non-disclosure by assuming 2x aligned S3 emissions.  That's still likely undercounting, because
             # most non-disclosing companies are nowhere near the reduction rates of the benchmarks.
             # It would be lovely to use S1S2 or S1 data to inform S3, but that likely adds error on top of error
             assert company.projected_intensities.S1S2S3 == None
-            s3_projections = bm_ei_s3 * 2.0
             ei_metric = str(bm_ei_s3.dtype.units)
-            if ITR.HAS_UNCERTAINTIES:
-                s3_projections = s3_projections.map(
-                    lambda x: Q_(ITR.ufloat(x.m.n, x.m.s + x.m.n/2.0)
-                                 if isinstance(x.m, ITR.UFloat) else ITR.ufloat(x.m, x.m/2.0), x.u)).astype(bm_ei_s3.dtype)
+            # If we don't have uncertainties, ITR.ufloat just returns the nom value 2.0
+            s3_projections = bm_ei_s3 * ITR.ufloat(2.0, 1.0)
             company.projected_intensities.S3 = DF_ICompanyEIProjections(ei_metric=ei_metric,
                                                                         projections=s3_projections)
             if company.projected_intensities.S1S2 is not None:
                 try:
-                    company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(ei_metric=ei_metric,
-                                                                                    # Mismatched dimensionalities are not automatically converted
-                                                                                    projections=s3_projections+company.projected_intensities.S1S2.projections.astype(f"pint[{ei_metric}]"))
+                    company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(
+                        ei_metric=ei_metric,
+                        # Mismatched dimensionalities are not automatically converted
+                        projections=s3_projections+company.projected_intensities.S1S2.projections.astype(f"pint[{ei_metric}]"),
+                    )
                 except DimensionalityError:
-                    logger.error(f"Company {company.company_id}'s S1+S2 intensity units ({company.projected_intensities.S1S2.projections.dtype} )are not compatible with benchmark units ({ei_metric})")
+                    logger.error(f"Company {company.company_id}'s S1+S2 intensity units "
+                                 f"({company.projected_intensities.S1S2.projections.dtype})"
+                                 f"are not compatible with benchmark units ({ei_metric})")
 
-        company.ghg_s3 = s3_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production
+        company.ghg_s3 = (s3_projections[self.company_data.projection_controls.BASE_YEAR] * company.base_year_production).to('t CO2e')
         logger.info(f"Added S3 estimates for {company.company_id} (sector = {sector}, region = {region})")
 
 
@@ -642,15 +646,14 @@ class DataWarehouse(ABC):
             proj_ei_t,
             lambda prod, ei: asPintSeries(ITR.data.osc_units.align_production_to_bm(prod, ei).mul(ei)).pint.m_as(units_CO2e))
         if ITR.HAS_UNCERTAINTIES:
-            # Normalize uncertain NaNs...FIXME: should we instead allow and accept nan+/-nan?
-            proj_CO2e_m_t[proj_CO2e_m_t.applymap(lambda x: isinstance(x, ITR.UFloat) and ITR.isnan(x))] = ITR._ufloat_nan
             # Sum both the nominal and std_dev values, because these series are completely correlated
-            nom_CO2e_t = proj_CO2e_m_t.apply(ITR.nominal_values).cumsum()
-            err_CO2e_t = proj_CO2e_m_t.apply(ITR.std_devs).cumsum()
-            cumulative_emissions_t = nom_CO2e_t.combine(err_CO2e_t, ITR.recombine_nom_and_std)
+            # Note that NaNs in this dataframe will be nan+/-nan, showing up in both nom and err
+            nom_CO2e_m_t = proj_CO2e_m_t.apply(ITR.nominal_values).cumsum()
+            err_CO2e_m_t = proj_CO2e_m_t.apply(ITR.std_devs).cumsum()
+            cumulative_emissions_m_t = nom_CO2e_m_t.combine(err_CO2e_m_t, ITR.recombine_nom_and_std)
         else:
-            cumulative_emissions_t = proj_CO2e_m_t.cumsum()
-        return cumulative_emissions_t.T.astype(f"pint[{units_CO2e}]")
+            cumulative_emissions_m_t = proj_CO2e_m_t.cumsum()
+        return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}]")
 
     @classmethod
     def _get_exceedance_year(self, df_subject: pd.DataFrame, df_budget: pd.DataFrame, base_year: int, target_year: int, budget_year: int=None) -> pd.Series:
@@ -659,6 +662,7 @@ class DataWarehouse(ABC):
         :param df_budget: DataFrame of cumulative emissions budget allowed over time
         :param budget_year: if not None, set the exceedence budget to that year; otherwise budget starts low and grows year-by-year
         :return: The furthest-out year where df_subject < df_budget, or np.nan if none
+
         Where the (df_subject-aligned) budget defines a value but df_subject doesn't have a value, return pd.NA
         Where the benchmark (df_budget) fails to provide a metric for the subject scope, return no rows
         """

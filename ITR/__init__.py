@@ -6,7 +6,6 @@ import warnings
 import pandas as pd
 import numpy as np
 import json
-from .data import osc_units
 from .interfaces import EScope
 from . import data
 from . import utils
@@ -20,14 +19,17 @@ try:
         raise AttributeError
     from uncertainties import ufloat, UFloat
     from uncertainties.unumpy import uarray, isnan, nominal_values, std_devs
-    from .utils import umean
     _ufloat_nan = ufloat(np.nan, 0.0)
     pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
+    from .utils import umean
     HAS_UNCERTAINTIES = True
-except (ImportError, ModuleNotFoundError, AttributeError):
+except (ImportError, ModuleNotFoundError, AttributeError) as exc:
     HAS_UNCERTAINTIES = False
     from numpy import isnan
     from statistics import mean
+
+    def ufloat(nom_val, std_val):
+        return nom_val
 
     def nominal_values(x):
         return x
@@ -78,7 +80,10 @@ def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
     assert HAS_UNCERTAINTIES
     if std.sum()==0:
         return nom
-    return pd.Series(data=uarray(nom.values, np.where(nom.notna(), std.values, 0)), index=nom.index, name=nom.name)
+    result =  pd.Series(data=uarray(nom.values, np.where(nom.notna(), std.values, 0)), index=nom.index, name=nom.name)
+    # Canonicalize NaNs
+    result.values[isna(result)] = np.nan
+    return result
 
 
 def JSONEncoder(q):

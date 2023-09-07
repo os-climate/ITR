@@ -11,8 +11,9 @@ from operator import add
 from typing import List, Type, Dict
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_, asPintDataFrame, asPintSeries, PintType, EI_Metric, \
-    align_production_to_bm
+from . import ureg, Q_, PA_
+from ITR.data.osc_units import asPintDataFrame, asPintSeries, EI_Metric, align_production_to_bm
+from pint_pandas import PintType
 
 from ITR.configs import ColumnsConfig, VariablesConfig, ProjectionControls, LoggingConfig
 
@@ -716,7 +717,7 @@ class EITrajectoryProjector(EIProjector):
             # Fill in gaps between BASE_YEAR and the first data we have
             if ITR.HAS_UNCERTAINTIES:
                 backfilled_t = historic_ei_t.apply(lambda col: (lambda fvi: col if fvi is None else col.where(col.index.get_level_values('year') >= fvi, col[fvi]))
-                                                            (col.map(lambda x: x.n if isinstance(x, ITR.UFloat) else x).first_valid_index()))
+                                                   (col.map(lambda x: x.n if isinstance(x, ITR.UFloat) else x).first_valid_index()))
             else:
                 backfilled_t = historic_ei_t.apply(lambda col: col.fillna(method='bfill'))
             # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases

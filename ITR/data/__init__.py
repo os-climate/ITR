@@ -100,5 +100,9 @@ pint.Measurement = ureg.Measurement
 pint.Context = ureg.Context
 
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
-from pint_pandas import PintType
-PintType.ureg = ureg
+from pint_pandas import PintType, PintArray
+
+Q_ = ureg.Quantity
+M_ = ureg.Measurement
+PA_ = PintArray
+
