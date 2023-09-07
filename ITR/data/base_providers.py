@@ -395,11 +395,13 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             new_company_projections = EITrajectoryProjector(self.projection_controls).project_ei_trajectories(
                 companies_without_projections)
             for c in new_company_projections:
+                production_units = c.base_year_production.units
                 if c.projected_intensities.S1S2 is None:
                     # When Gas Utilities split out S3, they often don't drag along S1S2 (and S3 are the biggies anyway)
-                    c.base_year_production = c.ghg_s3 / c.projected_intensities.S3.projections[base_year]
+                    production_value = c.ghg_s3 / c.projected_intensities.S3.projections[base_year]
                 else:
-                    c.base_year_production = c.ghg_s1s2 / c.projected_intensities.S1S2.projections[base_year]
+                    production_value = c.ghg_s1s2 / c.projected_intensities.S1S2.projections[base_year]
+                c.base_year_production = production_value.to(production_units)
                 if not ITR.isna(c.base_year_production):
                     for i, p in enumerate(c.historic_data.productions):
                         if p.year == base_year:
@@ -1146,7 +1148,7 @@ class EITargetProjector(EIProjector):
             # a netzero target for S1+S2 implies netzero targets for both S1 and S2.  The TPI benchmark needs an S1 target
             # for some sectors, and projecting a netzero target for S1 from S1+S2 makes that benchmark useable.
             # Note that we can only infer separate S1 and S2 targets from S1+S2 targets when S1+S2 = 0, because S1=0 + S2=0 is S1+S2=0
-            if not scope_targets:
+            if no_scope_targets:
                 if company.historic_data is None:
                     # This just defends against poorly constructed test cases
                     nz_target_years[scope_name] = None
