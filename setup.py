@@ -14,7 +14,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="ITR",
-    version="1.0.4",
+    version="1.0.5",
     description="Assess the temperature alignment of current targets, commitments, "
     "and investment and lending portfolios.",
     long_description=long_description,
@@ -47,10 +47,10 @@ setup(
         "openpyxl==3.0.10",
         "openscm-units==0.5.2",
         "orca==1.8",
-        "osc-ingest-tools==0.4.3",
+        "osc-ingest-tools>=0.4.3",
         "pandas>=2.0.3",
         "Pint>=0.22",
-        "Pint-Pandas>=0.3",
+        "Pint-Pandas>=0.5",
         "psutil==5.9.5",
         "pydantic==1.10.8",
         "pygithub==1.55",
@@ -84,6 +84,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Software Development",
         "Topic :: Office/Business :: Financial",
