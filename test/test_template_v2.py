@@ -22,26 +22,22 @@ pd.options.display.width=999
 pd.options.display.max_columns=99
 pd.options.display.min_rows=30
 
-class TestTemplateProviderV2(unittest.TestCase):
-    """
-    Test the excel template provider
-    """
-
-    def setUp(self) -> None:
-        self.root = os.path.dirname(os.path.abspath(__file__))
-        self.company_data_path = os.path.join(self.root, "inputs", "20220927 ITR V2 Sample Data.xlsx")
-        # self.company_data_path = os.path.join(self.root, "inputs", "20230106 ITR V2 Sample Data.xlsx")
+class TemplateV2:
+    def __init__(self) -> None:
+        root = os.path.dirname(os.path.abspath(__file__))
+        self.company_data_path = os.path.join(root, "inputs", "20220927 ITR V2 Sample Data.xlsx")
+        # self.company_data_path = os.path.join(root, "inputs", "20230106 ITR V2 Sample Data.xlsx")
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         # load production benchmarks
-        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
-        with open(self.benchmark_prod_json) as json_file:
+        benchmark_prod_json = os.path.join(root, "inputs", "json", "benchmark_production_OECM.json")
+        with open(benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # load intensity benchmarks
-        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_PC.json")
-        with open(self.benchmark_EI_json) as json_file:
+        benchmark_EI_json = os.path.join(root, "inputs", "json", "benchmark_EI_OECM_PC.json")
+        with open(benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
         ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
@@ -50,6 +46,21 @@ class TestTemplateProviderV2(unittest.TestCase):
         self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
         self.company_info_at_base_year = self.template_company_data.get_company_intensity_and_production_at_base_year(self.company_ids)
 
+template_V2 = TemplateV2()
+
+class TestTemplateProviderV2(unittest.TestCase):
+    """
+    Test the excel template provider
+    """
+
+    def setUp(self) -> None:
+        self.company_data_path = template_V2.company_data_path
+        self.template_company_data = template_V2.template_company_data
+        self.base_production_bm = template_V2.base_production_bm
+        self.base_EI_bm = template_V2.base_EI_bm
+        self.data_warehouse = template_V2.data_warehouse
+        self.company_ids = template_V2.company_ids
+        self.company_info_at_base_year = template_V2.company_info_at_base_year
 
     def test_target_projections(self):
         comids = ['US00130H1059', 'US0185223007',
