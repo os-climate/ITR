@@ -77,8 +77,6 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
         It could be changed to output the last (most recent) value (if the inputs arrive sorted)
     """
 
-    # if 'DE0005190003' in y.index:
-    #     breakpoint()
     try:
         if isinstance(y, pd.DataFrame):
             # Something went wrong with the GroupBy operation and we got a pd.DataFrame
@@ -356,7 +354,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Make sure that if all NaN these columns are not represented as float64
             df_esg.submetric = df_esg.submetric.astype('string').str.strip().fillna('')
             if 'boundary' in df_esg.columns:
-                df_esg['boundary'] = df_esg['boundary'].str.strip().fillna('').astype('string')
+                df_esg['boundary'] = df_esg['boundary'].astype('string').str.strip().fillna('')
             # In the V2 template, the COMPANY_NAME and COMPANY_ID are merged cells and need to be filled forward
             # For convenience, we also fill forward Report Date, which is often expressed in the first row of a fresh report,
             # but sometimes omitted in subsequent rows (because it's "redundant information")
@@ -686,9 +684,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             # convert "nice" word descriptions of S3 emissions to category numbers
             s3_idx = df_esg.metric.str.upper().eq('S3')
-            s3_dict_matches = df_esg[s3_idx].submetric.astype('str').str.lower().isin(s3_category_dict)
+            s3_dict_matches = df_esg[s3_idx].submetric.astype('string').str.lower().isin(s3_category_dict)
             s3_dict_idx = s3_dict_matches[s3_dict_matches].index
-            df_esg.loc[s3_dict_idx, 'submetric'] = df_esg.loc[s3_dict_idx].submetric.astype('str').str.lower().map(s3_category_dict)
+            df_esg.loc[s3_dict_idx, 'submetric'] = df_esg.loc[s3_dict_idx].submetric.astype('string').str.lower().map(s3_category_dict)
             # FIXME: can we make more efficient by just using ':' as index on left-hand side?
             df_esg.loc[s3_idx.index.difference(s3_dict_idx), 'submetric'] = df_esg.loc[s3_idx.index.difference(s3_dict_idx)].submetric.map(maybe_other_s3_mappings)
 
