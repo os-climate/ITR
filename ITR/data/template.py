@@ -84,34 +84,34 @@ def _estimated_value(y: pd.Series) -> pint.Quantity:
             logger.error("Cannot estimate value of whole DataFrame; Something went wrong with GroupBy operation")
             raise ValueError
         y = y[y.map(lambda x: not ITR.isna(x))]
-        if len(y)==0:
-            return np.nan
-        if not y.map(lambda x: isinstance(x, pint.Quantity)).all():
-            # In the non-Quantity case, we might be "averaging" string values
-            x = y.unique()
-            if len(x)==1:
-                return x[0]
-            logger.error(f"Invalid attempt to estimate average of these items: {x}")
-            raise ValueError
     except TypeError:
         # FIXME: can get here if we have garbage units in one row (such as 't/MWh') that don't match another ('t CO2e/MWh')
         # Need to deal with that...
         logger.error(f"type_error({y}), so returning {y.values}[0]")
         return y.iloc[0]
-    # This relies on the fact that we can now see Quantity(np.nan, ...) for both float and ufloat magnitudes
-    # remove NaNs, which mess with mean estimation
-    x = PA_._from_sequence(y)
-    if len(x) == 1:
+    if len(y) == 0:
+        return np.nan
+    if len(y) == 1:
         # If there's only one non-NaN input, return that one
-        return x[0]
+        return y.iloc[0]
+    if not y.map(lambda x: isinstance(x, pint.Quantity)).all():
+        # In the non-Quantity case, we might be "averaging" string values
+        z = y.unique()
+        if len(z)==1:
+            return z[0]
+        logger.error(f"Invalid attempt to estimate average of these items: {z}")
+        raise ValueError
+    # Let PintArray do all the work of harmonizing compatible units
+    z = PA_._from_sequence(y)
     if ITR.HAS_UNCERTAINTIES:
-        wavg = ITR.umean(x.quantity.m)
+        wavg = ITR.umean(z.quantity.m)
     else:
-        wavg = np.mean(x.quantity.m)
-    est_value = Q_(wavg, x.quantity.u)
+        wavg = np.mean(z.quantity.m)
+    est_value = Q_(wavg, z.quantity.u)
     return est_value
 
-# FIXME: Should make this work with a pure PintArray.
+# FIXME: Should make this work with a pure PintArray
+
 # Callers have already reduced multiple SUBMETRICS to a single rows using _estimated_value.
 # However, pd.Categorize normalization might set several submetrics to NaN.  Ideally, we
 # have more highly prioritized metrics than that, but if not, we can still fix things here.
@@ -249,9 +249,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_emissions = df_emissions.set_index('index', append=True).loc[:, esg_year_columns]
             df_intensities_t = asPintDataFrame(df_intensities.T)
             df_emissions_t = asPintDataFrame(df_emissions.T)
-            df_productions_t = df_emissions_t.divide(df_intensities_t, axis=1)
+            df_productions_t = df_emissions_t.divide(df_intensities_t)
             # FIXME: need to reconcile what happens if multiple scopes all yield the same production metrics
-            df_productions_t = df_productions_t.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype)[5:-1]).to_reduced_units().u}]")).dropna(axis=1, how='all')
+            df_productions_t = df_productions_t.apply(lambda x: x.astype(f"pint[{ureg(str(x.dtype.units)).to_reduced_units().u}]")).dropna(axis=1, how='all')
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # pint units don't like being twisted from columns to rows, but it's ok
@@ -293,8 +293,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                          .set_index([ColumnsConfig.SCOPE,'index'], append=True))
             case1_idx = df2.index.intersection(df1_case1.index)
             case2_idx = df2.index.intersection(df1_case2.index)
-            df3_t = pd.concat([asPintDataFrame(df2.loc[case1_idx].T).mul(asPintDataFrame(df1_case1.loc[case1_idx, esg_year_columns].T), axis=1),
-                               asPintDataFrame(df2.loc[case2_idx].T).mul(asPintDataFrame(df1_case2.loc[case2_idx, esg_year_columns].T), axis=1)],
+            # Mulitiplication of quantities results in concatenation of units, but NaNs might not be wrapped with their own units.
+            # When we multiply naked NaNs by quantities, we get a defective concatenation.  Fix this by transposing df3 so we can use
+            # PintArrays.  Those multiplications will create proper unit math for both numbers and NaNs
+            df3_t = pd.concat([asPintDataFrame(df2.loc[case1_idx].T).mul(asPintDataFrame(df1_case1.loc[case1_idx, esg_year_columns].T)),
+                               asPintDataFrame(df2.loc[case2_idx].T).mul(asPintDataFrame(df1_case2.loc[case2_idx, esg_year_columns].T))],
                               axis=1)
             if ITR.HAS_UNCERTAINTIES:
                 df4 = df3_t.astype('pint[t CO2e]').T # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
@@ -843,7 +846,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg = df_esg[~df_esg.company_id.isin(missing_esg_metrics_df.index)]
 
             # We don't yet know our benchmark, so we cannot yet Use benchmark data to align their respective weights
-
             df3 = (pd.concat([best_prod, new_prod, best_esg_em, new_em_to_allocate, new_em_allocated])
                    .reset_index(level='metric')
                    .rename(columns={'metric':'scope'})
@@ -856,11 +858,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 assert 'sector' not in df3.index.names and 'submetric' not in df3.index.names
 
             # Avoid division by zero problems with zero-valued production metrics
-            df4 = asPintDataFrame(df3.xs(VariablesConfig.EMISSIONS, level=1).T).div(
-                asPintDataFrame(df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[1,2]).T), axis=1).T
+            df3_num_t = asPintDataFrame(df3.xs(VariablesConfig.EMISSIONS, level=1).T)
+            df3_denom_t = asPintDataFrame(df3.xs((VariablesConfig.PRODUCTIONS, 'production'), level=[1,2]).T)
+            df4 = (df3_num_t * df3_denom_t.rdiv(1.0).apply(lambda x: x.map(lambda y: x.dtype.na_value if ITR.isna(y) else Q_(0, x.dtype.units) if y.m==np.inf else y))).T
             df4['variable'] = VariablesConfig.EMISSIONS_INTENSITIES
             df4 = df4.reset_index().set_index(['company_id', 'variable', 'scope'])
-            df5 = pd.concat([df3, df4])
+            # Build df5 from PintArrays, not object types
+            df3_num_t = pd.concat({VariablesConfig.EMISSIONS: df3_num_t}, names=['variable'], axis=1)
+            df3_num_t.columns = df3_num_t.columns.reorder_levels(['company_id','variable', 'scope'])
+            df3_denom_t = pd.concat({VariablesConfig.PRODUCTIONS: df3_denom_t}, names=['variable'], axis=1)
+            df3_denom_t = pd.concat({"production": df3_denom_t}, names=['scope'], axis=1)
+            df3_denom_t.columns = df3_denom_t.columns.reorder_levels(['company_id','variable', 'scope'])
+            df5 = pd.concat([df3_num_t.T, df3_denom_t.T, df4])
 
             df_historic_data = df5
 
@@ -1038,8 +1047,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                     # FIXME: Is this the best place to finalize base_year_production, ghg_s1s2, and ghg_s3 data?
                     # Something tells me these parameters should be removed in favor of querying historical data directly
-                    company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = asPintSeries(df_historic_data.loc[
-                        company_id, 'Productions', 'production'])[base_year]
+                    company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = df_historic_data.loc[
+                        company_id, 'Productions', 'production'][base_year]
                     try:
                         company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(df_historic_data.loc[
                             company_id, 'Emissions', 'S1S2'])[base_year]

@@ -10,6 +10,7 @@ from pint import get_application_registry, Context, Quantity, DimensionalityErro
 import ITR
 
 from . import ureg, Q_, M_, PA_
+from pint_pandas import PintType
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 # openscm_units does this for all gas species...we just have to keep up.
@@ -115,7 +116,12 @@ ureg.add_context(coal)
 ureg.enable_contexts('ngas', 'coal')
 
 # from https://github.com/hgrecco/pint/discussions/1697
-def direct_conversions(ureg, unit):
+def direct_conversions(ureg, unit) -> [str]:
+    """
+    Return a LIST of unit names that Pint can convert implicitly from/to UNIT.
+    This does not include the list of additional unit names that can be explicitly
+    converted by using the `Quantity.to` method.
+    """
     def unit_dimensionality(ureg, name):
         unit = getattr(ureg, name, None)
 
@@ -135,7 +141,10 @@ def direct_conversions(ureg, unit):
 # conversions = direct_conversions(ureg, "m / s ** 2")
 # {name: getattr(ureg, name).dimensionality for name in conversions}
 
-def time_dimension(unit, exp):
+def time_dimension(unit, exp) -> bool:
+    """
+    True if UNIT can be converted to something related only to time.
+    """
     return ureg(unit).is_compatible_with("s") # and exp == -1
 
 
@@ -181,6 +190,42 @@ def dimension_as(x, dim_unit):
         return (x * orig_dim_unit.to(dim_unit) / orig_dim_unit).to_reduced_units()
     except StopIteration:
         raise DimensionalityError (x, dim_unit, extra_msg=f"; no compatible dimension not found")
+
+def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Series:
+    """
+    A timeseries of production unit values can be aligned with a timeseries of Emissions Intensity (EI)
+    metrics that uses different units of production.  For example, the production timeseries might be
+    `bbl` (`Blue Barrels of Oil`) but the EI might be `t CO2e/GJ` (`CO2e * metric_ton / gigajoule`).
+    By converting the production series to gigajoules up front, there are no complex conversions
+    needed later (such as trying to convert `t CO2e * metric_ton / bbl` to
+    `CO2e * metric_ton / gigajoule`, which is not straightfowrard, as the former is
+    `[mass] / [length]**3` whereas the latter is `[seconds] ** 2 / [length] **2`.
+    """
+    if ureg(f"t CO2e/({prod_series.iloc[0].units})") == ei_bm.iloc[0]:
+        return prod_series
+    # Convert the units of production into the denominator of the EI units
+    ei_units = str(ei_bm.iloc[0].units)
+    (ei_unit_top, ei_unit_bottom) = ei_units.split('/', 1)
+    if '/' in ei_unit_bottom:
+        # Fix reciprocals: t CO2e / CH4 / bcm -> t CO2e / (CH4 * bcm)
+        (bottom_unit_num, bottom_unit_denom) = ei_unit_bottom.split('/', 1)
+        ei_unit_bottom = f"{bottom_unit_num} {bottom_unit_denom}"
+    # We might need to add mass dimension back in if it was simplified out (t CO2e / t Fe, for example)
+    if '[mass]' not in ureg.parse_units(ei_unit_top).dimensionality:
+        try:
+            mass_unit = [unit for unit, exp in pint.util.to_units_container(prod_series.iloc[0].to_base_units()).items()
+                         if exp==1 and ureg(unit).is_compatible_with("kg")][0]
+            ei_unit_bottom = f"{mass_unit} {ei_unit_bottom}"
+        except IndexError:
+            # If no mass term in prod_series, likely a dimensional mismatch between prod_series and ei_unit_bottom
+            raise DimensionalityError (
+                prod_series.iloc[0],
+                '',
+                dim1=str(prod_series.dtype.units),
+                dim2=ei_unit_bottom,
+                extra_msg=f"cannot align units"
+            )
+    return asPintSeries(prod_series).pint.to(ei_unit_bottom)
 
 oil = Context('oil')
 oil.add_transformation('[carbon] * [mass] ** 2 / [length] / [time] ** 2', '[carbon] * [mass]',
@@ -761,7 +806,7 @@ def asPintSeries(series: pd.Series, name=None, errors='ignore', inplace=False) -
         new_series.name = name
     na_index = na_values[na_values].index
     if len(na_index)>0:
-        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: Q_(np.nan, unit))
+        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: PintType(unit).na_value)
     return new_series.astype(f"pint[{unit}]")
 
 def asPintDataFrame(df: pd.DataFrame, errors='ignore', inplace=False) -> pd.DataFrame:

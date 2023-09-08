@@ -127,7 +127,7 @@ class TestTemplateProviderV2(unittest.TestCase):
                     # c_proj_targets is a list of nasty BaseModel types so we cannot use Pandas asserters
                     c_proj_targets = c_proj_targets[1:]
                     assert [ITR.nominal_values(round(x.value.m_as(expected_projection.dtype.units),4)) for x in c_proj_targets] == expected_projection.pint.m.tolist()
-     
+
     def test_temp_score(self):
         df_portfolio = pd.read_excel(self.company_data_path, sheet_name="Portfolio")
         requantify_df_from_columns(df_portfolio, inplace=True)
@@ -199,7 +199,7 @@ class TestTemplateProviderV2(unittest.TestCase):
         assert_pint_frame_equal(self, benchmarks.loc[:, EScope.S1S2, :], expected_data)
 
     def test_get_projected_production(self):
-        expected_data_2025 = pd.Series([Q_(88056.533643, ureg('GWh')), Q_(241.762219, ureg('TWh')), Q_(38.710168585224, ureg('Mt Steel'))],
+        expected_data_2025 = pd.Series([Q_(88056.5336432, ureg('GWh')), Q_(241.762219, ureg('TWh')), Q_(38.710168585224, ureg('Mt Steel'))],
                                        index=self.company_ids,
                                        name=2025)
         production = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]

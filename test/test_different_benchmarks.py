@@ -17,6 +17,7 @@ from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 
 from pint import Quantity
+from pint_pandas import PintType
 from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame
 
 from utils import gen_company_data, DequantifyQuantity, assert_pint_series_equal
@@ -66,30 +67,30 @@ class TestEIBenchmarks(unittest.TestCase):
 
         def gen_company_variation(company_name, company_id, region, sector,
                                   base_production,
-                                  EI_df, ei_multiplier, ei_offset,
+                                  EI_df_t, ei_multiplier, ei_offset,
                                   ei_nz_year, ei_max_negative=None) -> ICompanyData:
             year_list = [2019, 2025, 2030, 2035, 2040, 2045, 2050]
             # the last slice(None) gives us all scopes to index against
-            bm_ei = asPintDataFrame(EI_df.loc[(sector, region, slice(None)), year_list])
+            bm_ei_t = EI_df_t.loc[year_list, (sector, region, slice(None))]
 
-            if len(bm_ei) == 1:
-                adjusted_bm_ei = bm_ei * ei_multiplier + ei_offset
+            if len(bm_ei_t.columns) == 1:
+                adjusted_bm_ei = bm_ei_t * ei_multiplier + ei_offset
             else:
-                adjusted_bm_ei = bm_ei.copy()
-                adjusted_idx = adjusted_bm_ei.index.get_level_values('scope').isin([EScope.S1, EScope.S1S2, EScope.S1S2S3])
-                adjusted_bm_ei.loc[adjusted_idx] = adjusted_bm_ei.loc[adjusted_idx].mul(ei_multiplier).add(ei_offset)
+                adjusted_bm_ei_t = bm_ei_t.copy()
+                adjusted_idx = adjusted_bm_ei_t.columns.get_level_values('scope').isin([EScope.S1, EScope.S1S2, EScope.S1S2S3])
+                adjusted_bm_ei_t.loc[:, adjusted_idx] = adjusted_bm_ei_t.loc[:, adjusted_idx].mul(ei_multiplier).add(ei_offset)
 
             # We set intensities to be the wonky things
             company_data = gen_company_data(company_name, company_id, region, sector,
                                             base_production,
-                                            adjusted_bm_ei,
+                                            adjusted_bm_ei_t,
                                             ei_nz_year, ei_max_negative)
             projected_intensities = company_data.projected_targets
             # We set targets to be the nicely aligned things
             # (which vary due to different sectors/regions/benchmarks)
             company_data = gen_company_data(company_name, company_id, region, sector,
                                             base_production,
-                                            bm_ei,
+                                            bm_ei_t,
                                             2051, ei_max_negative)
             company_data.projected_intensities = projected_intensities
             return company_data
@@ -99,25 +100,25 @@ class TestEIBenchmarks(unittest.TestCase):
         # We cannot set it to zero, lest the target be dropped as "missing data"
         company_a0 = gen_company_variation('Company A0', 'SUN000100000', 'Europe', 'Electricity Utilities',
                                            Q_(1.0, "GWh"),
-                                           self.OECM_EI_S3_bm._EI_df / 1.0e9, 1.0, ei_offset = Q_(0, 'g CO2/TWh'),
+                                           self.OECM_EI_S3_bm._EI_df_t / 1.0e9, 1.0, ei_offset = Q_(0, 'g CO2/TWh'),
                                            ei_nz_year = 2025)
 
         # Company AG is over-budget with its intensity projections, but OECM-aligned with their target projections
         company_ag = gen_company_variation('Company AG', 'US0079031078', 'North America', 'Electricity Utilities',
                                            Q_(9.9, "TWh"),
-                                           self.OECM_EI_S3_bm._EI_df, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
+                                           self.OECM_EI_S3_bm._EI_df_t, 1.0, ei_offset = Q_(100, 'g CO2/kWh'),
                                            ei_nz_year = 2051, ei_max_negative = Q_(-1, 'g CO2/kWh'))
 
         # Company AH is 50% over-budget with its intensity projections, but plans net-zero by 2030
         company_ah = gen_company_variation('Company AH', 'US00724F1012', 'North America', 'Electricity Utilities',
                                            Q_(1.9, "TWh"),
-                                           self.OECM_EI_S3_bm._EI_df, 1.5, ei_offset = Q_(0, 'g CO2/kWh'),
+                                           self.OECM_EI_S3_bm._EI_df_t, 1.5, ei_offset = Q_(0, 'g CO2/kWh'),
                                            ei_nz_year = 2031)
 
         # Company AI is 50% over-budget with its intensity projections, but plans net-zero by 2040
         company_ai = gen_company_variation('Company AI', 'US00130H1059', 'North America', 'Electricity Utilities',
                                            Q_(1.0, "TWh"),
-                                           self.OECM_EI_S3_bm._EI_df, 1.5, ei_offset = Q_(0, 'g CO2/kWh'),
+                                           self.OECM_EI_S3_bm._EI_df_t, 1.5, ei_offset = Q_(0, 'g CO2/kWh'),
                                            ei_nz_year = 2041)
 
         # Company AJ is 20% under-budget with its intensity projections, and plans net-zero by 2050
@@ -125,7 +126,7 @@ class TestEIBenchmarks(unittest.TestCase):
         # whereas if we use multiplier factor, trajectories would follow that and targets would remain aligned
         company_aj = gen_company_variation('Company AJ', 'FR0000125338', 'Europe', 'Electricity Utilities',
                                            Q_(4.9, "PJ"),
-                                           self.OECM_EI_S3_bm._EI_df * 0.8, 1.0, ei_offset = Q_(0, 'kg CO2/MWh'),
+                                           self.OECM_EI_S3_bm._EI_df_t * 0.8, 1.0, ei_offset = Q_(0, 'kg CO2/MWh'),
                                            ei_nz_year = 2051)
 
         # print(json.dumps(company_ag.dict(), cls=DequantifyQuantity, indent=2))
