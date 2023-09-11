@@ -93,7 +93,7 @@ with open(benchmark_prod_json) as json_file:
 #     coal_prod_bm['base_year_production'] = f"{coal_base_prod:~P}"
 #     parsed_json['AnyScope']['benchmarks'].append(coal_prod_bm)
 
-prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
+prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
 base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 logger.info('Load production benchmark from {}'.format(benchmark_prod_json_file))
 
@@ -897,7 +897,7 @@ def recalculate_individual_itr(warehouse_pickle_json, eibm, proj_meth, winz, bm_
                             parsed_json[scope_name] = extra_json[scope_name]
                         else:
                             parsed_json[scope_name]['benchmarks'] += extra_json[scope_name]['benchmarks']
-        EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.parse_obj(parsed_json))
+        EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=IEIBenchmarkScopes.model_validate(parsed_json))
         # This updates benchmarks and all that depends on them (including trajectories)
         Warehouse.update_benchmarks(base_production_bm, EI_bm)
         bm_region = eibm

@@ -72,7 +72,7 @@ class EndToEndTest(unittest.TestCase):
             region='Europe',
             benchmark_global_budget=Q_("396 Gt CO2"),
             benchmark_temperature="1.5 delta_degC",
-            projected_intensities=ICompanyEIProjectionsScopes.parse_obj({
+            projected_intensities=ICompanyEIProjectionsScopes.model_validate({
                 "S1S2": {
                     "ei_metric": "t CO2/(t Steel)",
                     "projections": [
@@ -91,7 +91,7 @@ class EndToEndTest(unittest.TestCase):
                     ]
                 }
             }),
-            projected_targets=ICompanyEIProjectionsScopes.parse_obj({
+            projected_targets=ICompanyEIProjectionsScopes.model_validate({
                 "S1S2": {
                     "ei_metric": "t CO2/(t Steel)",
                     "projections": [

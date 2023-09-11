@@ -7,8 +7,7 @@ import numpy as np
 import itertools
 
 import ITR
-from .data.osc_units import ureg, Q_, PA_
-from .interfaces import quantity
+from .data.osc_units import ureg, Q_, PA_, Quantity_type
 
 from .interfaces import EScope, ETimeFrames, EScoreResultType, Aggregation, AggregationContribution, \
     ScoreAggregation, \
@@ -52,7 +51,7 @@ class TemperatureScore(PortfolioAggregation):
             self.grouping = grouping
 
     def get_score(self, scorable_row: pd.Series) -> Tuple[
-        quantity('delta_degC'), quantity('delta_degC'), float, quantity('delta_degC'), float, EScoreResultType]:
+        Quantity_type('delta_degC'), Quantity_type('delta_degC'), float, Quantity_type('delta_degC'), float, EScoreResultType]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
@@ -100,7 +99,7 @@ class TemperatureScore(PortfolioAggregation):
             return score, trajectory_temperature_score, trajectory_overshoot_ratio, \
                 target_temperature_score, target_overshoot_ratio, score_result_type
 
-    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> quantity('delta_degC'):
+    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Quantity_type('delta_degC'):
         """
         Get the aggregated temperature score. S1+S2+S3 is an emissions weighted sum of S1+S2 and S3.
 
@@ -136,7 +135,7 @@ class TemperatureScore(PortfolioAggregation):
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
 
-    def get_default_score(self, target: pd.Series) -> quantity('delta_degC'):
+    def get_default_score(self, target: pd.Series) -> Quantity_type('delta_degC'):
         """
         :param target: The target as a row of a dataframe
         :return: The temperature score
@@ -301,7 +300,7 @@ class TemperatureScore(PortfolioAggregation):
             score=weighted_scores.fillna(0).sum(),
             # proportion is not declared by anything to be a percent, so we make it a number from 0..1
             proportion=len(weighted_scores) / total_companies,
-            contributions=[AggregationContribution.parse_obj(contribution) for contribution in contribution_dicts]), \
+            contributions=[AggregationContribution.model_validate(contribution) for contribution in contribution_dicts]), \
                         data[self.c.COLS.CONTRIBUTION_RELATIVE], \
                         data[self.c.COLS.CONTRIBUTION])
 

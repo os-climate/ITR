@@ -87,13 +87,13 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                # TODO: sort out why this trips up pint
-                self._prod_delta_df = pd.DataFrame([self._convert_benchmark_to_series(bm, EScope.AnyScope) for bm in self._productions_benchmarks[EScope.AnyScope.name].benchmarks])
+                _prod_delta_df_t = pd.concat([self._convert_benchmark_to_series(bm, EScope.AnyScope) for bm in self._productions_benchmarks[EScope.AnyScope.name].benchmarks], axis=1)
         except AttributeError:
             assert False
-        self._prod_delta_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
         # See comment above to understand use of `cumprod` function
-        self._prod_df = self._prod_delta_df.add(1.0).cumprod(axis=1).astype('pint[]')
+        self._prod_df = _prod_delta_df_t.pint.dequantify().add(1.0).cumprod(axis=0).pint.quantify().T
+        self._prod_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
+
 
     # Note that benchmark production series are dimensionless.
     # FIXME: They also don't need a scope.  Remove scope when we change IBenchmark format...
@@ -119,10 +119,10 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         return self._prod_df
     
         # The call to this function generates a 42-row (and counting...) DataFrame for the one row we're going to end up needing...
-        df_bm = pd.DataFrame([self._convert_benchmark_to_series(bm, scope).pint.m for bm in self._productions_benchmarks[scope.name].benchmarks])
-        df_bm.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
+        df_bm_t = pd.concat([self._convert_benchmark_to_series(bm, scope).pint.m for bm in self._productions_benchmarks[scope.name].benchmarks], axis=1)
         
-        df_partial_pp = df_bm.add(1).cumprod(axis=1).astype('pint[]')
+        df_partial_pp = df_bm_t.pint.dequantify().add(1.0).cumprod(axis=0).pint.quantify().T
+        df_partial_pp.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
 
         return df_partial_pp
 
@@ -433,7 +433,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        company_dict = company.dict()
+        company_dict = company.model_dump()
         production_units = str(company_dict[self.column_config.PRODUCTION_METRIC])
         emissions_units = str(company_dict[self.column_config.EMISSIONS_METRIC])
 
@@ -604,7 +604,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         """
         excluded_cols = ['projected_targets', 'projected_intensities', 'historic_data', 'target_data']
         df = pd.DataFrame.from_records(
-            [dict(ICompanyData.parse_obj({k:v for k, v in dict(c).items() if k not in excluded_cols}))
+            [dict(ICompanyData.model_validate({k:v for k, v in dict(c).items() if k not in excluded_cols}))
              for c in self.get_company_data(company_ids)]).set_index(self.column_config.COMPANY_ID)
         return df
 
@@ -1197,7 +1197,7 @@ class EITargetProjector(EIProjector):
                         if ITR.isna(target_ei_value):
                             continue
                         model_ei_projections = self._get_ei_projections_from_ei_realizations(ei_realizations, i)
-                        ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
+                        ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Metric(f"{target_ei_value.u:~P}"),
                                                                                  projections=self._get_bounded_projections(model_ei_projections))
                         if not ITR.isna(target_ei_value):
                             target_year = ei_realizations[i].year
@@ -1273,7 +1273,7 @@ class EITargetProjector(EIProjector):
                                 if ITR.isna(last_ei_value):
                                     continue
                                 model_ei_projections = self._get_ei_projections_from_ei_realizations(ei_realizations, i)
-                                ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{last_ei_value.u:~P}"),
+                                ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Metric(f"{last_ei_value.u:~P}"),
                                                                                          projections=self._get_bounded_projections(model_ei_projections))
                                 skip_first_year = 1
                                 break
@@ -1339,7 +1339,7 @@ class EITargetProjector(EIProjector):
                                 while model_ei_projections[0].year > self.projection_controls.BASE_YEAR:
                                     model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
                                 last_prod_value = production_proj.loc[last_ei_year]
-                                ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{(last_em_value/last_prod_value).u:~P}"),
+                                ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Metric(f"{(last_em_value/last_prod_value).u:~P}"),
                                                                                          projections=self._get_bounded_projections(model_ei_projections))
                                 skip_first_year = 1
                                 break
@@ -1382,7 +1382,7 @@ class EITargetProjector(EIProjector):
                 else:
                     while model_ei_projections[0].year > self.projection_controls.BASE_YEAR:
                         model_ei_projections = [ICompanyEIProjection(year=model_ei_projections[0].year-1, value=model_ei_projections[0].value)] + model_ei_projections
-                    ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
+                    ei_projection_scopes[scope_name] = ICompanyEIProjections(ei_metric=EI_Metric(f"{target_ei_value.u:~P}"),
                                                                              projections=self._get_bounded_projections(model_ei_projections))
 
                 if scope_targets_intensity and scope_targets_intensity[0].netzero_year:

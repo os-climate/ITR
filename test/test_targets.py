@@ -84,13 +84,13 @@ class TestTargets(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # OECM (S3)
         with open(self.benchmark_EI_OECM_S3) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
         self.OECM_EI_S3_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
     def gen_company_variation(self, company_name, company_id, region, sector,
@@ -696,7 +696,7 @@ class TestTargets(unittest.TestCase):
                 'S1S2S3': []
             }
         }
-        company_ag = ICompanyData.parse_obj(company_dict_ag)
+        company_ag = ICompanyData.model_validate(company_dict_ag)
         
         company_dict_ah = company_dict_ag.copy()
         company_dict_ah['company_name'] = 'Company AH'
@@ -726,7 +726,7 @@ class TestTargets(unittest.TestCase):
                 'S1S2S3': []
             }
         }
-        company_ah = ICompanyData.parse_obj(company_dict_ah)
+        company_ah = ICompanyData.model_validate(company_dict_ah)
         
         company_dict_ai = company_dict_ag.copy()
         company_dict_ai['company_name'] = 'Company AI'
@@ -756,7 +756,7 @@ class TestTargets(unittest.TestCase):
                 'S1S2S3': []
             }
         }
-        company_ai = ICompanyData.parse_obj(company_dict_ai)
+        company_ai = ICompanyData.model_validate(company_dict_ai)
         
         company_data = [ company_ag, company_ah, company_ai, company_oecm ]
         company_dict = {

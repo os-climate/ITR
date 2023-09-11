@@ -6,7 +6,7 @@ import numpy as np
 from pydantic import BaseModel, ValidationError
 
 from . import ureg, Q_
-from ITR.data.osc_units import BenchmarkMetric, EmissionsQuantity, EI_Quantity, quantity
+from ITR.data.osc_units import BenchmarkMetric, EmissionsQuantity, EI_Quantity, Quantity_type
 import pint
 
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig, VariablesConfig, TabsConfig, ProjectionControls, LoggingConfig
@@ -116,7 +116,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         return self._prod_df
 
 class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
-    def __init__(self, excel_path: str, benchmark_temperature: quantity('delta_degC'),
+    def __init__(self, excel_path: str, benchmark_temperature: Quantity_type('delta_degC'),
                  benchmark_global_budget: EmissionsQuantity, is_AFOLU_included: bool,
                  column_config: Type[ColumnsConfig] = ColumnsConfig):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
@@ -267,7 +267,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
                 # Put the index back into the dictionary so model builds correctly
                 company_data[ColumnsConfig.COMPANY_ID] = company_id
-                model_companies.append(ICompanyData.parse_obj(company_data))
+                model_companies.append(ICompanyData.model_validate(company_data))
             except ValidationError as e:
                 logger.warning(
                     f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped" % company_data[

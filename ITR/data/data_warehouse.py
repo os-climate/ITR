@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 import ITR
 from . import ureg, Q_, PA_
-from ITR.data.osc_units import asPintSeries, asPintDataFrame, EmissionsQuantity, quantity
+from ITR.data.osc_units import asPintSeries, asPintDataFrame, EmissionsQuantity, Quantity_type
 from ITR.interfaces import EScope, IEmissionRealization, IEIRealization, \
     ICompanyData, ICompanyAggregates, ICompanyEIProjection, ICompanyEIProjections, \
     DF_ICompanyEIProjections, IHistoricData
@@ -67,10 +67,10 @@ class DataWarehouse(ABC):
                 'ghg_s3': c.ghg_s3,
                 'historic_data': IHistoricData(
                     productions=c.historic_data.productions,
-                    emissions=c.historic_data.emissions.copy(),
-                    emissions_intensities=c.historic_data.emissions_intensities.copy() ),
-                'projected_intensities': c.projected_intensities.copy(),
-                'projected_targets': c.projected_targets.copy()
+                    emissions=c.historic_data.emissions.model_copy(),
+                    emissions_intensities=c.historic_data.emissions_intensities.model_copy() ),
+                'projected_intensities': c.projected_intensities.model_copy(),
+                'projected_targets': c.projected_targets.model_copy()
             }
             orig_historic_data = self.orig_historic_data[c.company_id]
             for scope_name in EScope.get_scopes():
@@ -486,7 +486,7 @@ class DataWarehouse(ABC):
             base_year: int,
             target_year: int,
             budgeted_ei: pd.DataFrame,
-            benchmark_temperature: quantity('delta_degC'),
+            benchmark_temperature: Quantity_type('delta_degC'),
             global_budget: EmissionsQuantity,
     ) -> pd.DataFrame:
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
@@ -590,7 +590,7 @@ class DataWarehouse(ABC):
             global_budget=self.benchmarks_projected_ei.benchmark_global_budget)
 
         companies = df_company_data.to_dict(orient="records")
-        # This was WICKED SLOW: aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
+        # This was WICKED SLOW: aggregate_company_data = [ICompanyAggregates.model_validate(company) for company in companies]
         aggregate_company_data = [ICompanyAggregates.from_ICompanyData(company, scope_company_data)
                                   for company in company_data
                                   for scope_company_data in df_company_data.loc[[company.company_id]][[
@@ -613,7 +613,7 @@ class DataWarehouse(ABC):
         model_companies: List[ICompanyAggregates] = []
         for company_data in companies_data_dict:
             try:
-                model_companies.append(ICompanyAggregates.parse_obj(company_data))
+                model_companies.append(ICompanyAggregates.model_validate(company_data))
             except ValidationError:
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped" % company_data[

@@ -1118,7 +1118,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 if company_data[ColumnsConfig.COMPANY_MARKET_CAP] is pd.NA:
                     company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
 
-                model_companies.append(ICompanyData.parse_obj(company_data))
+                model_companies.append(ICompanyData.model_validate(company_data))
             except ValidationError as err:
                 logger.error(f"{err}: (One of) the input(s) of company with ID {company_id} is invalid")
                 # breakpoint()
@@ -1236,7 +1236,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         excluded_cols = ['projected_targets', 'projected_intensities', 'historic_data', 'target_data']
         df = pd.DataFrame.from_records(
-            [dict(ICompanyData.parse_obj({k:v for k, v in dict(c).items() if k not in excluded_cols}))
+            [dict(ICompanyData.model_validate({k:v for k, v in dict(c).items() if k not in excluded_cols}))
              for c in self.get_company_data(company_ids)]).set_index(self.column_config.COMPANY_ID)
         # company_ids_idx = pd.Index(company_ids)
         # df = self.df_fundamentals.loc[company_ids_idx]

@@ -70,13 +70,13 @@ class TestVaultProvider(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
         self.vault_production_bm = VaultProviderProductionBenchmark(engine_init, benchmark_name="benchmark_prod", production_benchmarks=prod_bms)
 
         # load intensity benchmarks
         with open(self.benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
         self.vault_EI_bm = VaultProviderIntensityBenchmark(engine_init, benchmark_name="benchmark_ei", EI_benchmarks=ei_bms)
 
         # load company data

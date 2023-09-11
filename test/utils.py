@@ -132,7 +132,7 @@ def gen_company_data(company_name, company_id, region, sector, production,
                 scope_projections[EScope.S1S2.name] = {
                     'ei_metric': EI_Metric(ei_metric),
                     'projections': [
-                        ICompanyEIProjection.parse_obj({
+                        ICompanyEIProjection.model_validate({
                             'year':y,
                             'value': EI_Quantity(interpolate_value_at_year(y, bm_ei * (1-s1s2_s3_split), ei_nz_year, ei_max_negative)),
                         }) for y in range(2019, 2051)
@@ -141,7 +141,7 @@ def gen_company_data(company_name, company_id, region, sector, production,
                 scope_projections[EScope.S3.name] = {
                     'ei_metric': EI_Metric(ei_metric),
                     'projections': [
-                        ICompanyEIProjection.parse_obj({
+                        ICompanyEIProjection.model_validate({
                             'year':y,
                             'value': EI_Quantity(interpolate_value_at_year(y, bm_ei * s1s2_s3_split, ei_nz_year, ei_max_negative)),
                         }) for y in range(2019, 2051)
@@ -159,7 +159,7 @@ def gen_company_data(company_name, company_id, region, sector, production,
         scope_projections[scope.name] = {
             'ei_metric': EI_Metric(ei_metric),
             'projections': [
-                ICompanyEIProjection.parse_obj({
+                ICompanyEIProjection.model_validate({
                     'year':y,
                     'value': EI_Quantity(interpolate_value_at_year(y, bm_ei, ei_nz_year, ei_max_negative)),
                 }) for y in range(2019, 2051)
@@ -168,6 +168,6 @@ def gen_company_data(company_name, company_id, region, sector, production,
 
     company_dict['projected_targets'] = ICompanyEIProjectionsScopes(**scope_projections)
     
-    company_data = ICompanyData.parse_obj(company_dict)
+    company_data = ICompanyData.model_validate(company_dict)
     return company_data
 

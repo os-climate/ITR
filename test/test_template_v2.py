@@ -32,14 +32,14 @@ class TemplateV2:
         benchmark_prod_json = os.path.join(root, "inputs", "json", "benchmark_production_OECM.json")
         with open(benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # load intensity benchmarks
         benchmark_EI_json = os.path.join(root, "inputs", "json", "benchmark_EI_OECM_PC.json")
         with open(benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
+        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
         self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         self.data_warehouse = DataWarehouse(self.template_company_data, self.base_production_bm, self.base_EI_bm)
