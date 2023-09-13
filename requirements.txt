@@ -20,7 +20,7 @@ pydantic==1.10.8
 pygithub==1.55
 pytest==7.3.2
 python-dotenv==1.0.0
-setuptools>=65.5.1
+setuptools>=65.7.0
 sphinx<8,>=6
 sphinx-autoapi>=2.0.1
 sphinx-autodoc-typehints
