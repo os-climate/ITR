@@ -1,15 +1,19 @@
 ---
+name: "Linting"
+
 on: push  # yamllint disable-line rule:truthy
 
 jobs:
   lint:
-    name: "Validate YAML files (yamllint)"
+    name: "Validate YAML (yamllint)"
     runs-on: ubuntu-latest
     steps:
+
+      - name: "Checkout Repository"
       - uses: actions/checkout@v3
 
-      - name: Install yamllint
+      - name: "Installing: yamllint"
         run: pip install yamllint
 
-      - name: Lint YAML files
+      - name: "Linting YAML files"
         run: yamllint .
