@@ -43,6 +43,7 @@ setup(
         "jupyterlab==4.0.4",
         "matplotlib==3.7.2",
         "multiprocess==0.70.14",
+        "numexpr>=2.8.6",
         "numpy==1.24.3",
         "openpyxl==3.0.10",
         "openscm-units==0.5.2",

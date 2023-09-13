@@ -1,2 +1,2 @@
 # While ITR is not available on PyPI: comment out line 2, else: comment out or delete line 3
-ITR
+ITR>=1.0.6

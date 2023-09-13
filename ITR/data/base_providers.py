@@ -60,7 +60,7 @@ from ITR.interfaces import EI_Quantity
 # The Pandas `cumprod` function calculates precisely the cumulative product we need
 # As the math shows above, the terms we need to accumulate are 1.0 + growth.
 
-# df.add(1).cumprod(axis=1).astype('pint[]') results in a project that looks like this:
+# df.add(1).cumprod(axis=1).astype('pint[dimensionless]') results in a project that looks like this:
 # 
 #                                                2019     2020  ...      2049      2050
 # region                 sector        scope                    ...                    
@@ -87,11 +87,12 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                _prod_delta_df_t = pd.concat([self._convert_benchmark_to_series(bm, EScope.AnyScope) for bm in self._productions_benchmarks[EScope.AnyScope.name].benchmarks], axis=1)
+                _prod_delta_df_t = pd.concat([self._convert_benchmark_to_series(bm, EScope.AnyScope).pint.m
+                                              for bm in self._productions_benchmarks[EScope.AnyScope.name].benchmarks], axis=1)
         except AttributeError:
             assert False
         # See comment above to understand use of `cumprod` function
-        self._prod_df = _prod_delta_df_t.pint.dequantify().add(1.0).cumprod(axis=0).pint.quantify().T
+        self._prod_df = _prod_delta_df_t.add(1.0).cumprod(axis=0).astype('pint[dimensionless]').T
         self._prod_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
 
 
@@ -105,7 +106,8 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         # Benchmarks don't need work-around for https://github.com/hgrecco/pint/issues/1687, but if they did:
         # units = ureg.parse_units(benchmark.benchmark_metric)
-        years, values = list(map(list, zip(*{r.year: Q_(r.value) for r in benchmark.projections}.items())))
+
+        years, values = list(map(list, zip(*{r.year: r.value.m for r in benchmark.projections}.items())))
         return pd.Series(PA_(np.array(values), dtype='pint[]'),
                          index = years, name=(benchmark.sector, benchmark.region, scope))
 
@@ -119,9 +121,10 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         return self._prod_df
     
         # The call to this function generates a 42-row (and counting...) DataFrame for the one row we're going to end up needing...
-        df_bm_t = pd.concat([self._convert_benchmark_to_series(bm, scope).pint.m for bm in self._productions_benchmarks[scope.name].benchmarks], axis=1)
+        df_bm_t = pd.concat([self._convert_benchmark_to_series(bm, scope).pint.m
+                             for bm in self._productions_benchmarks[scope.name].benchmarks], axis=1)
         
-        df_partial_pp = df_bm_t.pint.dequantify().add(1.0).cumprod(axis=0).pint.quantify().T
+        df_partial_pp = df_bm_t.add(1.0).cumprod(axis=0).astype('pint[dimensionless]').T
         df_partial_pp.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
 
         return df_partial_pp

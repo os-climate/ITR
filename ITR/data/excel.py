@@ -111,7 +111,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         # df = self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].drop(columns='benchmark_metric')
         # df.loc[:, 'scope'] = df.scope.map(lambda x: EScope[x])
         # df.set_index([self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE], inplace=True)
-        # df_partial_pp = df.add(1).cumprod(axis=1).astype('pint[]')
+        # df_partial_pp = df.add(1).cumprod(axis=1).astype('pint[dimensionless]')
         # return df_partial_pp
         return self._prod_df
 
