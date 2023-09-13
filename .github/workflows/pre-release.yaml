@@ -19,12 +19,16 @@ jobs:
       - name: "Checkout Repository"
         uses: actions/checkout@v3
 
-      - name: "Populate/Export Environment Variables"
+      - name: "Populate Environment Variables"
         id: variables
         run: |
           datetime=$(date +'%Y%m%d%H%M')
-          export datetime
+          ver_num="${{ matrix.python-version }}.${datetime}"
+          ver_str="version = \"v${ver_num}\""
+          # shellcheck disable=SC2129
           echo "$datetime" >> "$GITHUB_OUTPUT"
+          echo "${ver_num}" >> "$GITHUB_OUTPUT"
+          echo "${ver_str}" >> "$GITHUB_OUTPUT"
 
       - name: "Set up Python ${{ matrix.python-version }}"
         uses: actions/setup-python@v2
@@ -35,16 +39,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
 
+      - name: "Update Project Versioning: pyproject.toml"
+        run: |
+          sed -i "s/.*version = .*/${{ steps.variables.outputs.ver_str }}/" \
+          pyproject.toml
+
+      - name: "Tag Test Release"
+        # Delete all local tags, then create a synthetic tag for testing
+        # Use the date/time to avoid conflicts uploading to Test PyPI
+        run: |
+          git tag | xargs -L 1 | xargs git tag --delete
+          git tag "v${{ steps.variables.outputs.ver_num }}"
+          git checkout "tags/v${{ steps.variables.outputs.ver_num }}"
+
       - name: "Build with TOX"
         run: |
           tox -e build
-
-      - name: "Tag Test Release"
-        run: |
-          git tag v0.0.${{ steps.variables.outputs.datetime }}\
-          -${{ matrix.python-version }}
-          git checkout tags/v0.0.${{ steps.variables.outputs.datetime }}\
-          -${{ matrix.python-version }}
 
       - name: "Publish Build Products"
         run: |
