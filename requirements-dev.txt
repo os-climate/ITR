@@ -1,0 +1,8 @@
+tox
+pre-commit
+lint = [
+    "actionlint-py",
+    "black",
+    "yamllint",
+    "black[jupyter]"
+]
