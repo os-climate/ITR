@@ -28,4 +28,4 @@ jobs:
       uses: pypa/gh-action-pip-audit@v1.0.8
       with:
         ignore-vulns: |
-          OSV:PYSEC-2023-163
+          PYSEC-2023-163
