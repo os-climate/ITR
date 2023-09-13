@@ -1,0 +1,41 @@
+---
+name: "Linting Checks"
+
+on: push  # yamllint disable-line rule:truthy
+
+jobs:
+  lint:
+    name: "Check Repository Content"
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: "Checkout Repository"
+        uses: actions/checkout@v3
+
+      - name: "Installing: yamllint"
+        run: pip install yamllint
+
+      - name: "Checking YAML files (yamllint)"
+        run: yamllint .
+
+      - name: "Checking GitHub Actions (actionlint)"
+        id: actionlint
+        uses: raven-actions/actionlint@v1
+        with:
+          matcher: true  # optional
+          cache: true  # optional
+          fail-on-error: true  # optional
+          files: ".github/workflows/*.yaml, .github/workflows/*.yml"
+          # flags: "-ignore SC2086"  # optional
+
+      - name: "Summary Report"
+        if: ${{ steps.actionlint.outputs.exit-code != 0 }}
+        # yamllint disable rule:line-length
+        run: |
+          echo "Used actionlint version ${{ steps.actionlint.outputs.version-semver }}"
+          echo "Used actionlint release ${{ steps.actionlint.outputs.version-tag }}"
+          echo "actionlint ended with ${{ steps.actionlint.outputs.exit-code }} exit code"
+          echo "actionlint ended because '${{ steps.actionlint.outputs.exit-message }}'"
+          echo "actionlint found ${{ steps.actionlint.outputs.total-errors }} errors"
+          echo "actionlint checked ${{ steps.actionlint.outputs.total-files }} files"
+          echo "actionlint cache used: ${{ steps.actionlint.outputs.cache-hit }}"
