@@ -12,12 +12,12 @@ jobs:
     name: "Build Validation"
     runs-on: "ubuntu-latest"
     strategy:
-    matrix:
-      python-version: ['3.9', '3.10', '3.11']
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
     steps:
 
       - name: "Checkout Repository"
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
       - name: "Populate/Export Environment Variables"
         id: variables
