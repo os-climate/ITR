@@ -40,10 +40,10 @@ dev = [
 ]
 
 [build-system]
-# requires = ["setuptools>=65.7.0", "setuptools-scm"]
-# build-backend = "setuptools.build_meta"
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["setuptools>=65.7.0", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+# requires = ["pdm-backend"]
+# build-backend = "pdm.backend"
 
 [tool.pdm.build]
 dependencies = {file = ["requirements-dev.txt"]}

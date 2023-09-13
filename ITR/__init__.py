@@ -15,13 +15,15 @@ from pint_pandas import PintType, PintArray
 
 try:
     # Even if we have uncertainties available as a module, we don't have the right version of pint
-    if hasattr(pint.compat, 'tokenizer'):
+    if hasattr(pint.compat, "tokenizer"):
         raise AttributeError
     from uncertainties import ufloat, UFloat
     from uncertainties.unumpy import uarray, isnan, nominal_values, std_devs
+
     _ufloat_nan = ufloat(np.nan, 0.0)
     pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
     from .utils import umean
+
     HAS_UNCERTAINTIES = True
 except (ImportError, ModuleNotFoundError, AttributeError) as exc:
     HAS_UNCERTAINTIES = False
@@ -35,7 +37,7 @@ except (ImportError, ModuleNotFoundError, AttributeError) as exc:
         return x
 
     def std_devs(x):
-        if hasattr(x, '__len__'):
+        if hasattr(x, "__len__"):
             return [0] * len(x)
         return 0
 
@@ -45,10 +47,11 @@ except (ImportError, ModuleNotFoundError, AttributeError) as exc:
     def umean(unquantified_data):
         return mean(unquantified_data)
 
+
 def isna(x):
-    '''
+    """
     True if X is either a NaN-like Quantity or otherwise NA-like
-    '''
+    """
     # This function simplifies dealing with NA vs. NaN quantities and magnitudes inside and outside of PintArrays
     if isinstance(x, pint.Quantity):
         x = x.m
@@ -56,16 +59,17 @@ def isna(x):
         return isnan(x)
     return pd.isna(x)
 
+
 def Q_m_as(value, units, inplace=False):
-    '''
+    """
     Convert VALUE from a string to a Quantity.
     If the Quanity is not already in UNITS, then convert in place.
     Returns the MAGNITUDE of the (possibly) converted value.
-    '''
+    """
     x = value
-    if type(value)==str:
+    if type(value) == str:
         x = pint.Quantity(value)
-    if x.u==units:
+    if x.u == units:
         return x.m
     if inplace:
         x.ito(units)
@@ -74,13 +78,17 @@ def Q_m_as(value, units, inplace=False):
 
 
 def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
-    '''
+    """
     A Pandas-friendly way to combine nominal and error terms for uncertainties
-    '''
+    """
     assert HAS_UNCERTAINTIES
-    if std.sum()==0:
+    if std.sum() == 0:
         return nom
-    result =  pd.Series(data=uarray(nom.values, np.where(nom.notna(), std.values, 0)), index=nom.index, name=nom.name)
+    result = pd.Series(
+        data=uarray(nom.values, np.where(nom.notna(), std.values, 0)),
+        index=nom.index,
+        name=nom.name,
+    )
     # Canonicalize NaNs
     result.values[isna(result)] = np.nan
     return result
@@ -96,7 +104,9 @@ def JSONEncoder(q):
     elif isinstance(q, pd.Series):
         # Inside the map function NA values become float64 nans and lose their units
         ser = q.map(lambda x: f"nan {q.pint.u}" if isna(x) else f"{x:.5f}")
-        res = pd.DataFrame(data={'year': ser.index, 'value': ser.values}).to_dict('records')
+        res = pd.DataFrame(data={"year": ser.index, "value": ser.values}).to_dict(
+            "records"
+        )
         return res
     else:
         return str(q)
