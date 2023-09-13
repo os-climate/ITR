@@ -1,18 +1,24 @@
 ---
-name: "GitHub Actions"
+name: "Linting Checks"
 
 on: push  # yamllint disable-line rule:truthy
 
 jobs:
   lint:
-    name: "Validate (actionlint)"
+    name: "Check Repository Content"
     runs-on: ubuntu-latest
     steps:
 
       - name: "Checkout Repository"
         uses: actions/checkout@v3
 
-      - name: actionlint
+      - name: "Installing: yamllint"
+        run: pip install yamllint
+
+      - name: "Checking YAML files (yamllint)"
+        run: yamllint .
+
+      - name: "Checking GitHub Actions (actionlint)"
         id: actionlint
         uses: raven-actions/actionlint@v1
         with:
