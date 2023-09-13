@@ -1,19 +1,18 @@
+---
 name: Unit tests
-on:
+
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - main
-      - develop
   pull_request:
-    branches:
-      - main
-      - develop
+
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.9', '3.10', '3.11' ]
+        python-version: ['3.9', '3.10', '3.11']
     name: Run unit tests
     steps:
       - uses: actions/checkout@v3
