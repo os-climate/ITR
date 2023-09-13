@@ -9,25 +9,27 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   build:
-    name: "Test Notebooks"
+    name: "Build and Test"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
-    name: "Build and Test"
     steps:
 
       - name: "Checkout Repository"
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: "Set up Python ${{ matrix.python-version }}"
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+
+      - name: "Install Dependencies"
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install .
           pip install pytest nbmake
-      - run: pytest --nbmake examples/quick_temp_score_calculation.ipynb
+
+      - name: "Run: pytest"
+        run: pytest --nbmake examples/quick_temp_score_calculation.ipynb
