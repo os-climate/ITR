@@ -1,13 +1,16 @@
-name: Publish Python distributions to TestPyPI
+---
+name: Publish Python distributions to PyPI
 
-on:
+on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
   # pull_request:
-  #   branches: [ main ]
 
 jobs:
   build-n-publish:
-    name: Build and publish Python distributions to TestPyPI
+    name: Build and publish Python distributions to PyPI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -29,8 +32,7 @@ jobs:
           --wheel
           --outdir dist/
           .
-      - name: Publish distribution to Test PyPI
+      - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1.8
         with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.PYPI_API_TOKEN }}
