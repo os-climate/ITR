@@ -1,6 +1,7 @@
+---
 # Run all notebooks on every push
 name: Notebooks
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - main
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.9', '3.10', '3.11' ]
+        python-version: ['3.9', '3.10', '3.11']
     name: Check example notebooks
     steps:
       - uses: actions/checkout@v3
