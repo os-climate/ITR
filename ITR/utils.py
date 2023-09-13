@@ -12,15 +12,22 @@ import pint
 from pint_pandas import PintType
 
 from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
-from .configs import ColumnsConfig, TemperatureScoreControls, TemperatureScoreConfig, LoggingConfig
+from .configs import (
+    ColumnsConfig,
+    TemperatureScoreControls,
+    TemperatureScoreConfig,
+    LoggingConfig,
+)
 
 import logging
+
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
 from .data.data_warehouse import DataWarehouse
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
+
 
 # If this file is moved, the computation of get_project_root may also need to change
 def get_project_root() -> Path:
@@ -50,10 +57,15 @@ def _make_isin_map(df_portfolio: pd.DataFrame) -> dict:
     :param df_portfolio: The complete portfolio
     :return: A mapping from company_id to ISIN
     """
-    return {company_id: company[ColumnsConfig.COMPANY_ISIN]
-            for company_id, company in df_portfolio[[ColumnsConfig.COMPANY_ID, ColumnsConfig.COMPANY_ISIN]]
-                .set_index(ColumnsConfig.COMPANY_ID)
-                .to_dict(orient='index').items()}
+    return {
+        company_id: company[ColumnsConfig.COMPANY_ISIN]
+        for company_id, company in df_portfolio[
+            [ColumnsConfig.COMPANY_ID, ColumnsConfig.COMPANY_ISIN]
+        ]
+        .set_index(ColumnsConfig.COMPANY_ID)
+        .to_dict(orient="index")
+        .items()
+    }
 
 
 def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]:
@@ -69,18 +81,27 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ISIN].isnull().any():
-        error_message = f"Company ISINs are missing for one or more companies in the input file."
+        error_message = (
+            f"Company ISINs are missing for one or more companies in the input file."
+        )
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ID].isnull().any():
-        error_message = f"Company IDs are missing for one or more companies in the input file."
+        error_message = (
+            f"Company IDs are missing for one or more companies in the input file."
+        )
         logger.error(error_message)
         raise ValueError(error_message)
 
-    return [PortfolioCompany.parse_obj(company) for company in df_portfolio.to_dict(orient="records")]
+    return [
+        PortfolioCompany.parse_obj(company)
+        for company in df_portfolio.to_dict(orient="records")
+    ]
 
 
-def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -> pd.DataFrame:
+def get_data(
+    data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]
+) -> pd.DataFrame:
     """
     Get the required data from the data provider(s) and return a 9-box grid for each company.
 
@@ -88,44 +109,84 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     :param portfolio: A list of PortfolioCompany models
     :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
     """
-    df_portfolio = pd.DataFrame.from_records([_flatten_user_fields(c) for c in portfolio
-                                              if c.company_id not in data_warehouse.company_data.missing_ids])
-    df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(df_portfolio[ColumnsConfig.INVESTMENT_VALUE])
+    df_portfolio = pd.DataFrame.from_records(
+        [
+            _flatten_user_fields(c)
+            for c in portfolio
+            if c.company_id not in data_warehouse.company_data.missing_ids
+        ]
+    )
+    df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(
+        df_portfolio[ColumnsConfig.INVESTMENT_VALUE]
+    )
 
     if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
         raise ValueError(f"Portfolio contains no company_id data")
 
     # This transforms a dataframe of portfolio data into model data just so we can transform that back into a dataframe?!
     # It does this for all scopes, not only the scopes of interest
-    company_data = data_warehouse.get_preprocessed_company_data(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
-    
+    company_data = data_warehouse.get_preprocessed_company_data(
+        df_portfolio[ColumnsConfig.COMPANY_ID].to_list()
+    )
+
     if len(company_data) == 0:
-        raise ValueError("None of the companies in your portfolio could be found by the data providers")
+        raise ValueError(
+            "None of the companies in your portfolio could be found by the data providers"
+        )
 
     df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data])
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
-    df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype('pint[Mt CO2e]')
+    df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype("pint[Mt CO2e]")
     s3_data_invalid = df_company_data[ColumnsConfig.GHG_SCOPE3].isna()
-    if len(s3_data_invalid[s3_data_invalid].index)>0:
-        df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3].map(
-            lambda x: Q_(np.nan, 'Mt CO2e'))
-    for col in [ColumnsConfig.GHG_SCOPE3, ColumnsConfig.CUMULATIVE_BUDGET, ColumnsConfig.CUMULATIVE_SCALED_BUDGET,
-                ColumnsConfig.CUMULATIVE_TARGET, ColumnsConfig.CUMULATIVE_TRAJECTORY]:
-        df_company_data[col] = df_company_data[col].astype('pint[Mt CO2e]')
-    for col in [ColumnsConfig.COMPANY_REVENUE, ColumnsConfig.COMPANY_MARKET_CAP, ColumnsConfig.COMPANY_ENTERPRISE_VALUE, ColumnsConfig.COMPANY_EV_PLUS_CASH, ColumnsConfig.COMPANY_TOTAL_ASSETS, ColumnsConfig.COMPANY_CASH_EQUIVALENTS]:
+    if len(s3_data_invalid[s3_data_invalid].index) > 0:
+        df_company_data.loc[
+            s3_data_invalid, ColumnsConfig.GHG_SCOPE3
+        ] = df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3].map(
+            lambda x: Q_(np.nan, "Mt CO2e")
+        )
+    for col in [
+        ColumnsConfig.GHG_SCOPE3,
+        ColumnsConfig.CUMULATIVE_BUDGET,
+        ColumnsConfig.CUMULATIVE_SCALED_BUDGET,
+        ColumnsConfig.CUMULATIVE_TARGET,
+        ColumnsConfig.CUMULATIVE_TRAJECTORY,
+    ]:
+        df_company_data[col] = df_company_data[col].astype("pint[Mt CO2e]")
+    for col in [
+        ColumnsConfig.COMPANY_REVENUE,
+        ColumnsConfig.COMPANY_MARKET_CAP,
+        ColumnsConfig.COMPANY_ENTERPRISE_VALUE,
+        ColumnsConfig.COMPANY_EV_PLUS_CASH,
+        ColumnsConfig.COMPANY_TOTAL_ASSETS,
+        ColumnsConfig.COMPANY_CASH_EQUIVALENTS,
+    ]:
         df_company_data[col] = asPintSeries(df_company_data[col])
-    df_company_data[ColumnsConfig.BENCHMARK_TEMP] = df_company_data[ColumnsConfig.BENCHMARK_TEMP].astype('pint[delta_degC]')
-    df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET].astype('pint[Gt CO2e]')
-    portfolio_data = pd.merge(left=df_company_data, right=df_portfolio.drop(ColumnsConfig.COMPANY_NAME, axis=1), how="left",
-                              on=[ColumnsConfig.COMPANY_ID]).set_index([ColumnsConfig.COMPANY_ID, ColumnsConfig.SCOPE])
+    df_company_data[ColumnsConfig.BENCHMARK_TEMP] = df_company_data[
+        ColumnsConfig.BENCHMARK_TEMP
+    ].astype("pint[delta_degC]")
+    df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df_company_data[
+        ColumnsConfig.BENCHMARK_GLOBAL_BUDGET
+    ].astype("pint[Gt CO2e]")
+    portfolio_data = pd.merge(
+        left=df_company_data,
+        right=df_portfolio.drop(ColumnsConfig.COMPANY_NAME, axis=1),
+        how="left",
+        on=[ColumnsConfig.COMPANY_ID],
+    ).set_index([ColumnsConfig.COMPANY_ID, ColumnsConfig.SCOPE])
     return portfolio_data
 
 
-def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta_degC'], aggregation_method: PortfolioAggregationMethod,
-              grouping: Optional[List[str]], time_frames: List[ETimeFrames],
-              scopes: List[EScope], anonymize: bool, aggregate: bool = True,
-              controls: Optional[TemperatureScoreControls] = None) -> Tuple[pd.DataFrame,
-                                                                            Optional[ScoreAggregations]]:
+def calculate(
+    portfolio_data: pd.DataFrame,
+    fallback_score: pint.Quantity["delta_degC"],
+    aggregation_method: PortfolioAggregationMethod,
+    grouping: Optional[List[str]],
+    time_frames: List[ETimeFrames],
+    scopes: List[EScope],
+    anonymize: bool,
+    aggregate: bool = True,
+    controls: Optional[TemperatureScoreControls] = None,
+) -> Tuple[pd.DataFrame, Optional[ScoreAggregations]]:
     """
     Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).
 
@@ -143,8 +204,14 @@ def calculate(portfolio_data: pd.DataFrame, fallback_score: pint.Quantity['delta
     config = TemperatureScoreConfig
     if controls:
         TemperatureScoreConfig.CONTROLS_CONFIG = controls
-    ts = TemperatureScore(time_frames=time_frames, scopes=scopes, fallback_score=fallback_score,
-                          grouping=grouping, aggregation_method=aggregation_method, config=config)
+    ts = TemperatureScore(
+        time_frames=time_frames,
+        scopes=scopes,
+        fallback_score=fallback_score,
+        grouping=grouping,
+        aggregation_method=aggregation_method,
+        config=config,
+    )
 
     scores = ts.calculate(portfolio_data)
     aggregations = None
@@ -170,27 +237,33 @@ def umean(unquantified_data):
     :param: A set of uncertainty values
     :return: The weighted mean of the values, with a freshly calculated error term
     """
-    arr = np.array([v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0) for v in unquantified_data if not ITR.isnan(v)])
+    arr = np.array(
+        [
+            v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0)
+            for v in unquantified_data
+            if not ITR.isnan(v)
+        ]
+    )
     N = len(arr)
-    if N==0:
+    if N == 0:
         return np.nan
-    if N==1:
+    if N == 1:
         return arr[0]
     nominals = ITR.nominal_values(arr)
-    if any(ITR.std_devs(arr)==0):
+    if any(ITR.std_devs(arr) == 0):
         # We cannot mix and match "perfect" measurements with uncertainties
         # Instead compute the mean and return the "standard error" as the uncertainty
         # e.g. ITR.umean([100, 200]) = 150 +/- 50
         w_mean = sum(nominals) / N
-        w_std = np.std(nominals) / np.sqrt(N-1)
+        w_std = np.std(nominals) / np.sqrt(N - 1)
     else:
         # Compute the "uncertainty of the weighted mean", which apparently
         # means ignoring whether or not there are large uncertainties
         # that should be created by elements that disagree
         # e.g. ITR.umean([100+/-1, 200+/-1]) = 150.0+/-0.7 (!)
-        w_sigma = 1/sum([1/(v.s**2) for v in arr])
-        w_mean = sum([v.n/(v.s**2) for v in arr]) * w_sigma
-        w_std = w_sigma * np.sqrt(sum([1/(v.s**2) for v in arr]))
+        w_sigma = 1 / sum([1 / (v.s**2) for v in arr])
+        w_mean = sum([v.n / (v.s**2) for v in arr]) * w_sigma
+        w_std = w_sigma * np.sqrt(sum([1 / (v.s**2) for v in arr]))
     result = ITR.ufloat(w_mean, w_std)
     return result
 
@@ -205,8 +278,10 @@ def uround(u, ndigits):
         return ITR.ufloat(round(u.n, ndigits), u.s)
     return ITR.ufloat(round(u.n, ndigits), round(u.s, ndigits))
 
+
 try:
     import uncertainties
+
     uncertainties.UFloat.__round__ = uround
 except (ImportError, ModuleNotFoundError, AttributeError):
     pass
@@ -227,8 +302,8 @@ def get_size(obj, seen=None):
     if isinstance(obj, dict):
         size += sum([get_size(v, seen) for v in obj.values()])
         size += sum([get_size(k, seen) for k in obj.keys()])
-    elif hasattr(obj, '__dict__'):
+    elif hasattr(obj, "__dict__"):
         size += get_size(obj.__dict__, seen)
-    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+    elif hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes, bytearray)):
         size += sum([get_size(i, seen) for i in obj])
     return size

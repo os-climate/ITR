@@ -9,13 +9,17 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   build:
+    name: "Test Notebooks"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
-    name: Check example notebooks
+    name: "Build and Test"
     steps:
+
+      - name: "Checkout Repository"
       - uses: actions/checkout@v3
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
