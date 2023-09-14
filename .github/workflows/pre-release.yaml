@@ -43,7 +43,7 @@ jobs:
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
         run: |
-          test/scripts/dummy-versioning.sh "${{ steps.setenv.outputs.vernum }}"
+          scripts/dummy-versioning.sh "${{ steps.setenv.outputs.vernum }}"
           git tag | xargs -L 1 | xargs git tag --delete
           git tag "v${{ steps.setenv.outputs.vernum }}"
           git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
