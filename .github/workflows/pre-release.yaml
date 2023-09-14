@@ -20,14 +20,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: "Populate Environment Variables"
-        id: variables
+        id: vars
         run: |
           echo "datetime=$(date +'%Y%m%d%H%M')" >> "$GITHUB_OUTPUT"
           echo "vernum=${{ matrix.python-version }}.$datetime" \
           >> "$GITHUB_OUTPUT"
 
       - name: "Set up Python ${{ matrix.python-version }}"
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: "Install Dependencies"
@@ -39,12 +39,11 @@ jobs:
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
         run: |
-          # yamllint disable rule:line-length
-          sed -i "s/.*version = .*/version = ${{ steps.variables.outputs.vernum }}/" \
+          sed -i "s/.*version =.*/version = ${{ steps.vars.outputs.vernum }}/" \
           pyproject.toml
           git tag | xargs -L 1 | xargs git tag --delete
-          git tag "v${{ steps.variables.outputs.vernum }}"
-          git checkout "tags/v${{ steps.variables.outputs.vernum }}"
+          git tag "v${{ steps.vars.outputs.vernum }}"
+          git checkout "tags/v${{ steps.vars.outputs.vernum }}"
 
       - name: "Build with TOX"
         run: |
