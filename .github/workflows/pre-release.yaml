@@ -21,10 +21,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: "Populate Environment Variables"
-        id: vars
+        id: setenv
         run: |
           datetime=$(date +'%Y%m%d%H%M')
-          echo "${datetime}" >> "$GITHUB_OUTPUT"
+          export datetime
+          echo "datetime=$(date +'%Y%m%d%H%M')" >> "$GITHUB_OUTPUT"
           echo "vernum=${{ matrix.python-version }}.${datetime}" \
           >> "$GITHUB_OUTPUT"
 
@@ -41,11 +42,12 @@ jobs:
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
         run: |
-          sed -i "s/.*version =.*/version = ${{ steps.vars.outputs.vernum }}/" \
+          sed -i \
+          "s/.*version =.*/version = ${{ steps.setenv.outputs.vernum }}/" \
           pyproject.toml
           git tag | xargs -L 1 | xargs git tag --delete
-          git tag "v${{ steps.vars.outputs.vernum }}"
-          git checkout "tags/v${{ steps.vars.outputs.vernum }}"
+          git tag "v${{ steps.setenv.outputs.vernum }}"
+          git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
 
       - name: "Build with TOX"
         run: |
