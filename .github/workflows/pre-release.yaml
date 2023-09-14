@@ -45,7 +45,7 @@ jobs:
         run: |
 
           sed -i \
-          "s/.*version =.*/version = $vernum/" \
+          "s/.*version =.*/version = \"$vernum\"/" \
           pyproject.toml
           git tag | xargs -L 1 | xargs git tag --delete
           git tag "v${{ steps.setenv.outputs.vernum }}"
