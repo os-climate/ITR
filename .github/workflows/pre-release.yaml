@@ -22,9 +22,9 @@ jobs:
       - name: "Populate Environment Variables"
         id: vars
         run: |
-          echo "datetime=$(date +'%Y%m%d%H%M')" >> "$GITHUB_OUTPUT"
-          echo "datetime=$(date +'%Y%m%d%H%M')" >> "$GITHUB_ENV"
-          echo "vernum=${{ matrix.python-version }}.$datetime" \
+          datetime=$(date +'%Y%m%d%H%M')
+          echo $datetime >> "$GITHUB_OUTPUT"
+          echo "vernum=${{ matrix.python-version }}.${datetime}" \
           >> "$GITHUB_OUTPUT"
 
       - name: "Set up Python ${{ matrix.python-version }}"
