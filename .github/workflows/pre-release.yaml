@@ -25,7 +25,7 @@ jobs:
           export datetime
           echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
           vernum="${{ matrix.python-version }}.${datetime}"
-          echo "$vernum" >> "$GITHUB_OUTPUT"
+          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
 
       - name: "Checkout Repository"
         uses: actions/checkout@v3
