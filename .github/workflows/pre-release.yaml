@@ -1,5 +1,5 @@
 ---
-name: "Pre-Release (Publish to Test PyPI)"
+name: "Test: Build and Publish"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
@@ -9,12 +9,11 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   pre-release:
-    name: "Build Validation"
+    name: "Build and Publish to Test PyPI "
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        # python-version: ['3.9', '3.10', '3.11']
-        python-version: ['3.11']
+        python-version: ['3.9', '3.10', '3.11']
     steps:
 
       - name: "Populate Environment Variables"
