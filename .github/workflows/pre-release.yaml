@@ -23,11 +23,10 @@ jobs:
         id: variables
         run: |
           datetime=$(date +'%Y%m%d%H%M')
+          echo "${datetime}" >> "$GITHUB_OUTPUT"
           ver_num="${{ matrix.python-version }}.${datetime}"
-          ver_str="version = \"v${ver_num}\""
-          # shellcheck disable=SC2129
-          echo "$datetime" >> "$GITHUB_OUTPUT"
           echo "${ver_num}" >> "$GITHUB_OUTPUT"
+          ver_str="version = \"v${ver_num}\""
           echo "${ver_str}" >> "$GITHUB_OUTPUT"
 
       - name: "Set up Python ${{ matrix.python-version }}"
