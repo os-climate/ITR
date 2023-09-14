@@ -43,14 +43,13 @@ jobs:
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
         run: |
-
           sed -i \
           "s/.*version =.*/version = \"$vernum\"/" \
           pyproject.toml
           git tag | xargs -L 1 | xargs git tag --delete
           git tag "v${{ steps.setenv.outputs.vernum }}"
           git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
-          cat pyproject.toml
+          grep version pyproject.toml
 
       - name: "Build with TOX"
         run: |
