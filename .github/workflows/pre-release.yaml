@@ -24,7 +24,7 @@ jobs:
           datetime=$(date +'%Y%m%d%H%M')
           export datetime
           echo "datetime=$(date +'%Y%m%d%H%M')" >> "$GITHUB_OUTPUT"
-          echo "vernum=${{ matrix.python-version }}.${datetime}" \
+          echo "vernum=\"${{ matrix.python-version }}.${datetime}"\" \
           >> "$GITHUB_OUTPUT"
 
       - name: "Checkout Repository"
