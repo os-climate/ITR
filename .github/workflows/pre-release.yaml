@@ -23,7 +23,7 @@ jobs:
         id: vars
         run: |
           datetime=$(date +'%Y%m%d%H%M')
-          echo $datetime >> "$GITHUB_OUTPUT"
+          echo "${datetime}" >> "$GITHUB_OUTPUT"
           echo "vernum=${{ matrix.python-version }}.${datetime}" \
           >> "$GITHUB_OUTPUT"
 
