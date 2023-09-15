@@ -56,9 +56,9 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
+          automatic_release_tag: "dev.${{ matrix.python-version }}.${{ steps.setenv.outputs.vernum }}"
           prerelease: true
-          title: "Development Build"
+          title: "Development Build Python ${{ matrix.python-version }} ${{ steps.setenv.outputs.vernum }}"
           files: |
             dist/*.tar.gz
             dist/*.whl
