@@ -27,6 +27,8 @@ jobs:
         run: |
           set -x
           VARS_FILE=dist/buildvars.txt
+          mkdir -o dist | true
+          touch dist/buildvars.txt
           datetime=$(date +'%Y%m%d%H%M')
           export datetime
           echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
@@ -117,11 +119,12 @@ jobs:
       #    vernum=${{ env.vernum }}
       #    echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
 
-      - name: Download build artefacts
-        uses: actions/download-artifact@v3
+      - name: Sign the dists with Sigstore
+        uses: sigstore/gh-action-sigstore-python@v1.2.3
         with:
-          name: python-package-distributions
-          path: dist/
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
 
       - name: "Publish artefacts (Test PyPI)"
         uses: softprops/action-gh-release@v1
@@ -167,9 +170,7 @@ jobs:
   ### PUBLISH GITHUB ###
 
   github-release:
-    name: >-
-      Sign the Python 🐍 distribution 📦 with Sigstore
-      and upload them to GitHub Release
+    name: "Release package (GitHub)"
     needs:
       - publish-to-pypi
     runs-on: ubuntu-latest
@@ -183,13 +184,6 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-
-      - name: Sign the dists with Sigstore
-        uses: sigstore/gh-action-sigstore-python@v1.2.3
-        with:
-          inputs: >-
-            ./dist/*.tar.gz
-            ./dist/*.whl
 
       - name: Upload artifact signatures to GitHub Release
         env:
