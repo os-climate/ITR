@@ -20,6 +20,7 @@ jobs:
       - name: "Populate environment variables"
         id: setenv
         run: |
+          echo "Action triggered by user: ${GITHUB_TRIGGERING_ACTOR}"
           set -x
           datetime=$(date +'%Y%m%d%H%M')
           export datetime
