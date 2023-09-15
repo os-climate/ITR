@@ -181,7 +181,14 @@ jobs:
       - name: "Check environment variables"
         run: env
 
-      - name: "Publish to test PyPi 📦"
-        uses: pypa/gh-action-pypi-publish@release/v1
+      # TEMP DISABLE - NEED TRUSTED PUBLISHED
+      # - name: "Publish distribution to PyPI"
+      #   uses: pypa/gh-action-pypi-publish@release/v1.8
+      #   with:
+      #     password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Publish distribution to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/1.8.10
         with:
-          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
