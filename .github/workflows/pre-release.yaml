@@ -1,5 +1,5 @@
 ---
-name: "Build testing"
+name: "🐍 Build testing only"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:

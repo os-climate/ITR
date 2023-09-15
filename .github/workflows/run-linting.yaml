@@ -1,5 +1,5 @@
 ---
-name: "Linting checks"
+name: "🧪 Linting checks"
 
 on: push  # yamllint disable-line rule:truthy
 

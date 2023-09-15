@@ -1,6 +1,6 @@
 ---
 # Run all notebooks on every push
-name: "Build notebooks"
+name: "🗒️ Build notebooks"
 on:  # yamllint disable-line rule:truthy
   pull_request:
     types:
