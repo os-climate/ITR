@@ -1,10 +1,10 @@
 ---
 # Run all notebooks on every push
-name: Notebooks
+name: "Build notebooks"
 on:  # yamllint disable-line rule:truthy
   pull_request:
     types:
-      ["opened", "reopened", edited]
+      [opened, reopened, edited]
 
 jobs:
   build:
