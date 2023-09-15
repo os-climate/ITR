@@ -12,7 +12,7 @@ jobs:
   ### BUILD ###
 
   build:
-    name: Build distribution 📦
+    name: "Build packages 🐍"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -75,8 +75,7 @@ jobs:
   publish-to-pypi:
     # Only publish to PyPI on tag pushes
     # if: startsWith(github.ref, 'refs/tags/')
-    name: >-
-      Publish Python 🐍 distribution 📦 to PyPI
+    name: "Publish to test PyPI 📦"
     needs:
       - build
     runs-on: ubuntu-latest
@@ -90,7 +89,7 @@ jobs:
       - name: "List environment variables"
         run: env
 
-      - name: Download build artefacts
+      - name: "Download build artefacts ⬇"
         uses: actions/download-artifact@v3
         with:
           name: python-package-distributions
@@ -102,31 +101,21 @@ jobs:
           set -x
           VARS_FILE=dist/buildvars.txt
           source "$VARS_FILE"
+          echo "datetime=${datetime}" | tee "$GITHUB_OUTPUT" "$GITHUB_ENV"
+          echo "pyver=${pyver}" | tee "$GITHUB_OUTPUT" "$GITHUB_ENV"
+          echo "vernum=${vernum}" | tee "$GITHUB_OUTPUT" "$GITHUB_ENV"
 
       - name: "Check environment variables"
         run: env
 
-      # - name: "Populate environment variables"
-      #  id: setenv
-      #  run: |
-      #    echo "Action triggered by user: ${GITHUB_TRIGGERING_ACTOR}"
-      #    set -x
-      #    datetime=$(date +'%Y%m%d%H%M')
-      #    export datetime
-      #    echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-      #    pyver=${{ env.pyver }}
-      #    echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
-      #    vernum=${{ env.vernum }}
-      #    echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
-
-      - name: Sign the dists with Sigstore
+      - name: "Sign packages with Sigstore"
         uses: sigstore/gh-action-sigstore-python@v1.2.3
         with:
           inputs: >-
             ./dist/*.tar.gz
             ./dist/*.whl
 
-      - name: "Publish artefacts (Test PyPI)"
+      - name: "Publish to test PyPI 📦"
         uses: softprops/action-gh-release@v1
         with:
           # password: ${{ secrets.TEST_PYPI_API_TOKEN }}
