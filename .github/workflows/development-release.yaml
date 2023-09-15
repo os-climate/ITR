@@ -1,5 +1,5 @@
 ---
-name: "Build and publish test release 📦"
+name: "Development release build and publish 📦"
 
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
@@ -97,9 +97,6 @@ jobs:
       id-token: write
     steps:
 
-      - name: "List environment variables"
-        run: env
-
       - name: "Download build artefacts ⬇"
         uses: actions/download-artifact@v3
         with:
@@ -113,20 +110,17 @@ jobs:
           source dist/buildvars.txt
           echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
           echo "Datetime is: ${datetime}"
-          echo "datetime=${datetime}" >> "$GITHUB_ENV"
           echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
           echo "Python version is: ${pyver}"
-          echo "pyver=${pyver}" >> "$GITHUB_ENV"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
           echo "Version number is: ${vernum}"
-          echo "vernum=${vernum}" >> "$GITHUB_ENV"
 
-      - name: "Check environment variables"
-        run: env
+      # - name: "Check environment variables"
+      #   run: env
 
       # Valid inputs are:
       # repo_token, automatic_release_tag, draft, prerelease, title, files
-      - name: "Publish to GitHub 📦"
+      - name: "Publish test release to GitHub 📦"
         uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -170,8 +164,7 @@ jobs:
 
       - name: "Remove files unsupported by PyPi"
         run: |
-          rm dist/*.txt dist/*.crt dist/*.sig
-          ls dist/
+          rm dist/*.txt dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
