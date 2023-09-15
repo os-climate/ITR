@@ -128,6 +128,7 @@ jobs:
       - name: "Publish to GitHub 📦"
         uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
         with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
           title:
             "Development Build \
