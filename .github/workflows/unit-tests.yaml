@@ -1,5 +1,5 @@
 ---
-name: "Unit tests"
+name: "🧪 Unit tests"
 
 on:  # yamllint disable-line rule:truthy
   pull_request:
