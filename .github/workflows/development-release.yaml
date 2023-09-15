@@ -53,19 +53,19 @@ jobs:
         run: |
           tox -e build
 
-      - name: "Publish build products (GitHub)"
-        uses: "ModeSevenIndustrialSolutions/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag:
-            ${{ steps.setenv.outputs.vernum }}"
-          prerelease: true
-          title:
-            "Development Build \
-            ${{ steps.setenv.outputs.vernum }}"
-          files: |
-            dist/*.tar.gz
-            dist/*.whl
+      #- name: "Publish build products (GitHub)"
+      #  uses: "ModeSevenIndustrialSolutions/action-automatic-releases@latest"
+      #  with:
+      #    repo_token: "${{ secrets.GITHUB_TOKEN }}"
+      #    automatic_release_tag:
+      #      ${{ steps.setenv.outputs.vernum }}"
+      #    prerelease: true
+      #    title:
+      #      "Development Build \
+      #      ${{ steps.setenv.outputs.vernum }}"
+      #    files: |
+      #      dist/*.tar.gz
+      #      dist/*.whl
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
