@@ -151,13 +151,10 @@ jobs:
     environment:
       name: testpypi
       url: https://test.pypi.org/project/ITR/
-    permissions:
-      # IMPORTANT: mandatory for trusted publishing
-      id-token: write
+    # permissions:
+    # IMPORTANT: mandatory for trusted publishing
+    #   id-token: write
     steps:
-
-      - name: "List environment variables"
-        run: env
 
       - name: "Download build artefacts ⬇"
         uses: actions/download-artifact@v3
@@ -165,32 +162,19 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-      - name: "Source environment variables"
-        id: setenv
-        run: |
-          set -x
-          source dist/buildvars.txt
-          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-          echo "Datetime is: ${datetime}"
-          echo "datetime=${datetime}" >> "$GITHUB_ENV"
-          echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
-          echo "Python version is: ${pyver}"
-          echo "pyver=${pyver}" >> "$GITHUB_ENV"
-          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
-          echo "Version number is: ${vernum}"
-          echo "vernum=${vernum}" >> "$GITHUB_ENV"
-
-      - name: "Check environment variables"
-        run: env
-
       # TEMP DISABLE - NEED TRUSTED PUBLISHED
       # - name: "Publish distribution to PyPI"
       #   uses: pypa/gh-action-pypi-publish@release/v1.8
       #   with:
       #     password: ${{ secrets.PYPI_API_TOKEN }}
 
+      - name: "Remove files unsupported by PyPi"
+        run: |
+          rm dist/*.txt dist/*.crt
+
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          verbose: true
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
