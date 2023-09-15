@@ -27,7 +27,7 @@ jobs:
         run: |
           set -x
           VARS_FILE=dist/buildvars.txt
-          mkdir -o dist | true
+          mkdir -p dist | true
           touch dist/buildvars.txt
           datetime=$(date +'%Y%m%d%H%M')
           export datetime
