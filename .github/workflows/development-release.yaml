@@ -124,12 +124,14 @@ jobs:
       - name: "Check environment variables"
         run: env
 
-      # Valid inputs are ['repo_token', 'automatic_release_tag', 'draft', 'prerelease', 'title', 'files']
+      # Valid inputs are:
+      # repo_token, automatic_release_tag, draft, prerelease, title, files
       - name: "Publish to GitHub 📦"
         uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
+          automatic_release_tag: ${{ steps.setenv.outputs.vernum }}
           title:
             "Development Build \
             ${{ steps.setenv.outputs.vernum }}"
@@ -188,7 +190,7 @@ jobs:
       #     password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: Publish distribution to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.8.10
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
