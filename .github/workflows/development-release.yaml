@@ -1,21 +1,26 @@
 ---
-name: "Build/publish development release"
+name: "Build 🐍 development release and publish 📦"
+
+# GitHub/PyPI trusted publisher documentation:
+# https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
 
 jobs:
-  pre-release:
-    runs-on: "ubuntu-latest"
+
+  ### BUILD ###
+
+  build:
+    name: Build distribution 📦
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.10']
-    environment:
-      name: testpypi
-    permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
+
     steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
 
       - name: "Populate environment variables"
         id: setenv
@@ -24,16 +29,18 @@ jobs:
           datetime=$(date +'%Y%m%d%H%M')
           export datetime
           echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-          vernum="${{ matrix.python-version }}.${datetime}"
+          pyver=${{ matrix.python-version }}
+          echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
+          echo "pyver=${pyver}" >> "$GITHUB_ENV"
+          vernum="${pyver}.${datetime}"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+          echo "vernum=${vernum}" >> "$GITHUB_ENV"
 
-      - name: "Checkout repository"
-        uses: actions/checkout@v3
-
-      - name: "Set up Python ${{ matrix.python-version }}"
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: "Install dependencies"
         run: |
           python -m pip install --upgrade pip
@@ -53,21 +60,125 @@ jobs:
         run: |
           tox -e build
 
-      #- name: "Publish build products (GitHub)"
-      #  uses: "ModeSevenIndustrialSolutions/action-automatic-releases@latest"
-      #  with:
-      #    repo_token: "${{ secrets.GITHUB_TOKEN }}"
-      #    automatic_release_tag:
-      #      ${{ steps.setenv.outputs.vernum }}"
-      #    prerelease: true
-      #    title:
-      #      "Development Build \
-      #      ${{ steps.setenv.outputs.vernum }}"
-      #    files: |
-      #      dist/*.tar.gz
-      #      dist/*.whl
-
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
         with:
-          repository-url: https://test.pypi.org/project/ITR/
+          name: python-package-distributions
+          path: dist/
+
+  ### PUBLISH PYPI ###
+
+  publish-to-pypi:
+    # Only publish to PyPI on tag pushes
+    # if: startsWith(github.ref, 'refs/tags/')
+    name: >-
+      Publish Python 🐍 distribution 📦 to PyPI
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/ITR/
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    steps:
+
+      - name: "List Environment variables"
+        run: env
+
+      - name: "Populate environment variables"
+        id: setenv
+        run: |
+          set -x
+          datetime=$(date +'%Y%m%d%H%M')
+          export datetime
+          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
+          pyver=${{ env.pyver }}
+          echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
+          vernum=${{ env.vernum }}
+          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+
+      - name: Download the artefacts
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: "Publish build products (Test PyPI)"
+        uses: softprops/action-gh-release@v1
+        with:
+          # password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          # repository-url: https://test.pypi.org/legacy/
+          repository: https://test.pypi.org/legacy/
+          # repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          # automatic_release_tag:
+          tag_name:
+            ${{ steps.setenv.outputs.vernum }}"
+          prerelease: true
+          #  title:
+          name:
+            "Development Build \
+            ${{ steps.setenv.outputs.vernum }}"
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+
+#  publish-to-pypi:
+# Only publish to PyPI on tag pushes
+# if: startsWith(github.ref, 'refs/tags/')
+#    name: >-
+#      Publish Python 🐍 distribution 📦 to PyPI
+#    needs:
+#    - build
+#    runs-on: ubuntu-latest
+#    environment:
+#      name: testpypi
+#      url: https://test.pypi.org/project/ITR/
+#    permissions:
+#      id-token: write  # IMPORTANT: mandatory for trusted publishing
+#    steps:
+#      - name: Download the artefacts
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: python-package-distributions
+#          path: dist/
+#      - name: Publish distribution 📦 to PyPI
+#        uses: pypa/gh-action-pypi-publish@release/v1
+
+  ### PUBLISH GITHUB ###
+
+  github-release:
+    name: >-
+      Sign the Python 🐍 distribution 📦 with Sigstore
+      and upload them to GitHub Release
+    needs:
+      - publish-to-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write  # IMPORTANT: mandatory for sigstore
+    steps:
+
+      - name: Download all the dists
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Sign the dists with Sigstore
+        uses: sigstore/gh-action-sigstore-python@v1.2.3
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
+
+      - name: Upload artifact signatures to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # Upload to GitHub Release using the `gh` CLI.
+        # `dist/` contains the built packages, and the
+        # sigstore-produced signatures and certificates.
+        run: >-
+          gh release upload
+          '${{ github.ref_name }}' dist/**
+          --repo '${{ github.repository }}'
