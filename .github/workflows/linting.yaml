@@ -1,15 +1,15 @@
 ---
-name: "Linting Checks"
+name: "Linting checks"
 
 on: push  # yamllint disable-line rule:truthy
 
 jobs:
   lint:
-    name: "Check Repository Content"
+    name: "Check repository content"
     runs-on: ubuntu-latest
     steps:
 
-      - name: "Checkout Repository"
+      - name: "Checkout repository"
         uses: actions/checkout@v3
 
       - name: "Installing: yamllint"
@@ -28,7 +28,7 @@ jobs:
           files: ".github/workflows/*.yaml, .github/workflows/*.yml"
           # flags: "-ignore SC2086"  # optional
 
-      - name: "Summary Report"
+      - name: "Problem report (conditional step)"
         if: ${{ steps.actionlint.outputs.exit-code != 0 }}
         # yamllint disable rule:line-length
         run: |
