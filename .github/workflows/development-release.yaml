@@ -10,6 +10,12 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.10']
+    environment:
+      name: testpypi
+    with:
+      repository-url: https://test.pypi.org/project/ITR/
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
 
       - name: "Populate environment variables"
@@ -62,8 +68,5 @@ jobs:
             dist/*.tar.gz
             dist/*.whl
 
-      - name: "Publish artefacts (Test PyPI)"
-        uses: pypa/gh-action-pypi-publish@release/v1.8
-        with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
