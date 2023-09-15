@@ -27,7 +27,7 @@ jobs:
         run: |
           set -x
           VARS_FILE=dist/buildvars.txt
-          mkdir -p dist | true
+          mkdir -p dist || true
           touch dist/buildvars.txt
           datetime=$(date +'%Y%m%d%H%M')
           export datetime
@@ -134,8 +134,7 @@ jobs:
           repository: https://test.pypi.org/project/ITR/
           # repo_token: "${{ secrets.GITHUB_TOKEN }}"
           # automatic_release_tag:
-          tag_name:
-            ${{ steps.setenv.outputs.vernum }}"
+          tag_name: ${{ steps.setenv.outputs.vernum }}
           prerelease: true
           #  title:
           name:
