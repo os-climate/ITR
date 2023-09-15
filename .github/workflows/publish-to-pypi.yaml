@@ -3,6 +3,9 @@ name: "Tag and release (publish to PyPI)"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   build-and-publish:

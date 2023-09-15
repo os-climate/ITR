@@ -97,13 +97,18 @@ jobs:
 
       - name: "Source environment variables"
         id: setenv
-        run: >-
+        run: |
           set -x
-          VARS_FILE=dist/buildvars.txt
-          source "$VARS_FILE"
-          echo "datetime=${datetime}" | tee "$GITHUB_OUTPUT" "$GITHUB_ENV"
-          echo "pyver=${pyver}" | tee "$GITHUB_OUTPUT" "$GITHUB_ENV"
-          echo "vernum=${vernum}" | tee "$GITHUB_OUTPUT" "$GITHUB_ENV"
+          source dist/buildvars.txt
+          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
+          echo "Datetime is: ${datetime}"
+          echo "datetime=${datetime}" >> "$GITHUB_ENV"
+          echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
+          echo "Python version is: ${pyver}"
+          echo "pyver=${pyver}" >> "$GITHUB_ENV"
+          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+          echo "Version number is: ${vernum}"
+          echo "vernum=${vernum}" >> "$GITHUB_ENV"
 
       - name: "Check environment variables"
         run: env
@@ -158,7 +163,7 @@ jobs:
   ### PUBLISH GITHUB ###
 
   github-release:
-    name: "Release package (GitHub)"
+    name: "Release to GitHub 📦"
     needs:
       - publish-to-pypi
     runs-on: ubuntu-latest
