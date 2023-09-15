@@ -26,15 +26,17 @@ jobs:
         id: setenv
         run: |
           set -x
+          VARS_FILE=dist/buildvars.txt
           datetime=$(date +'%Y%m%d%H%M')
           export datetime
           echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
+          echo "datetime=${datetime}" >> "$VARS_FILE"
           pyver=${{ matrix.python-version }}
           echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
-          echo "pyver=${pyver}" >> "$GITHUB_ENV"
+          echo "pyver=${pyver}" >> "$VARS_FILE"
           vernum="${pyver}.${datetime}"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
-          echo "vernum=${vernum}" >> "$GITHUB_ENV"
+          echo "vernum=${vernum}" >> "$VARS_FILE"
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -83,33 +85,50 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
 
-      - name: "List Environment variables"
+      - name: "List environment variables"
         run: env
 
-      - name: "Populate environment variables"
-        id: setenv
-        run: |
-          set -x
-          datetime=$(date +'%Y%m%d%H%M')
-          export datetime
-          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-          pyver=${{ env.pyver }}
-          echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
-          vernum=${{ env.vernum }}
-          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
-
-      - name: Download the artefacts
+      - name: Download build artefacts
         uses: actions/download-artifact@v3
         with:
           name: python-package-distributions
           path: dist/
 
-      - name: "Publish build products (Test PyPI)"
+      - name: "Source environment variables"
+        id: setenv
+        run: >-
+          set -x
+          VARS_FILE=dist/buildvars.txt
+          source "$VARS_FILE"
+
+      - name: "Check environment variables"
+        run: env
+
+      # - name: "Populate environment variables"
+      #  id: setenv
+      #  run: |
+      #    echo "Action triggered by user: ${GITHUB_TRIGGERING_ACTOR}"
+      #    set -x
+      #    datetime=$(date +'%Y%m%d%H%M')
+      #    export datetime
+      #    echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
+      #    pyver=${{ env.pyver }}
+      #    echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
+      #    vernum=${{ env.vernum }}
+      #    echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+
+      - name: Download build artefacts
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: "Publish artefacts (Test PyPI)"
         uses: softprops/action-gh-release@v1
         with:
           # password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          # repository-url: https://test.pypi.org/legacy/
-          repository: https://test.pypi.org/legacy/
+          # repository-url: https://test.pypi.org/project/ITR/
+          repository: https://test.pypi.org/project/ITR/
           # repo_token: "${{ secrets.GITHUB_TOKEN }}"
           # automatic_release_tag:
           tag_name:
