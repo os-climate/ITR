@@ -3,18 +3,14 @@ name: "Tag and Release (Publish to PyPI)"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
-  # pull_request:
 
 jobs:
   build-and-publish:
-    name: "Tag and Release"
+    name: "Tag and release"
     runs-on: ubuntu-latest
     steps:
 
-      - name: "Checkout Repository"
+      - name: "Checkout repository"
         uses: actions/checkout@v3
 
       - name: "Setup Python 3.9"

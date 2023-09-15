@@ -1,15 +1,14 @@
 ---
-name: "Test: builds and publishing"
+name: "Build/Publish Development Release"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
-  push:
-    branches:
-      - "master"
+  pull_request:
+    types:
+      [closed]
 
 jobs:
   pre-release:
-    name: "Build and test publishing (PyPI)"
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
@@ -53,12 +52,16 @@ jobs:
           tox -e build
 
       - name: "Publish build products (GitHub)"
-      - uses: "marvinpinto/action-automatic-releases@latest"
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "dev.${{ matrix.python-version }}.${{ steps.setenv.outputs.vernum }}"
+          automatic_release_tag:
+            "dev.${{ matrix.python-version }}.\
+            ${{ steps.setenv.outputs.vernum }}"
           prerelease: true
-          title: "Development Build Python ${{ matrix.python-version }} ${{ steps.setenv.outputs.vernum }}"
+          title:
+            "Development Build \
+            ${{ matrix.python-version }} ${{ steps.setenv.outputs.vernum }}"
           files: |
             dist/*.tar.gz
             dist/*.whl
