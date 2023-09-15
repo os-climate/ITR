@@ -1,5 +1,5 @@
 ---
-name: "Tag and release (publish to PyPI)"
+name: "Production build and release"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
@@ -31,6 +31,6 @@ jobs:
           python -m build --sdist --wheel --outdir dist/ .
 
       - name: "Publish distribution to PyPI"
-        uses: pypa/gh-action-pypi-publish@release/v1.8
+        uses: pypa/gh-action-pypi-publish@release/v1.8.10
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
