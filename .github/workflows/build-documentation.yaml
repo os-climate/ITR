@@ -8,6 +8,8 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   build_and_deploy:
+    # Don't run if pull request is NOT merged
+    if: github.event.pull_request.merged == true
     name: "Rebuild documentation"
     runs-on: ubuntu-latest
     strategy:
