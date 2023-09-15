@@ -12,10 +12,9 @@ jobs:
         python-version: ['3.10']
     environment:
       name: testpypi
-    with:
-      repository-url: https://test.pypi.org/project/ITR/
     permissions:
-      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
     steps:
 
       - name: "Populate environment variables"
@@ -70,3 +69,5 @@ jobs:
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/project/ITR/
