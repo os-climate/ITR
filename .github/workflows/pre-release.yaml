@@ -12,7 +12,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.9', '3.10', 3.11']
     steps:
 
       - name: "Populate environment variables"
@@ -56,12 +56,11 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag:
-            "dev.${{ matrix.python-version }}.\
             ${{ steps.setenv.outputs.vernum }}"
           prerelease: true
           title:
             "Development Build \
-            ${{ matrix.python-version }} ${{ steps.setenv.outputs.vernum }}"
+            ${{ steps.setenv.outputs.vernum }}"
           files: |
             dist/*.tar.gz
             dist/*.whl
