@@ -122,6 +122,8 @@ jobs:
 
       - name: "Publish to test PyPI 📦"
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           # repository-url: https://test.pypi.org/project/ITR/
