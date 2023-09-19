@@ -8,6 +8,10 @@ name: "🐍📦 Test build and release"
 on:
   workflow_dispatch:
 
+env:
+  python-version: "3.10"
+
+
 ### BUILD ###
 
 jobs:
@@ -34,7 +38,7 @@ jobs:
           export datetime
           echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
           echo "datetime=${datetime}" >> "$VARS_FILE"
-          pyver=${{ matrix.python-version }}
+          pyver=${{ env.python-version }}
           echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
           echo "pyver=${pyver}" >> "$VARS_FILE"
           vernum="${pyver}.${datetime}"
@@ -44,7 +48,7 @@ jobs:
       - name: "Setup Python 3.10"
         uses: actions/setup-python@v4.7.0
         with:
-          python-version: '3.10'
+          python-version: ${{ env.python-version }}
 
       - name: "Install dependencies"
         run: |
@@ -143,9 +147,9 @@ jobs:
     environment:
       name: testpypi
       url: https://test.pypi.org/project/ITR/
-    # permissions:
-    # IMPORTANT: mandatory for trusted publishing
-    #   id-token: write
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
     steps:
 
       - name: "⬇ Download build artefacts"
@@ -153,12 +157,6 @@ jobs:
         with:
           name: Development
           path: dist/
-
-      # TEMP DISABLE - NEED TRUSTED PUBLISHED
-      # - name: "Publish distribution to PyPI"
-      #   uses: pypa/gh-action-pypi-publish@release/v1.8
-      #   with:
-      #     password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: "Remove files unsupported by PyPi"
         run: |
