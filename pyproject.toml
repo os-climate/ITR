@@ -2,30 +2,31 @@
 name = "ITR"
 version = "1.0.5"
 description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
-authors = [
-    {name = "Ortec Finance",email = "joris.cramwinckel@ortec-finance.com"},
-]
-# dynamic = ["dependencies"]
+authors = [ { name = "Ortec Finance", email = "joris.cramwinckel@ortec-finance.com" }, ]
 requires-python = ">=3.9"
 readme = "README.md"
-license = {text = "Apache-2.0"}
-keywords = ["Climate", "ITR", "Finance"]
+license = { text = "Apache-2.0" }
+keywords = [
+  "Climate",
+  "ITR",
+  "Finance"
+]
 classifiers = [
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: MacOS",
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: Unix",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.9",
-    "Topic :: Office/Business :: Financial",
-    "Topic :: Scientific/Engineering",
-    "Topic :: Software Development",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: Unix",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.9",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Software Development",
 ]
 
 [project.urls]
@@ -34,22 +35,24 @@ Downloads = "https://github.com/os-climate/ITR/releases"
 "Bug Tracker" = "https://github.com/os-climate/ITR/issues"
 Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
 "Source Code" = "https://github.com/os-climate/ITR"
+
 [project.optional-dependencies]
-dev = [
-    "nose2",
-]
+dev = [ "nose2" ]
 
 [build-system]
-requires = ["setuptools>=65.7.0", "setuptools-scm"]
+requires = [
+  "setuptools>=65.7.0",
+  "setuptools-scm"
+]
 build-backend = "setuptools.build_meta"
 # requires = ["pdm-backend"]
 # build-backend = "pdm.backend"
 
 [tool.pdm.build]
-dependencies = {file = ["requirements-dev.txt"]}
-source-includes = ["ITR"]
+dependencies = { file = [ "requirements-dev.txt" ] }
+source-includes = [ "ITR" ]
 run-setuptools = true
 
 [tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+dependencies = { file = [ "requirements.txt" ] }
+optional-dependencies = { dev = { file = [ "requirements-dev.txt" ] } }
