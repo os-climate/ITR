@@ -409,7 +409,6 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         sec_reg_scopes = company_sector_region_scope[["sector", "region", "scope"]]
         if scope_to_calc is not None:
             sec_reg_scopes = sec_reg_scopes[sec_reg_scopes.scope.eq(scope_to_calc)]
-        sec_reg_scopes[~sec_reg_scopes.index.duplicated()]
         sec_reg_scopes_mi = pd.MultiIndex.from_frame(sec_reg_scopes).unique()
         bm_proj_t = self._EI_df_t.loc[
             range(
@@ -429,20 +428,12 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         # This piece of work essentially does a column-based join (to avoid extra transpositions)
         result = pd.concat(
             [
-                pd.Series()
-                if x is None
-                else bm_proj_t[tuple(x[1])].rename((x[0], x[1][-1]))
-                for y in sec_reg_scopes.iterrows()
-                # In the happy path, we can use sector/region/scope index as-is
-                # In the less-happy path, we have to construct sector/'Global'/scope
-                # In the least happy path, we have to ditch the row because our benchmark does not cover it
-                for x in [
-                    y
-                    if tuple(y[1]) in bm_proj_t
-                    else (y[0], (y[1][0], "Global", y[1][2]))
-                    if (y[1][0], "Global", y[1][2]) in bm_proj_t
-                    else None
-                ]
+                bm_proj_t[tuple(ser)].rename((idx, ser.iloc[2]))
+                if tuple(ser) in bm_proj_t
+                else bm_proj_t[ser_global].rename((idx, ser.iloc[2]))
+                if (ser_global:=(ser.iloc[0], "Global", ser.iloc[2],)) in bm_proj_t
+                else pd.Series()
+                for idx, ser in sec_reg_scopes.iterrows()
             ],
             axis=1,
         ).dropna(axis=1, how="all")
@@ -1130,9 +1121,7 @@ class EITrajectoryProjector(EIProjector):
                     )
                 )
             else:
-                backfilled_t = historic_ei_t.apply(
-                    lambda col: col.fillna(method="bfill")
-                )
+                backfilled_t = historic_ei_t.bfill(axis=0)
             # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases
             # while also working on real-world use cases.  But we need to formalize this decision.
             backfilled_t = backfilled_t.reset_index()
@@ -1526,14 +1515,12 @@ class EITrajectoryProjector(EIProjector):
         intensities_t = intensities_t.apply(
             lambda col: col
             if col.dtype == np.float64
+            # Float64 NA needs to be converted to np.nan before we can apply nominal_values
             else ITR.nominal_values(col.fillna(np.nan)).astype(np.float64)
         )
-        # FIXME: Pandas 2.1
         # Treat NaN ratios as "unchnaged year on year"
         # FIXME Could we ever have UFloat NaNs here?  np.nan is valid UFloat.
-        ratios_t: pd.DataFrame = intensities_t.rolling(
-            window=2, axis="index", closed="right"
-        ).apply(func=self._year_on_year_ratio, raw=True)
+        ratios_t: pd.DataFrame = intensities_t.rolling(window=2, closed="right").apply(func=self._year_on_year_ratio, raw=True)
         ratios_t = ratios_t.apply(
             lambda col: col.fillna(0) if all(col.map(lambda x: ITR.isna(x))) else col
         )
