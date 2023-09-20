@@ -1,36 +1,127 @@
 ---
 name: "🐍📦 Production build and release"
 
-on:  # yamllint disable-line rule:truthy
+# GitHub/PyPI trusted publisher documentation:
+# https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+
+# yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
   push:
+    # Only invoked on tag pushes
     tags:
       - "v*.*.*"
 
+env:
+  python-version: "3.10"
+
+
+### BUILD ###
+
 jobs:
-  build-and-publish:
-    name: "Tag and release"
+  build:
+    name: "🐍 Build packages"
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for Sigstore
     steps:
 
+      ### BUILDING ###
+
       - name: "Checkout repository"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: "Setup Python 3.9"
-        uses: actions/setup-python@v4
+      - name: "Setup Python 3.10"
+        uses: actions/setup-python@v4.7.0
         with:
-          python-version: "3.9"
+          python-version: ${{ env.python-version }}
 
-      - name: Install pypa/build
+      - name: "Install dependencies"
         run: |
-          python -m
-          pip install build --user
+          python -m pip install --upgrade pip
+          pip install tox tox-gh-actions
 
-      - name: "Build a binary wheel and a source tarball"
+      - name: "Build with TOX"
         run: |
-          python -m build --sdist --wheel --outdir dist/ .
+          tox -e build
 
-      - name: "Publish distribution to PyPI"
-        uses: pypa/gh-action-pypi-publish@release/v1.8.10
+      ### SIGNING ###
+
+      - name: "Sign packages with Sigstore"
+        uses: sigstore/gh-action-sigstore-python@v1.2.3
         with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{github.ref_name}}
+          path: dist/
+
+
+  ### PUBLISH GITHUB ###
+
+  github:
+    name: "📦 Publish packages to GitHub"
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      # IMPORTANT: mandatory for Sigstore and trusted publishing
+      id-token: write
+    steps:
+
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{github.ref_name}}
+          path: dist/
+
+      - name: "📦 Publish release to GitHub"
+        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
+        with:
+          # Valid inputs are:
+          # repo_token, automatic_release_tag, draft, prerelease, title, files
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: true
+          automatic_release_tag: ${{github.ref_name}}
+          title: ${{github.ref_name}}
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+
+
+  ### PUBLISH PYPI ###
+
+  pypi:
+    name: "📦 Publish to PyPi"
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ITR/
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+    steps:
+
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{github.ref_name}}
+          path: dist/
+
+      - name: "Remove files unsupported by PyPi"
+        run: |
+          rm dist/*.txt dist/*.crt dist/*.sig*
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
           password: ${{ secrets.PYPI_API_TOKEN }}
+          repository-url: https://pypi.org/project/ITR/

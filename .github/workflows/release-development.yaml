@@ -4,24 +4,26 @@ name: "🐍📦 Test build and release"
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 
-on:  # yamllint disable-line rule:truthy
+# yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
+
+env:
+  python-version: "3.10"
+
 
 ### BUILD ###
 
 jobs:
   build:
-    name: "Build packages 🐍"
+    name: "🐍 Build packages"
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # IMPORTANT: mandatory for Sigstore
-    strategy:
-      matrix:
-        python-version: ['3.10']
-
-    ### BUILDING ###
-
     steps:
+
+      ### BUILDING ###
+
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
@@ -36,17 +38,17 @@ jobs:
           export datetime
           echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
           echo "datetime=${datetime}" >> "$VARS_FILE"
-          pyver=${{ matrix.python-version }}
+          pyver=${{ env.python-version }}
           echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
           echo "pyver=${pyver}" >> "$VARS_FILE"
           vernum="${pyver}.${datetime}"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
           echo "vernum=${vernum}" >> "$VARS_FILE"
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: "Setup Python 3.10"
+        uses: actions/setup-python@v4.7.0
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.python-version }}
 
       - name: "Install dependencies"
         run: |
@@ -79,15 +81,16 @@ jobs:
       - name: Store the distribution packages
         uses: actions/upload-artifact@v3
         with:
-          name: python-package-distributions
+          name: Development
           path: dist/
+
 
   ### PUBLISH GITHUB ###
 
   github:
     # Only publish to PyPI on tag pushes
     # if: startsWith(github.ref, 'refs/tags/')
-    name: "Test publish to GitHub 📦"
+    name: "📦 Test publish to GitHub"
     needs:
       - build
     runs-on: ubuntu-latest
@@ -97,10 +100,10 @@ jobs:
       id-token: write
     steps:
 
-      - name: "Download build artefacts ⬇"
+      - name: "⬇ Download build artefacts"
         uses: actions/download-artifact@v3
         with:
-          name: python-package-distributions
+          name: Development
           path: dist/
 
       - name: "Source environment variables"
@@ -115,14 +118,12 @@ jobs:
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
           echo "Version number is: ${vernum}"
 
-      # - name: "Check environment variables"
-      #   run: env
 
-      # Valid inputs are:
-      # repo_token, automatic_release_tag, draft, prerelease, title, files
-      - name: "Publish test release to GitHub 📦"
+      - name: "📦 Publish packages to GitHub"
         uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
         with:
+          # Valid inputs are:
+          # repo_token, automatic_release_tag, draft, prerelease, title, files
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
           automatic_release_tag: ${{ steps.setenv.outputs.vernum }}
@@ -133,34 +134,29 @@ jobs:
             dist/*.tar.gz
             dist/*.whl
 
+
   ### PUBLISH TEST PYPI ###
 
   testpypi:
     # Only publish to PyPI on tag pushes
     # if: startsWith(github.ref, 'refs/tags/')
-    name: "Test publish to PyPi 📦"
+    name: "📦 Test publish to PyPi"
     needs:
       - build
     runs-on: ubuntu-latest
     environment:
       name: testpypi
       url: https://test.pypi.org/project/ITR/
-    # permissions:
-    # IMPORTANT: mandatory for trusted publishing
-    #   id-token: write
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
     steps:
 
-      - name: "Download build artefacts ⬇"
+      - name: "⬇ Download build artefacts"
         uses: actions/download-artifact@v3
         with:
-          name: python-package-distributions
+          name: Development
           path: dist/
-
-      # TEMP DISABLE - NEED TRUSTED PUBLISHED
-      # - name: "Publish distribution to PyPI"
-      #   uses: pypa/gh-action-pypi-publish@release/v1.8
-      #   with:
-      #     password: ${{ secrets.PYPI_API_TOKEN }}
 
       - name: "Remove files unsupported by PyPi"
         run: |
