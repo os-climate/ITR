@@ -569,18 +569,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ].ffill()
 
         # NA in exposure is how we drop rows we want to ignore
-        df = df[df.exposure.notna()]
-
-        # TODO: Fix market_cap column naming inconsistency
-        df.rename(
+        df = df[df.exposure.notna()].rename(
             columns={
                 "revenue": "company_revenue",
                 "market_cap": "company_market_cap",
                 "ev": "company_enterprise_value",
                 "evic": "company_ev_plus_cash",
                 "assets": "company_total_assets",
-            },
-            inplace=True,
+                # TODO: Fix market_cap column naming inconsistency
+            }
         )
         df.loc[df.region.isnull(), "region"] = df.country.map(ITR_country_to_region)
 
@@ -1388,7 +1385,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             ].droplevel("metric")
             if prod_base_year.isna().any():
                 logger.warning(
-                    f"The following companies lack base year production info (will be ignored:\n{prod_base_year[prod_base_year.isna()].index.to_list()}"
+                    f"The following companies lack base year production info (will be ignored):\n{prod_base_year[prod_base_year.isna()].index.to_list()}"
                 )
                 prod_base_year = prod_base_year[prod_base_year.notna()]
             prod_metrics = prod_base_year.map(lambda x: f"{x.u:~P}")
@@ -1505,9 +1502,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             )
             new_ab.insert(0, "scope", scope_ab)
             new_ab.set_index("scope", append=True, inplace=True)
-            df_ab[df_ab.applymap(lambda x: ITR.isna(x))] = new_ab.loc[
-                new_ab.index.intersection(df_ab.index)
-            ]
+            df_ab[df_ab.map(ITR.isna)] = new_ab.loc[new_ab.index.intersection(df_ab.index)]
             # DF_AB has gaps filled, but not whole new rows that did not exist before
             # Drop rows in NEW_AB already covered by DF_AB and consolidate
             new_ab.drop(index=df_ab.index, inplace=True, errors="ignore")
