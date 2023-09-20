@@ -12,6 +12,7 @@ jobs:
     if: github.event.pull_request.merged == true
     name: "Rebuild documentation"
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       matrix:
         python-version: ['3.11']
