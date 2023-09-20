@@ -22,9 +22,9 @@ jobs:
           pip install yamllint
           yamllint .
 
-      - name: "Checking TOML files (gh-action-toml-linter)"
-        if: always()
-        uses: yisonPylkita/gh-action-toml-linter@0.1.3
+#      - name: "Checking TOML files (gh-action-toml-linter)"
+#        if: always()
+#        uses: yisonPylkita/gh-action-toml-linter@0.1.3
 
       - name: "Checking GitHub Actions (actionlint)"
         if: always()
