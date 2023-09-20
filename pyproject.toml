@@ -41,16 +41,16 @@ dev = [ "nose2" ]
 
 [build-system]
 requires = [
-  "setuptools>=65.7.0",
-  "setuptools-scm"
+  # "setuptools>=65.7.0",
+  # "setuptools-scm",
+  "pdm-backend"
 ]
-build-backend = "setuptools.build_meta"
-# requires = ["pdm-backend"]
-# build-backend = "pdm.backend"
+# build-backend = "setuptools.build_meta"
+build-backend = "pdm.backend"
 
 [tool.pdm.build]
 dependencies = { file = [ "requirements-dev.txt" ] }
-source-includes = [ "ITR" ]
+# source-includes = [ "ITR" ]
 run-setuptools = true
 
 [tool.setuptools.dynamic]

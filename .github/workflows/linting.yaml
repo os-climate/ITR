@@ -1,7 +1,11 @@
 ---
 name: "🧪 Linting checks"
 
-on: push  # yamllint disable-line rule:truthy
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    types:
+      [opened, reopened, edited]
 
 jobs:
   lint:
