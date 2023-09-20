@@ -6,7 +6,12 @@ import numpy as np
 from pydantic import BaseModel, ValidationError
 
 from . import ureg, Q_
-from ITR.data.osc_units import BenchmarkMetric, EmissionsQuantity, EI_Quantity, Quantity_type
+from ITR.data.osc_units import (
+    BenchmarkMetric,
+    EmissionsQuantity,
+    EI_Quantity,
+    Quantity_type,
+)
 import pint
 
 from ITR.configs import (

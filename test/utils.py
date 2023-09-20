@@ -184,31 +184,10 @@ def gen_company_data(
                 pass
             elif EScope.S1S2 in scopes:  # and EScope.S3 not in scopes
                 # Compute S3 from S1S2S3 - S1S2
-                company_dict['ghg_s3'] = production * (
-                    bm_ei[2019] - bm_ei_scopes_t.loc[
-                        2019,
-                        (sector, slice(None), EScope.S1S2)
-                    ].iloc[0]
-                )
-            elif EScope.S3 in scopes: # and EScope.S1S2 not in scopes
-                # Compute S1S2 from S1S2S3 - S3
-                company_dict['ghg_s1s2'] = production * (
-                    bm_ei[2019] - bm_ei_scopes_t.loc[
-                        2019,
-                        (sector, slice(None), EScope.S3)
-                    ].iloc[0]
-                )
-            else:
-                s1s2_s3_split = random.uniform(0.5,0.9)
-                company_dict['ghg_s1s2'] = (production * bm_ei[2019] * (1-s1s2_s3_split))
-                company_dict['ghg_s3'] = (production * bm_ei[2019] * s1s2_s3_split)
-                scope_projections[EScope.S1S2.name] = {
-                    'ei_metric': EI_Metric(ei_metric),
-                    'projections': [
-                        ICompanyEIProjection.model_validate({
-                            'year':y,
-                            'value': EI_Quantity(interpolate_value_at_year(y, bm_ei * (1-s1s2_s3_split), ei_nz_year, ei_max_negative)),
-                        }) for y in range(2019, 2051)
+                company_dict["ghg_s3"] = production * (
+                    bm_ei[2019]
+                    - bm_ei_scopes_t.loc[2019, (sector, slice(None), EScope.S1S2)].iloc[
+                        0
                     ]
                 )
             elif EScope.S3 in scopes:  # and EScope.S1S2 not in scopes

@@ -8,7 +8,14 @@ import json
 from dataclasses import dataclass
 from typing import Annotated, Any, Dict
 from pydantic_core import CoreSchema, core_schema
-from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, GetJsonSchemaHandler, TypeAdapter, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
+    TypeAdapter,
+    ValidationError,
+)
 from pydantic.json_schema import JsonSchemaValue
 from pydantic.functional_validators import BeforeValidator, AfterValidator
 
@@ -389,20 +396,24 @@ def check_ProductionMetric(units: str) -> str:
     for pu in _production_units:
         if qty.is_compatible_with(pu):
             return units
-        qty_as_annual = convert_to_annual(qty, errors='ignore')
+        qty_as_annual = convert_to_annual(qty, errors="ignore")
         if qty_as_annual.is_compatible_with(pu):
             return str(qty_as_annual.u)
     raise ValueError(f"{qty} not relateable to {_production_units}")
 
+
 ProductionMetric = Annotated[str, AfterValidator(check_ProductionMetric)]
+
 
 def check_EmissionsMetric(units: str) -> str:
     qty = ureg(units)
-    if qty.is_compatible_with('t CO2'):
+    if qty.is_compatible_with("t CO2"):
         return units
     raise ValueError(f"{units} not relateable to 't CO2'")
 
+
 EmissionsMetric = Annotated[str, AfterValidator(check_EmissionsMetric)]
+
 
 def check_EI_Metric(units: str) -> str:
     qty = ureg(units)
@@ -410,11 +421,13 @@ def check_EI_Metric(units: str) -> str:
         if qty.is_compatible_with(ei_u):
             return units
     raise ValueError(f"{units} not relateable to {_ei_units}")
-    
+
+
 EI_Metric = Annotated[str, AfterValidator(check_EI_Metric)]
 
+
 def check_BenchmarkMetric(units: str) -> str:
-    if units=="dimensionless":
+    if units == "dimensionless":
         return units
     qty = ureg(units)
     for ei_u in _ei_units:
@@ -422,7 +435,9 @@ def check_BenchmarkMetric(units: str) -> str:
             return units
     raise ValueError(f"{units} not relateable to 'dimensionless' or {_ei_units}")
 
+
 BenchmarkMetric = Annotated[str, AfterValidator(check_BenchmarkMetric)]
+
 
 def to_Quantity(quantity: Any) -> Quantity:
     if isinstance(quantity, str):
@@ -438,12 +453,23 @@ def to_Quantity(quantity: Any) -> Quantity:
         raise ValueError(f"{quantity} is not a Quantity")
     return quantity
 
+
 def check_EmissionsQuantity(quantity: Quantity) -> Quantity:
     if quantity.is_compatible_with("t CO2"):
         return quantity
-    raise DimensionalityError(quantity, "t CO2", dim1="", dim2="", extra_msg=f"Dimensionality must be compatible with 't CO2'")
-    
-EmissionsQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EmissionsQuantity)]
+    raise DimensionalityError(
+        quantity,
+        "t CO2",
+        dim1="",
+        dim2="",
+        extra_msg=f"Dimensionality must be compatible with 't CO2'",
+    )
+
+
+EmissionsQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EmissionsQuantity)
+]
+
 
 def check_ProductionQuantity(quantity: Quantity) -> Quantity:
     for pu in _production_units:
@@ -456,9 +482,19 @@ def check_ProductionQuantity(quantity: Quantity) -> Quantity:
                 return quantity_as_annual
     except DimensionalityError:
         pass
-    raise DimensionalityError (quantity, str(_production_units), dim1="", dim2="", extra_msg=f"Dimensionality must be compatible with [{_production_units}]")
+    raise DimensionalityError(
+        quantity,
+        str(_production_units),
+        dim1="",
+        dim2="",
+        extra_msg=f"Dimensionality must be compatible with [{_production_units}]",
+    )
 
-ProductionQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_ProductionQuantity)]    
+
+ProductionQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_ProductionQuantity)
+]
+
 
 def check_EI_Quantity(quantity: Quantity) -> Quantity:
     for ei_u in _ei_units:
@@ -471,19 +507,39 @@ def check_EI_Quantity(quantity: Quantity) -> Quantity:
                 return quantity_as_annual
     except DimensionalityError:
         pass
-    raise DimensionalityError (quantity, str(_ei_units), dim1="", dim2="", extra_msg=f"Dimensionality must be compatible with [{_ei_units}]")
+    raise DimensionalityError(
+        quantity,
+        str(_ei_units),
+        dim1="",
+        dim2="",
+        extra_msg=f"Dimensionality must be compatible with [{_ei_units}]",
+    )
 
-EI_Quantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EI_Quantity)]
+
+EI_Quantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EI_Quantity)
+]
+
 
 def check_BenchmarkQuantity(quantity: Quantity) -> Quantity:
-    if str(quantity.u) == 'dimensionless':
+    if str(quantity.u) == "dimensionless":
         return quantity
     for ei_u in _ei_units:
         if quantity.is_compatible_with(ei_u):
             return quantity
-    raise DimensionalityError (quantity, str(_ei_units), dim1='', dim2='', extra_msg=f"Dimensionality must be 'dimensionless' or compatible with [{_ei_units}]")
+    raise DimensionalityError(
+        quantity,
+        str(_ei_units),
+        dim1="",
+        dim2="",
+        extra_msg=f"Dimensionality must be 'dimensionless' or compatible with [{_ei_units}]",
+    )
 
-BenchmarkQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_BenchmarkQuantity)]
+
+BenchmarkQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_BenchmarkQuantity)
+]
+
 
 def check_MonetaryQuantity(quantity: Quantity) -> Quantity:
     try:
@@ -495,34 +551,44 @@ def check_MonetaryQuantity(quantity: Quantity) -> Quantity:
     for currency in ITR.data.currency_dict.values():
         if quantity.is_compatible_with(currency):
             return quantity
-    raise DimensionalityError (quantity, "USD", dim1="", dim2="", extra_msg=f"Dimensionality must be 'dimensionless' or compatible with [{ITR.data.currency_dict.values()}]")
+    raise DimensionalityError(
+        quantity,
+        "USD",
+        dim1="",
+        dim2="",
+        extra_msg=f"Dimensionality must be 'dimensionless' or compatible with [{ITR.data.currency_dict.values()}]",
+    )
 
-MonetaryQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_MonetaryQuantity)]
+
+MonetaryQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_MonetaryQuantity)
+]
+
 
 def Quantity_type(units: str) -> type:
     """A method for making a pydantic compliant Pint quantity field type."""
 
     def validate(value, units, info):
         quantity = to_Quantity(value)
-        assert quantity.is_compatible_with(units), f"Units of {value} incompatible with {units}"
+        assert quantity.is_compatible_with(
+            units
+        ), f"Units of {value} incompatible with {units}"
         return quantity
 
-    def __get_pydantic_core_schema__(
-        source_type: Any
-    ) -> CoreSchema:
+    def __get_pydantic_core_schema__(source_type: Any) -> CoreSchema:
         return core_schema.general_plain_validator_function(
             lambda value, info: validate(value, units, info)
         )
 
     @classmethod
     def __get_pydantic_json_schema__(
-            cls, core_schema: CoreSchema, handler: GetJsonSchemaHandler
+        cls, core_schema: CoreSchema, handler: GetJsonSchemaHandler
     ) -> JsonSchemaValue:
         json_schema = handler(core_schema)
         json_schema = handler.resolve_ref_schema(json_schema)
         json_schema["$ref"] = "#/definitions/Quantity"
         return json_schema
-    
+
     return type(
         "Quantity",
         (Quantity,),
@@ -531,6 +597,7 @@ def Quantity_type(units: str) -> type:
             __get_pydantic_json_schema__=__get_pydantic_json_schema__,
         ),
     )
+
 
 def asPintSeries(
     series: pd.Series, name=None, errors="ignore", inplace=False

@@ -90,7 +90,7 @@ from ITR.interfaces import EI_Quantity
 # As the math shows above, the terms we need to accumulate are 1.0 + growth.
 
 # df.add(1).cumprod(axis=1).astype('pint[dimensionless]') results in a project that looks like this:
-# 
+#
 #                                                2019     2020  ...      2049      2050
 # region                 sector        scope                    ...
 # Steel                  Global        AnyScope   1.0  1.00306  ...  1.419076  1.441071
@@ -119,14 +119,26 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                _prod_delta_df_t = pd.concat([self._convert_benchmark_to_series(bm, EScope.AnyScope).pint.m
-                                              for bm in self._productions_benchmarks[EScope.AnyScope.name].benchmarks], axis=1)
+                _prod_delta_df_t = pd.concat(
+                    [
+                        self._convert_benchmark_to_series(bm, EScope.AnyScope).pint.m
+                        for bm in self._productions_benchmarks[
+                            EScope.AnyScope.name
+                        ].benchmarks
+                    ],
+                    axis=1,
+                )
         except AttributeError:
             assert False
         # See comment above to understand use of `cumprod` function
-        self._prod_df = _prod_delta_df_t.add(1.0).cumprod(axis=0).astype("pint[dimensionless]").T
-        self._prod_df.index.names = [self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE]
-
+        self._prod_df = (
+            _prod_delta_df_t.add(1.0).cumprod(axis=0).astype("pint[dimensionless]").T
+        )
+        self._prod_df.index.names = [
+            self.column_config.SECTOR,
+            self.column_config.REGION,
+            self.column_config.SCOPE,
+        ]
 
     # Note that benchmark production series are dimensionless.
     # FIXME: They also don't need a scope.  Remove scope when we change IBenchmark format...
@@ -141,9 +153,14 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         # Benchmarks don't need work-around for https://github.com/hgrecco/pint/issues/1687, but if they did:
         # units = ureg.parse_units(benchmark.benchmark_metric)
 
-        years, values = list(map(list, zip(*{r.year: r.value.m for r in benchmark.projections}.items())))
-        return pd.Series(PA_(np.array(values), dtype="pint[]"),
-                         index = years, name=(benchmark.sector, benchmark.region, scope))
+        years, values = list(
+            map(list, zip(*{r.year: r.value.m for r in benchmark.projections}.items()))
+        )
+        return pd.Series(
+            PA_(np.array(values), dtype="pint[]"),
+            index=years,
+            name=(benchmark.sector, benchmark.region, scope),
+        )
 
     # Production benchmarks are dimensionless, relevant for AnyScope
     def _get_projected_production(
@@ -161,14 +178,15 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
             [
                 self._convert_benchmark_to_series(bm, scope).pint.m
                 for bm in self._productions_benchmarks[scope.name].benchmarks
-            ], axis=1
+            ],
+            axis=1,
         )
-        
+
         df_partial_pp = df_bm_t.add(1.0).cumprod(axis=0).astype("pint[dimensionless]").T
         df_partial_pp.index.names = [
             self.column_config.SECTOR,
             self.column_config.REGION,
-            self.column_config.SCOPE
+            self.column_config.SCOPE,
         ]
 
         return df_partial_pp
@@ -926,7 +944,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
             [
                 dict(
                     ICompanyData.model_validate(
-                        {k:v for k, v in dict(c).items() if k not in excluded_cols}
+                        {k: v for k, v in dict(c).items() if k not in excluded_cols}
                     )
                 )
                 for c in self.get_company_data(company_ids)

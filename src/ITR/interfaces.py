@@ -9,7 +9,14 @@ from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
 from typing import TYPE_CHECKING, Callable
 from pydantic_core import CoreSchema
-from pydantic import BaseModel, ConfigDict, GetJsonSchemaHandler, model_validator, field_validator, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    GetJsonSchemaHandler,
+    model_validator,
+    field_validator,
+    ValidationError,
+)
 from pydantic.json_schema import JsonSchemaValue
 
 import ITR
@@ -186,7 +193,7 @@ class ScoreAggregation(BaseModel):
 class ScoreAggregationScopes(BaseModel):
     S1: Optional[ScoreAggregation] = None
     S2: Optional[ScoreAggregation] = None
-    S1S2: Optional[ScoreAggregation]=  None
+    S1S2: Optional[ScoreAggregation] = None
     S3: Optional[ScoreAggregation] = None
     S1S2S3: Optional[ScoreAggregation] = None
 
@@ -234,7 +241,9 @@ class IBenchmark(BaseModel):
     benchmark_metric: BenchmarkMetric
     projections_nounits: Optional[List[UProjection]] = None
     projections: Optional[List[IProjection]] = None
-    base_year_production: Optional[ProductionQuantity] = None  # FIXME: applies only to production benchmarks
+    base_year_production: Optional[
+        ProductionQuantity
+    ] = None  # FIXME: applies only to production benchmarks
 
     def __init__(
         self,
@@ -292,7 +301,7 @@ class IBenchmark(BaseModel):
 
 class IBenchmarks(BaseModel):
     benchmarks: List[IBenchmark]
-    production_centric:bool = False
+    production_centric: bool = False
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -652,7 +661,7 @@ class ITargetData(BaseModel):
     target_base_year_unit: str
     target_reduction_pct: float  # This is actually a fraction, not a percentage.  1.0 = complete reduction to zero.
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     def start_end_base_order(cls, v):
         if v["target_start_year"] < v["target_base_year"]:
             raise ValueError(
@@ -690,7 +699,7 @@ class ICompanyData(BaseModel):
     # Emissions typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
     emissions_metric: Optional[EmissionsMetric] = None
     production_metric: Optional[ProductionMetric] = None
-    
+
     # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
     base_year_production: Optional[ProductionQuantity] = None
     ghg_s1s2: Optional[EmissionsQuantity] = None
@@ -1024,16 +1033,32 @@ class ICompanyAggregates(ICompanyData):
             EmissionsQuantity(scope_company_data["cumulative_trajectory"])
         if not ITR.isna(scope_company_data["cumulative_target"]):
             EmissionsQuantity(scope_company_data["cumulative_target"])
-        if not Q_(scope_company_data["benchmark_temperature"]).is_compatible_with(ureg("delta_degC")):
-            raise ValueError(f"benchmark temperature {scope_company_data["benchmark_temperature"]} is not compatible with delta_degC")
+        if not Q_(scope_company_data["benchmark_temperature"]).is_compatible_with(
+            ureg("delta_degC")
+        ):
+            raise ValueError(
+                f"benchmark temperature {scope_company_data['benchmark_temperature']} is not compatible with delta_degC"
+            )
         else:
-            scope_company_data["benchmark_temperature"] = Q_(scope_company_data["benchmark_temperature"])
+            scope_company_data["benchmark_temperature"] = Q_(
+                scope_company_data["benchmark_temperature"]
+            )
         EmissionsQuantity(scope_company_data["benchmark_global_budget"])
         if not isinstance(scope_company_data["scope"], EScope):
-            raise ValueError(f"scope {scope_company_data["scope"]} is not a valid scope")
-        if not ITR.isna(scope_company_data["trajectory_exceedance_year"]) and not isinstance(scope_company_data["trajectory_exceedance_year"], int):
-            raise ValueError(f"scope {scope_company_data["trajectory_exceedance_year"]} is not a valid trajectory exceedance year value")
-        if not ITR.isna(scope_company_data["target_exceedance_year"]) and not isinstance(scope_company_data["target_exceedance_year"], int):
-            raise ValueError(f"scope {scope_company_data["target_exceedance_year"]} is not a valid target exceedance year value")
+            raise ValueError(
+                f"scope {scope_company_data['scope']} is not a valid scope"
+            )
+        if not ITR.isna(
+            scope_company_data["trajectory_exceedance_year"]
+        ) and not isinstance(scope_company_data["trajectory_exceedance_year"], int):
+            raise ValueError(
+                f"scope {scope_company_data['trajectory_exceedance_year']} is not a valid trajectory exceedance year value"
+            )
+        if not ITR.isna(
+            scope_company_data["target_exceedance_year"]
+        ) and not isinstance(scope_company_data["target_exceedance_year"], int):
+            raise ValueError(
+                f"scope {scope_company_data['target_exceedance_year']} is not a valid target exceedance year value"
+            )
         # ...while not re-running any validation on super_instnace
         return cls.model_construct(**scope_company_data, **super_instance.__dict__)
