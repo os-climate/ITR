@@ -94,12 +94,47 @@ jobs:
             dist/*.whl
 
 
+  ### PUBLISH TEST PYPI ###
+
+  testpypi:
+    # Only publish to PyPI on tag pushes
+    # if: startsWith(github.ref, 'refs/tags/')
+    name: "📦 Test publish to PyPi"
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/ITR/
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+    steps:
+
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: Development
+          path: dist/
+
+      - name: "Remove files unsupported by PyPi"
+        run: |
+          rm dist/*.txt dist/*.crt dist/*.sig*
+
+      - name: Publish distribution to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
+
+
   ### PUBLISH PYPI ###
 
   pypi:
     name: "📦 Publish to PyPi"
     needs:
-      - build
+      - testpypi
     runs-on: ubuntu-latest
     environment:
       name: pypi
