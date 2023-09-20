@@ -26,3 +26,16 @@ repos:
         # pre-commit's default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
         language_version: python3.11
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: 'v8.49.0'
+    hooks:
+      - id: eslint
+        files: \^*.toml
+        types: [file]
+        additional_dependencies:
+          - eslint
+          - eslint-config-google
+          - eslint-loader
+          - eslint-plugin-react
+          - babel-eslint
