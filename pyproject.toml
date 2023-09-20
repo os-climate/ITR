@@ -36,23 +36,6 @@ Downloads = "https://github.com/os-climate/ITR/releases"
 Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
 "Source Code" = "https://github.com/os-climate/ITR"
 
-[project.optional-dependencies]
-dev = [ "nose2" ]
-
 [build-system]
-requires = [
-  # "setuptools>=65.7.0",
-  # "setuptools-scm",
-  "pdm-backend"
-]
-# build-backend = "setuptools.build_meta"
 build-backend = "pdm.backend"
-
-[tool.pdm.build]
-dependencies = { file = [ "requirements-dev.txt" ] }
-# source-includes = [ "ITR" ]
-run-setuptools = true
-
-[tool.setuptools.dynamic]
-dependencies = { file = [ "requirements.txt" ] }
-optional-dependencies = { dev = { file = [ "requirements-dev.txt" ] } }
+requires = "pdm-backend"
