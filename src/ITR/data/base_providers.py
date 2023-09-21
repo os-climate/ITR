@@ -152,7 +152,6 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         # Benchmarks don't need work-around for https://github.com/hgrecco/pint/issues/1687, but if they did:
         # units = ureg.parse_units(benchmark.benchmark_metric)
-
         years, values = list(
             map(list, zip(*{r.year: r.value.m for r in benchmark.projections}.items()))
         )
@@ -433,7 +432,14 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                 bm_proj_t[tuple(ser)].rename((idx, ser.iloc[2]))
                 if tuple(ser) in bm_proj_t
                 else bm_proj_t[ser_global].rename((idx, ser.iloc[2]))
-                if (ser_global:=(ser.iloc[0], "Global", ser.iloc[2],)) in bm_proj_t
+                if (
+                    ser_global := (
+                        ser.iloc[0],
+                        "Global",
+                        ser.iloc[2],
+                    )
+                )
+                in bm_proj_t
                 else pd.Series()
                 for idx, ser in sec_reg_scopes.iterrows()
             ],
@@ -1523,9 +1529,9 @@ class EITrajectoryProjector(EIProjector):
         # FIXME: Pandas 2.1
         # Treat NaN ratios as "unchnaged year on year"
         # FIXME Could we ever have UFloat NaNs here?  np.nan is valid UFloat.
-        ratios_t: pd.DataFrame = intensities_t.rolling(
-            window=2, axis="index", closed="right"
-        ).apply(func=self._year_on_year_ratio, raw=True)
+        ratios_t: pd.DataFrame = intensities_t.rolling(window=2, closed="right").apply(
+            func=self._year_on_year_ratio, raw=True
+        )
         ratios_t = ratios_t.apply(
             lambda col: col.fillna(0) if all(col.map(lambda x: ITR.isna(x))) else col
         )
@@ -1849,7 +1855,7 @@ class EITargetProjector(EIProjector):
                             )
                         )
                         ei_projection_scopes[scope_name] = ICompanyEIProjections(
-                            ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
+                            ei_metric=f"{target_ei_value.u:~P}",
                             projections=self._get_bounded_projections(
                                 model_ei_projections
                             ),
@@ -1956,7 +1962,7 @@ class EITargetProjector(EIProjector):
                                 ei_projection_scopes[
                                     scope_name
                                 ] = ICompanyEIProjections(
-                                    ei_metric=EI_Quantity(f"{last_ei_value.u:~P}"),
+                                    ei_metric=f"{last_ei_value.u:~P}",
                                     projections=self._get_bounded_projections(
                                         model_ei_projections
                                     ),
@@ -2074,9 +2080,7 @@ class EITargetProjector(EIProjector):
                                 ei_projection_scopes[
                                     scope_name
                                 ] = ICompanyEIProjections(
-                                    ei_metric=EI_Quantity(
-                                        f"{(last_em_value/last_prod_value).u:~P}"
-                                    ),
+                                    ei_metric=f"{(last_em_value/last_prod_value).u:~P}",
                                     projections=self._get_bounded_projections(
                                         model_ei_projections
                                     ),
@@ -2162,7 +2166,7 @@ class EITargetProjector(EIProjector):
                             )
                         ] + model_ei_projections
                     ei_projection_scopes[scope_name] = ICompanyEIProjections(
-                        ei_metric=EI_Quantity(f"{target_ei_value.u:~P}"),
+                        ei_metric=f"{target_ei_value.u:~P}",
                         projections=self._get_bounded_projections(model_ei_projections),
                     )
 

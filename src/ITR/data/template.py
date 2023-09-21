@@ -910,13 +910,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 .reset_index()
                 .rename(columns={"level_1": ColumnsConfig.SCOPE})
                 .set_index("company_id")
+                # Most things are emissions, but all things are strings
+                .assign(variable=VariablesConfig.EMISSIONS)
             )
+            # Fix the strings that are not emissions
             df2.loc[
                 df2[ColumnsConfig.SCOPE] == "production", ColumnsConfig.VARIABLE
             ] = VariablesConfig.PRODUCTIONS
-            df2.loc[
-                df2[ColumnsConfig.SCOPE] != "production", ColumnsConfig.VARIABLE
-            ] = VariablesConfig.EMISSIONS
+
             df3 = (
                 df2.reset_index()
                 .set_index(["company_id", "variable", "scope"])
@@ -1505,7 +1506,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             )
             new_ab.insert(0, "scope", scope_ab)
             new_ab.set_index("scope", append=True, inplace=True)
-            df_ab[df_ab.map(ITR.isna)] = new_ab.loc[new_ab.index.intersection(df_ab.index)]
+            df_ab[df_ab.map(ITR.isna)] = new_ab.loc[
+                new_ab.index.intersection(df_ab.index)
+            ]
             # DF_AB has gaps filled, but not whole new rows that did not exist before
             # Drop rows in NEW_AB already covered by DF_AB and consolidate
             new_ab.drop(index=df_ab.index, inplace=True, errors="ignore")

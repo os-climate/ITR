@@ -162,7 +162,8 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         """
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         for sheetname, df in self.benchmark_excel.items():
-            self.benchmark_excel[sheetname] = df.fillna(method="ffill")
+            # This fills down the sector information for different regions
+            self.benchmark_excel[sheetname] = df.ffill()
         self._convert_excel_to_model = convert_dimensionless_benchmark_excel_to_model
         production_bms = self._convert_excel_to_model(
             self.benchmark_excel,
@@ -192,14 +193,15 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
     def __init__(
         self,
         excel_path: str,
-        benchmark_temperature: quantity("delta_degC"),
+        benchmark_temperature: Quantity_type("delta_degC"),
         benchmark_global_budget: EmissionsQuantity,
         is_AFOLU_included: bool,
         column_config: Type[ColumnsConfig] = ColumnsConfig,
     ):
         self.benchmark_excel = pd.read_excel(excel_path, sheet_name=None, skiprows=0)
         for sheetname, df in self.benchmark_excel.items():
-            self.benchmark_excel[sheetname] = df.fillna(method="ffill")
+            # This fills down the sector information for different regions
+            self.benchmark_excel[sheetname] = df.ffill()
         self._convert_excel_to_model = convert_benchmarks_ei_excel_to_model
         ei_bm_scopes = self._convert_excel_to_model(
             self.benchmark_excel,

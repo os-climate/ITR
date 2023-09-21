@@ -93,11 +93,11 @@ class DataWarehouse(ABC):
                 "ghg_s3": c.ghg_s3,
                 "historic_data": IHistoricData(
                     productions=c.historic_data.productions,
-                    emissions=c.historic_data.emissions.copy(),
-                    emissions_intensities=c.historic_data.emissions_intensities.copy(),
+                    emissions=c.historic_data.emissions.model_copy(),
+                    emissions_intensities=c.historic_data.emissions_intensities.model_copy(),
                 ),
-                "projected_intensities": c.projected_intensities.copy(),
-                "projected_targets": c.projected_targets.copy(),
+                "projected_intensities": c.projected_intensities.model_copy(),
+                "projected_targets": c.projected_targets.model_copy(),
             }
             orig_historic_data = self.orig_historic_data[c.company_id]
             for scope_name in EScope.get_scopes():
@@ -791,7 +791,7 @@ class DataWarehouse(ABC):
         base_year: int,
         target_year: int,
         budgeted_ei: pd.DataFrame,
-        benchmark_temperature: quantity("delta_degC"),
+        benchmark_temperature: Quantity_type("delta_degC"),
         global_budget: EmissionsQuantity,
     ) -> pd.DataFrame:
         # trajectories are projected from historic data and we are careful to fill all gaps between historic and projections
@@ -1007,12 +1007,20 @@ class DataWarehouse(ABC):
         # Limit projected_ei to the year range of projected_production
         proj_ei_t = asPintDataFrame(projected_ei[proj_prod_t.index].T)
         units_CO2e = "t CO2e"
-        proj_CO2e_m_t = proj_prod_t.combine(
-            proj_ei_t,
-            lambda prod, ei: asPintSeries(
-                ITR.data.osc_units.align_production_to_bm(prod, ei).mul(ei)
-            ).pint.m_as(units_CO2e),
+        # We use pd.concat because pd.combine reverts our PintArrays into object arrays :-/
+        proj_CO2e_m_t = pd.concat(
+            [
+                ITR.data.osc_units.align_production_to_bm(
+                    proj_prod_t[col], proj_ei_t[col]
+                )
+                .mul(proj_ei_t[col])
+                .pint.m_as(units_CO2e)
+                for col in proj_ei_t.columns
+            ],
+            axis=1,
         )
+        # pd.concat names parameter refers to index.names; there's no way to set columns.names
+        proj_CO2e_m_t.columns.names = proj_ei_t.columns.names
         if ITR.HAS_UNCERTAINTIES:
             # Sum both the nominal and std_dev values, because these series are completely correlated
             # Note that NaNs in this dataframe will be nan+/-nan, showing up in both nom and err
