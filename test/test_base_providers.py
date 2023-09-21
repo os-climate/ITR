@@ -65,7 +65,7 @@ class TestBaseProvider(unittest.TestCase):
             elif company_data["sector"] == "Steel":
                 company_data["production_metric"] = "t Steel"
         self.companies = [
-            ICompanyData.model_validate(company_data) for company_data in parsed_json
+            ICompanyData.parse_obj(company_data) for company_data in parsed_json
         ]
         # If the company data does not have S3 emissions projections, it won't match any S3 scope data
         self.base_company_data = BaseCompanyDataProvider(self.companies)
@@ -73,7 +73,7 @@ class TestBaseProvider(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(
             production_benchmarks=prod_bms
         )
@@ -81,7 +81,7 @@ class TestBaseProvider(unittest.TestCase):
         # load intensity benchmarks
         with open(self.benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         self.base_warehouse = DataWarehouse(

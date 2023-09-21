@@ -8,16 +8,7 @@ from operator import add
 from enum import Enum
 from typing import Optional, Dict, List, Literal, Union
 from typing import TYPE_CHECKING, Callable
-from pydantic_core import CoreSchema
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    GetJsonSchemaHandler,
-    model_validator,
-    field_validator,
-    ValidationError,
-)
-from pydantic.json_schema import JsonSchemaValue
+from pydantic import BaseModel, parse_obj_as, validator, root_validator, ValidationError
 
 import ITR
 
@@ -35,7 +26,7 @@ from ITR.data.osc_units import (
     EI_Metric,
     EI_Quantity,
     MonetaryQuantity,
-    Quantity_type,
+    quantity,
 )
 from ITR.configs import ProjectionControls, LoggingConfig
 
@@ -155,22 +146,18 @@ class EScoreResultType(Enum):
 
 
 class AggregationContribution(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     company_name: str
     company_id: str
-    temperature_score: Quantity_type("delta_degC")
-    contribution_relative: Optional[Quantity_type("percent")] = None
-    contribution: Optional[Quantity_type("delta_degC")] = None
+    temperature_score: quantity("delta_degC")
+    contribution_relative: Optional[quantity("percent")]
+    contribution: Optional[quantity("delta_degC")]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class Aggregation(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    score: Quantity_type("delta_degC")
+    score: quantity("delta_degC")
     # proportion is a number from 0..1
     proportion: float
     contributions: List[AggregationContribution]
@@ -180,10 +167,8 @@ class Aggregation(BaseModel):
 
 
 class ScoreAggregation(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     all: Aggregation
-    influence_percentage: Quantity_type("percent")
+    influence_percentage: quantity("percent")
     grouped: Dict[str, Aggregation]
 
     def __getitem__(self, item):
@@ -191,33 +176,31 @@ class ScoreAggregation(BaseModel):
 
 
 class ScoreAggregationScopes(BaseModel):
-    S1: Optional[ScoreAggregation] = None
-    S2: Optional[ScoreAggregation] = None
-    S1S2: Optional[ScoreAggregation] = None
-    S3: Optional[ScoreAggregation] = None
-    S1S2S3: Optional[ScoreAggregation] = None
+    S1: Optional[ScoreAggregation]
+    S2: Optional[ScoreAggregation]
+    S1S2: Optional[ScoreAggregation]
+    S3: Optional[ScoreAggregation]
+    S1S2S3: Optional[ScoreAggregation]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class ScoreAggregations(BaseModel):
-    short: Optional[ScoreAggregationScopes] = None
-    mid: Optional[ScoreAggregationScopes] = None
-    long: Optional[ScoreAggregationScopes] = None
+    short: Optional[ScoreAggregationScopes]
+    mid: Optional[ScoreAggregationScopes]
+    long: Optional[ScoreAggregationScopes]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class PortfolioCompany(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     company_name: str
     company_id: str
-    company_isin: Optional[str] = None
+    company_isin: Optional[str]
     investment_value: MonetaryQuantity
-    user_fields: Optional[dict] = None
+    user_fields: Optional[dict]
 
 
 # U is Unquantified, which is presently how our benchmarks come in (production_metric comes in elsewhere)
@@ -227,23 +210,19 @@ class UProjection(BaseModel):
 
 
 class IProjection(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     year: int
     value: BenchmarkQuantity
 
 
 class IBenchmark(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     sector: str
     region: str
     benchmark_metric: BenchmarkMetric
-    projections_nounits: Optional[List[UProjection]] = None
-    projections: Optional[List[IProjection]] = None
+    projections_nounits: Optional[List[UProjection]]
+    projections: Optional[List[IProjection]]
     base_year_production: Optional[
         ProductionQuantity
-    ] = None  # FIXME: applies only to production benchmarks
+    ]  # FIXME: applies only to production benchmarks
 
     def __init__(
         self,
@@ -301,7 +280,7 @@ class IBenchmark(BaseModel):
 
 class IBenchmarks(BaseModel):
     benchmarks: List[IBenchmark]
-    production_centric: bool = False
+    production_centric = False
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -312,27 +291,25 @@ class IBenchmarks(BaseModel):
 
 
 class IProductionBenchmarkScopes(BaseModel):
-    AnyScope: Optional[IBenchmarks] = None
-    S1: Optional[IBenchmarks] = None
-    S2: Optional[IBenchmarks] = None
-    S1S2: Optional[IBenchmarks] = None
-    S3: Optional[IBenchmarks] = None
-    S1S2S3: Optional[IBenchmarks] = None
+    AnyScope: Optional[IBenchmarks]
+    S1: Optional[IBenchmarks]
+    S2: Optional[IBenchmarks]
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
 class IEIBenchmarkScopes(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    S1: Optional[IBenchmarks] = None
-    S2: Optional[IBenchmarks] = None
-    S1S2: Optional[IBenchmarks] = None
-    S3: Optional[IBenchmarks] = None
-    S1S2S3: Optional[IBenchmarks] = None
-    benchmark_temperature: Quantity_type("delta_degC")
-    benchmark_global_budget: Quantity_type("Gt CO2")
+    S1: Optional[IBenchmarks]
+    S2: Optional[IBenchmarks]
+    S1S2: Optional[IBenchmarks]
+    S3: Optional[IBenchmarks]
+    S1S2S3: Optional[IBenchmarks]
+    benchmark_temperature: quantity("delta_degC")
+    benchmark_global_budget: quantity("Gt CO2")
     is_AFOLU_included: bool
 
     def __getitem__(self, item):
@@ -340,10 +317,8 @@ class IEIBenchmarkScopes(BaseModel):
 
 
 class ICompanyEIProjection(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     year: int
-    value: Optional[EI_Quantity] = None
+    value: Optional[EI_Quantity]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -408,13 +383,14 @@ class ICompanyEIProjections(BaseModel):
 
 
 class DF_ICompanyEIProjections(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     ei_metric: Optional[EI_Metric] = None
     projections: pd.Series
 
-    @field_validator("projections")
-    def val_projections(cls, v: pd.Series):
+    class Config:
+        arbitrary_types_allowed = True
+
+    @validator("projections")
+    def allow_projections(cls, v):
         if isinstance(v.pint, PintSeriesAccessor):
             return v
         raise ValidationError(f"{v} is not composed of a PintArray")
@@ -459,11 +435,11 @@ class DF_ICompanyEIProjections(BaseModel):
 
 
 class ICompanyEIProjectionsScopes(BaseModel):
-    S1: Optional[DF_ICompanyEIProjections] = None
-    S2: Optional[DF_ICompanyEIProjections] = None
-    S1S2: Optional[DF_ICompanyEIProjections] = None
-    S3: Optional[DF_ICompanyEIProjections] = None
-    S1S2S3: Optional[DF_ICompanyEIProjections] = None
+    S1: Optional[DF_CompanyEIProjections] = None
+    S2: Optional[DF_CompanyEIProjections] = None
+    S1S2: Optional[DF_CompanyEIProjections] = None
+    S3: Optional[DF_CompanyEIProjections] = None
+    S1S2S3: Optional[DF_CompanyEIProjections] = None
 
     def __init__(self, *args, **kwargs):
         # We don't validate anything in the first step because incoming parameters are the wild west
@@ -511,17 +487,13 @@ class ICompanyEIProjectionsScopes(BaseModel):
 
 
 class IProductionRealization(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     year: int
-    value: Optional[ProductionQuantity] = None
+    value: Optional[ProductionQuantity]
 
 
 class IEmissionRealization(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     year: int
-    value: Optional[EmissionsQuantity] = None
+    value: Optional[EmissionsQuantity]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -577,10 +549,8 @@ class IHistoricEmissionsScopes(BaseModel):
 
 
 class IEIRealization(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     year: int
-    value: Optional[EI_Quantity] = None
+    value: Optional[EI_Quantity]
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -638,9 +608,9 @@ class IHistoricEIScopes(BaseModel):
 
 
 class IHistoricData(BaseModel):
-    productions: Optional[List[IProductionRealization]] = None
-    emissions: Optional[IHistoricEmissionsScopes] = None
-    emissions_intensities: Optional[IHistoricEIScopes] = None
+    productions: Optional[List[IProductionRealization]]
+    emissions: Optional[IHistoricEmissionsScopes]
+    emissions_intensities: Optional[IHistoricEIScopes]
 
 
 class ITargetData(BaseModel):
@@ -652,17 +622,16 @@ class ITargetData(BaseModel):
         Literal["Absolute"],
     ]
     target_scope: EScope
-    target_start_year: Optional[int] = None
+    target_start_year: Optional[int]
     target_base_year: int
     target_end_year: int
 
     target_base_year_qty: float
-    target_base_year_err: Optional[float] = None
+    target_base_year_err: Optional[float]
     target_base_year_unit: str
     target_reduction_pct: float  # This is actually a fraction, not a percentage.  1.0 = complete reduction to zero.
 
-    @model_validator(mode="before")
-
+    @root_validator
     def start_end_base_order(cls, v):
         if v["target_start_year"] < v["target_base_year"]:
             raise ValueError(
@@ -680,8 +649,6 @@ class ITargetData(BaseModel):
 
 
 class ICompanyData(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     company_name: str
     company_id: str
 
@@ -691,37 +658,39 @@ class ICompanyData(BaseModel):
     # while target_probability in ICompanyData is company-specific
     target_probability: float = np.nan
 
-    target_data: Optional[List[ITargetData]] = None
-    # IHistoric data can contain None values; need to convert to Quantified NaNs
-    historic_data: Optional[IHistoricData] = None
+    target_data: Optional[List[ITargetData]]
+    historic_data: Optional[
+        IHistoricData
+    ]  # IHistoric data can contain None values; need to convert to Quantified NaNs
 
-    country: Optional[str] = None
+    country: Optional[str]
 
-    # Emissions typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
-    emissions_metric: Optional[EmissionsMetric] = None
-    production_metric: Optional[ProductionMetric] = None
+    emissions_metric: Optional[
+        EmissionsMetric
+    ]  # Typically use t CO2 for MWh/GJ and Mt CO2 for TWh/PJ
+    production_metric: Optional[ProductionMetric]
 
     # These three instance variables match against financial data below, but are incomplete as historic_data and target_data
-    base_year_production: Optional[ProductionQuantity] = None
-    ghg_s1s2: Optional[EmissionsQuantity] = None
-    ghg_s3: Optional[EmissionsQuantity] = None
+    base_year_production: Optional[ProductionQuantity]
+    ghg_s1s2: Optional[EmissionsQuantity]
+    ghg_s3: Optional[EmissionsQuantity]
 
-    industry_level_1: Optional[str] = None
-    industry_level_2: Optional[str] = None
-    industry_level_3: Optional[str] = None
-    industry_level_4: Optional[str] = None
+    industry_level_1: Optional[str]
+    industry_level_2: Optional[str]
+    industry_level_3: Optional[str]
+    industry_level_4: Optional[str]
 
-    company_revenue: Optional[MonetaryQuantity] = None
-    company_market_cap: Optional[MonetaryQuantity] = None
-    company_enterprise_value: Optional[MonetaryQuantity] = None
-    company_ev_plus_cash: Optional[MonetaryQuantity] = None
-    company_total_assets: Optional[MonetaryQuantity] = None
-    company_cash_equivalents: Optional[MonetaryQuantity] = None
+    company_revenue: Optional[MonetaryQuantity]
+    company_market_cap: Optional[MonetaryQuantity]
+    company_enterprise_value: Optional[MonetaryQuantity]
+    company_ev_plus_cash: Optional[MonetaryQuantity]
+    company_total_assets: Optional[MonetaryQuantity]
+    company_cash_equivalents: Optional[MonetaryQuantity]
 
     # Initialized later when we have benchmark information.  It is OK to initialize as None and fix later.
     # They will show up as {'S1S2': { 'projections': [ ... ] }}
-    projected_targets: Optional[ICompanyEIProjectionsScopes] = None
-    projected_intensities: Optional[ICompanyEIProjectionsScopes] = None
+    projected_targets: Optional[ICompanyEIProjectionsScopes]
+    projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
     # TODO: Do we want to do some sector inferencing here?
 
@@ -772,7 +741,7 @@ class ICompanyData(BaseModel):
     ):
         valid_realizations = [rv for rv in realized_values if not ITR.isna(rv.value)]
         if not valid_realizations:
-            retval = realized_values[0].model_copy()
+            retval = realized_values[0].copy()
             retval.year = None
             return retval
         valid_realizations.sort(key=lambda x: x.year, reverse=True)
@@ -996,25 +965,25 @@ class ICompanyData(BaseModel):
 
 # These aggregate terms are all derived from the benchmark being used
 class ICompanyAggregates(ICompanyData):
-    cumulative_budget: Optional[EmissionsQuantity] = None
-    cumulative_scaled_budget: Optional[EmissionsQuantity] = None
-    cumulative_trajectory: Optional[EmissionsQuantity] = None
-    cumulative_target: Optional[EmissionsQuantity] = None
-    benchmark_temperature: Optional[Quantity_type("delta_degC")] = None
-    benchmark_global_budget: Optional[EmissionsQuantity] = None
-    scope: Optional[EScope] = None
+    cumulative_budget: Optional[EmissionsQuantity]
+    cumulative_scaled_budget: Optional[EmissionsQuantity]
+    cumulative_trajectory: Optional[EmissionsQuantity]
+    cumulative_target: Optional[EmissionsQuantity]
+    benchmark_temperature: Optional[quantity("delta_degC")]
+    benchmark_global_budget: Optional[EmissionsQuantity]
+    scope: Optional[EScope]
 
     # The first year that cumulative_projections exceeds the 2050 cumulative_budget
-    trajectory_exceedance_year: Optional[int] = None
-    target_exceedance_year: Optional[int] = None
+    trajectory_exceedance_year: Optional[int]
+    target_exceedance_year: Optional[int]
 
     # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
-    # projected_targets: Optional[ICompanyEIProjectionsScopes] = None
-    # projected_intensities: Optional[ICompanyEIProjectionsScopes] = None
+    # projected_targets: Optional[ICompanyEIProjectionsScopes]
+    # projected_intensities: Optional[ICompanyEIProjectionsScopes]
 
     # Custom validator here
-    @field_validator("trajectory_exceedance_year", "target_exceedance_year")
-    def val_exceedance_year(cls, v):
+    @validator("trajectory_exceedance_year", "target_exceedance_year", pre=True)
+    def allow_NA(cls, v):
         if isinstance(v, int):
             return v
         if pd.isna(v):
@@ -1028,12 +997,12 @@ class ICompanyAggregates(ICompanyData):
         SCOPE_COMPANY_DATA is the dictionary of the new values we want to add...for this one company
         """
         # FIXME: Would love to know how to run these automatically...
-        EmissionsQuantity(scope_company_data["cumulative_budget"])
-        EmissionsQuantity(scope_company_data["cumulative_scaled_budget"])
+        EmissionsQuantity.validate(scope_company_data["cumulative_budget"])
+        EmissionsQuantity.validate(scope_company_data["cumulative_scaled_budget"])
         if not ITR.isna(scope_company_data["cumulative_trajectory"]):
-            EmissionsQuantity(scope_company_data["cumulative_trajectory"])
+            EmissionsQuantity.validate(scope_company_data["cumulative_trajectory"])
         if not ITR.isna(scope_company_data["cumulative_target"]):
-            EmissionsQuantity(scope_company_data["cumulative_target"])
+            EmissionsQuantity.validate(scope_company_data["cumulative_target"])
         if not Q_(scope_company_data["benchmark_temperature"]).is_compatible_with(
             ureg("delta_degC")
         ):
@@ -1044,7 +1013,7 @@ class ICompanyAggregates(ICompanyData):
             scope_company_data["benchmark_temperature"] = Q_(
                 scope_company_data["benchmark_temperature"]
             )
-        EmissionsQuantity(scope_company_data["benchmark_global_budget"])
+        EmissionsQuantity.validate(scope_company_data["benchmark_global_budget"])
         if not isinstance(scope_company_data["scope"], EScope):
             raise ValueError(
                 f"scope {scope_company_data['scope']} is not a valid scope"
@@ -1062,4 +1031,4 @@ class ICompanyAggregates(ICompanyData):
                 f"scope {scope_company_data['target_exceedance_year']} is not a valid target exceedance year value"
             )
         # ...while not re-running any validation on super_instnace
-        return cls.model_construct(**scope_company_data, **super_instance.__dict__)
+        return cls.construct(**scope_company_data, **super_instance.__dict__)

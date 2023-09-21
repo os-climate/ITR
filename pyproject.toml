@@ -1,6 +1,6 @@
 [project]
 name = "ITR"
-version = "1.0.6"
+version = "1.0.5"
 description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
 authors = [ { name = "Ortec Finance", email = "joris.cramwinckel@ortec-finance.com" }, ]
 requires-python = ">=3.9"
