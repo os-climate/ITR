@@ -1888,7 +1888,7 @@ def update_graph(
     changed_id = [p["prop_id"] for p in dash.callback_context.triggered][
         0
     ]  # to catch which widgets were pressed
-    amended_portfolio = pd.read_json(portfolio_json, orient="split")
+    amended_portfolio = pd.read_json(io.StringIO(initial_value=portfolio_json), orient="split")
     # Why does this get lost in translation?
     amended_portfolio.index.name = "company_id"
     amended_portfolio = amended_portfolio.assign(
@@ -1960,7 +1960,7 @@ def update_graph(
         scope_mask = amended_portfolio.scope == EScope[scope]
     filt_df = amended_portfolio[
         temp_score_mask & sec_mask & reg_mask & scope_mask
-    ]  # filtering
+    ].copy()  # filtering; copy makes it safe to modify column contents without getting warnings
     if len(filt_df) == 0:  # if after filtering the dataframe is empty
         # breakpoint()
         raise PreventUpdate

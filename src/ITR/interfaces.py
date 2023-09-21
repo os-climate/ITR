@@ -662,6 +662,7 @@ class ITargetData(BaseModel):
     target_reduction_pct: float  # This is actually a fraction, not a percentage.  1.0 = complete reduction to zero.
 
     @model_validator(mode="before")
+
     def start_end_base_order(cls, v):
         if v["target_start_year"] < v["target_base_year"]:
             raise ValueError(

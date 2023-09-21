@@ -157,7 +157,7 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
             map(list, zip(*{r.year: r.value.m for r in benchmark.projections}.items()))
         )
         return pd.Series(
-            PA_(np.array(values), dtype="pint[]"),
+            PA_(np.array(values), dtype="pint[dimensionless]"),
             index=years,
             name=(benchmark.sector, benchmark.region, scope),
         )
@@ -411,7 +411,6 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         sec_reg_scopes = company_sector_region_scope[["sector", "region", "scope"]]
         if scope_to_calc is not None:
             sec_reg_scopes = sec_reg_scopes[sec_reg_scopes.scope.eq(scope_to_calc)]
-        sec_reg_scopes[~sec_reg_scopes.index.duplicated()]
         sec_reg_scopes_mi = pd.MultiIndex.from_frame(sec_reg_scopes).unique()
         bm_proj_t = self._EI_df_t.loc[
             range(
@@ -1132,9 +1131,7 @@ class EITrajectoryProjector(EIProjector):
                     )
                 )
             else:
-                backfilled_t = historic_ei_t.apply(
-                    lambda col: col.fillna(method="bfill")
-                )
+                backfilled_t = historic_ei_t.bfill(axis=0)
             # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases
             # while also working on real-world use cases.  But we need to formalize this decision.
             backfilled_t = backfilled_t.reset_index()
@@ -1528,6 +1525,7 @@ class EITrajectoryProjector(EIProjector):
         intensities_t = intensities_t.apply(
             lambda col: col
             if col.dtype == np.float64
+            # Float64 NA needs to be converted to np.nan before we can apply nominal_values
             else ITR.nominal_values(col.fillna(np.nan)).astype(np.float64)
         )
         # FIXME: Pandas 2.1

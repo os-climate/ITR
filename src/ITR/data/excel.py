@@ -12,7 +12,6 @@ from ITR.data.osc_units import (
     EI_Quantity,
     Quantity_type,
 )
-import pint
 
 from ITR.configs import (
     ColumnsConfig,
