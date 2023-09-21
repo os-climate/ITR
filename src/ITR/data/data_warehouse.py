@@ -12,7 +12,7 @@ from ITR.data.osc_units import (
     asPintSeries,
     asPintDataFrame,
     EmissionsQuantity,
-    quantity,
+    Quantity_type,
 )
 from ITR.interfaces import (
     EScope,
@@ -975,7 +975,7 @@ class DataWarehouse(ABC):
         model_companies: List[ICompanyAggregates] = []
         for company_data in companies_data_dict:
             try:
-                model_companies.append(ICompanyAggregates.parse_obj(company_data))
+                model_companies.append(ICompanyAggregates.model_validate(company_data))
             except ValidationError:
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped"

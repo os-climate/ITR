@@ -613,7 +613,9 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         result = []
         for bm in self._EI_benchmarks.dict()[str(scope)]["benchmarks"]:
-            result.append(self._convert_benchmark_to_series(IBenchmark.parse_obj(bm)))
+            result.append(
+                self._convert_benchmark_to_series(IBenchmark.model_validate(bm))
+            )
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
 
