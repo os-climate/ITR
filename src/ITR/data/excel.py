@@ -6,8 +6,12 @@ import numpy as np
 from pydantic import BaseModel, ValidationError
 
 from . import ureg, Q_
-from ITR.data.osc_units import BenchmarkMetric, EmissionsQuantity, EI_Quantity, quantity
-import pint
+from ITR.data.osc_units import (
+    BenchmarkMetric,
+    EmissionsQuantity,
+    EI_Quantity,
+    Quantity_type,
+)
 
 from ITR.configs import (
     ColumnsConfig,
@@ -179,7 +183,7 @@ class ExcelProviderProductionBenchmark(BaseProviderProductionBenchmark):
         # df = self.benchmark_excel[TabsConfig.PROJECTED_PRODUCTION].drop(columns='benchmark_metric')
         # df.loc[:, 'scope'] = df.scope.map(lambda x: EScope[x])
         # df.set_index([self.column_config.SECTOR, self.column_config.REGION, self.column_config.SCOPE], inplace=True)
-        # df_partial_pp = df.add(1).cumprod(axis=1).astype('pint[]')
+        # df_partial_pp = df.add(1).cumprod(axis=1).astype('pint[dimensionless]')
         # return df_partial_pp
         return self._prod_df
 
@@ -435,7 +439,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
                 # Put the index back into the dictionary so model builds correctly
                 company_data[ColumnsConfig.COMPANY_ID] = company_id
-                model_companies.append(ICompanyData.parse_obj(company_data))
+                model_companies.append(ICompanyData.model_validate(company_data))
             except ValidationError as e:
                 logger.warning(
                     f"EX {e}: (one of) the input(s) of company %s is invalid and will be skipped"

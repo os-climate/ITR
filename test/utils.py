@@ -224,7 +224,7 @@ def gen_company_data(
                 scope_projections[EScope.S3.name] = {
                     "ei_metric": EI_Metric(ei_metric),
                     "projections": [
-                        ICompanyEIProjection.parse_obj(
+                        ICompanyEIProjection.model_validate(
                             {
                                 "year": y,
                                 "value": EI_Quantity(
@@ -252,7 +252,7 @@ def gen_company_data(
         scope_projections[scope.name] = {
             "ei_metric": EI_Metric(ei_metric),
             "projections": [
-                ICompanyEIProjection.parse_obj(
+                ICompanyEIProjection.model_validate(
                     {
                         "year": y,
                         "value": EI_Quantity(
@@ -268,5 +268,5 @@ def gen_company_data(
 
     company_dict["projected_targets"] = ICompanyEIProjectionsScopes(**scope_projections)
 
-    company_data = ICompanyData.parse_obj(company_dict)
+    company_data = ICompanyData.model_validate(company_dict)
     return company_data

@@ -89,7 +89,7 @@ from ITR.interfaces import EI_Quantity
 # The Pandas `cumprod` function calculates precisely the cumulative product we need
 # As the math shows above, the terms we need to accumulate are 1.0 + growth.
 
-# df.add(1).cumprod(axis=1).astype('pint[]') results in a project that looks like this:
+# df.add(1).cumprod(axis=1).astype('pint[dimensionless]') results in a project that looks like this:
 #
 #                                                2019     2020  ...      2049      2050
 # region                 sector        scope                    ...
@@ -119,24 +119,26 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                # TODO: sort out why this trips up pint
-                self._prod_delta_df = pd.DataFrame(
+                _prod_delta_df_t = pd.concat(
                     [
-                        self._convert_benchmark_to_series(bm, EScope.AnyScope)
+                        self._convert_benchmark_to_series(bm, EScope.AnyScope).pint.m
                         for bm in self._productions_benchmarks[
                             EScope.AnyScope.name
                         ].benchmarks
-                    ]
+                    ],
+                    axis=1,
                 )
         except AttributeError:
             assert False
-        self._prod_delta_df.index.names = [
+        # See comment above to understand use of `cumprod` function
+        self._prod_df = (
+            _prod_delta_df_t.add(1.0).cumprod(axis=0).astype("pint[dimensionless]").T
+        )
+        self._prod_df.index.names = [
             self.column_config.SECTOR,
             self.column_config.REGION,
             self.column_config.SCOPE,
         ]
-        # See comment above to understand use of `cumprod` function
-        self._prod_df = self._prod_delta_df.add(1.0).cumprod(axis=1).astype("pint[]")
 
     # Note that benchmark production series are dimensionless.
     # FIXME: They also don't need a scope.  Remove scope when we change IBenchmark format...
@@ -150,13 +152,12 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
         # Benchmarks don't need work-around for https://github.com/hgrecco/pint/issues/1687, but if they did:
         # units = ureg.parse_units(benchmark.benchmark_metric)
+
         years, values = list(
-            map(
-                list, zip(*{r.year: Q_(r.value) for r in benchmark.projections}.items())
-            )
+            map(list, zip(*{r.year: r.value.m for r in benchmark.projections}.items()))
         )
         return pd.Series(
-            PA_(np.array(values), dtype="pint[]"),
+            PA_(np.array(values), dtype="pint[dimensionless]"),
             index=years,
             name=(benchmark.sector, benchmark.region, scope),
         )
@@ -173,19 +174,20 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         return self._prod_df
 
         # The call to this function generates a 42-row (and counting...) DataFrame for the one row we're going to end up needing...
-        df_bm = pd.DataFrame(
+        df_bm_t = pd.concat(
             [
                 self._convert_benchmark_to_series(bm, scope).pint.m
                 for bm in self._productions_benchmarks[scope.name].benchmarks
-            ]
+            ],
+            axis=1,
         )
-        df_bm.index.names = [
+
+        df_partial_pp = df_bm_t.add(1.0).cumprod(axis=0).astype("pint[dimensionless]").T
+        df_partial_pp.index.names = [
             self.column_config.SECTOR,
             self.column_config.REGION,
             self.column_config.SCOPE,
         ]
-
-        df_partial_pp = df_bm.add(1).cumprod(axis=1).astype("pint[]")
 
         return df_partial_pp
 
@@ -663,7 +665,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        company_dict = company.dict()
+        company_dict = company.model_dump()
         production_units = str(company_dict[self.column_config.PRODUCTION_METRIC])
         emissions_units = str(company_dict[self.column_config.EMISSIONS_METRIC])
 
@@ -932,7 +934,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         df = pd.DataFrame.from_records(
             [
                 dict(
-                    ICompanyData.parse_obj(
+                    ICompanyData.model_validate(
                         {k: v for k, v in dict(c).items() if k not in excluded_cols}
                     )
                 )
@@ -1518,9 +1520,12 @@ class EITrajectoryProjector(EIProjector):
             # Float64 NA needs to be converted to np.nan before we can apply nominal_values
             else ITR.nominal_values(col.fillna(np.nan)).astype(np.float64)
         )
+        # FIXME: Pandas 2.1
         # Treat NaN ratios as "unchnaged year on year"
         # FIXME Could we ever have UFloat NaNs here?  np.nan is valid UFloat.
-        ratios_t: pd.DataFrame = intensities_t.rolling(window=2, closed="right").apply(func=self._year_on_year_ratio, raw=True)
+        ratios_t: pd.DataFrame = intensities_t.rolling(
+            window=2, axis="index", closed="right"
+        ).apply(func=self._year_on_year_ratio, raw=True)
         ratios_t = ratios_t.apply(
             lambda col: col.fillna(0) if all(col.map(lambda x: ITR.isna(x))) else col
         )

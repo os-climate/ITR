@@ -569,15 +569,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ].ffill()
 
         # NA in exposure is how we drop rows we want to ignore
-        df = df[df.exposure.notna()].rename(
+        df = df[df.exposure.notna()]
+
+        # TODO: Fix market_cap column naming inconsistency
+        df.rename(
             columns={
                 "revenue": "company_revenue",
                 "market_cap": "company_market_cap",
                 "ev": "company_enterprise_value",
                 "evic": "company_ev_plus_cash",
                 "assets": "company_total_assets",
-                # TODO: Fix market_cap column naming inconsistency
-            }
+            },
+            inplace=True,
         )
         df.loc[df.region.isnull(), "region"] = df.country.map(ITR_country_to_region)
 
@@ -1904,7 +1907,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 if company_data[ColumnsConfig.COMPANY_MARKET_CAP] is pd.NA:
                     company_data[ColumnsConfig.COMPANY_MARKET_CAP] = np.nan
 
-                model_companies.append(ICompanyData.parse_obj(company_data))
+                model_companies.append(ICompanyData.model_validate(company_data))
             except ValidationError as err:
                 logger.error(
                     f"{err}: (One of) the input(s) of company with ID {company_id} is invalid"
@@ -2086,7 +2089,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df = pd.DataFrame.from_records(
             [
                 dict(
-                    ICompanyData.parse_obj(
+                    ICompanyData.model_validate(
                         {k: v for k, v in dict(c).items() if k not in excluded_cols}
                     )
                 )
