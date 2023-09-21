@@ -107,7 +107,7 @@ class TestProjector(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(
             production_benchmarks=prod_bms
         )
@@ -156,7 +156,7 @@ class TestProjector(unittest.TestCase):
     def test_trajectories(self):
         projections = self.projector.project_ei_trajectories(self.companies)
 
-        projections_dict = [projection.model_dump() for projection in projections]
+        projections_dict = [projection.dict() for projection in projections]
         test_successful = is_pint_dict_equal(
             projections_dict, self.reference_projections
         )
@@ -316,7 +316,7 @@ class TestProjector(unittest.TestCase):
         projections = EITrajectoryProjector(
             ProjectionControls(TREND_CALC_METHOD=pd.DataFrame.median)
         ).project_ei_trajectories(self.companies)
-        projections_dict = [projection.model_dump() for projection in projections]
+        projections_dict = [projection.dict() for projection in projections]
 
         test_successful = is_pint_dict_equal(
             projections_dict, self.reference_projections
@@ -327,7 +327,7 @@ class TestProjector(unittest.TestCase):
         projections = EITrajectoryProjector(
             ProjectionControls(UPPER_PERCENTILE=0.9, LOWER_PERCENTILE=0.1)
         ).project_ei_trajectories(self.companies)
-        projections_dict = [projection.model_dump() for projection in projections]
+        projections_dict = [projection.dict() for projection in projections]
         test_successful = is_pint_dict_equal(
             projections_dict, self.reference_projections
         )

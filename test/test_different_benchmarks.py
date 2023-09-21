@@ -66,25 +66,25 @@ class TestEIBenchmarks(unittest.TestCase):
         # OECM Production-Centric (PC)
         with open(self.benchmark_EI_OECM_PC) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.OECM_EI_PC_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         # OECM (S3)
         with open(self.benchmark_EI_OECM_S3) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.OECM_EI_S3_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         # TPI
         with open(self.benchmark_EI_TPI) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.TPI_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         # TPI below 2
         with open(self.benchmark_EI_TPI_below_2) as json_file:
             parsed_json = json.load(json_file)
-        ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
+        ei_bms = IEIBenchmarkScopes.parse_obj(parsed_json)
         self.TPI_below_2_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
         def gen_company_variation(
@@ -222,7 +222,7 @@ class TestEIBenchmarks(unittest.TestCase):
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
-        prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
+        prod_bms = IProductionBenchmarkScopes.parse_obj(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(
             production_benchmarks=prod_bms
         )

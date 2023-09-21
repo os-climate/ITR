@@ -5,14 +5,12 @@ the module, extend the respective config class and pass it to the class as the "
 from __future__ import annotations
 
 import logging
-from typing import List
-from pydantic import BaseModel, ConfigDict
-from dataclasses import dataclass
-
 import pandas as pd
 import pint
-import ITR
-from ITR.data.osc_units import ureg, Q_, Quantity_type, EmissionsQuantity
+from ITR.data.osc_units import ureg, Q_, quantity, EmissionsQuantity
+from typing import List
+from pydantic import BaseModel
+from dataclasses import dataclass
 
 
 def ITR_median(*args, **kwargs):
@@ -216,20 +214,18 @@ class ProjectionControls:
 
 
 class TemperatureScoreControls(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
     base_year: int
     target_end_year: int
-    tcre: Quantity_type("delta_degC")
+    tcre: quantity("delta_degC")
     carbon_conversion: EmissionsQuantity
-    scenario_target_temperature: Quantity_type("delta_degC")
+    scenario_target_temperature: quantity("delta_degC")
     target_probability: float
 
     def __getitem__(self, item):
         return getattr(self, item)
 
     @property
-    def tcre_multiplier(self) -> Quantity_type("delta_degC/(t CO2)"):
+    def tcre_multiplier(self) -> quantity("delta_degC/(t CO2)"):
         return self.tcre / self.carbon_conversion
 
 
