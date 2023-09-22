@@ -18,6 +18,7 @@ __pycache__/
 .pdm-python
 .pdm-build
 .pdm.toml
+.tox
 build/
 develop-eggs/
 dist/**
