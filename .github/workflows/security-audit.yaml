@@ -23,6 +23,9 @@ jobs:
       - name: "Checkout repository"
         uses: actions/checkout@v3
 
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v3
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -31,6 +34,8 @@ jobs:
       - name: "Install dependencies"
         run: |
           pip install --upgrade pip
+          pdm lock
+          pdm export -o requirements.txt
           python -m pip install -r requirements.txt
           python -m pip install .
 
