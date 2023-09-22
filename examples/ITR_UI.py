@@ -1888,7 +1888,9 @@ def update_graph(
     changed_id = [p["prop_id"] for p in dash.callback_context.triggered][
         0
     ]  # to catch which widgets were pressed
-    amended_portfolio = pd.read_json(io.StringIO(initial_value=portfolio_json), orient="split")
+    amended_portfolio = pd.read_json(
+        io.StringIO(initial_value=portfolio_json), orient="split"
+    )
     # Why does this get lost in translation?
     amended_portfolio.index.name = "company_id"
     amended_portfolio = amended_portfolio.assign(
