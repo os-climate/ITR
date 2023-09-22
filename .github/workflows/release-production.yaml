@@ -49,6 +49,10 @@ jobs:
           scripts/release-versioning.sh
           grep version pyproject.toml
 
+      - name: "Document Python environment"
+        run: |
+          pip freeze
+
       - name: "Build with TOX"
         run: |
           tox -e build
