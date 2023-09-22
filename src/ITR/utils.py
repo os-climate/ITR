@@ -59,9 +59,7 @@ def _make_isin_map(df_portfolio: pd.DataFrame) -> dict:
     """
     return {
         company_id: company[ColumnsConfig.COMPANY_ISIN]
-        for company_id, company in df_portfolio[
-            [ColumnsConfig.COMPANY_ID, ColumnsConfig.COMPANY_ISIN]
-        ]
+        for company_id, company in df_portfolio[[ColumnsConfig.COMPANY_ID, ColumnsConfig.COMPANY_ISIN]]
         .set_index(ColumnsConfig.COMPANY_ID)
         .to_dict(orient="index")
         .items()
@@ -81,27 +79,18 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ISIN].isnull().any():
-        error_message = (
-            f"Company ISINs are missing for one or more companies in the input file."
-        )
+        error_message = f"Company ISINs are missing for one or more companies in the input file."
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ID].isnull().any():
-        error_message = (
-            f"Company IDs are missing for one or more companies in the input file."
-        )
+        error_message = f"Company IDs are missing for one or more companies in the input file."
         logger.error(error_message)
         raise ValueError(error_message)
 
-    return [
-        PortfolioCompany.model_validate(company)
-        for company in df_portfolio.to_dict(orient="records")
-    ]
+    return [PortfolioCompany.model_validate(company) for company in df_portfolio.to_dict(orient="records")]
 
 
-def get_data(
-    data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]
-) -> pd.DataFrame:
+def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -> pd.DataFrame:
     """
     Get the required data from the data provider(s) and return a 9-box grid for each company.
 
@@ -110,40 +99,28 @@ def get_data(
     :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
     """
     df_portfolio = pd.DataFrame.from_records(
-        [
-            _flatten_user_fields(c)
-            for c in portfolio
-            if c.company_id not in data_warehouse.company_data.missing_ids
-        ]
+        [_flatten_user_fields(c) for c in portfolio if c.company_id not in data_warehouse.company_data.missing_ids]
     )
-    df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(
-        df_portfolio[ColumnsConfig.INVESTMENT_VALUE]
-    )
+    df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(df_portfolio[ColumnsConfig.INVESTMENT_VALUE])
 
     if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
         raise ValueError(f"Portfolio contains no company_id data")
 
     # This transforms a dataframe of portfolio data into model data just so we can transform that back into a dataframe?!
     # It does this for all scopes, not only the scopes of interest
-    company_data = data_warehouse.get_preprocessed_company_data(
-        df_portfolio[ColumnsConfig.COMPANY_ID].to_list()
-    )
+    company_data = data_warehouse.get_preprocessed_company_data(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
 
     if len(company_data) == 0:
-        raise ValueError(
-            "None of the companies in your portfolio could be found by the data providers"
-        )
+        raise ValueError("None of the companies in your portfolio could be found by the data providers")
 
     df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data])
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
     df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype("pint[Mt CO2e]")
     s3_data_invalid = df_company_data[ColumnsConfig.GHG_SCOPE3].isna()
     if len(s3_data_invalid[s3_data_invalid].index) > 0:
-        df_company_data.loc[
+        df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = df_company_data.loc[
             s3_data_invalid, ColumnsConfig.GHG_SCOPE3
-        ] = df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3].map(
-            lambda x: Q_(np.nan, "Mt CO2e")
-        )
+        ].map(lambda x: Q_(np.nan, "Mt CO2e"))
     for col in [
         ColumnsConfig.GHG_SCOPE3,
         ColumnsConfig.CUMULATIVE_BUDGET,
@@ -161,9 +138,9 @@ def get_data(
         ColumnsConfig.COMPANY_CASH_EQUIVALENTS,
     ]:
         df_company_data[col] = asPintSeries(df_company_data[col])
-    df_company_data[ColumnsConfig.BENCHMARK_TEMP] = df_company_data[
-        ColumnsConfig.BENCHMARK_TEMP
-    ].astype("pint[delta_degC]")
+    df_company_data[ColumnsConfig.BENCHMARK_TEMP] = df_company_data[ColumnsConfig.BENCHMARK_TEMP].astype(
+        "pint[delta_degC]"
+    )
     df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df_company_data[
         ColumnsConfig.BENCHMARK_GLOBAL_BUDGET
     ].astype("pint[Gt CO2e]")
@@ -238,11 +215,7 @@ def umean(unquantified_data):
     :return: The weighted mean of the values, with a freshly calculated error term
     """
     arr = np.array(
-        [
-            v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0)
-            for v in unquantified_data
-            if not ITR.isnan(v)
-        ]
+        [v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0) for v in unquantified_data if not ITR.isnan(v)]
     )
     N = len(arr)
     if N == 0:

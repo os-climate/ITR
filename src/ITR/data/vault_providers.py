@@ -44,9 +44,7 @@ LoggingConfig.add_config_to_logger(logger)
 # Load some standard environment variables from a dot-env file, if it exists.
 # If no such file can be found, does not fail, and so allows these environment vars to
 # be populated in some other way
-dotenv_dir = os.environ.get(
-    "CREDENTIAL_DOTENV_DIR", os.environ.get("HOME", "/opt/app-root/src")
-)
+dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.environ.get("HOME", "/opt/app-root/src"))
 dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path=dotenv_path, override=True)
@@ -55,9 +53,7 @@ ingest_catalog = "osc_datacommons_dev"
 ingest_schema = "demo_dv"
 demo_schema = "demo_dv"
 
-engine = osc.attach_trino_engine(
-    verbose=True, catalog=ingest_catalog, schema=ingest_schema
-)
+engine = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=ingest_schema)
 
 
 # If DF_COL contains Pint quantities (because it is a PintArray or an array of Pint Quantities),
@@ -75,18 +71,8 @@ def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
     elif df_col.size == 0:
         return df_col
     elif isinstance(df_col.iloc[0], Quantity):
-        m, u = list(
-            zip(
-                *df_col.map(
-                    lambda x: (np.nan, "dimensionless")
-                    if pd.isna(x)
-                    else (x.m, str(x.u))
-                )
-            )
-        )
-        return pd.DataFrame(
-            {df_col.name: m, df_col.name + "_units": u}, index=df_col.index
-        )
+        m, u = list(zip(*df_col.map(lambda x: (np.nan, "dimensionless") if pd.isna(x) else (x.m, str(x.u)))))
+        return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index)
     else:
         return df_col
 
@@ -108,33 +94,23 @@ def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
     for col in columns_reversed:
         if col.endswith("_units"):
             if units_col:
-                logger.error(
-                    f"Column {units_col} follows {col} without intervening value column"
-                )
+                logger.error(f"Column {units_col} follows {col} without intervening value column")
                 # We expect _units column to follow a non-units column
                 raise ValueError
             units_col = col
             continue
         if units_col:
             if col + "_units" != units_col:
-                logger.error(
-                    f"Excpecting column name {col}_units but saw {units_col} instead"
-                )
+                logger.error(f"Excpecting column name {col}_units but saw {units_col} instead")
                 raise ValueError
             if (df[units_col] == df[units_col].iloc[0]).all():
                 # We can make a PintArray since column is of homogeneous type
                 # ...and if the first valid index matches all, we can take first row as good
-                new_col = PintArray(
-                    df[col], dtype=f"pint[{ureg(df[units_col].iloc[0]).u}]"
-                )
+                new_col = PintArray(df[col], dtype=f"pint[{ureg(df[units_col].iloc[0]).u}]")
             else:
                 # Make a pd.Series of Quantity in a way that does not throw UnitStrippedWarning
                 new_col = pd.Series(data=df[col], name=col) * pd.Series(
-                    data=df[units_col].map(
-                        lambda x: typemap.get(col, "dimensionless")
-                        if pd.isna(x)
-                        else ureg(x).u
-                    ),
+                    data=df[units_col].map(lambda x: typemap.get(col, "dimensionless") if pd.isna(x) else ureg(x).u),
                     name=col,
                 )
             if col in typemap.keys():
@@ -198,8 +174,7 @@ def read_quantified_sql(
     ]
     if extra_unit_columns:
         extra_unit_columns_positions = [
-            (i, extra_unit_columns[i][0], extra_unit_columns[i][1])
-            for i in range(len(extra_unit_columns))
+            (i, extra_unit_columns[i][0], extra_unit_columns[i][1]) for i in range(len(extra_unit_columns))
         ]
         for col_tuple in extra_unit_columns_positions:
             logger.error(
@@ -249,18 +224,10 @@ class VaultCompanyDataProvider(CompanyDataProvider):
         self._company_table = company_table
         self.column_config = column_config
         # Validate and complete the projected trajectories
-        self._target_table = target_table or company_table.replace(
-            "company_", "target_"
-        )  # target_data
-        self._trajectory_table = trajectory_table or company_table.replace(
-            "company_", "trajectory_"
-        )  # trajectory_data
-        self._production_table = company_table.replace(
-            "company_", "production_"
-        )  # production_data
-        self._emissions_table = company_table.replace(
-            "company_", "emissions_"
-        )  # emissions_data
+        self._target_table = target_table or company_table.replace("company_", "target_")  # target_data
+        self._trajectory_table = trajectory_table or company_table.replace("company_", "trajectory_")  # trajectory_data
+        self._production_table = company_table.replace("company_", "production_")  # production_data
+        self._emissions_table = company_table.replace("company_", "emissions_")  # emissions_data
         companies_without_projections = osc._do_sql(
             f"""
 select C.company_name, C.company_id from {self._schema}.{self._company_table} C left join {self._schema}.{self._target_table} EI on EI.company_id=C.company_id
@@ -371,9 +338,7 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
                 self._engine,
                 verbose=False,
             )
-        weights = pd.Series(
-            data=[s[1] for s in qres], index=[s[0] for s in qres], dtype=float
-        )
+        weights = pd.Series(data=[s[1] for s in qres], index=[s[0] for s in qres], dtype=float)
         weights = weights.loc[pa_temp_scores.index.intersection(weights.index)]
         weight_sum = weights.sum()
         return pa_temp_scores * weights / weight_sum
@@ -397,9 +362,7 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
         """
         raise NotImplementedError
 
-    def get_company_intensity_and_production_at_base_year(
-        self, company_ids: List[str]
-    ) -> pd.DataFrame:
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
         """
         overrides subclass method
         :param: company_ids: list of company ids
@@ -420,9 +383,7 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
         # df = df.drop(columns=['projected_targets', 'projected_intensities'])
         return df
 
-    def get_company_projected_trajectories(
-        self, company_ids: List[str]
-    ) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         :param company_ids: A list of company IDs
         :return: A pandas DataFrame with projected intensities per company
@@ -452,9 +413,7 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         :param production_benchmarks: List of IBenchmarkScopes
         :param column_config: An optional ColumnsConfig object containing relevant variable names
         """
-        super().__init__(
-            production_benchmarks=production_benchmarks, column_config=column_config
-        )
+        super().__init__(production_benchmarks=production_benchmarks, column_config=column_config)
         self._engine = engine
         self._schema = ingest_schema or engine.dialect.default_schema_name or "demo_dv"
         self.benchmark_name = benchmark_name
@@ -545,9 +504,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         df = df.convert_dtypes()
         create_table_from_df(df, self._schema, benchmark_name, engine)
 
-    def get_SDA_intensity_benchmarks(
-        self, company_info_at_base_year: pd.DataFrame
-    ) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
@@ -561,22 +518,16 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
 
-        return decarbonization_paths.mul((ei_base - last_ei), axis=0).add(
-            last_ei, axis=0
-        )
+        return decarbonization_paths.mul((ei_base - last_ei), axis=0).add(last_ei, axis=0)
 
-    def _get_decarbonizations_paths(
-        self, intensity_benchmarks: pd.DataFrame
-    ) -> pd.DataFrame:
+    def _get_decarbonizations_paths(self, intensity_benchmarks: pd.DataFrame) -> pd.DataFrame:
         """
         Overrides subclass method
         Returns a DataFrame with the projected decarbonization paths for the supplied companies in intensity_benchmarks.
         :param: A DataFrame with company and intensity benchmarks per calendar year per row
         :return: A pd.DataFrame with company and decarbonisation path s per calendar year per row
         """
-        return intensity_benchmarks.apply(
-            lambda row: self._get_decarbonization(row), axis=1
-        )
+        return intensity_benchmarks.apply(lambda row: self._get_decarbonization(row), axis=1)
 
     def _get_decarbonization(self, intensity_benchmark_row: pd.Series) -> pd.Series:
         """
@@ -586,12 +537,8 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: A pd.Series with company and decarbonisation path s per calendar year per row
         """
         first_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.base_year]
-        last_ei = intensity_benchmark_row[
-            self.temp_config.CONTROLS_CONFIG.target_end_year
-        ]
-        return intensity_benchmark_row.apply(
-            lambda x: (x - last_ei) / (first_ei - last_ei)
-        )
+        last_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.target_end_year]
+        return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
 
     def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
         """
@@ -613,9 +560,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         """
         result = []
         for bm in self._EI_benchmarks.dict()[str(scope)]["benchmarks"]:
-            result.append(
-                self._convert_benchmark_to_series(IBenchmark.model_validate(bm))
-            )
+            result.append(self._convert_benchmark_to_series(IBenchmark.model_validate(bm)))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
 
@@ -632,15 +577,11 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :param scope: a scope
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
-        benchmark_projection = self._get_projected_intensities(
-            scope
-        )  # TODO optimize performance
+        benchmark_projection = self._get_projected_intensities(scope)  # TODO optimize performance
         sectors = company_sector_region_info[self.column_config.SECTOR]
         regions = company_sector_region_info[self.column_config.REGION]
         benchmark_regions = regions.copy()
-        mask = benchmark_regions.isin(
-            benchmark_projection.reset_index()[self.column_config.REGION]
-        )
+        mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
         benchmark_regions.loc[~mask] = "Global"
 
         benchmark_projection = benchmark_projection.loc[
@@ -820,18 +761,12 @@ from {self._schema}.{itr_prefix}overshoot_ratios R
             verbose=True,
         )
 
-    def get_preprocessed_company_data(
-        self, company_ids: List[str]
-    ) -> List[ICompanyAggregates]:
+    def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         raise NotImplementedError
 
-    def get_pa_temp_scores(
-        self, probability: float, company_ids: List[str]
-    ) -> pd.Series:
+    def get_pa_temp_scores(self, probability: float, company_ids: List[str]) -> pd.Series:
         if probability < 0 or probability > 1:
-            raise ValueError(
-                f"probability value {probability} outside range [0.0, 1.0]"
-            )
+            raise ValueError(f"probability value {probability} outside range [0.0, 1.0]")
         temp_scores = read_quantified_sql(
             f"select company_id, scope, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units from {self._schema}.{self._tempscore_table}",
             self._tempscore_table,
@@ -842,8 +777,9 @@ from {self._schema}.{itr_prefix}overshoot_ratios R
         # We may have company_ids in our portfolio not in our database, and vice-versa.
         # Return proper pa_temp_scores for what we can find, and np.nan for those we cannot
         retval = pd.Series(data=None, index=company_ids, dtype="float64")
-        retval.loc[retval.index.intersection(temp_scores.index)] = (
-            temp_scores.target_temperature_score * probability
-            + temp_scores.trajectory_temperature_score * (1 - probability)
+        retval.loc[
+            retval.index.intersection(temp_scores.index)
+        ] = temp_scores.target_temperature_score * probability + temp_scores.trajectory_temperature_score * (
+            1 - probability
         )
         return retval

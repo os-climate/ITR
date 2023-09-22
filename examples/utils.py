@@ -15,11 +15,7 @@ def print_aggregations(aggregations):
         if time_frame_values:
             for scope, scope_values in time_frame_values.items():
                 if scope_values:
-                    print(
-                        "{:<10s} {:<10s} {:.2f}".format(
-                            time_frame, scope, scope_values["all"]["score"]
-                        )
-                    )
+                    print("{:<10s} {:<10s} {:.2f}".format(time_frame, scope, scope_values["all"]["score"]))
 
 
 def print_percentage_default_scores(aggregations):
@@ -29,11 +25,7 @@ def print_percentage_default_scores(aggregations):
         if time_frame_values:
             for scope, scope_values in time_frame_values.items():
                 if scope_values:
-                    print(
-                        "{:<10s} {:<10s} {:.2f}".format(
-                            time_frame, scope, scope_values["influence_percentage"]
-                        )
-                    )
+                    print("{:<10s} {:<10s} {:.2f}".format(time_frame, scope, scope_values["influence_percentage"]))
 
 
 def print_grouped_scores(aggregations):
@@ -49,18 +41,14 @@ def print_grouped_scores(aggregations):
                         print("{:<25s}{t:.2f}".format(group, t=aggregation["score"]))
 
 
-def collect_company_contributions(
-    aggregated_portfolio, amended_portfolio, analysis_parameters
-):
+def collect_company_contributions(aggregated_portfolio, amended_portfolio, analysis_parameters):
     timeframe, scopes, grouping = analysis_parameters
     timeframe = str(timeframe[0]).lower()
     company_names = []
     relative_contributions = []
     temperature_scores = []
     for scope in scopes:
-        for contribution in aggregated_portfolio[timeframe][str(scope)]["all"][
-            "contributions"
-        ]:
+        for contribution in aggregated_portfolio[timeframe][str(scope)]["all"]["contributions"]:
             company_names.append(contribution.company_name)
             relative_contributions.append(contribution.contribution_relative)
             temperature_scores.append(contribution.temperature_score)
@@ -83,47 +71,31 @@ def collect_company_contributions(
         on="company_name",
     )
     company_contributions["portfolio_percentage"] = (
-        100
-        * company_contributions["investment_value"]
-        / company_contributions["investment_value"].sum()
+        100 * company_contributions["investment_value"] / company_contributions["investment_value"].sum()
     )
     company_contributions["ownership_percentage"] = (
-        100
-        * company_contributions["investment_value"]
-        / company_contributions["company_market_cap"]
+        100 * company_contributions["investment_value"] / company_contributions["company_market_cap"]
     )
-    company_contributions = company_contributions.sort_values(
-        by="contribution", ascending=False
-    )
+    company_contributions = company_contributions.sort_values(by="contribution", ascending=False)
     company_contributions.set_index("company_id")
     return company_contributions
 
 
-def plot_grouped_statistics(
-    aggregated_portfolio, company_contributions, analysis_parameters
-):
+def plot_grouped_statistics(aggregated_portfolio, company_contributions, analysis_parameters):
     import matplotlib.pyplot as plt
 
     timeframe, scopes, grouping = analysis_parameters
     timeframe = str(timeframe[0]).lower()
 
-    sector_investments = (
-        company_contributions.groupby(grouping).investment_value.sum().values
-    )
+    sector_investments = company_contributions.groupby(grouping).investment_value.sum().values
     sector_contributions = [
-        ITR.nominal_values(v.m)
-        for v in company_contributions.groupby(grouping).contribution.sum().values
+        ITR.nominal_values(v.m) for v in company_contributions.groupby(grouping).contribution.sum().values
     ]
     sector_names = company_contributions.groupby(grouping).contribution.sum().keys()
     sector_temp_scores = [
         ITR.nominal_values(v.m)
         for scope in scopes
-        for v in [
-            aggregation.score
-            for aggregation in aggregated_portfolio[timeframe][str(scope)][
-                "grouped"
-            ].values()
-        ]
+        for v in [aggregation.score for aggregation in aggregated_portfolio[timeframe][str(scope)]["grouped"].values()]
     ]
 
     sector_temp_scores, sector_names, sector_contributions, sector_investments = zip(
@@ -164,12 +136,8 @@ def anonymize(portfolio, provider):
     portfolio = portfolio.reset_index()
     portfolio_companies = portfolio["company_name"].unique()
     for index, company_name in enumerate(portfolio_companies):
-        portfolio.loc[
-            portfolio["company_name"] == company_name, "company_id"
-        ] = "C" + str(index + 1)
-        portfolio.loc[
-            portfolio["company_name"] == company_name, "company_isin"
-        ] = "C" + str(index + 1)
+        portfolio.loc[portfolio["company_name"] == company_name, "company_id"] = "C" + str(index + 1)
+        portfolio.loc[portfolio["company_name"] == company_name, "company_isin"] = "C" + str(index + 1)
         provider.data["fundamental_data"].loc[
             provider.data["fundamental_data"]["company_name"] == company_name,
             "company_id",
@@ -181,9 +149,7 @@ def anonymize(portfolio, provider):
         provider.data["target_data"].loc[
             provider.data["target_data"]["company_name"] == company_name, "company_id"
         ] = "C" + str(index + 1)
-        portfolio.loc[
-            portfolio["company_name"] == company_name, "company_name"
-        ] = "Company" + str(index + 1)
+        portfolio.loc[portfolio["company_name"] == company_name, "company_name"] = "Company" + str(index + 1)
         provider.data["fundamental_data"].loc[
             provider.data["fundamental_data"]["company_name"] == company_name,
             "company_name",
@@ -191,9 +157,7 @@ def anonymize(portfolio, provider):
         provider.data["target_data"].loc[
             provider.data["target_data"]["company_name"] == company_name, "company_name"
         ] = "Company" + str(index + 1)
-    for index, company_name in enumerate(
-        provider.data["fundamental_data"]["company_name"].unique()
-    ):
+    for index, company_name in enumerate(provider.data["fundamental_data"]["company_name"].unique()):
         if company_name not in portfolio["company_name"].unique():
             provider.data["fundamental_data"].loc[
                 provider.data["fundamental_data"]["company_name"] == company_name,
@@ -215,11 +179,7 @@ def plot_grouped_heatmap(grouped_aggregations, analysis_parameters):
     timeframe = str(timeframe[0]).lower()
     group_1, group_2 = grouping
 
-    aggregations = dict(
-        ChainMap(
-            *[grouped_aggregations[timeframe][str(scope)].grouped for scope in scopes]
-        )
-    )
+    aggregations = dict(ChainMap(*[grouped_aggregations[timeframe][str(scope)].grouped for scope in scopes]))
     combinations = list(aggregations.keys())
 
     groups = {group_1: [], group_2: []}
@@ -237,9 +197,7 @@ def plot_grouped_heatmap(grouped_aggregations, analysis_parameters):
         for j, item_group_1 in enumerate(groups[group_1]):
             key = item_group_1 + "-" + item_group_2
             if key in combinations:
-                grid[i, j] = ITR.nominal_values(
-                    aggregations[item_group_1 + "-" + item_group_2].score.m
-                )
+                grid[i, j] = ITR.nominal_values(aggregations[item_group_1 + "-" + item_group_2].score.m)
             else:
                 grid[i, j] = np.nan
 
@@ -266,9 +224,7 @@ def get_contributions_per_group(aggregations, analysis_parameters, group):
     aggregations = aggregations.dict()
 
     contributions = [
-        c
-        for scope in scopes
-        for c in aggregations[timeframe][str(scope)]["grouped"][group]["contributions"]
+        c for scope in scopes for c in aggregations[timeframe][str(scope)]["grouped"][group]["contributions"]
     ]
     contributions = pd.DataFrame(contributions)
     columns = ["group"] + contributions.columns.tolist()

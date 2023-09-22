@@ -42,15 +42,9 @@ class TestBaseProvider(unittest.TestCase):
 
     def _setUpWithEIBM(self, eibm_filename, scope_to_calc) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
-        self.company_json = os.path.join(
-            self.root, "inputs", "json", "fundamental_data.json"
-        )
-        self.benchmark_prod_json = os.path.join(
-            self.root, "inputs", "json", "benchmark_production_OECM.json"
-        )
-        self.benchmark_EI_json = os.path.join(
-            self.root, "inputs", "json", eibm_filename
-        )
+        self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
+        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
+        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", eibm_filename)
 
         # load company data
         with open(self.company_json) as json_file:
@@ -64,9 +58,7 @@ class TestBaseProvider(unittest.TestCase):
                     company_data["production_metric"] = "MWh"
             elif company_data["sector"] == "Steel":
                 company_data["production_metric"] = "t Steel"
-        self.companies = [
-            ICompanyData.model_validate(company_data) for company_data in parsed_json
-        ]
+        self.companies = [ICompanyData.model_validate(company_data) for company_data in parsed_json]
         # If the company data does not have S3 emissions projections, it won't match any S3 scope data
         self.base_company_data = BaseCompanyDataProvider(self.companies)
 
@@ -74,9 +66,7 @@ class TestBaseProvider(unittest.TestCase):
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
-        self.base_production_bm = BaseProviderProductionBenchmark(
-            production_benchmarks=prod_bms
-        )
+        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # load intensity benchmarks
         with open(self.benchmark_EI_json) as json_file:
@@ -84,9 +74,7 @@ class TestBaseProvider(unittest.TestCase):
         ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
         self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
-        self.base_warehouse = DataWarehouse(
-            self.base_company_data, self.base_production_bm, self.base_EI_bm
-        )
+        self.base_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.base_EI_bm)
         self.company_ids = [
             "US0079031078",
             "US00724F1012",
@@ -164,14 +152,10 @@ class TestBaseProvider(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify company scores:
-        expected = pd.Series(
-            [5.53, 2.72, 1.82], dtype="pint[delta_degC]", name="temperature_score"
-        )
+        expected = pd.Series([5.53, 2.72, 1.82], dtype="pint[delta_degC]", name="temperature_score")
         pd.testing.assert_series_equal(scores.temperature_score, expected)
         # verify that results exist
-        self.assertAlmostEqual(
-            agg_scores.long.S1S2.all.score, Q_(2.11, ureg.delta_degC), places=2
-        )
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.11, ureg.delta_degC), places=2)
 
     def test_get_benchmark(self):
         # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific
@@ -303,9 +287,7 @@ class TestBaseProvider(unittest.TestCase):
         ]
         expected_data = pd.concat(data, axis=1, ignore_index=True).T
         expected_data.index = self.company_ids
-        benchmarks = self.base_EI_bm.get_SDA_intensity_benchmarks(
-            self.company_info_at_base_year
-        )
+        benchmarks = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
 
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
@@ -315,20 +297,14 @@ class TestBaseProvider(unittest.TestCase):
         takes in account primary scope - S1S2 or S3
         """
         # benchmarks for default scope S1S2
-        bm_s1s2 = self.base_EI_bm.get_SDA_intensity_benchmarks(
-            self.company_info_at_base_year, EScope.S1S2
-        )
+        bm_s1s2 = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year, EScope.S1S2)
 
         # Reload EI benchmark with primary scope S3
         self.setUp_S3_only()
-        bm_s3 = self.base_EI_bm.get_SDA_intensity_benchmarks(
-            self.company_info_at_base_year, EScope.S3
-        )
+        bm_s3 = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year, EScope.S3)
 
         # Verify that different scope results into different values, but same index and columns
-        self.assertTrue(
-            bm_s1s2.index.droplevel("scope").equals(bm_s3.index.droplevel("scope"))
-        )
+        self.assertTrue(bm_s1s2.index.droplevel("scope").equals(bm_s3.index.droplevel("scope")))
         self.assertTrue(bm_s1s2.columns.equals(bm_s3.columns))
         self.assertFalse(bm_s1s2.equals(bm_s3))
 
@@ -346,9 +322,7 @@ class TestBaseProvider(unittest.TestCase):
             name=2025,
             dtype="pint[MWh]",
         )
-        productions = self.base_production_bm.get_company_projected_production(
-            self.company_info_at_base_year
-        )[2025]
+        productions = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
         assert_pint_series_equal(self, expected_data_2025, productions)
 
     def test_get_projected_targets(self):
@@ -361,14 +335,10 @@ class TestBaseProvider(unittest.TestCase):
                     Q_(0.17005401282971486, "t CO2 / GJ"),
                     Q_(0.04623233372785435, "t CO2 / GJ"),
                 ],
-                index=pd.MultiIndex.from_tuples(
-                    zip(self.company_ids, [EScope.S1S2] * len(self.company_ids))
-                ),
+                index=pd.MultiIndex.from_tuples(zip(self.company_ids, [EScope.S1S2] * len(self.company_ids))),
                 name=2025,
             )
-        target_projections = self.base_company_data.get_company_projected_targets(
-            self.company_ids, 2025
-        )
+        target_projections = self.base_company_data.get_company_projected_targets(self.company_ids, 2025)
         assert_pint_series_equal(self, expected_data_2025, target_projections)
 
     def test_get_cumulative_value(self):
@@ -406,24 +376,12 @@ class TestBaseProvider(unittest.TestCase):
         self.assertEqual(company_2.company_id, "US00724F1012")
         self.assertAlmostEqual(company_1.ghg_s1s2, Q_(640.885111270135, "Mt CO2"))
         self.assertAlmostEqual(company_2.ghg_s1s2, Q_(1027.6039725941746, "Mt CO2"))
-        self.assertAlmostEqual(
-            company_1.cumulative_budget, Q_(1243.1262721585052, "Mt CO2")
-        )
-        self.assertAlmostEqual(
-            company_2.cumulative_budget, Q_(7102.63790663653851, "Mt CO2")
-        )
-        self.assertAlmostEqual(
-            company_1.cumulative_target, Q_(17342.428074061572, "Mt CO2")
-        )
-        self.assertAlmostEqual(
-            company_2.cumulative_target, Q_(27191.863852079525, "Mt CO2")
-        )
-        self.assertAlmostEqual(
-            company_1.cumulative_trajectory, Q_(17222.957455753196, "Mt CO2")
-        )
-        self.assertAlmostEqual(
-            company_2.cumulative_trajectory, Q_(40343.09136798882, "Mt CO2")
-        )
+        self.assertAlmostEqual(company_1.cumulative_budget, Q_(1243.1262721585052, "Mt CO2"))
+        self.assertAlmostEqual(company_2.cumulative_budget, Q_(7102.63790663653851, "Mt CO2"))
+        self.assertAlmostEqual(company_1.cumulative_target, Q_(17342.428074061572, "Mt CO2"))
+        self.assertAlmostEqual(company_2.cumulative_target, Q_(27191.863852079525, "Mt CO2"))
+        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17222.957455753196, "Mt CO2"))
+        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40343.09136798882, "Mt CO2"))
 
         # Reload EI benchmark with primary scope S3
         self.setUp_S3_only()
@@ -436,12 +394,8 @@ class TestBaseProvider(unittest.TestCase):
         # we need fundamental company data as well.  Adding S3 data to companies requires
         # changing other test cases (since the S3 data becomes part of cumulative emissions).
         return
-        company_1 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[
-            0
-        ]
-        company_2 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[
-            3
-        ]
+        company_1 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[0]
+        company_2 = self.base_warehouse.get_preprocessed_company_data(self.company_ids)[3]
         self.assertEqual(company_1.company_name, "Company AG")
         self.assertEqual(company_2.company_name, "Company AJ")
         self.assertEqual(company_1.company_id, "US0079031078")
