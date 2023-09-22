@@ -5,9 +5,7 @@ if pytest.__version__ < "3.0.0":
     pytest.skip()
 else:
     pytestmark = pytest.mark.skip
-    pytest.skip(
-        "skipping vault because Trino auth breaks CI/CD", allow_module_level=True
-    )
+    pytest.skip("skipping vault because Trino auth breaks CI/CD", allow_module_level=True)
 
 import json
 import unittest
@@ -51,9 +49,7 @@ if vault_initialized:
     ingest_catalog = "osc_datacommons_dev"
     demo_schema = "demo_dv"
 
-    dotenv_dir = os.environ.get(
-        "CREDENTIAL_DOTENV_DIR", os.environ.get("PWD", "/opt/app-root/src")
-    )
+    dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.environ.get("PWD", "/opt/app-root/src"))
     dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
     if os.path.exists(dotenv_path):
         load_dotenv(dotenv_path=dotenv_path, override=True)
@@ -81,12 +77,8 @@ class TestVaultProvider(unittest.TestCase):
 
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
-        self.benchmark_prod_json = os.path.join(
-            self.root, "inputs", "json", "benchmark_production_OECM.json"
-        )
-        self.benchmark_EI_json = os.path.join(
-            self.root, "inputs", "json", "benchmark_EI_OECM_S3.json"
-        )
+        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
+        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_S3.json")
 
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
