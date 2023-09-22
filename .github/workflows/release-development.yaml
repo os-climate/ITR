@@ -27,6 +27,9 @@ jobs:
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v3
+
       - name: "Populate environment variables"
         id: setenv
         run: |
