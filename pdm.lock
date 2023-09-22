@@ -2,11 +2,11 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "doc", "test", "tox"]
+groups = ["default", "doc", "test", "tox", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:b16129e4eb4bc979d169c63c4184cab37b3fd3b5bd138d12d88d8af864634bab"
+content_hash = "sha256:2d8333ca9e04967a342ced208de35a473ff484ce3c3e948fd3b749af8404df94"
 
 [[package]]
 name = "alabaster"

@@ -95,6 +95,10 @@ tox = [
   "tox-pdm>=0.5"
 ]
 doc = [ "sphinx" ]
+dev = [
+    "tox-pdm>=0.7.0",
+    "tox>=4.11.3",
+]
 
 [tool.pytest.ini_options]
 testpaths = [ "test/" ]
