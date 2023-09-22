@@ -27,9 +27,7 @@ from ITR.interfaces import (
 def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
     is_equal = True
     for i in range(len(result)):
-        if json.dumps(result[i], cls=ITR_Encoder) != json.dumps(
-            reference[i], cls=ITR_Encoder
-        ):
+        if json.dumps(result[i], cls=ITR_Encoder) != json.dumps(reference[i], cls=ITR_Encoder):
             print(
                 f"Differences in projections_dict[{i}]: company_name = {result[i]['company_name']}; company_id = {result[i]['company_id']}"
             )
@@ -52,9 +50,7 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                                 vproj = [
                                     {
                                         "year": k,
-                                        "value": " ".join(
-                                            ["{:.5f}".format(v.m), str(v.u)]
-                                        ),
+                                        "value": " ".join(["{:.5f}".format(v.m), str(v.u)]),
                                     }
                                     for k, v in vproj.to_dict().items()
                                 ]
@@ -67,16 +63,12 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                                 )
                                 is_equal = False
                         elif v.get(scope):
-                            print(
-                                f"reference has no scope {scope} for projection_intensities"
-                            )
+                            print(f"reference has no scope {scope} for projection_intensities")
                             # ???? is_equal = False
                     continue
                 try:
                     vref = reference[i][k]
-                    if json.dumps(v, cls=ITR_Encoder) != json.dumps(
-                        vref, cls=ITR_Encoder
-                    ):
+                    if json.dumps(v, cls=ITR_Encoder) != json.dumps(vref, cls=ITR_Encoder):
                         print(
                             f"computed {k}:\n{json.dumps(v, cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref, cls=ITR_Encoder)}\n\n"
                         )
@@ -95,30 +87,20 @@ class TestProjector(unittest.TestCase):
 
     def setUp(self) -> None:
         self.root: str = os.path.dirname(os.path.abspath(__file__))
-        self.source_path: str = os.path.join(
-            self.root, "inputs", "json", "test_project_companies.json"
-        )
-        self.json_reference_path: str = os.path.join(
-            self.root, "inputs", "json", "test_project_reference.json"
-        )
-        self.benchmark_prod_json = os.path.join(
-            self.root, "inputs", "json", "benchmark_production_OECM.json"
-        )
+        self.source_path: str = os.path.join(self.root, "inputs", "json", "test_project_companies.json")
+        self.json_reference_path: str = os.path.join(self.root, "inputs", "json", "test_project_reference.json")
+        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
-        self.base_production_bm = BaseProviderProductionBenchmark(
-            production_benchmarks=prod_bms
-        )
+        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         with open(self.source_path, "r") as file:
             company_dicts = json.load(file)
         for company_dict in company_dicts:
             company_dict["report_date"] = datetime.date(2021, 12, 31)
-        self.companies = [
-            ICompanyData(**company_dict) for company_dict in company_dicts
-        ]
+        self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
         self.projector = EITrajectoryProjector()
         with open(self.json_reference_path, "r") as file:
             itr_encoder = ITR_Encoder()
@@ -157,9 +139,7 @@ class TestProjector(unittest.TestCase):
         projections = self.projector.project_ei_trajectories(self.companies)
 
         projections_dict = [projection.model_dump() for projection in projections]
-        test_successful = is_pint_dict_equal(
-            projections_dict, self.reference_projections
-        )
+        test_successful = is_pint_dict_equal(projections_dict, self.reference_projections)
         self.assertEqual(test_successful, True)
 
     def test_targets(self):
@@ -179,12 +159,8 @@ class TestProjector(unittest.TestCase):
         }
         company_dict[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(company_data)
         company_index = [c.company_id for c in company_data]
-        company_sector_region_info = pd.DataFrame(
-            company_dict, pd.Index(company_index, name="company_id")
-        )
-        bm_production_data = self.base_production_bm.get_company_projected_production(
-            company_sector_region_info
-        )
+        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
+        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
         expected_0 = pd.Series(
             PA_(
                 [
@@ -243,9 +219,7 @@ class TestProjector(unittest.TestCase):
         company_data[0].target_data = [target_0]
         for i, c in enumerate(company_data):
             if c.target_data:
-                projected_targets = EITargetProjector(
-                    self.projector.projection_controls
-                ).project_ei_targets(
+                projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
                     c,
                     bm_production_data.loc[(c.company_id, EScope.S1S2)],
                     ei_df_t=pd.DataFrame(),
@@ -256,10 +230,7 @@ class TestProjector(unittest.TestCase):
                 else:
                     test_projection = pd.Series(
                         PA_(
-                            [
-                                x.value.m_as(test_projection.ei_metric)
-                                for x in test_projection.projections
-                            ],
+                            [x.value.m_as(test_projection.ei_metric) for x in test_projection.projections],
                             dtype=test_projection.ei_metric,
                         ),
                         index=range(2019, 2051),
@@ -269,46 +240,32 @@ class TestProjector(unittest.TestCase):
                 assert c.projected_targets is None
 
     def test_extrapolate(self):
-        with open(
-            os.path.join(self.root, "inputs", "json", "test_fillna_companies.json"), "r"
-        ) as file:
+        with open(os.path.join(self.root, "inputs", "json", "test_fillna_companies.json"), "r") as file:
             company_dicts = json.load(file)
         for company_dict in company_dicts:
             company_dict["report_date"] = datetime.date(2021, 12, 31)
         fillna_data = [ICompanyData(**company_dict) for company_dict in company_dicts]
 
-        ei_projector = EITrajectoryProjector(
-            ProjectionControls(UPPER_PERCENTILE=0.9, LOWER_PERCENTILE=0.1)
-        )
+        ei_projector = EITrajectoryProjector(ProjectionControls(UPPER_PERCENTILE=0.9, LOWER_PERCENTILE=0.1))
         historic_df = ei_projector._extract_historic_df(fillna_data)
         ei_projector._align_and_compute_missing_historic_ei(fillna_data, historic_df)
 
-        historic_years = [
-            column for column in historic_df.columns if type(column) == int
-        ]
-        projection_years = range(
-            max(historic_years), ei_projector.projection_controls.TARGET_YEAR + 1
-        )
+        historic_years = [column for column in historic_df.columns if type(column) == int]
+        projection_years = range(max(historic_years), ei_projector.projection_controls.TARGET_YEAR + 1)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
             warnings.simplefilter("ignore")
             historic_intensities_t = asPintDataFrame(
-                historic_df[historic_years]
-                .query(f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'")
-                .T
+                historic_df[historic_years].query(f"variable=='{VariablesConfig.EMISSIONS_INTENSITIES}'").T
             ).pint.dequantify()
         standardized_intensities_t = ei_projector._standardize(historic_intensities_t)
         intensity_trends_t = ei_projector._get_trends(standardized_intensities_t)
-        extrapolated_t = ei_projector._extrapolate(
-            intensity_trends_t, projection_years, historic_intensities_t
-        )
+        extrapolated_t = ei_projector._extrapolate(intensity_trends_t, projection_years, historic_intensities_t)
         # Restore row-wise shape of DataFrame
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # pint units don't like being twisted from columns to rows, but it's ok
-            ei_projector._add_projections_to_companies(
-                fillna_data, extrapolated_t.pint.quantify()
-            )
+            ei_projector._add_projections_to_companies(fillna_data, extrapolated_t.pint.quantify())
         # Figure out what to test here--just making it through with funny company data is step 1!
 
     # Need test data in order to test mean
@@ -318,9 +275,7 @@ class TestProjector(unittest.TestCase):
         ).project_ei_trajectories(self.companies)
         projections_dict = [projection.model_dump() for projection in projections]
 
-        test_successful = is_pint_dict_equal(
-            projections_dict, self.reference_projections
-        )
+        test_successful = is_pint_dict_equal(projections_dict, self.reference_projections)
         self.assertEqual(test_successful, True)
 
     def test_upper_lower(self):
@@ -328,9 +283,7 @@ class TestProjector(unittest.TestCase):
             ProjectionControls(UPPER_PERCENTILE=0.9, LOWER_PERCENTILE=0.1)
         ).project_ei_trajectories(self.companies)
         projections_dict = [projection.model_dump() for projection in projections]
-        test_successful = is_pint_dict_equal(
-            projections_dict, self.reference_projections
-        )
+        test_successful = is_pint_dict_equal(projections_dict, self.reference_projections)
         self.assertEqual(test_successful, True)
 
 

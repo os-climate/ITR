@@ -33,9 +33,7 @@ class e2e_DataWarehouse(DataWarehouse):
         # super().__init__(company_data, ProductionBenchmarkDataProvider(), IntensityBenchmarkDataProvider())
         self.company_data = company_data
 
-    def get_preprocessed_company_data(
-        self, company_ids: List[str]
-    ) -> List[ICompanyAggregates]:
+    def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
         return self.company_data.companies
 
 
@@ -180,9 +178,7 @@ class EndToEndTest(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify that results exist
-        self.assertAlmostEqual(
-            agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2
-        )
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2)
 
     # Run some regression tests
     # @unittest.skip("only run for longer test runs")
@@ -223,9 +219,7 @@ class EndToEndTest(unittest.TestCase):
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
-        self.assertAlmostEqual(
-            agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2
-        )
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2)
 
     def test_grouping(self):
         """
@@ -238,9 +232,7 @@ class EndToEndTest(unittest.TestCase):
         pf_companies_all: List[PortfolioCompany] = []
 
         for ind_level in industry_levels:
-            company_ids_with_level = [
-                f"{ind_level}_{company_id}" for company_id in company_ids
-            ]
+            company_ids_with_level = [f"{ind_level}_{company_id}" for company_id in company_ids]
 
             companies, pf_companies = self.create_base_companies(company_ids_with_level)
             for company in companies:

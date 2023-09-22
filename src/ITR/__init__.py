@@ -104,9 +104,7 @@ def JSONEncoder(q):
     elif isinstance(q, pd.Series):
         # Inside the map function NA values become float64 nans and lose their units
         ser = q.map(lambda x: f"nan {q.pint.u}" if isna(x) else f"{x:.5f}")
-        res = pd.DataFrame(data={"year": ser.index, "value": ser.values}).to_dict(
-            "records"
-        )
+        res = pd.DataFrame(data={"year": ser.index, "value": ser.values}).to_dict("records")
         return res
     else:
         return str(q)

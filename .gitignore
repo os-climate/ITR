@@ -1,5 +1,6 @@
 # Credentials / Secrets
 credentials.env
+config.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -13,9 +14,10 @@ __pycache__/
 *.so
 
 # Distribution / packaging
-pdm.lock
 .Python
 .pdm-python
+.pdm-build
+.pdm.toml
 build/
 develop-eggs/
 dist/**

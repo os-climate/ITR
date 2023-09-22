@@ -41,6 +41,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
 
+      - name: "Update version from tags for production release"
+        run: |
+          scripts/release-versioning.sh
+          grep version pyproject.toml
+
       - name: "Build with TOX"
         run: |
           tox -e build
@@ -154,9 +159,13 @@ jobs:
         run: |
           rm dist/*.txt dist/*.crt dist/*.sig*
 
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          verbose: true
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          repository-url: https://pypi.org/project/ITR/
+#      - name: "Publish distribution to PyPI"
+#        uses: pypa/gh-action-pypi-publish@release/v1
+#        with:
+#          verbose: true
+#          password: ${{ secrets.PYPI_API_TOKEN }}
+#          repository-url: https://pypi.org/project/ITR/
+
+      - uses: pdm-project/setup-pdm@v3
+      - name: "Publish distribution to PyPI"
+        run: pdm publish --no-build

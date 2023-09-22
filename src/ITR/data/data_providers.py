@@ -67,9 +67,7 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_intensity_and_production_at_base_year(
-        self, company_ids: List[str]
-    ) -> pd.DataFrame:
+    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
         """
         Get the emission intensity and the production for a list of companies at the base year.
         :param: company_ids: list of company ids
@@ -80,9 +78,7 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_projected_trajectories(
-        self, company_ids: List[str]
-    ) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
         """
         Gets the emission intensities for a list of companies
         :param company_ids: list of company ids
@@ -117,9 +113,7 @@ class ProductionBenchmarkDataProvider(ABC):
         pass
 
     @abstractmethod
-    def get_company_projected_production(
-        self, ghg_scope12: pd.DataFrame
-    ) -> pd.DataFrame:
+    def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
         """
         get the projected productions for all companies in ghg_scope12
         :param ghg_scope12: DataFrame with at least the following columns :
@@ -129,9 +123,7 @@ class ProductionBenchmarkDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_benchmark_projections(
-        self, company_secor_region_info: pd.DataFrame
-    ) -> pd.DataFrame:
+    def get_benchmark_projections(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         get the sector emissions for a list of companies.
         If there is no data for the sector, then it will be replaced by the global value
@@ -149,9 +141,7 @@ class IntensityBenchmarkDataProvider(ABC):
     Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.
     """
 
-    AFOLU_CORRECTION_FACTOR = (
-        0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
-    )
+    AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
 
     def __init__(
         self,
@@ -204,9 +194,7 @@ class IntensityBenchmarkDataProvider(ABC):
         self._benchmark_global_budget = value
 
     @abstractmethod
-    def _get_intensity_benchmarks(
-        self, company_sector_region_info: pd.DataFrame
-    ) -> pd.DataFrame:
+    def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_sector_region_info: DataFrame with at least the following columns :
@@ -216,9 +204,7 @@ class IntensityBenchmarkDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_SDA_intensity_benchmarks(
-        self, company_sector_region_info: pd.DataFrame
-    ) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_sector_region_info: DataFrame with at least the following columns :
