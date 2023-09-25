@@ -170,7 +170,7 @@ jobs:
 
       - name: "Remove files unsupported by PyPi"
         run: |
-          rm dist/*.txt dist/*.crt dist/*.sig*
+          rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
