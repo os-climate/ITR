@@ -106,32 +106,20 @@ jobs:
           echo "tarball=$(ls dist/*.tgz)" >> "$GITHUB_OUTPUT"
           echo "wheel=$(ls dist/*.whl)" >> "$GITHUB_OUTPUT"
 
-#      - name: "📦 Publish packages to GitHub"
-#        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
-#        with:
+      - name: "📦 Publish packages to GitHub"
+        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
+        with:
           # Valid inputs are:
           # repo_token, automatic_release_tag, draft, prerelease, title, files
-#          repo_token: ${{ secrets.GITHUB_TOKEN }}
-#          prerelease: true
-#          automatic_release_tag: ${{ steps.setenv.outputs.vernum }}
-#          title:
-#            "Development Build \
-#            ${{ steps.setenv.outputs.vernum }}"
-#          files: |
-#            dist/*.tar.gz
-#            dist/*.whl
-
-      - uses: ModeSevenIndustrialSolutions/gha-upload-to-release@v1.0.1
-        with:
-          name: "Tarball"
-          path: dist/${{ steps.setenv.outputs.tarball }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: ModeSevenIndustrialSolutions/gha-upload-to-release@v1.0.1
-        with:
-          name: "Python Wheel"
-          path: dist/${{ steps.setenv.outputs.wheel }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: true
+          automatic_release_tag: ${{ steps.setenv.outputs.vernum }}
+          title:
+            "Development Build \
+            ${{ steps.setenv.outputs.vernum }}"
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
 
 
   ### PUBLISH TEST PYPI ###
