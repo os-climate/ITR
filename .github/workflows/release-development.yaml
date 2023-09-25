@@ -121,13 +121,13 @@ jobs:
 #            dist/*.tar.gz
 #            dist/*.whl
 
-      - uses: Shopify/upload-to-release@v1
+      - uses: Shopify/upload-to-release@v1.0.1
         with:
           name: "Tarball"
           path: dist/${{ steps.setenv.outputs.tarball }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: Shopify/upload-to-release@v1
+      - uses: Shopify/upload-to-release@v1.0.1
         with:
           name: "Python Wheel"
           path: dist/${{ steps.setenv.outputs.wheel }}
