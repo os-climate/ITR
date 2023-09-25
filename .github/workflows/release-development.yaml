@@ -33,20 +33,9 @@ jobs:
       - name: "Populate environment variables"
         id: setenv
         run: |
-          set -x
-          VARS_FILE=buildvars.txt
-          mkdir -p dist || true
-          touch "$VARS_FILE"
-          datetime=$(date +'%Y%m%d%H%M')
-          export datetime
-          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-          echo "datetime=${datetime}" >> "$VARS_FILE"
-          pyver=${{ env.python-version }}
-          echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
-          echo "pyver=${pyver}" >> "$VARS_FILE"
-          vernum="${pyver}.${datetime}"
+          vernum="${{ env.python-version }}.$(date +'%Y%m%d%H%M')"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
-          echo "vernum=${vernum}" >> "$VARS_FILE"
+          echo "vernum=${vernum}" >> buildvars.txt
 
       - name: "Setup Python 3.10"
         uses: actions/setup-python@v4.7.0
@@ -63,10 +52,10 @@ jobs:
           git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
           grep version pyproject.toml
 
-      - name: "Build with TOX"
+      - name: "Build with PDM backend"
         run: |
-          # pdm install; pdm build
           pdm build
+          # Need to save the build environment for subsequent steps
           mv buildvars.txt dist/buildvars.txt
 
       ### SIGNING ###
@@ -133,8 +122,6 @@ jobs:
   ### PUBLISH TEST PYPI ###
 
   testpypi:
-    # Only publish to PyPI on tag pushes
-    # if: startsWith(github.ref, 'refs/tags/')
     name: "📦 Test publish to PyPi"
     needs:
       - build

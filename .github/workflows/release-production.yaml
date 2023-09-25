@@ -23,7 +23,8 @@ jobs:
     name: "🐍 Build packages"
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # IMPORTANT: mandatory for Sigstore
+      # IMPORTANT: mandatory for Sigstore
+      id-token: write
     steps:
 
       ### BUILDING ###
@@ -39,24 +40,14 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - name: "Update Python packages"
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox tox-pdm
-
       - name: "Update version from tags for production release"
         run: |
           echo "Github versioning: ${{ github.ref_name }}"
           scripts/release-versioning.sh
 
-      - name: "Document Python environment"
+      - name: "Build with PDM backend"
         run: |
-          pip freeze
-
-      - name: "Build with TOX"
-        run: |
-          echo "Build version: ${{ github.ref_name }}"
-          tox -e build
+          pdm build
 
       ### SIGNING ###
 
@@ -85,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      # IMPORTANT: mandatory for Sigstore and trusted publishing
+      # IMPORTANT: mandatory for trusted publishing
       id-token: write
     steps:
 
