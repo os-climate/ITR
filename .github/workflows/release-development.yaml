@@ -53,11 +53,6 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - name: "Update Python packages"
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox tox-pdm
-
       - name: "Tag for test release"
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
@@ -68,16 +63,10 @@ jobs:
           git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
           grep version pyproject.toml
 
-      - name: "Document Python environment"
-        run: |
-          pip freeze
-
       - name: "Build with TOX"
         run: |
-          # if [ -f  pdm.lock ]; then rm pdm.lock; fi
-          # pdm lock
           tox -e build
-          cp buildvars.txt dist/buildvars.txt
+          mv buildvars.txt dist/buildvars.txt
 
       ### SIGNING ###
 
@@ -119,15 +108,9 @@ jobs:
       - name: "Source environment variables"
         id: setenv
         run: |
-          set -x
           if [ -f dist/buildvars.txt ]; then
             source dist/buildvars.txt
-            echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-            echo "Datetime is: ${datetime}"
-            echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
-            echo "Python version is: ${pyver}"
             echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
-            echo "Version number is: ${vernum}"
           else
             echo "Build environment variables could not be sourced"
           fi
