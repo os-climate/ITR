@@ -91,7 +91,7 @@ jobs:
           # Valid inputs are:
           # repo_token, automatic_release_tag, draft, prerelease, title, files
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: true
+          prerelease: false
           automatic_release_tag: ${{github.ref_name}}
           title: ${{github.ref_name}}
           files: |
@@ -119,7 +119,7 @@ jobs:
       - name: "⬇ Download build artefacts"
         uses: actions/download-artifact@v3
         with:
-          name: Development
+          name: ${{github.ref_name}}
           path: dist/
 
       - name: "Remove files unsupported by PyPi"
