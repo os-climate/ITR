@@ -70,7 +70,8 @@ jobs:
 
       - name: "Build with TOX"
         run: |
-          tox -e build
+          # pdm install; pdm build
+          pdm build
           mv buildvars.txt dist/buildvars.txt
 
       ### SIGNING ###
@@ -92,16 +93,14 @@ jobs:
   ### PUBLISH GITHUB ###
 
   github:
-    # Only publish to PyPI on tag pushes
-    # if: startsWith(github.ref, 'refs/tags/')
+
     name: "📦 Test publish to GitHub"
     needs:
       - build
     runs-on: ubuntu-latest
     permissions:
+      # IMPORTANT: mandatory for artefact release
       contents: write
-      # IMPORTANT: mandatory for Sigstore and trusted publishing
-      # id-token: write
     steps:
 
       - name: "⬇ Download build artefacts"

@@ -78,6 +78,8 @@ jobs:
 
   github:
     name: "📦 Publish packages to GitHub"
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
     runs-on: ubuntu-latest
@@ -110,9 +112,9 @@ jobs:
   ### PUBLISH TEST PYPI ###
 
   testpypi:
-    # Only publish to PyPI on tag pushes
-    # if: startsWith(github.ref, 'refs/tags/')
     name: "📦 Test publish to PyPi"
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
     runs-on: ubuntu-latest
@@ -132,7 +134,10 @@ jobs:
 
       - name: "Remove files unsupported by PyPi"
         run: |
-          rm dist/*.txt dist/*.crt dist/*.sig*
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
+          fi
+          rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -146,6 +151,8 @@ jobs:
 
   pypi:
     name: "📦 Publish to PyPi"
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - testpypi
     runs-on: ubuntu-latest
@@ -165,7 +172,10 @@ jobs:
 
       - name: "Remove files unsupported by PyPi"
         run: |
-          rm dist/*.txt dist/*.crt dist/*.sig*
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
+          fi
+          rm dist/*.crt dist/*.sig*
 
 #      - name: "Publish distribution to PyPI"
 #        uses: pypa/gh-action-pypi-publish@release/v1
