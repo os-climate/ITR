@@ -120,7 +120,7 @@ jobs:
         id: setenv
         run: |
           set -x
-          if [ -f source dist/buildvars.txt ]; then
+          if [ -f dist/buildvars.txt ]; then
             source dist/buildvars.txt
             echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
             echo "Datetime is: ${datetime}"
