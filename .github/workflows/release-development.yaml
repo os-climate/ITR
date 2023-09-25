@@ -103,8 +103,8 @@ jobs:
           else
             echo "Build environment variables could not be sourced"
           fi
-          echo "tarball=$(ls dist/*.tgz" >> "$GITHUB_OUTPUT"
-          echo "wheel=$(ls dist/*.whl" >> "$GITHUB_OUTPUT"
+          echo "tarball=$(ls dist/*.tgz)" >> "$GITHUB_OUTPUT"
+          echo "wheel=$(ls dist/*.whl)" >> "$GITHUB_OUTPUT"
 
 #      - name: "📦 Publish packages to GitHub"
 #        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
