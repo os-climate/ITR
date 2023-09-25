@@ -74,7 +74,7 @@ jobs:
 
       - name: "Build with TOX"
         run: |
-          if [ -f  pdm.lock ]; then; rm pdm.lock; fi
+          if [ -f  pdm.lock ]; then rm pdm.lock; fi
           pdm lock
           tox -e build
 
