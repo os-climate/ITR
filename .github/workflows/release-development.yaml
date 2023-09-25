@@ -34,7 +34,7 @@ jobs:
         id: setenv
         run: |
           set -x
-          VARS_FILE=dist/buildvars.txt
+          VARS_FILE=buildvars.txt
           mkdir -p dist || true
           touch "$VARS_FILE"
           datetime=$(date +'%Y%m%d%H%M')
@@ -77,7 +77,7 @@ jobs:
           # if [ -f  pdm.lock ]; then rm pdm.lock; fi
           # pdm lock
           tox -e build
-          ls dist
+          cp buildvars.txt dist/buildvars.txt
 
       ### SIGNING ###
 
@@ -120,14 +120,17 @@ jobs:
         id: setenv
         run: |
           set -x
-          ls dist
-          if [ -f source dist/buildvars.txt ]; then source dist/buildvars.txt; fi
-          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-          echo "Datetime is: ${datetime}"
-          echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
-          echo "Python version is: ${pyver}"
-          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
-          echo "Version number is: ${vernum}"
+          if [ -f source dist/buildvars.txt ]; then
+            source dist/buildvars.txt
+            echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
+            echo "Datetime is: ${datetime}"
+            echo "pyver=${pyver}" >> "$GITHUB_OUTPUT"
+            echo "Python version is: ${pyver}"
+            echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+            echo "Version number is: ${vernum}"
+          else
+            echo "Build environment variables could not be sourced"
+          fi
 
       - name: "📦 Publish packages to GitHub"
         uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
@@ -170,6 +173,9 @@ jobs:
 
       - name: "Remove files unsupported by PyPi"
         run: |
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
+          fi
           rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
