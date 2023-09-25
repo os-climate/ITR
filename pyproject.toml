@@ -102,3 +102,6 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = [ "test/" ]
+
+[tool.black]
+line-length = 120
