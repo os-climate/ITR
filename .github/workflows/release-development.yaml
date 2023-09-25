@@ -53,6 +53,11 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
+      - name: "Update Python packages"
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-pdm
+
       - name: "Tag for test release"
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
@@ -96,7 +101,7 @@ jobs:
     permissions:
       contents: write
       # IMPORTANT: mandatory for Sigstore and trusted publishing
-      id-token: write
+      # id-token: write
     steps:
 
       - name: "⬇ Download build artefacts"
