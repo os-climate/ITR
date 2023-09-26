@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: testpypi
-      url: https://test.pypi.org/project/ITR/
+      url:  https://test.pypi.org/legacy/
     permissions:
       # IMPORTANT: mandatory for trusted publishing
       contents: read
@@ -155,3 +155,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1.8.10
         with:
           verbose: true
+          repository-url: https://test.pypi.org/legacy/
