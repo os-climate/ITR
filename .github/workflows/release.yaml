@@ -109,7 +109,8 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
-    environment: testpypi
+    environment:
+      name: testpypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
       contents: read
@@ -145,7 +146,8 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
-    environment: release
+    environment:
+      name: pypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
       contents: read
