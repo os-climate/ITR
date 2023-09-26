@@ -152,7 +152,7 @@ jobs:
           rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/latest
+        uses: pypa/gh-action-pypi-publish@release/v1.8.10
         with:
           verbose: true
           environment: testpypi
