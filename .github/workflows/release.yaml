@@ -130,7 +130,7 @@ jobs:
           rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
-        uses: pypa/gh-action-pypi-publish@v1
+        uses: pypa/gh-action-pypi-publish@release/latest
         with:
           environment: testpypi
           repository-url: https://test.pypi.org/legacy/
@@ -176,7 +176,7 @@ jobs:
         uses: pdm-project/setup-pdm@v3
 
       - name: "Publish release to PyPI"
-        uses: pypa/gh-action-pypi-publish@v1
+        uses: pypa/gh-action-pypi-publish@release/latest
         with:
           environment: testpypi
           verbose: true
