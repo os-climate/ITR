@@ -129,12 +129,12 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/legacy/
+    # environment:
+    #   name: testpypi
+    #  url: https://test.pypi.org/legacy/
     permissions:
       # IMPORTANT: mandatory for trusted publishing
-      contents: read
+      # contents: read
       id-token: write
     steps:
 
