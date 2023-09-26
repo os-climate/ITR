@@ -109,9 +109,7 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/project/ITR/
+    environment: testpypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
       contents: read
@@ -132,8 +130,10 @@ jobs:
           rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.8.10
+        uses: pypa/gh-action-pypi-publish@v1
         with:
+          environment: testpypi
+          repository-url: https://test.pypi.org/legacy/
           verbose: true
 
   ### PUBLISH PYPI ###
@@ -143,11 +143,9 @@ jobs:
     # Only publish on tag pushes
     if: startsWith(github.ref, 'refs/tags/')
     needs:
-      - testpypi
+      - build
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/ITR/
+    environment: release
     permissions:
       # IMPORTANT: mandatory for trusted publishing
       contents: read
@@ -178,7 +176,7 @@ jobs:
         uses: pdm-project/setup-pdm@v3
 
       - name: "Publish release to PyPI"
-        uses: pypa/gh-action-pypi-publish@release/v1.8.10
+        uses: pypa/gh-action-pypi-publish@v1
         with:
+          environment: testpypi
           verbose: true
-          password: ${{ secrets.TOKEN }}
