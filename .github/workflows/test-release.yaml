@@ -129,8 +129,8 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
-    #environment:
-    #  name: testpypi
+    environment:
+      name: testpypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
       contents: read
@@ -154,5 +154,4 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-          environment: testpypi
           repository-url: https://test.pypi.org/legacy/
