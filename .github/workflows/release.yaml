@@ -68,7 +68,7 @@ jobs:
   ### PUBLISH GITHUB ###
 
   github:
-    name: "📦 Publish packages to GitHub"
+    name: "📦 Publish to GitHub"
     # Only publish on tag pushes
     if: startsWith(github.ref, 'refs/tags/')
     needs:
@@ -99,10 +99,10 @@ jobs:
             dist/*.whl
 
 
-  ### PUBLISH TEST PYPI ###
+  ### PUBLISH PYPI TEST ###
 
   testpypi:
-    name: "📦 Test publish to PyPi"
+    name: "📦 Publish to PyPi Test"
     # Only publish on tag pushes
     if: startsWith(github.ref, 'refs/tags/')
     needs:
@@ -141,7 +141,7 @@ jobs:
     # Only publish on tag pushes
     if: startsWith(github.ref, 'refs/tags/')
     needs:
-      - build
+      - testpypi
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -162,13 +162,6 @@ jobs:
             rm dist/buildvars.txt
           fi
           rm dist/*.crt dist/*.sig*
-
-#      - name: "Publish distribution to PyPI"
-#        uses: pypa/gh-action-pypi-publish@release/v1
-#        with:
-#          verbose: true
-#          password: ${{ secrets.PYPI_API_TOKEN }}
-#          repository-url: https://pypi.org/project/ITR/
 
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
