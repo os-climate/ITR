@@ -133,7 +133,6 @@ jobs:
       name: testpypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
-      # contents: read
       id-token: write
     steps:
 

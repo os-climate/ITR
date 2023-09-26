@@ -113,7 +113,6 @@ jobs:
       name: testpypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
-      contents: read
       id-token: write
     steps:
 
@@ -133,7 +132,6 @@ jobs:
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          environment: testpypi
           repository-url: https://test.pypi.org/legacy/
           verbose: true
 
@@ -150,7 +148,6 @@ jobs:
       name: pypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
-      contents: read
       id-token: write
     steps:
 
@@ -180,5 +177,4 @@ jobs:
       - name: "Publish release to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          environment: testpypi
           verbose: true
