@@ -76,8 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory to publish artefacts
-      contents: read
-      id-token: write
+      contents: write
     steps:
 
       - name: "⬇ Download build artefacts"
