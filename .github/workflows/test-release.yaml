@@ -134,6 +134,7 @@ jobs:
       url: https://test.pypi.org/project/ITR/
     permissions:
       # IMPORTANT: mandatory for trusted publishing
+      contents: read
       id-token: write
     steps:
 
@@ -151,6 +152,6 @@ jobs:
           rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@release/v1.8.10
         with:
           verbose: true
