@@ -1,5 +1,5 @@
 ---
-name: "🐍 Test builds (matrix)"
+name: "🧪 Test builds (matrix)"
 
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
