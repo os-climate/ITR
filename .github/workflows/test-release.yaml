@@ -152,7 +152,7 @@ jobs:
           rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1.8.10
+        uses: pypa/gh-action-pypi-publish@release/v1.8
         with:
           verbose: true
           repository-url: https://test.pypi.org/legacy/
