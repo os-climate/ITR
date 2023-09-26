@@ -156,5 +156,5 @@ jobs:
         with:
           verbose: true
           environment: testpypi
-          url: https://test.pypi.org/legacy/
-          # repository-url: https://test.pypi.org/legacy/
+          #url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
