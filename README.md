@@ -1,5 +1,8 @@
 # ITR
-This Python module implements the ITR methodology, elaborated in this [Functional Overview](https://github.com/os-climate/ITR/blob/main/docs/FunctionalOverview.rst).  [A graphical representation](https://github.com/os-climate/ITR/blob/main/docs/Calculation.md) of the fundamental calculations is also available in the [docs](https://github.com/os-climate/ITR/tree/main/docs) directory.
+
+This Python module implements the ITR methodology, elaborated in this [Functional Overview](https://github.com/os-climate/ITR/blob/main/docs/FunctionalOverview.rst).
+
+[A graphical representation](https://github.com/os-climate/ITR/blob/main/docs/Calculation.md) of the fundamental calculations is also available in the [docs](https://github.com/os-climate/ITR/tree/main/docs) directory.
 
 ## Getting started with the user interface:
 
