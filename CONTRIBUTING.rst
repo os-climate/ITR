@@ -6,7 +6,7 @@ Any contribution to this project is highly appreciated. The most common way to c
 
 Submitting a bug report or a feature request
 ==============================================
-To keep track of open issues and feature requests, we will use `Github's https://github.com/os-climate/ITR/issues <https://github.com/OFBDABV/ITR/issues/>`_.
+To keep track of open issues and feature requests, we will use `Github's https://github.com/os-climate/ITR/issues <https://github.com/os-climate/ITR/issues/>`_.
 
 If you encounter any bugs or missing features, please do not hesitate to open a ticket. Before submitting a report, please check that the issue has not already been reported.
 For ease of comprehension, please ensure your report includes the following characteristics:
@@ -23,7 +23,7 @@ Before a pull request can be approved it needs to be reviewed by two core contri
 
 Getting started
 -----------------
-Before getting started it is important to have a clean Python environment. The recommended Python version is 3.6 or higher.
+Before getting started it is important to have a clean Python environment. The recommended Python version is 3.9 or higher.
 An anaconda environment file is provided in the root of the project, as is a PIP requirements.txt file.
 The easiest way to work on the Python module is by installing it in development mode. This can be done using the following command::
 
