@@ -39,10 +39,6 @@ from ITR.configs import ColumnsConfig
 
 from utils import gen_company_data, DequantifyQuantity, assert_pint_series_equal
 
-import plotly.express as px
-import plotly.graph_objects as go
-
-
 def print_expected(target_df, company_data):
     target_indexes = target_df.index.to_list()
     for c in company_data:
@@ -54,28 +50,6 @@ def print_expected(target_df, company_data):
                                 index=range(2019,2051))
 """
         )
-
-
-# https://stackoverflow.com/a/62853540/1291237
-from plotly.subplots import make_subplots
-
-subfig = make_subplots(specs=[[{"secondary_y": True}]])
-
-# # create two independent figures with px.line each containing data from multiple columns
-# fig = px.line(df, y=df.filter(regex="Linear").columns, render_mode="webgl",)
-# fig2 = px.line(df, y=df.filter(regex="Log").columns, render_mode="webgl",)
-#
-# fig2.update_traces(yaxis="y2")
-#
-# subfig.add_traces(fig.data + fig2.data)
-# subfig.layout.xaxis.title="Time"
-# subfig.layout.yaxis.title="Linear Y"
-# subfig.layout.yaxis2.type="log"
-# subfig.layout.yaxis2.title="Log Y"
-# # recoloring is necessary otherwise lines from fig und fig2 would share each color
-# # e.g. Linear-, Log- = blue; Linear+, Log+ = red... we don't want this
-# subfig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
-# subfig.show()
 
 
 # For this test case, we prime the pump with known-aligned emissions intensities.
@@ -327,26 +301,6 @@ class TestTargets(unittest.TestCase):
             bm_production_data.loc[(company_aj.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
         )
-
-        plot_dict = {
-            # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
-            f"{c.company_id} - {c.company_name}": self.base_company_data._convert_projections_to_series(
-                c, "projected_targets"
-            )
-            for c in company_data
-        }
-        target_df = pd.DataFrame(plot_dict)
-
-        fig = px.line(
-            target_df.pint.dequantify().droplevel(1, axis=1),
-            y=[k for k in plot_dict.keys()],
-            labels={
-                "index": "Year",
-                "value": f"{intensity.u:~P}",
-                "variable": "test_target_netzero",
-            },
-        )
-        # fig.show()
 
         # print_expected(target_df, [company_ag, company_ah, company_ai, company_aj])
         expected_ag = pd.Series(
@@ -742,26 +696,6 @@ class TestTargets(unittest.TestCase):
             ei_df_t=ei_df_t,
         )
 
-        plot_dict = {
-            # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
-            f"{c.company_id} - {c.company_name}": self.base_company_data._convert_projections_to_series(
-                c, "projected_targets"
-            )
-            for c in company_data
-        }
-        target_df = pd.DataFrame(plot_dict)
-
-        fig = px.line(
-            target_df.pint.dequantify().droplevel(1, axis=1),
-            y=[k for k in plot_dict.keys()],
-            labels={
-                "index": "Year",
-                "value": f"{intensity.u:~P}",
-                "variable": "test_target_2030",
-            },
-        )
-        # fig.show()
-
         # print_expected(target_df, [company_ag, company_ah, company_ai, company_aj])
         expected_ag = pd.Series(
             PA_(
@@ -1156,26 +1090,6 @@ class TestTargets(unittest.TestCase):
             bm_production_data.loc[(company_aj.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
         )
-
-        plot_dict = {
-            # "Trajectory": (co_productions * co_ei_trajectory).cumsum(),
-            f"{c.company_id} - {c.company_name}": self.base_company_data._convert_projections_to_series(
-                c, "projected_targets"
-            )
-            for c in company_data
-        }
-        target_df = pd.DataFrame(plot_dict)
-
-        fig = px.line(
-            target_df.pint.dequantify().droplevel(1, axis=1),
-            y=[k for k in plot_dict.keys()],
-            labels={
-                "index": "Year",
-                "value": f"{intensity.u:~P}",
-                "variable": "test_target_overlaps",
-            },
-        )
-        # fig.show()
 
         # print_expected(target_df, company_data)
         expected_ag = pd.Series(
@@ -1690,7 +1604,6 @@ class TestTargets(unittest.TestCase):
         def _pint_cumsum(ser: pd.Series) -> pd.Series:
             return ser.pint.m.cumsum().astype(ser.dtype)
 
-        # fig = px.line(df, x='id', y='value', color='variable')
         cumsum_units = "Mt CO2e"
         target_dict = {
             f"Target: {c.company_id} - {c.company_name}": compute_scope_targets(c, "projected_targets", co_pp.columns)
@@ -1727,32 +1640,6 @@ class TestTargets(unittest.TestCase):
                 axis=1,
             )
         )
-        dequantified_df = target_df.pint.dequantify().droplevel(1, axis=1)
-        # May have uncertainties...or some columns may be Float64
-        dequantified_df = dequantified_df.apply(
-            lambda col: col if col.dtype == "float64" else ITR.nominal_values(col).astype(np.float64)
-        )
-        fig_target = px.line(dequantified_df, y=dequantified_df.filter(regex="Target:").columns)
-        fig_trajectory = px.line(dequantified_df, y=dequantified_df.filter(regex="Trajectory:").columns)
-        fig_trajectory.update_traces(line={"dash": "dash"})
-        fig_target_cumulative = px.line(dequantified_df, y=dequantified_df.filter(regex="TargetCumulative:").columns)
-        fig_target_cumulative.update_traces(yaxis="y2")
-        fig_trajectory_cumulative = px.line(
-            dequantified_df,
-            y=dequantified_df.filter(regex="TrajectoryCumulative:").columns,
-        )
-        fig_trajectory_cumulative.update_traces(yaxis="y2", line={"dash": "dash"})
-        subfig = make_subplots(specs=[[{"secondary_y": True}]])
-        subfig.add_traces(
-            fig_target.data + fig_trajectory.data + fig_target_cumulative.data + fig_trajectory_cumulative.data
-        )
-        # subfig.for_each_trace(lambda t: t.update(line=dict(color=t.marker.color)))
-        # subfig.show()
-
-        # fig = px.line(target_df.pint.dequantify().droplevel(1, axis=1), y=[k for k in plot_dict.keys()],
-        # labels={'index':'Year', 'value':f"{intensity_s1s2.u:~P}", 'variable':'test_different_starting_dates_intensity'})
-        # fig.show()
-
         self.data_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_S3_bm)
         companies = self.data_warehouse.get_preprocessed_company_data(company_index)
 

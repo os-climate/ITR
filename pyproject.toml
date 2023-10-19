@@ -30,14 +30,7 @@ classifiers = [
 ]
 dependencies = [
   "autoapi>=2.0.1",
-  "dash==2.11.1",
-  "dash-bootstrap-components==1.4.2",
-  "diskcache==5.6.1",
-  "flask==2.2.5",
   "iam-units>=2022.10.27",
-  "jupyterlab==4.0.4",
-  "matplotlib==3.7.2",
-  "multiprocess==0.70.14",
   "numpy==1.24.3",
   "openpyxl==3.0.10",
   "openscm-units==0.5.2",
