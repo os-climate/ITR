@@ -39,6 +39,7 @@ from ITR.configs import ColumnsConfig
 
 from utils import gen_company_data, DequantifyQuantity, assert_pint_series_equal
 
+
 def print_expected(target_df, company_data):
     target_indexes = target_df.index.to_list()
     for c in company_data:
