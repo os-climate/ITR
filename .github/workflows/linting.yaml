@@ -3,6 +3,7 @@ name: "🧪 Linting checks"
 
 # yamllint disable-line rule:truthy
 on:
+  workflow_dispatch:
   pull_request:
     types:
       [opened, reopened, edited]
