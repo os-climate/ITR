@@ -18,7 +18,7 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.10.0
+    rev: 23.9.1
     hooks:
       - id: black
         # It is recommended to specify the latest version of Python
@@ -26,19 +26,6 @@ repos:
         # pre-commit's default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
         language_version: python3.11
-
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: 'v8.52.0'
-    hooks:
-      - id: eslint
-        files: \^*.toml
-        types: [file]
-        additional_dependencies:
-          - eslint
-          - eslint-config-google
-          - eslint-loader
-          - eslint-plugin-react
-          - babel-eslint
 
   - repo: https://github.com/pycqa/flake8
     rev: '6.1.0'
@@ -49,3 +36,13 @@ repos:
     rev: 'v1.6.1'
     hooks:
       - id: mypy
+
+  - repo: local
+    hooks:
+      - id: tomllint
+        name: "Script: scripts/tomllint.sh"
+        language: script
+        # pass_filenames: false
+        files: \^*.toml
+        types: [file]
+        entry: scripts/tomllint.sh .
