@@ -1,6 +1,6 @@
 [project]
 name = "ITR"
-version = "v1.0.6"
+version = "v1.0.7"
 description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
 authors = [ { name = "Michael Tiemann", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" } ]
 requires-python = ">=3.9"
@@ -37,6 +37,7 @@ dependencies = [
   "orca==1.8",
   "osc-ingest-tools>=0.4.3",
   "pandas>=2.1.0",
+  "pip>=23.2",
   "Pint>=0.22",
   "Pint-Pandas>=0.5",
   "psutil==5.9.5",
