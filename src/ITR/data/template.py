@@ -344,14 +344,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             )
             if "boundary" in df1.columns:
                 df1.drop(columns="boundary", inplace=True)
-            df1 = df1.drop(columns="unit").groupby(
-                by=[
-                    ColumnsConfig.COMPANY_ID,
-                    ColumnsConfig.TEMPLATE_REPORT_DATE,
-                    "submetric",
-                ],
-                dropna=False,
-            ).agg(_estimated_value)
+            df1 = (
+                df1.drop(columns="unit")
+                .groupby(
+                    by=[
+                        ColumnsConfig.COMPANY_ID,
+                        ColumnsConfig.TEMPLATE_REPORT_DATE,
+                        "submetric",
+                    ],
+                    dropna=False,
+                )
+                .agg(_estimated_value)
+            )
             df1["sub_count"] = df1.groupby([ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE])[
                 df1.columns[0]
             ].transform("count")
@@ -856,7 +860,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             em_metrics_grouped = em_metrics.groupby(by=["company_id", "metric"])
             em_unit_nunique = em_metrics_grouped["unit"].nunique()
             if any(em_unit_nunique > 1):
-                em_unit_ambig = em_unit_nunique[em_unit_nunique > 1].reset_index('metric')
+                em_unit_ambig = em_unit_nunique[em_unit_nunique > 1].reset_index("metric")
                 for company_id in em_unit_ambig.index.unique():
                     logger.warning(
                         f"Company {company_id} uses multiple units describing scopes "
