@@ -5,6 +5,7 @@ import pandas as pd
 from numpy.testing import assert_array_equal
 
 import ITR
+from ITR import data_dir
 from ITR.interfaces import EScope, ETimeFrames, IntensityMetric
 from ITR.interfaces import (
     ICompanyData,
@@ -159,13 +160,10 @@ class TestEIBenchmarks(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        self.root = os.path.dirname(os.path.abspath(__file__))
-        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
-        self.benchmark_EI_OECM_PC = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_PC.json")
-        self.benchmark_EI_TPI = os.path.join(self.root, "inputs", "json", "benchmark_EI_TPI_2_degrees.json")
-        self.benchmark_EI_TPI_below_2 = os.path.join(
-            self.root, "inputs", "json", "benchmark_EI_TPI_below_2_degrees.json"
-        )
+        self.benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
+        self.benchmark_EI_OECM_PC = os.path.join(data_dir, "benchmark_EI_OECM_PC.json")
+        self.benchmark_EI_TPI = os.path.join(data_dir, "benchmark_EI_TPI_2_degrees.json")
+        self.benchmark_EI_TPI_below_2 = os.path.join(data_dir, "benchmark_EI_TPI_below_2_degrees.json")
 
         # load company data
         self.companies = [company_ag, company_ah, company_ai]
