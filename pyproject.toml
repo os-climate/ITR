@@ -37,7 +37,7 @@ dependencies = [
   "orca==1.8",
   "osc-ingest-tools>=0.4.3",
   "pandas>=2.1.0",
-  "pip>=23.2",
+  "pip>=23.3.1",
   "Pint>=0.22",
   "Pint-Pandas>=0.5",
   "psutil==5.9.5",
