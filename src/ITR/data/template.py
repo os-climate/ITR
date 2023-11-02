@@ -344,7 +344,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             )
             if "boundary" in df1.columns:
                 df1.drop(columns="boundary", inplace=True)
-            df1 = df1.groupby(
+            df1 = df1.drop(columns="unit").groupby(
                 by=[
                     ColumnsConfig.COMPANY_ID,
                     ColumnsConfig.TEMPLATE_REPORT_DATE,
@@ -853,26 +853,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     )
             # All emissions metrics across multiple sectors should all resolve to some form of [mass] CO2
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
-            em_unit_ambig = em_metrics.groupby(by=["company_id", "metric"]).count()
-            em_unit_ambig = em_unit_ambig[em_unit_ambig.unit > 1]
-            if len(em_unit_ambig) > 0:
-                em_unit_ambig = em_unit_ambig.reset_index("metric").drop(columns="unit")
-                for id in em_unit_ambig.index.unique():
+            em_metrics_grouped = em_metrics.groupby(by=["company_id", "metric"])
+            em_unit_nunique = em_metrics_grouped["unit"].nunique()
+            if any(em_unit_nunique > 1):
+                em_unit_ambig = em_unit_nunique[em_unit_nunique > 1].reset_index('metric')
+                for company_id in em_unit_ambig.index.unique():
                     logger.warning(
-                        f"Company {id} uses multiple units describing scopes {[s for s in em_unit_ambig.loc[[id]]['metric']]}"
+                        f"Company {company_id} uses multiple units describing scopes "
+                        f"{[s for s in em_unit_ambig.loc[[company_id]]['metric']]}"
                     )
                 logger.warning(f"The ITR Tool will choose one and covert all to that")
-            else:
-                em_metrics.metrics = "emissions"
-                em_unit_ambig = em_metrics.groupby(by=["company_id", "metric"]).count()
-                em_unit_ambig = em_unit_ambig[em_unit_ambig.unit > 1]
-                if len(em_unit_ambig) > 0:
-                    em_unit_ambig = em_unit_ambig.droplevel("metric")
-                    for id in em_unit_ambig.index.unique():
-                        logger.warning(
-                            f"Company {id} uses multiple units describing different scopes {[s for s in em_unit_ambig.loc[[id]]['unit']]}"
-                        )
-                    logger.warning(f"The ITR Tool will choose one and covert all to that")
 
             em_units = em_metrics.groupby(by=["company_id"], group_keys=True).first()
             # We update the metrics we were told with the metrics we are given
