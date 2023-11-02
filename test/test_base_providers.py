@@ -4,6 +4,7 @@ import os
 import warnings
 import pandas as pd
 import ITR
+from ITR import data_dir
 from ITR.data.osc_units import ureg, Q_, asPintSeries
 
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
@@ -43,8 +44,8 @@ class TestBaseProvider(unittest.TestCase):
     def _setUpWithEIBM(self, eibm_filename, scope_to_calc) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
         self.company_json = os.path.join(self.root, "inputs", "json", "fundamental_data.json")
-        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
-        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", eibm_filename)
+        self.benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
+        self.benchmark_EI_json = os.path.join(data_dir, eibm_filename)
 
         # load company data
         with open(self.company_json) as json_file:
