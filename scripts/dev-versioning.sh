@@ -4,7 +4,7 @@
 
 FILEPATH="pyproject.toml"
 
-if [ $# -ne 1 ] && [ $# -ne 0]; then
+if [ $# -ne 1 ] && [ $# -ne 0 ]; then
 	echo "Usage: $0 [version-string]"
 	echo "Substitutes the version string in pyproject.toml"; exit 1
 elif [ $# -eq 1 ]; then
