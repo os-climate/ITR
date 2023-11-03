@@ -1184,12 +1184,21 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     .drop(columns="submetric")
                 )
 
-            prod_base_year = pd.concat([best_prod, new_prod])[self.projection_controls.BASE_YEAR].droplevel("metric")
-            if prod_base_year.isna().any():
+            prod_df = pd.concat([best_prod, new_prod]).droplevel("metric")
+            base_year_loc = prod_df.columns.get_loc(self.projection_controls.BASE_YEAR)
+            base_year_na = prod_df.iloc[:, base_year_loc].isna()
+            if base_year_na.any():
                 logger.warning(
-                    f"The following companies lack base year production info (will be ignored):\n{prod_base_year[prod_base_year.isna()].index.to_list()}"
+                    "The following companies lack base year production info (will be ignored):\n"
+                    f"{prod_df[base_year_na].index.to_list()}"
                 )
-                prod_base_year = prod_base_year[prod_base_year.notna()]
+                # We could backfill instead of dropping companies...
+                # prod_df.iloc[:, base_year_loc:-1] = prod_df.iloc[:, base_year_loc:-1].bfill(axis=1)
+                prod_df = prod_df[~base_year_na]
+                if len(prod_df) == 0:
+                    logger.error("No companies left to analyze...aborting")
+                    assert False
+            prod_base_year = prod_df.iloc[:, base_year_loc]
             prod_metrics = prod_base_year.map(lambda x: f"{x.u:~P}")
             # We update the metrics we were told with the metrics we are given
             df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics
@@ -1229,8 +1238,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 assert "sector" not in df3.index.names and "submetric" not in df3.index.names
 
             # Avoid division by zero problems with zero-valued production metrics
+            # Note that we should be filtering out NA production values before this point,
+            # but we want this to be robust in case NA production values arrive here somehow
             df3_num_t = asPintDataFrame(df3.xs(VariablesConfig.EMISSIONS, level=1).T)
             df3_denom_t = asPintDataFrame(df3.xs((VariablesConfig.PRODUCTIONS, "production"), level=[1, 2]).T)
+            df3_null = df3_denom_t.dtypes == object
+            df3_null_idx = df3_null[df3_null].index
+            if len(df3_null_idx):
+                logger.warning(f"Dropping NULL-valued production data for these indexes\n{df3_null_idx}")
+                df3_num_t = df3_num_t[~df3_null_idx]
+                df3_denom_t = df3_denom_t[~df3_null_idx]
             df4 = (
                 df3_num_t
                 * df3_denom_t.rdiv(1.0).apply(
