@@ -22,7 +22,7 @@ repos:
       - id: check-json
       - id: check-merge-conflict
       - id: check-shebang-scripts-are-executable
-      - id: check-symlink
+      - id: check-symlinks
       - id: check-toml
       - id: detect-aws-credentials
       - id: check-xml
@@ -40,7 +40,7 @@ repos:
         args: ['--fix=lf']
 
   - repo: https://github.com/jorisroovers/gitlint
-    rev: v0.17.0
+    rev: v0.19.1
     hooks:
       - id: gitlint
 
@@ -50,7 +50,7 @@ repos:
       - id: bashate
 
   - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.7.2
+    rev: v0.9.0
     hooks:
       - id: shellcheck
       # args: ["--severity=warning"]  # Optionally only show errors and warnings
@@ -90,7 +90,7 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1
+    rev: 23.10.1
     hooks:
       - id: black
 
