@@ -11,8 +11,8 @@ elif [ $# -eq 1 ]; then
 	VERSION=$1
 	echo "Received version string: $VERSION"
 else
-	datetime=$(date +'%Y%m%d%H%M')
-    pyver=$(python --version | awk '{print $2}')
+  datetime=$(date +'%Y%m%d%H%M')
+  pyver=$(python --version | awk '{print $2}')
 	VERSION="${pyver}.${datetime}"
 	echo "Defined version string: $VERSION"
 fi

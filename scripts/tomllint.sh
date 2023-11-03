@@ -13,13 +13,13 @@ fi
 check_platform() {
     # Enumerate platform and set binary name appropriately
     PLATFORM=$(uname -a)
-    if (echo $PLATFORM | grep Darwin | grep arm64); then
+    if (echo "${PLATFORM}" | grep Darwin | grep arm64); then
         TAPLO_VER="taplo-darwin-aarch64.gz"
-    elif (echo $PLATFORM | grep Darwin | grep x86_64); then
+    elif (echo "${PLATFORM}" | grep Darwin | grep x86_64); then
         TAPLO_VER="taplo-darwin-x86_64.gz"
-    elif (echo $PLATFORM | grep Linux | grep aarch64); then
+    elif (echo "${PLATFORM}" | grep Linux | grep aarch64); then
         TAPLO_VER="taplo-full-linux-aarch64.gz"
-    elif (echo $PLATFORM | grep Linux | grep x86_64); then
+    elif (echo "${PLATFORM}" | grep Linux | grep x86_64); then
         TAPLO_VER="taplo-full-linux-x86_64.gz"
     else
         echo "Unsupported platform!"; exit 1
