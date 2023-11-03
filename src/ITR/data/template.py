@@ -1203,7 +1203,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 prod_df = prod_df[~base_year_na]
                 if len(prod_df) == 0:
                     logger.error("No companies left to analyze...aborting")
-                assert False
+                    assert False
             prod_base_year = prod_df.iloc[:, base_year_loc]
             prod_metrics = prod_base_year.map(lambda x: f"{x.u:~P}")
             # We update the metrics we were told with the metrics we are given
