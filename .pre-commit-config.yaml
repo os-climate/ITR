@@ -25,6 +25,13 @@ repos:
     hooks:
       - id: gitlint
 
+  - id: bashate
+    name: bashate
+    description: This hook runs bashate for linting shell scripts
+    entry: bashate
+    language: python
+    types: [shell]
+
   # If you want to automatically "modernize" your Python code:
   # - repo: https://github.com/asottile/pyupgrade
   #   rev: v3.3.1
