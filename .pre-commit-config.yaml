@@ -37,7 +37,6 @@ repos:
       - id: pretty-format-json
       - id: requirements-txt-fixer
       - id: trailing-whitespace
-        args: ['--fix=lf']
 
   - repo: https://github.com/jorisroovers/gitlint
     rev: v0.19.1
