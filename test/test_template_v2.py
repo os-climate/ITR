@@ -6,6 +6,7 @@ import pandas as pd
 from pint_pandas import PintArray as PA_
 
 import ITR
+from ITR import data_dir
 from ITR.data.osc_units import ureg, Q_, M_, asPintSeries, requantify_df_from_columns
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 
@@ -40,14 +41,14 @@ class TemplateV2:
         # self.company_data_path = os.path.join(root, "inputs", "20230106 ITR V2 Sample Data.xlsx")
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         # load production benchmarks
-        benchmark_prod_json = os.path.join(root, "inputs", "json", "benchmark_production_OECM.json")
+        benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
         with open(benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
         # load intensity benchmarks
-        benchmark_EI_json = os.path.join(root, "inputs", "json", "benchmark_EI_OECM_PC.json")
+        benchmark_EI_json = os.path.join(data_dir, "benchmark_EI_OECM_PC.json")
         with open(benchmark_EI_json) as json_file:
             parsed_json = json.load(json_file)
         ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)

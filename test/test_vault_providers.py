@@ -20,6 +20,7 @@ import osc_ingest_trino as osc
 from sqlalchemy.engine import create_engine
 
 import ITR
+from ITR import data_dir
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
@@ -76,9 +77,8 @@ class TestVaultProvider(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        self.root = os.path.dirname(os.path.abspath(__file__))
-        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
-        self.benchmark_EI_json = os.path.join(self.root, "inputs", "json", "benchmark_EI_OECM_S3.json")
+        self.benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
+        self.benchmark_EI_json = os.path.join(data_dir, "benchmark_EI_OECM_S3.json")
 
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:

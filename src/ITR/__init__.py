@@ -5,6 +5,7 @@ portfolios.
 import warnings
 import pandas as pd
 import numpy as np
+import os
 import json
 from .interfaces import EScope
 from . import data
@@ -12,6 +13,8 @@ from . import utils
 from . import temperature_score
 import pint
 from pint_pandas import PintType, PintArray
+
+data_dir = os.path.join(__path__[0], "data", "json")
 
 try:
     # Even if we have uncertainties available as a module, we don't have the right version of pint

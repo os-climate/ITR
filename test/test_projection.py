@@ -7,6 +7,7 @@ import warnings
 import pandas as pd
 
 import ITR
+from ITR import data_dir
 from utils import ITR_Encoder, assert_pint_series_equal
 from ITR.data.osc_units import Q_, PA_, asPintDataFrame
 from ITR.configs import ColumnsConfig, VariablesConfig
@@ -89,7 +90,7 @@ class TestProjector(unittest.TestCase):
         self.root: str = os.path.dirname(os.path.abspath(__file__))
         self.source_path: str = os.path.join(self.root, "inputs", "json", "test_project_companies.json")
         self.json_reference_path: str = os.path.join(self.root, "inputs", "json", "test_project_reference.json")
-        self.benchmark_prod_json = os.path.join(self.root, "inputs", "json", "benchmark_production_OECM.json")
+        self.benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
         # load production benchmarks
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
