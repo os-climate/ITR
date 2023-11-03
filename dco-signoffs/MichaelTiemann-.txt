@@ -845,4 +845,3 @@ This merge was not supposed to be that hard (one feature per branch they say), b
 At this point, things that failed before (due to bad interactions with unittest) still give problems, but all the unittests  plus the new projection tests basically work as well as they did before.
 
 c9060bd27118ff27ddd59f2dfb445c83a7dc7fc5 Create region_classification.csv
-

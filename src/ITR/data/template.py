@@ -1,54 +1,53 @@
+import datetime
+import logging
 import re
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-import datetime
-from typing import Type, List, Optional
-import pandas as pd
-import numpy as np
+from typing import List, Optional, Type
 
+import numpy as np
+import pandas as pd
+import pint
+from pint_pandas import PintType
 from pydantic import ValidationError
 
 import ITR
-from . import ureg, Q_, PA_
-from ITR.data.osc_units import (
-    fx_ctx,
-    ProductionQuantity,
-    EmissionsQuantity,
-    EI_Quantity,
-    asPintSeries,
-    asPintDataFrame,
-    ProductionMetric,
-    EmissionsMetric,
-)
-import pint
-from pint_pandas import PintType
-
-from ITR.data.base_providers import BaseCompanyDataProvider
 from ITR.configs import (
     ColumnsConfig,
+    LoggingConfig,
+    ProjectionControls,
+    SectorsConfig,
+    TabsConfig,
     TemperatureScoreConfig,
     VariablesConfig,
-    TabsConfig,
-    SectorsConfig,
-    ProjectionControls,
-    LoggingConfig,
+)
+from ITR.data.base_providers import BaseCompanyDataProvider
+from ITR.data.osc_units import (
+    EI_Quantity,
+    EmissionsMetric,
+    EmissionsQuantity,
+    ProductionMetric,
+    ProductionQuantity,
+    asPintDataFrame,
+    asPintSeries,
+    fx_ctx,
 )
 
-import logging
+from . import PA_, Q_, ureg
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
 from ITR.interfaces import (
-    ICompanyData,
     EScope,
+    ICompanyData,
+    IEIRealization,
+    IEmissionRealization,
+    IHistoricData,
+    IHistoricEIScopes,
     IHistoricEmissionsScopes,
     IProductionRealization,
-    IHistoricEIScopes,
-    IHistoricData,
-    ITargetData,
-    IEmissionRealization,
-    IEIRealization,
     IProjection,
+    ITargetData,
 )
 from ITR.utils import get_project_root
 

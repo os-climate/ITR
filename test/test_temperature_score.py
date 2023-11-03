@@ -1,22 +1,17 @@
-import warnings
 import os
 import unittest
-import pandas as pd
+import warnings
+
 import numpy as np
+import pandas as pd
+from utils import assert_pint_series_equal
 
 import ITR
 from ITR.configs import ColumnsConfig
-from ITR.interfaces import ETimeFrames, EScope
-from ITR.temperature_score import TemperatureScore
+from ITR.data.osc_units import Q_, asPintDataFrame, asPintSeries, requantify_df_from_columns, ureg
+from ITR.interfaces import EScope, ETimeFrames
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.data.osc_units import (
-    ureg,
-    Q_,
-    asPintSeries,
-    requantify_df_from_columns,
-    asPintDataFrame,
-)
-from utils import assert_pint_series_equal
+from ITR.temperature_score import TemperatureScore
 
 
 class TestTemperatureScore(unittest.TestCase):
