@@ -486,7 +486,7 @@ EI_Quantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(c
 
 
 def check_BenchmarkQuantity(quantity: Quantity) -> Quantity:
-    if str(quantity.u) == "dimensionless":
+    if quantity.u.dimensionless:
         return quantity
     for ei_u in _ei_units:
         if quantity.is_compatible_with(ei_u):
