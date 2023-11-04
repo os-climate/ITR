@@ -854,7 +854,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     # Convert ints to float as Work-around for Pandas GH#55824
                     # If we remove this extra conversion, we'll need to change Q_(m, u) to Q_(float(m), u)
                     # so as to convert not-yet-numeric string values to floating point numbers
-                    df_esg[col] = df_esg[col].astype('float64')
+                    df_esg[col] = df_esg[col].astype("float64")
                     df_esg[col] = df_esg[col].combine(
                         u_col,
                         lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
