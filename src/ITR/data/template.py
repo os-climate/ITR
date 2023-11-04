@@ -851,9 +851,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 warnings.simplefilter("ignore")
                 u_col = df_esg["unit"]
                 for col in esg_year_columns:
+                    # Convert ints to float as Work-around for Pandas GH#55824
+                    # If we remove this extra conversion, we'll need to change Q_(m, u) to Q_(float(m), u)
+                    # so as to convert not-yet-numeric string values to floating point numbers
+                    df_esg[col] = df_esg[col].astype('float64')
                     df_esg[col] = df_esg[col].combine(
                         u_col,
-                        lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(float(m), u),
+                        lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
                     )
             # All emissions metrics across multiple sectors should all resolve to some form of [mass] CO2
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
