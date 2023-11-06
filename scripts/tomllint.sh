@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# set -x
+
 status_code="0"
 TAPLO_URL=https://github.com/tamasfe/taplo/releases/download/0.8.1
 
@@ -14,22 +16,24 @@ check_platform() {
     # Enumerate platform and set binary name appropriately
     PLATFORM=$(uname -a)
     if (echo "${PLATFORM}" | grep Darwin | grep arm64); then
-        TAPLO_VER="taplo-darwin-aarch64.gz"
+        TAPLO_BIN="taplo-darwin-aarch64"
     elif (echo "${PLATFORM}" | grep Darwin | grep x86_64); then
-        TAPLO_VER="taplo-darwin-x86_64.gz"
+        TAPLO_BIN="taplo-darwin-x86_64"
     elif (echo "${PLATFORM}" | grep Linux | grep aarch64); then
-        TAPLO_VER="taplo-full-linux-aarch64.gz"
+        TAPLO_BIN="taplo-full-linux-aarch64"
     elif (echo "${PLATFORM}" | grep Linux | grep x86_64); then
-        TAPLO_VER="taplo-full-linux-x86_64.gz"
+        TAPLO_BIN="taplo-full-linux-x86_64"
     else
         echo "Unsupported platform!"; exit 1
     fi
+    TAPLO_GZIP="$TAPLO_BIN.gz"
+
 }
 
 check_file() {
     local file_path="$1"
     cp "$file_path" "$file_path.original"
-    "${TAPLO_BIN}" format "$file_path" >/dev/null
+    /tmp/"${TAPLO_BIN}" format "$file_path" >/dev/null
     diff "$file_path" "$file_path.original"
     local exit_code=$?
     if [ $exit_code -ne 0 ]; then
@@ -51,14 +55,22 @@ check_all() {
 }
 
 download_taplo() {
-    TAPLO_GZ=$(echo "${TAPLO_VER}" | sed "s/.gz//g")
-    TAPLO_BIN=/tmp/"${TAPLO_GZ}"
-    if [ ! -f /tmp/"${TAPLO_GZ}" ]; then
-        "${WGET_BIN}" -q -e robots=off -P /tmp "${TAPLO_URL}"/"${TAPLO_VER}"
+    if [ ! -f /tmp/"${TAPLO_GZIP}" ]; then
+        "${WGET_BIN}" -q -e robots=off -P /tmp "${TAPLO_URL}"/"${TAPLO_GZIP}"
     fi
-    if [ ! -x "${TAPLO_BIN}" ]; then
-        gzip -d /tmp/"${TAPLO_VER}"
-        chmod +x /tmp/"${TAPLO_GZ}"
+    TAPLO_PATH="/tmp/${TAPLO_BIN}"
+    if [ ! -x "${TAPLO_PATH}" ]; then
+        gzip -d "/tmp/${TAPLO_GZIP}"
+        chmod +x "/tmp/${TAPLO_BIN}"
+    fi
+    TAPLO_BIN="/tmp/${TAPLO_BIN}"
+}
+
+cleanup_tmp() {
+    # Only clean the temp directory if it was used
+    if [ -f /tmp/"${TAPLO_BIN}" ] || [ -f /tmp/"${TAPLO_GZIP}" ]; then
+        echo "Cleaning up..."
+        rm /tmp/"${TAPLO_BIN}"*
     fi
 }
 
@@ -76,24 +88,12 @@ if [ ! -x "${TAPLO_BIN}" ]; then
 fi
 
 if [ ! -x "${TAPLO_BIN}" ]; then
-    echo "TOML linting binary not found [taplo]"; exit 1
+    echo "Download failed: TOML linting binary not found [taplo]"
+    status_code="1"
+else
+    # To avoid execution when sourcing this script for testing
+    [ "$0" = "${BASH_SOURCE[0]}" ] && check_all "$@"
 fi
 
-cleanup_tmp() {
-    # Only clean the temp directory if it was used
-    if (echo "${TAPLO_BIN}" | grep "/tmp" > /dev/null 2>&1)
-    then
-        echo "Cleaning up..."
-        if [ -f "${TAPLO_BIN}" ]; then
-            rm "${TAPLO_BIN}"
-        fi
-        if [ -f "${TAPLO_GZ}" ]; then
-            rm "${TAPLO_GZ}"
-        fi
-    fi
-}
-
-# To avoid execution when sourcing this script for testing
-[ "$0" = "${BASH_SOURCE[0]}" ] && check_all "$@"
 cleanup_tmp
 exit $status_code
