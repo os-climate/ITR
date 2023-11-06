@@ -1,44 +1,40 @@
-import unittest
 import json
 import os
 import re
-import pandas as pd
+import unittest
+
 import numpy as np
+import pandas as pd
 from numpy.testing import assert_array_equal
+from pint import Quantity
+from utils import DequantifyQuantity, assert_pint_series_equal, gen_company_data
 
 import ITR
 from ITR import data_dir
-from ITR.interfaces import EScope, ETimeFrames
-from ITR.interfaces import (
-    ICompanyData,
-    ICompanyEIProjectionsScopes,
-    ICompanyEIProjections,
-    ICompanyEIProjection,
-)
-from ITR.interfaces import (
-    IProductionBenchmarkScopes,
-    IEIBenchmarkScopes,
-    PortfolioCompany,
-    ITargetData,
-)
-
+from ITR.configs import ColumnsConfig
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
     EITargetProjector,
     EITrajectoryProjector,
 )
-
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.temperature_score import TemperatureScore
+from ITR.data.osc_units import PA_, Q_, asPintDataFrame, asPintSeries, ureg
+from ITR.interfaces import (
+    EScope,
+    ETimeFrames,
+    ICompanyData,
+    ICompanyEIProjection,
+    ICompanyEIProjections,
+    ICompanyEIProjectionsScopes,
+    IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
+    ITargetData,
+    PortfolioCompany,
+)
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-
-from pint import Quantity
-from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame
-from ITR.configs import ColumnsConfig
-
-from utils import gen_company_data, DequantifyQuantity, assert_pint_series_equal
+from ITR.temperature_score import TemperatureScore
 
 
 def print_expected(target_df, company_data):

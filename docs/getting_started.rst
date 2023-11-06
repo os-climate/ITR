@@ -1,8 +1,8 @@
 ****************************
 Getting Started Using Python
 ****************************
-The most fundamental part of the project is the Python module, which takes care of all the heavy lifting. 
-You can install it easily through PIP. There are a couple ways to get started using the module. 
+The most fundamental part of the project is the Python module, which takes care of all the heavy lifting.
+You can install it easily through PIP. There are a couple ways to get started using the module.
 The easiest option is to run our getting started notebook on `Google Colab <https://colab.research.google.com/>`__.
 Alternatively, you can also run the `notebooks <https://github.com/os-climate/ITR/tree/main/examples>`__ locally or start from scratch using the API reference.
 
@@ -10,8 +10,8 @@ Alternatively, you can also run the `notebooks <https://github.com/os-climate/IT
 
 Google Colab
 -------------
-The easiest way to get started is by using the getting started notebook on Google Colab. 
-It guides you through all the steps involved in installing the module and consequently running it, i.e. calculating a temperature scores and analyzing portfolios. 
+The easiest way to get started is by using the getting started notebook on Google Colab.
+It guides you through all the steps involved in installing the module and consequently running it, i.e. calculating a temperature scores and analyzing portfolios.
 There are five notebooks that go through the process step-by-step:
 
 We recommend that you start with the data template notebook analysis example, especially
@@ -21,12 +21,12 @@ if you are new to Python
 Jupyter Notebooks
 -----------------
 Alternatively, you can also run the notebooks locally. To do so, you first need to set-up a new environment.
-In this example, we assume you use `Anaconda <https://www.anaconda.com/>`__ to manage your environments. 
+In this example, we assume you use `Anaconda <https://www.anaconda.com/>`__ to manage your environments.
 To do this, run the following command::
 
     cd examples conda env create -f environment.yml activate itr_getting_started jupyter notebook
 
-A tab should now open in your web browser. If you are using a virtual environment, you can install the required packages using the requirements.txt file in the examples directory. 
+A tab should now open in your web browser. If you are using a virtual environment, you can install the required packages using the requirements.txt file in the examples directory.
 Make sure that your Python version is at least 3.9.
 
 Python code

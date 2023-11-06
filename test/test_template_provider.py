@@ -1,22 +1,20 @@
 import os
 import unittest
+
 import numpy as np
 import pandas as pd
+from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
-from ITR.temperature_score import TemperatureScore
-from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.data.base_providers import EITargetProjector
-from ITR.data.excel import (
-    ExcelProviderProductionBenchmark,
-    ExcelProviderIntensityBenchmark,
-)
-from ITR.data.template import TemplateProviderCompany
 from ITR.data.data_warehouse import DataWarehouse
-from utils import assert_pint_series_equal, assert_pint_frame_equal
+from ITR.data.excel import ExcelProviderIntensityBenchmark, ExcelProviderProductionBenchmark
+from ITR.data.osc_units import Q_, asPintSeries, requantify_df_from_columns, ureg
+from ITR.data.template import TemplateProviderCompany
+from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
+from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.temperature_score import TemperatureScore
 
 
 class TemplateV1:

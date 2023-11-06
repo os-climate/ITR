@@ -1,19 +1,19 @@
-import unittest
-import pandas as pd
 import json
 import random
+import unittest
 
-import ITR
+import pandas as pd
 from pint import Quantity
 from pint_pandas import PintType
-from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
 
-from ITR.interfaces import EScope
+import ITR
+from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
 from ITR.interfaces import (
+    EScope,
     ICompanyData,
-    ICompanyEIProjectionsScopes,
-    ICompanyEIProjections,
     ICompanyEIProjection,
+    ICompanyEIProjections,
+    ICompanyEIProjectionsScopes,
 )
 
 

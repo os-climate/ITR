@@ -1,42 +1,36 @@
+import logging
 import os
 import pathlib
-from dotenv import load_dotenv
-
-import trino
-import osc_ingest_trino as osc
-import sqlalchemy
-
-import pandas as pd
 from typing import List, Type
-from . import ureg, Q_, PA_
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
-from ITR.data.data_providers import (
-    CompanyDataProvider,
-    ProductionBenchmarkDataProvider,
-    IntensityBenchmarkDataProvider,
-)
+
+import osc_ingest_trino as osc
+import pandas as pd
+import sqlalchemy
+import trino
+from dotenv import load_dotenv
+from pint import Quantity
+from pint_pandas import PintArray
+from sqlalchemy.engine import create_engine
+
+from ITR.configs import ColumnsConfig, LoggingConfig, TemperatureScoreConfig
 
 # Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
 from ITR.data.base_providers import BaseCompanyDataProvider
-
+from ITR.data.data_providers import CompanyDataProvider, IntensityBenchmarkDataProvider, ProductionBenchmarkDataProvider
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import (
-    ICompanyData,
     EScope,
-    IProductionBenchmarkScopes,
-    IEIBenchmarkScopes,
     IBenchmark,
     ICompanyAggregates,
+    ICompanyData,
+    IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
 )
+
+from . import PA_, Q_, ureg
 
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
 
-import trino
-from sqlalchemy.engine import create_engine
-from pint import Quantity
-from pint_pandas import PintArray
-
-import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

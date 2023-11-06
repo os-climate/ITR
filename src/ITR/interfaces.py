@@ -1,45 +1,35 @@
 from __future__ import annotations
 
 import json
+import logging
+from enum import Enum
+from operator import add
+from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Union
+
 import numpy as np
 import pandas as pd
-
-from operator import add
-from enum import Enum
-from typing import Optional, Dict, List, Literal, Union
-from typing import TYPE_CHECKING, Callable
-from pydantic_core import CoreSchema
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    GetJsonSchemaHandler,
-    model_validator,
-    field_validator,
-    ValidationError,
-)
+from pydantic import BaseModel, ConfigDict, GetJsonSchemaHandler, ValidationError, field_validator, model_validator
 from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import CoreSchema
 
 import ITR
-
+from ITR.configs import LoggingConfig, ProjectionControls
 from ITR.data.osc_units import (
-    ureg,
-    Q_,
     M_,
     PA_,
+    Q_,
     BenchmarkMetric,
     BenchmarkQuantity,
-    ProductionMetric,
-    ProductionQuantity,
-    EmissionsMetric,
-    EmissionsQuantity,
     EI_Metric,
     EI_Quantity,
+    EmissionsMetric,
+    EmissionsQuantity,
     MonetaryQuantity,
+    ProductionMetric,
+    ProductionQuantity,
     Quantity_type,
+    ureg,
 )
-from ITR.configs import ProjectionControls, LoggingConfig
-
-import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

@@ -29,7 +29,7 @@ name, identifiers, ISIN codes, and the value invested in each individual
 company. The company identifier is used to link the data from the
 portfolio, the fundamental data and the reported targets to each other.
 This can be any identifier the user wants to deploy, if the same
-identifier is used in all files. 
+identifier is used in all files.
 See :download:`portfolio data template <PortfolioTemplate.xlsx>`__ for an example portfolio file
 used with the original DataProviderTemplate file.  In the V2 template (see below),
 there is a Portfolio page where you can enter this data.
@@ -117,6 +117,3 @@ Specific attention should be given to intensity metrics as there
 currently lacks consensus in reporting method. For the tool, all
 intensity metrics have to be mapped to one of eight categories. Please
 refer to the **[link to guidance]** for more detail on how to do this.
-
-
-

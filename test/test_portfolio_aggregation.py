@@ -1,11 +1,13 @@
 import unittest
+
 import numpy as np
 import pandas as pd
-import ITR
 from utils import assert_pint_series_equal
-from ITR.portfolio_aggregation import PortfolioAggregationMethod, PortfolioAggregation
+
+import ITR
 from ITR.configs import ColumnsConfig
 from ITR.interfaces import EScope
+from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
 
 
 class TestPortfolioAggregation(unittest.TestCase):

@@ -1,63 +1,47 @@
+import logging
 import warnings  # needed until quantile behaves better with Pint quantities in arrays
+from functools import partial, reduce
+from operator import add
+from typing import Dict, List, Type
+
 import numpy as np
 import pandas as pd
 import pint
-from pint import DimensionalityError
 import pydantic
+from pint import DimensionalityError
+from pint_pandas import PintType
 from pydantic import ValidationError
 
-from functools import reduce, partial
-from operator import add
-from typing import List, Type, Dict
-
 import ITR
-from . import ureg, Q_, PA_
-from ITR.data.osc_units import (
-    asPintDataFrame,
-    asPintSeries,
-    EI_Metric,
-    align_production_to_bm,
-)
-from pint_pandas import PintType
+from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls, VariablesConfig
+from ITR.data.osc_units import EI_Metric, align_production_to_bm, asPintDataFrame, asPintSeries
 
-from ITR.configs import (
-    ColumnsConfig,
-    VariablesConfig,
-    ProjectionControls,
-    LoggingConfig,
-)
-
-import logging
+from . import PA_, Q_, ureg
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
-from ITR.data.data_providers import (
-    CompanyDataProvider,
-    ProductionBenchmarkDataProvider,
-    IntensityBenchmarkDataProvider,
-)
+from ITR.data.data_providers import CompanyDataProvider, IntensityBenchmarkDataProvider, ProductionBenchmarkDataProvider
 from ITR.interfaces import (
-    ICompanyData,
+    DF_ICompanyEIProjections,
+    EI_Quantity,
     EScope,
-    IProductionBenchmarkScopes,
-    IEIBenchmarkScopes,
     IBenchmark,
-    IProjection,
+    ICompanyData,
+    ICompanyEIProjection,
     ICompanyEIProjections,
     ICompanyEIProjectionsScopes,
+    IEIBenchmarkScopes,
+    IEIRealization,
+    IEmissionRealization,
+    IHistoricData,
     IHistoricEIScopes,
     IHistoricEmissionsScopes,
+    IProductionBenchmarkScopes,
     IProductionRealization,
+    IProjection,
     ITargetData,
-    IHistoricData,
-    ICompanyEIProjection,
-    IEmissionRealization,
-    IEIRealization,
-    DF_ICompanyEIProjections,
 )
-from ITR.interfaces import EI_Quantity
-
 
 # TODO handling of scopes in benchmarks
 

@@ -1,30 +1,23 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Union
+from typing import Dict, List, Union
+
 import pandas as pd
-
 from pint import Quantity
+
+from ITR.configs import ColumnsConfig, TabsConfig, TemperatureScoreConfig, TemperatureScoreControls, VariablesConfig
 from ITR.data.osc_units import ureg
-
 from ITR.interfaces import (
-    ICompanyData,
     EScope,
-    IHistoricData,
-    IProductionRealization,
-    IHistoricEmissionsScopes,
-    IHistoricEIScopes,
+    ICompanyData,
     ICompanyEIProjection,
-    ICompanyEIProjectionsScopes,
     ICompanyEIProjections,
-)
-
-from ITR.configs import (
-    TabsConfig,
-    ColumnsConfig,
-    VariablesConfig,
-    TemperatureScoreControls,
-    TemperatureScoreConfig,
+    ICompanyEIProjectionsScopes,
+    IHistoricData,
+    IHistoricEIScopes,
+    IHistoricEmissionsScopes,
+    IProductionRealization,
 )
 
 

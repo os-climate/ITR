@@ -2,12 +2,12 @@
 This module contains classes that create connections to data providers and initializes our system of units
 """
 
-import pint
-from pint import set_application_registry
-from openscm_units import unit_registry
 import re
 
 import numpy as np
+import pint
+from openscm_units import unit_registry
+from pint import set_application_registry
 
 currency_dict = {
     # 'US$':'USD', NOTE: don't try to re-define USD...it leads to infinite recursion
@@ -112,7 +112,7 @@ pint.Measurement = ureg.Measurement
 pint.Context = ureg.Context
 
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
-from pint_pandas import PintType, PintArray
+from pint_pandas import PintArray, PintType
 
 Q_ = ureg.Quantity
 M_ = ureg.Measurement

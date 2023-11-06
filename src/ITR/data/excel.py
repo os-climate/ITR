@@ -1,57 +1,50 @@
+import logging
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-from typing import Type, List, Optional
-import pandas as pd
+from typing import List, Optional, Type
+
 import numpy as np
-
+import pandas as pd
 from pydantic import BaseModel, ValidationError
-
-from . import ureg, Q_
-from ITR.data.osc_units import (
-    BenchmarkMetric,
-    EmissionsQuantity,
-    EI_Quantity,
-    Quantity_type,
-)
 
 from ITR.configs import (
     ColumnsConfig,
+    LoggingConfig,
+    ProjectionControls,
+    TabsConfig,
     TemperatureScoreConfig,
     VariablesConfig,
-    TabsConfig,
-    ProjectionControls,
-    LoggingConfig,
 )
+from ITR.data.osc_units import BenchmarkMetric, EI_Quantity, EmissionsQuantity, Quantity_type
 
-import logging
+from . import Q_, ureg
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
 )
 from ITR.interfaces import (
-    ICompanyData,
-    ICompanyEIProjection,
     EScope,
-    IEIBenchmarkScopes,
-    IProductionBenchmarkScopes,
     IBenchmark,
     IBenchmarks,
-    IHistoricEmissionsScopes,
-    IProductionRealization,
-    ProductionQuantity,
-    IHistoricEIScopes,
-    IHistoricData,
-    ITargetData,
-    IEmissionRealization,
+    ICompanyData,
+    ICompanyEIProjection,
+    IEIBenchmarkScopes,
     IEIRealization,
-    UProjection,
+    IEmissionRealization,
+    IHistoricData,
+    IHistoricEIScopes,
+    IHistoricEmissionsScopes,
+    IProductionBenchmarkScopes,
+    IProductionRealization,
     IProjection,
+    ITargetData,
+    ProductionQuantity,
+    UProjection,
 )
-
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
 # FIXME: this is now out of data with our much better JSON-based benchmark data

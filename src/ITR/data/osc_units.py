@@ -2,33 +2,25 @@
 This module handles initialization of pint functionality
 """
 
-import re
 import json
-
+import re
 from dataclasses import dataclass
 from typing import Annotated, Any, Dict
-from pydantic_core import CoreSchema, core_schema
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    GetCoreSchemaHandler,
-    GetJsonSchemaHandler,
-    TypeAdapter,
-    ValidationError,
-)
-from pydantic.json_schema import JsonSchemaValue
-from pydantic.functional_validators import BeforeValidator, AfterValidator
 
 import numpy as np
 import pandas as pd
 import pint
-from pint import get_application_registry, Context, Quantity, DimensionalityError
+from pint import Context, DimensionalityError, Quantity, get_application_registry
 from pint.facets.plain import PlainUnit
+from pint_pandas import PintType
+from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, GetJsonSchemaHandler, TypeAdapter, ValidationError
+from pydantic.functional_validators import AfterValidator, BeforeValidator
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import CoreSchema, core_schema
 
 import ITR
-from . import ureg, Q_, M_, PA_
 
-from pint_pandas import PintType
+from . import M_, PA_, Q_, ureg
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 # openscm_units does this for all gas species...we just have to keep up.

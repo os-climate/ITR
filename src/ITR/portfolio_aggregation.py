@@ -1,22 +1,20 @@
+import logging
+import warnings  # needed until apply behaves better with Pint quantities in arrays
 from abc import ABC
 from enum import Enum
-import warnings  # needed until apply behaves better with Pint quantities in arrays
-
 from typing import Type
-
-from pint import Quantity
-from pint_pandas import PintType
 
 import numpy as np
 import pandas as pd
 import pint
 import pint_pandas
+from pint import Quantity
+from pint_pandas import PintType
 
 import ITR
-from .data.osc_units import asPintSeries, Q_, PA_
-from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
 
-import logging
+from .configs import ColumnsConfig, LoggingConfig, PortfolioAggregationConfig
+from .data.osc_units import PA_, Q_, asPintSeries
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
