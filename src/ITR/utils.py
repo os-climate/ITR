@@ -157,13 +157,13 @@ def calculate(
     portfolio_data: pd.DataFrame,
     fallback_score: pint.Quantity[delta_degC],
     aggregation_method: PortfolioAggregationMethod,
-    grouping: Optional[List[str]],
+    grouping: list[str] | None,
     time_frames: list[ETimeFrames],
     scopes: list[EScope],
     anonymize: bool,
     aggregate: bool = True,
-    controls: Optional[TemperatureScoreControls] = None,
-) -> Tuple[pd.DataFrame, Optional[ScoreAggregations]]:
+    controls: TemperatureScoreControls | None = None,
+) -> tuple[pd.DataFrame, ScoreAggregations | None]:
     """
     Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).
 
