@@ -21,7 +21,12 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v3
+        with:
+          version: 2.10.0
 
       - name: Update dependencies
         uses: pdm-project/update-deps-action@main

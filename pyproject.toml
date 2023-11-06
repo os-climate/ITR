@@ -1,6 +1,6 @@
 [project]
 name = "ITR"
-version = "v1.0.10"
+version = "v1.0.11"
 description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
 authors = [ { name = "Michael Tiemann", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" } ]
 requires-python = ">=3.9"
@@ -69,12 +69,15 @@ Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
 requires = [ "pdm-backend" ]
 build-backend = "pdm.backend"
 
+[tool.isort]
+profile = "black"
+
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"
 release = "scripts/release-versioning.sh"
 test = "pytest"
 tox = "tox"
-doc = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
+docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
@@ -88,14 +91,14 @@ tox = [
   "tox",
   "tox-pdm>=0.5"
 ]
-doc = [ "sphinx" ]
 dev = [
   "tox>=4.11.3",
   "tox-pdm>=0.7.0"
 ]
+docs = ["sphinx>=7.2.6", "sphinx-copybutton>=0.5.2"]
 
 [tool.pytest.ini_options]
-testpaths = [ "test/" ]
+testpaths = ["test/"]
 
 [tool.black]
 line-length = 120
