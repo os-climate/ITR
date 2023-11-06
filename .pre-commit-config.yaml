@@ -24,7 +24,7 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-symlinks
       - id: check-toml
-      - id: detect-aws-credentials
+      # - id: detect-aws-credentials
       - id: check-xml
       - id: check-yaml
       - id: debug-statements

@@ -79,8 +79,7 @@ check_wget() {
     WGET_BIN=$(which wget)
     if [ ! -x "${WGET_BIN}" ]; then
         echo "WGET command not found"
-        apt update; apt-get install -y wget | true
-        dnf install -y wget | true
+        sudo apt update; sudo apt-get install -y wget | true
     fi
     WGET_BIN=$(which wget)
     if [ ! -x "${WGET_BIN}" ]; then
