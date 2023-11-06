@@ -343,14 +343,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             )
             if "boundary" in df1.columns:
                 df1.drop(columns="boundary", inplace=True)
-            df1 = df1.groupby(
-                by=[
-                    ColumnsConfig.COMPANY_ID,
-                    ColumnsConfig.TEMPLATE_REPORT_DATE,
-                    "submetric",
-                ],
-                dropna=False,
-            ).agg(_estimated_value)
+            df1 = (
+                df1.drop(columns="unit")
+                .groupby(
+                    by=[
+                        ColumnsConfig.COMPANY_ID,
+                        ColumnsConfig.TEMPLATE_REPORT_DATE,
+                        "submetric",
+                    ],
+                    dropna=False,
+                )
+                .agg(_estimated_value)
+            )
             df1["sub_count"] = df1.groupby([ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE])[
                 df1.columns[0]
             ].transform("count")
@@ -846,32 +850,26 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 warnings.simplefilter("ignore")
                 u_col = df_esg["unit"]
                 for col in esg_year_columns:
+                    # Convert ints to float as Work-around for Pandas GH#55824
+                    # If we remove this extra conversion, we'll need to change Q_(m, u) to Q_(float(m), u)
+                    # so as to convert not-yet-numeric string values to floating point numbers
+                    df_esg[col] = df_esg[col].astype("float64")
                     df_esg[col] = df_esg[col].combine(
                         u_col,
-                        lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(float(m), u),
+                        lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
                     )
             # All emissions metrics across multiple sectors should all resolve to some form of [mass] CO2
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
-            em_unit_ambig = em_metrics.groupby(by=["company_id", "metric"]).count()
-            em_unit_ambig = em_unit_ambig[em_unit_ambig.unit > 1]
-            if len(em_unit_ambig) > 0:
-                em_unit_ambig = em_unit_ambig.reset_index("metric").drop(columns="unit")
-                for id in em_unit_ambig.index.unique():
+            em_metrics_grouped = em_metrics.groupby(by=["company_id", "metric"])
+            em_unit_nunique = em_metrics_grouped["unit"].nunique()
+            if any(em_unit_nunique > 1):
+                em_unit_ambig = em_unit_nunique[em_unit_nunique > 1].reset_index("metric")
+                for company_id in em_unit_ambig.index.unique():
                     logger.warning(
-                        f"Company {id} uses multiple units describing scopes {[s for s in em_unit_ambig.loc[[id]]['metric']]}"
+                        f"Company {company_id} uses multiple units describing scopes "
+                        f"{[s for s in em_unit_ambig.loc[[company_id]]['metric']]}"
                     )
                 logger.warning(f"The ITR Tool will choose one and covert all to that")
-            else:
-                em_metrics.metrics = "emissions"
-                em_unit_ambig = em_metrics.groupby(by=["company_id", "metric"]).count()
-                em_unit_ambig = em_unit_ambig[em_unit_ambig.unit > 1]
-                if len(em_unit_ambig) > 0:
-                    em_unit_ambig = em_unit_ambig.droplevel("metric")
-                    for id in em_unit_ambig.index.unique():
-                        logger.warning(
-                            f"Company {id} uses multiple units describing different scopes {[s for s in em_unit_ambig.loc[[id]]['unit']]}"
-                        )
-                    logger.warning(f"The ITR Tool will choose one and covert all to that")
 
             em_units = em_metrics.groupby(by=["company_id"], group_keys=True).first()
             # We update the metrics we were told with the metrics we are given
@@ -1189,12 +1187,21 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     .drop(columns="submetric")
                 )
 
-            prod_base_year = pd.concat([best_prod, new_prod])[self.projection_controls.BASE_YEAR].droplevel("metric")
-            if prod_base_year.isna().any():
+            prod_df = pd.concat([best_prod, new_prod]).droplevel("metric")
+            base_year_loc = prod_df.columns.get_loc(self.projection_controls.BASE_YEAR)
+            base_year_na = prod_df.iloc[:, base_year_loc].isna()
+            if base_year_na.any():
                 logger.warning(
-                    f"The following companies lack base year production info (will be ignored):\n{prod_base_year[prod_base_year.isna()].index.to_list()}"
+                    "The following companies lack base year production info (will be ignored):\n"
+                    f"{prod_df[base_year_na].index.to_list()}"
                 )
-                prod_base_year = prod_base_year[prod_base_year.notna()]
+                # We could backfill instead of dropping companies...
+                # prod_df.iloc[:, base_year_loc:-1] = prod_df.iloc[:, base_year_loc:-1].bfill(axis=1)
+                prod_df = prod_df[~base_year_na]
+                if len(prod_df) == 0:
+                    logger.error("No companies left to analyze...aborting")
+                    assert False
+            prod_base_year = prod_df.iloc[:, base_year_loc]
             prod_metrics = prod_base_year.map(lambda x: f"{x.u:~P}")
             # We update the metrics we were told with the metrics we are given
             df_fundamentals.loc[prod_metrics.index, ColumnsConfig.PRODUCTION_METRIC] = prod_metrics
@@ -1234,8 +1241,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 assert "sector" not in df3.index.names and "submetric" not in df3.index.names
 
             # Avoid division by zero problems with zero-valued production metrics
+            # Note that we should be filtering out NA production values before this point,
+            # but we want this to be robust in case NA production values arrive here somehow
             df3_num_t = asPintDataFrame(df3.xs(VariablesConfig.EMISSIONS, level=1).T)
             df3_denom_t = asPintDataFrame(df3.xs((VariablesConfig.PRODUCTIONS, "production"), level=[1, 2]).T)
+            df3_null = df3_denom_t.dtypes == object
+            df3_null_idx = df3_null[df3_null].index
+            if len(df3_null_idx):
+                logger.warning(f"Dropping NULL-valued production data for these indexes\n{df3_null_idx}")
+                df3_num_t = df3_num_t[~df3_null_idx]
+                df3_denom_t = df3_denom_t[~df3_null_idx]
             df4 = (
                 df3_num_t
                 * df3_denom_t.rdiv(1.0).apply(

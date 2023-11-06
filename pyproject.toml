@@ -67,19 +67,22 @@ Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
+[tool.isort]
+profile = "black"
+
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"
 release = "scripts/release-versioning.sh"
 test = "pytest"
 tox = "tox"
-doc = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
+docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
 [tool.pdm.dev-dependencies]
 test = ["pdm[pytest]", "pdm[publish]", "pytest-cov"]
 tox = ["tox", "tox-pdm>=0.5"]
-doc = ["sphinx"]
+docs = ["sphinx>=7.2.6", "sphinx-copybutton>=0.5.2"]
 dev = ["tox>=4.11.3", "tox-pdm>=0.7.0"]
 
 [tool.pytest.ini_options]
