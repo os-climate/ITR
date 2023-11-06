@@ -113,7 +113,7 @@ def assert_pint_frame_equal(
                 delta,
             )
         except AssertionError as e:
-            errors.append((e.args[0]))
+            errors.append(e.args[0])
     if errors:
         raise AssertionError("\n".join(errors))
 

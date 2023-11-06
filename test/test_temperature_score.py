@@ -8,7 +8,13 @@ from utils import assert_pint_series_equal
 
 import ITR
 from ITR.configs import ColumnsConfig
-from ITR.data.osc_units import Q_, asPintDataFrame, asPintSeries, requantify_df_from_columns, ureg
+from ITR.data.osc_units import (
+    Q_,
+    asPintDataFrame,
+    asPintSeries,
+    requantify_df_from_columns,
+    ureg,
+)
 from ITR.interfaces import EScope, ETimeFrames
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore

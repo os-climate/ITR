@@ -6,7 +6,13 @@ from typing import Dict, List, Union
 import pandas as pd
 from pint import Quantity
 
-from ITR.configs import ColumnsConfig, TabsConfig, TemperatureScoreConfig, TemperatureScoreControls, VariablesConfig
+from ITR.configs import (
+    ColumnsConfig,
+    TabsConfig,
+    TemperatureScoreConfig,
+    TemperatureScoreControls,
+    VariablesConfig,
+)
 from ITR.data.osc_units import ureg
 from ITR.interfaces import (
     EScope,
@@ -39,7 +45,7 @@ class CompanyDataProvider(ABC):
         pass
 
     @abstractmethod
-    def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
+    def get_company_data(self, company_ids: list[str]) -> list[ICompanyData]:
         """
         Get all relevant data for a list of company ids (ISIN). This method should return a list of ICompanyData
         instances.
@@ -50,7 +56,7 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_value(self, company_ids: List[str], variable_name: str) -> pd.Series:
+    def get_value(self, company_ids: list[str], variable_name: str) -> pd.Series:
         """
         Gets the value of a variable for a list of companies ids
         :param company_ids: list of company ids
@@ -60,7 +66,7 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_intensity_and_production_at_base_year(self, company_ids: list[str]) -> pd.DataFrame:
         """
         Get the emission intensity and the production for a list of companies at the base year.
         :param: company_ids: list of company ids
@@ -71,7 +77,7 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_trajectories(self, company_ids: list[str]) -> pd.DataFrame:
         """
         Gets the emission intensities for a list of companies
         :param company_ids: list of company ids
@@ -80,7 +86,7 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_projected_targets(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_targets(self, company_ids: list[str]) -> pd.DataFrame:
         """
         Gets the projected targets for a list of companies
         :param company_ids: list of company ids
@@ -138,8 +144,8 @@ class IntensityBenchmarkDataProvider(ABC):
 
     def __init__(
         self,
-        benchmark_temperature: Quantity["delta_degC"],
-        benchmark_global_budget: Quantity["CO2"],
+        benchmark_temperature: Quantity[delta_degC],
+        benchmark_global_budget: Quantity[CO2],
         is_AFOLU_included: bool,
         **kwargs,
     ):
@@ -165,14 +171,14 @@ class IntensityBenchmarkDataProvider(ABC):
         self._is_AFOLU_included = value
 
     @property
-    def benchmark_temperature(self) -> Quantity["delta_degC"]:
+    def benchmark_temperature(self) -> Quantity[delta_degC]:
         """
         :return: assumed temperature for the benchmark. for OECM 1.5C for example
         """
         return self._benchmark_temperature
 
     @property
-    def benchmark_global_budget(self) -> Quantity["CO2"]:
+    def benchmark_global_budget(self) -> Quantity[CO2]:
         """
         :return: Benchmark provider assumed global budget. if AFOLU is not included global budget is divided by 0.76
         """

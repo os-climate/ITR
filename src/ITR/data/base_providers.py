@@ -13,15 +13,29 @@ from pint_pandas import PintType
 from pydantic import ValidationError
 
 import ITR
-from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls, VariablesConfig
-from ITR.data.osc_units import EI_Metric, align_production_to_bm, asPintDataFrame, asPintSeries
+from ITR.configs import (
+    ColumnsConfig,
+    LoggingConfig,
+    ProjectionControls,
+    VariablesConfig,
+)
+from ITR.data.osc_units import (
+    EI_Metric,
+    align_production_to_bm,
+    asPintDataFrame,
+    asPintSeries,
+)
 
 from . import PA_, Q_, ureg
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
-from ITR.data.data_providers import CompanyDataProvider, IntensityBenchmarkDataProvider, ProductionBenchmarkDataProvider
+from ITR.data.data_providers import (
+    CompanyDataProvider,
+    IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
+)
 from ITR.interfaces import (
     DF_ICompanyEIProjections,
     EI_Quantity,
@@ -416,7 +430,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         super().__init__()
         self.column_config = column_config
         self.projection_controls = projection_controls
-        self.missing_ids = set([])
+        self.missing_ids = set()
         # In the initialization phase, `companies` has minimal fundamental values (company_id, company_name, sector, region,
         # but not projected_intensities, projected_targets, etc)
         self._companies = companies
@@ -749,9 +763,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         company_data = [company for company in self._companies if company.company_id in company_ids]
 
         if len(company_data) is not len(company_ids):
-            self.missing_ids.update(
-                set([c_id for c_id in company_ids if c_id not in [c.company_id for c in company_data]])
-            )
+            self.missing_ids.update({c_id for c_id in company_ids if c_id not in [c.company_id for c in company_data]})
             logger.warning(
                 f"Companies not found in fundamental data and excluded from further computations: "
                 f"{self.missing_ids}"
@@ -905,7 +917,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         return pd.DataFrame()
 
 
-class EIProjector(object):
+class EIProjector:
     """
     This class implements generic projection functions used for both trajectory and target projection.
     """

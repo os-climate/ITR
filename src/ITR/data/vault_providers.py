@@ -16,7 +16,11 @@ from ITR.configs import ColumnsConfig, LoggingConfig, TemperatureScoreConfig
 
 # Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
 from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.data.data_providers import CompanyDataProvider, IntensityBenchmarkDataProvider, ProductionBenchmarkDataProvider
+from ITR.data.data_providers import (
+    CompanyDataProvider,
+    IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
+)
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.interfaces import (
     EScope,

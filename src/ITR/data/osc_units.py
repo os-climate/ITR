@@ -13,7 +13,14 @@ import pint
 from pint import Context, DimensionalityError, Quantity, get_application_registry
 from pint.facets.plain import PlainUnit
 from pint_pandas import PintType
-from pydantic import BaseModel, ConfigDict, GetCoreSchemaHandler, GetJsonSchemaHandler, TypeAdapter, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    GetCoreSchemaHandler,
+    GetJsonSchemaHandler,
+    TypeAdapter,
+    ValidationError,
+)
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema

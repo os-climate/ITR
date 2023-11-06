@@ -1,11 +1,11 @@
 ---
 name: "🧪 Test builds (matrix)"
 
-on:  # yamllint disable-line rule:truthy
+# yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
   pull_request:
-    types:
-      [opened, reopened, edited, synchronize]
+    types: [opened, reopened, edited, synchronize]
 
 jobs:
   pre-release:
@@ -16,9 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11']
+        python-version: ["3.9", "3.10", "3.11"]
     steps:
-
       - name: "Populate environment variables"
         id: setenv
         run: |

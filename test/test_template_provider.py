@@ -9,7 +9,10 @@ import ITR
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.base_providers import EITargetProjector
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.excel import ExcelProviderIntensityBenchmark, ExcelProviderProductionBenchmark
+from ITR.data.excel import (
+    ExcelProviderIntensityBenchmark,
+    ExcelProviderProductionBenchmark,
+)
 from ITR.data.osc_units import Q_, asPintSeries, requantify_df_from_columns, ureg
 from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany

@@ -9,8 +9,17 @@ from pydantic import ValidationError
 
 import ITR
 from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls
-from ITR.data.data_providers import CompanyDataProvider, IntensityBenchmarkDataProvider, ProductionBenchmarkDataProvider
-from ITR.data.osc_units import EmissionsQuantity, Quantity_type, asPintDataFrame, asPintSeries
+from ITR.data.data_providers import (
+    CompanyDataProvider,
+    IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
+)
+from ITR.data.osc_units import (
+    EmissionsQuantity,
+    Quantity_type,
+    asPintDataFrame,
+    asPintSeries,
+)
 from ITR.interfaces import (
     DF_ICompanyEIProjections,
     EScope,

@@ -402,7 +402,7 @@ class TestBaseProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AJ")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US17275R1023")
-        self.assertEquals(company_1.ghg_s3, Q_(0, "Mt CO2"))
+        self.assertEqual(company_1.ghg_s3, Q_(0, "Mt CO2"))
         self.assertAlmostEqual(company_2.ghg_s3, Q_(100080009.401725, "t CO2"))
 
     def test_get_value(self):

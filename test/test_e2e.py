@@ -3,7 +3,11 @@ import unittest
 from typing import List
 
 import ITR
-from ITR.data.data_providers import CompanyDataProvider, IntensityBenchmarkDataProvider, ProductionBenchmarkDataProvider
+from ITR.data.data_providers import (
+    CompanyDataProvider,
+    IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
+)
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.osc_units import PA_, Q_, ureg
 from ITR.interfaces import (
@@ -21,7 +25,7 @@ from ITR.temperature_score import TemperatureScore
 class e2e_DataProvider:  # if derived from CompanyDataProvider, we'd have to provide implementations for several methods we never use
     def __init__(self, companies: List[ICompanyAggregates]):
         self.companies = companies
-        self.missing_ids = set([])
+        self.missing_ids = set()
 
 
 class e2e_DataWarehouse(DataWarehouse):

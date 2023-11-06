@@ -132,7 +132,7 @@ class SectorsConfig:
     HEALTH_CARE = "Health Care"
 
     @classmethod
-    def get_configured_sectors(cls) -> List[str]:
+    def get_configured_sectors(cls) -> list[str]:
         """
         Get a list of sectors configured in the tool.
         :return: A list of sectors string values

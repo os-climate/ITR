@@ -11,9 +11,19 @@ from utils import ITR_Encoder, assert_pint_series_equal
 import ITR
 from ITR import data_dir
 from ITR.configs import ColumnsConfig, VariablesConfig
-from ITR.data.base_providers import BaseProviderProductionBenchmark, EITargetProjector, EITrajectoryProjector
+from ITR.data.base_providers import (
+    BaseProviderProductionBenchmark,
+    EITargetProjector,
+    EITrajectoryProjector,
+)
 from ITR.data.osc_units import PA_, Q_, asPintDataFrame
-from ITR.interfaces import EScope, ICompanyData, IProductionBenchmarkScopes, ITargetData, ProjectionControls
+from ITR.interfaces import (
+    EScope,
+    ICompanyData,
+    IProductionBenchmarkScopes,
+    ITargetData,
+    ProjectionControls,
+)
 
 
 def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
@@ -88,13 +98,13 @@ class TestProjector(unittest.TestCase):
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
         self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
-        with open(self.source_path, "r") as file:
+        with open(self.source_path) as file:
             company_dicts = json.load(file)
         for company_dict in company_dicts:
             company_dict["report_date"] = datetime.date(2021, 12, 31)
         self.companies = [ICompanyData(**company_dict) for company_dict in company_dicts]
         self.projector = EITrajectoryProjector()
-        with open(self.json_reference_path, "r") as file:
+        with open(self.json_reference_path) as file:
             itr_encoder = ITR_Encoder()
             self.reference_projections = json.load(file)
 
@@ -232,7 +242,7 @@ class TestProjector(unittest.TestCase):
                 assert c.projected_targets is None
 
     def test_extrapolate(self):
-        with open(os.path.join(self.root, "inputs", "json", "test_fillna_companies.json"), "r") as file:
+        with open(os.path.join(self.root, "inputs", "json", "test_fillna_companies.json")) as file:
             company_dicts = json.load(file)
         for company_dict in company_dicts:
             company_dict["report_date"] = datetime.date(2021, 12, 31)

@@ -14,7 +14,12 @@ from ITR.configs import (
     TemperatureScoreConfig,
     VariablesConfig,
 )
-from ITR.data.osc_units import BenchmarkMetric, EI_Quantity, EmissionsQuantity, Quantity_type
+from ITR.data.osc_units import (
+    BenchmarkMetric,
+    EI_Quantity,
+    EmissionsQuantity,
+    Quantity_type,
+)
 
 from . import Q_, ureg
 

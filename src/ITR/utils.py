@@ -13,7 +13,12 @@ from pint_pandas import PintType
 import ITR
 from ITR.data.osc_units import Q_, asPintSeries, ureg
 
-from .configs import ColumnsConfig, LoggingConfig, TemperatureScoreConfig, TemperatureScoreControls
+from .configs import (
+    ColumnsConfig,
+    LoggingConfig,
+    TemperatureScoreConfig,
+    TemperatureScoreControls,
+)
 from .interfaces import EScope, ETimeFrames, PortfolioCompany, ScoreAggregations
 
 logger = logging.getLogger(__name__)
@@ -61,7 +66,7 @@ def _make_isin_map(df_portfolio: pd.DataFrame) -> dict:
     }
 
 
-def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]:
+def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> list[PortfolioCompany]:
     """
     Convert a data frame to a list of portfolio company objects.
 
@@ -85,7 +90,7 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
     return [PortfolioCompany.model_validate(company) for company in df_portfolio.to_dict(orient="records")]
 
 
-def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -> pd.DataFrame:
+def get_data(data_warehouse: DataWarehouse, portfolio: list[PortfolioCompany]) -> pd.DataFrame:
     """
     Get the required data from the data provider(s) and return a 9-box grid for each company.
 
@@ -150,15 +155,15 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
 def calculate(
     portfolio_data: pd.DataFrame,
-    fallback_score: pint.Quantity["delta_degC"],
+    fallback_score: pint.Quantity[delta_degC],
     aggregation_method: PortfolioAggregationMethod,
-    grouping: Optional[List[str]],
-    time_frames: List[ETimeFrames],
-    scopes: List[EScope],
+    grouping: list[str] | None,
+    time_frames: list[ETimeFrames],
+    scopes: list[EScope],
     anonymize: bool,
     aggregate: bool = True,
-    controls: Optional[TemperatureScoreControls] = None,
-) -> Tuple[pd.DataFrame, Optional[ScoreAggregations]]:
+    controls: TemperatureScoreControls | None = None,
+) -> tuple[pd.DataFrame, ScoreAggregations | None]:
     """
     Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).
 

@@ -10,11 +10,21 @@ from utils import assert_pint_frame_equal, assert_pint_series_equal
 import ITR
 from ITR import data_dir
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.data.base_providers import BaseProviderIntensityBenchmark, BaseProviderProductionBenchmark, EITargetProjector
+from ITR.data.base_providers import (
+    BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
+    EITargetProjector,
+)
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.osc_units import M_, Q_, asPintSeries, requantify_df_from_columns, ureg
 from ITR.data.template import TemplateProviderCompany
-from ITR.interfaces import EScope, ETimeFrames, IEIBenchmarkScopes, IProductionBenchmarkScopes, PortfolioCompany
+from ITR.interfaces import (
+    EScope,
+    ETimeFrames,
+    IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
+    PortfolioCompany,
+)
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
 

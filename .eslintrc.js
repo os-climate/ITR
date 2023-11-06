@@ -1,40 +1,38 @@
 module.exports = {
-  "env": {
-    "browser": true,
-    "es2021": true
+  env: {
+    browser: true,
+    es2021: true,
   },
-  "extends": [
+  extends: [
     // add generic rulesets here, such as:
-    'eslint:recommended',
-    'plugin:toml/standard'
+    "eslint:recommended",
+    "plugin:toml/standard",
   ],
-  "overrides": [
+  overrides: [
     {
-        "env": {
-            "node": true
-        },
-        "files": [
-            ".eslintrc.{js,cjs}"
-        ],
-        "parserOptions": {
-            "sourceType": "script"
-        }
-    }
+      env: {
+        node: true,
+      },
+      files: [".eslintrc.{js,cjs}"],
+      parserOptions: {
+        sourceType: "script",
+      },
+    },
   ],
-  "parser": "@babel/eslint-parser",
-  "parserOptions": {
-      "ecmaVersion": "latest"
+  parser: "@babel/eslint-parser",
+  parserOptions: {
+    ecmaVersion: "latest",
   },
-  "overrides": [
+  overrides: [
     {
       files: ["*.toml"],
       parser: "toml-eslint-parser",
     },
   ],
-  "rules": {
+  rules: {
     "comma-spacing": "error",
-    "no-multi-spaces": ["error", { "exceptions": { "TOMLKeyValue": true } }],
+    "no-multi-spaces": ["error", { exceptions: { TOMLKeyValue: true } }],
     "no-multiple-empty-lines": "error",
-    "no-trailing-spaces": "error"
-  }
-}
+    "no-trailing-spaces": "error",
+  },
+};
