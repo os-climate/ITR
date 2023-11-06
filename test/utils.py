@@ -46,7 +46,7 @@ class DequantifyQuantity(json.JSONEncoder):
 
 
 def assert_pint_series_equal(
-    case: unittest.case,
+    case: unittest.case.TestCase,
     left: pd.Series,
     right: pd.Series,
     places=7,
@@ -77,7 +77,7 @@ def assert_pint_series_equal(
 
 
 def assert_pint_frame_equal(
-    case: unittest.case,
+    case: unittest.case.TestCase,
     left: pd.DataFrame,
     right: pd.DataFrame,
     places=7,
