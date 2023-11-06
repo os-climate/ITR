@@ -1,10 +1,70 @@
 ---
 repos:
-  # Do not allow direct push to main/master branches
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: check-toml
+      - id: detect-aws-credentials
+      - id: check-xml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: name-tests-test
+      # Do not allow direct push to main/master branches
       - id: no-commit-to-branch
+      - id: pretty-format-json
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+
+  - repo: https://github.com/openstack/bashate
+    rev: 2.1.1
+    hooks:
+      - id: bashate
+
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.9.0
+    hooks:
+      - id: shellcheck
+      # args: ["--severity=warning"]  # Optionally only show errors and warnings
+
+  # If you want to automatically "modernize" your Python code:
+  # - repo: https://github.com/asottile/pyupgrade
+  #   rev: v3.3.1
+  #   hooks:
+  #   - id: pyupgrade
+  #     args: ['--py37-plus']
+
+  # If you want to avoid flake8 errors due to unused vars or imports:
+  # - repo: https://github.com/PyCQA/autoflake
+  #   rev: v2.0.0
+  #   hooks:
+  #   - id: autoflake
+  #     args: [
+  #       --in-place,
+  #       --remove-all-unused-imports,
+  #       --remove-unused-variables,
+  #     ]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.32.0
@@ -18,19 +78,27 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1
+    rev: 23.10.1
     hooks:
       - id: black
-        # It is recommended to specify the latest version of Python
-        # supported by your project here, or alternatively use
-        # pre-commit's default_language_version, see
-        # https://pre-commit.com/#top_level-default_language_version
-        language_version: python3.11
+
+  # If like to embrace black styles even in the docs:
+  # - repo: https://github.com/asottile/blacken-docs
+  #   rev: v1.13.0
+  #   hooks:
+  #   - id: blacken-docs
+  #     additional_dependencies: [black]
 
   - repo: https://github.com/pycqa/flake8
     rev: '6.1.0'
     hooks:
       - id: flake8
+
+  # Check for misspells in documentation files:
+  # - repo: https://github.com/codespell-project/codespell
+  #   rev: v2.2.2
+  #   hooks:
+  #   - id: codespell
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v1.6.1'
