@@ -54,10 +54,10 @@ repos:
       - id: markdownlint
         args: ["--fix"]
 
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
-    hooks:
-      - id: pyupgrade
+  # - repo: https://github.com/asottile/pyupgrade
+  #   rev: v3.15.0
+  #   hooks:
+  #     - id: pyupgrade
 
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 23.10.1
