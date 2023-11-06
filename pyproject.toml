@@ -69,6 +69,9 @@ Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
 requires = [ "pdm-backend" ]
 build-backend = "pdm.backend"
 
+[tool.isort]
+profile = "black"
+
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"
 release = "scripts/release-versioning.sh"
