@@ -1,16 +1,19 @@
-import unittest
-import pandas as pd
 import json
 import random
+import unittest
+
+import pandas as pd
+from pint import Quantity
+from pint_pandas import PintType
 
 import ITR
-from ITR.data.osc_units import EI_Metric, EI_Quantity, Quantity, asPintSeries
+from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
 from ITR.interfaces import (
     EScope,
     ICompanyData,
-    ICompanyEIProjectionsScopes,
-    ICompanyEIProjections,
     ICompanyEIProjection,
+    ICompanyEIProjections,
+    ICompanyEIProjectionsScopes,
 )
 
 
@@ -43,7 +46,7 @@ class DequantifyQuantity(json.JSONEncoder):
 
 
 def assert_pint_series_equal(
-    case: unittest.case,
+    case: unittest.case.TestCase,
     left: pd.Series,
     right: pd.Series,
     places=7,
@@ -74,7 +77,7 @@ def assert_pint_series_equal(
 
 
 def assert_pint_frame_equal(
-    case: unittest.case,
+    case: unittest.case.TestCase,
     left: pd.DataFrame,
     right: pd.DataFrame,
     places=7,
@@ -110,7 +113,7 @@ def assert_pint_frame_equal(
                 delta,
             )
         except AssertionError as e:
-            errors.append((e.args[0]))
+            errors.append(e.args[0])
     if errors:
         raise AssertionError("\n".join(errors))
 

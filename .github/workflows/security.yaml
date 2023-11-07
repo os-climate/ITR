@@ -6,7 +6,8 @@
 
 name: "⛔️ Security auditing"
 
-on:  # yamllint disable-line rule:truthy
+# yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
   pull_request:
     types:
