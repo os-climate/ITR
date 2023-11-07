@@ -7,10 +7,6 @@ from dataclasses import dataclass
 from typing import Annotated, Any, Dict
 
 import pandas as pd
-
-import ITR
-from ..data import PA_, Q_, ureg
-
 import pint
 from pint import Context, DimensionalityError
 from pint_pandas import PintType
@@ -25,6 +21,10 @@ from pydantic import (
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
+
+import ITR
+
+from ..data import PA_, Q_, ureg
 
 Quantity = ureg.Quantity
 

@@ -2,6 +2,7 @@ import os
 import unittest
 
 import pandas as pd
+from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 import ITR
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
@@ -16,8 +17,6 @@ from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-
-from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 
 class TemplateV1:

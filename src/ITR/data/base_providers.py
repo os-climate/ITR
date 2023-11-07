@@ -6,8 +6,11 @@ from typing import Dict, List, Type
 
 import numpy as np
 import pandas as pd
+from pint import DimensionalityError
+from pint_pandas import PintType
 
 import ITR
+
 from ..configs import ColumnsConfig, LoggingConfig, ProjectionControls, VariablesConfig
 from ..data import PA_, Q_, ureg
 from ..data.data_providers import (
@@ -40,9 +43,6 @@ from ..interfaces import (
     IProductionRealization,
     ITargetData,
 )
-
-from pint import DimensionalityError
-from pint_pandas import PintType
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
