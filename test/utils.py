@@ -19,6 +19,7 @@ from ITR.interfaces import (
 from pint import Quantity
 from pint_pandas import PintType
 
+
 class ITR_Encoder(json.JSONEncoder):
     def default(self, q):
         if isinstance(q, Quantity):
