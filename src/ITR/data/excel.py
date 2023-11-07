@@ -5,34 +5,26 @@ import numpy as np
 
 from pydantic import BaseModel, ValidationError
 
-from . import ureg, Q_
-from ITR.data.osc_units import (
-    BenchmarkMetric,
-    EmissionsQuantity,
-    EI_Quantity,
-    Quantity_type,
-)
-
-from ITR.configs import (
+from ..configs import (
     ColumnsConfig,
-    TemperatureScoreConfig,
     VariablesConfig,
     TabsConfig,
     ProjectionControls,
     LoggingConfig,
 )
-
-import logging
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
-
-from ITR.data.base_providers import (
+from ..data import Q_
+from ..data.base_providers import (
     BaseCompanyDataProvider,
     BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
 )
-from ITR.interfaces import (
+from ..data.osc_units import (
+    BenchmarkMetric,
+    EmissionsQuantity,
+    EI_Quantity,
+    Quantity_type,
+)
+from ..interfaces import (
     ICompanyData,
     ICompanyEIProjection,
     EScope,
@@ -51,6 +43,11 @@ from ITR.interfaces import (
     UProjection,
     IProjection,
 )
+
+import logging
+
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
 
 
 # Excel spreadsheets don't have units elaborated, so we translate sectors to units
@@ -469,7 +466,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :param historic_data: Dataframe Productions, Emissions, and Emissions Intensities mixed together
         :return: historic data with unit attributes added on a per-element basis
         """
-        self.historic_years = [column for column in historic_data.columns if type(column) == int]
+        self.historic_years = [column for column in historic_data.columns if isinstance(column, int)]
 
         missing_ids = [company_id for company_id in company_ids if company_id not in historic_data.index]
         if missing_ids:

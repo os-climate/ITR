@@ -1,32 +1,28 @@
 from __future__ import annotations
 
-import sys
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from typing import List, Optional, Tuple
-
 import ITR
-from ITR.data.osc_units import ureg, Q_, asPintSeries
-import pint
-from pint_pandas import PintType
-
-from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
 from .configs import (
     ColumnsConfig,
     TemperatureScoreControls,
     TemperatureScoreConfig,
     LoggingConfig,
 )
+from .data.data_warehouse import DataWarehouse
+from .data.osc_units import Q_, Quantity, asPintSeries
+from .interfaces import PortfolioCompany, EScope, ETimeFrames, ScoreAggregations
+from .portfolio_aggregation import PortfolioAggregationMethod
+from .temperature_score import TemperatureScore
+
+import sys
+import pandas as pd
+import numpy as np
+from pathlib import Path
+from typing import List, Optional, Tuple
 
 import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
-
-from .data.data_warehouse import DataWarehouse
-from .portfolio_aggregation import PortfolioAggregationMethod
-from .temperature_score import TemperatureScore
 
 
 # If this file is moved, the computation of get_project_root may also need to change
@@ -155,7 +151,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
 def calculate(
     portfolio_data: pd.DataFrame,
-    fallback_score: pint.Quantity["delta_degC"],
+    fallback_score: Quantity["delta_degC"],
     aggregation_method: PortfolioAggregationMethod,
     grouping: Optional[List[str]],
     time_frames: List[ETimeFrames],

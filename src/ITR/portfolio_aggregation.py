@@ -1,27 +1,23 @@
+import ITR
+from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
+from .data.osc_units import asPintSeries, PA_
+from .interfaces import EScope
+
 from abc import ABC
 from enum import Enum
 import warnings  # needed until apply behaves better with Pint quantities in arrays
 
 from typing import Type
 
-from pint import Quantity
-from pint_pandas import PintType
-
 import numpy as np
 import pandas as pd
-import pint
-import pint_pandas
-
-import ITR
-from .data.osc_units import asPintSeries, Q_, PA_
-from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
+from pint_pandas import PintType
 
 import logging
 
+
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
-
-from .interfaces import EScope
 
 
 class PortfolioAggregationMethod(Enum):

@@ -2,12 +2,16 @@
 This module handles initialization of pint functionality
 """
 
+import ITR
+from ..data import PA_, Q_, ureg
+
 import re
-import json
 
 from dataclasses import dataclass
 from typing import Annotated, Any, Dict
+
 from pydantic_core import CoreSchema, core_schema
+
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -19,16 +23,12 @@ from pydantic import (
 from pydantic.json_schema import JsonSchemaValue
 from pydantic.functional_validators import BeforeValidator, AfterValidator
 
-import numpy as np
 import pandas as pd
 import pint
-from pint import get_application_registry, Context, Quantity, DimensionalityError
-from pint.facets.plain import PlainUnit
-
-import ITR
-from . import ureg, Q_, M_, PA_
-
+from pint import Context, DimensionalityError
 from pint_pandas import PintType
+
+Quantity = ureg.Quantity
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 # openscm_units does this for all gas species...we just have to keep up.

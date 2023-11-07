@@ -1,30 +1,25 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Union
+from typing import List
 import pandas as pd
 
-from pint import Quantity
-from ITR.data.osc_units import ureg
-
-from ITR.interfaces import (
-    ICompanyData,
-    EScope,
-    IHistoricData,
-    IProductionRealization,
-    IHistoricEmissionsScopes,
-    IHistoricEIScopes,
-    ICompanyEIProjection,
-    ICompanyEIProjectionsScopes,
-    ICompanyEIProjections,
+from ..configs import (  # noqa F401
+    ColumnsConfig,
 )
 
-from ITR.configs import (
-    TabsConfig,
-    ColumnsConfig,
-    VariablesConfig,
-    TemperatureScoreControls,
-    TemperatureScoreConfig,
+from ..data.osc_units import Quantity
+
+from ..interfaces import (  # noqa F401
+    EScope,
+    ICompanyData,
+    ICompanyEIProjection,
+    ICompanyEIProjections,
+    ICompanyEIProjectionsScopes,
+    IHistoricData,
+    IHistoricEIScopes,
+    IHistoricEmissionsScopes,
+    IProductionRealization,
 )
 
 

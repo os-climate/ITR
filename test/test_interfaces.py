@@ -1,24 +1,19 @@
-import os
 import unittest
 
 import pandas as pd
 
-import ITR
+import ITR  # noqa F401
+from ITR.configs import TemperatureScoreConfig
 from ITR.data.osc_units import (
-    ureg,
     Q_,
-    PA_,
     BenchmarkMetric,
     ProductionMetric,
     EI_Metric,
-    BenchmarkQuantity,
     EI_Quantity,
 )
-from ITR.configs import TemperatureScoreConfig
 from ITR.interfaces import (
     EScope,
     UProjection,
-    IProjection,
     IBenchmark,
     ICompanyData,
     ICompanyEIProjectionsScopes,

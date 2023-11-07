@@ -6,33 +6,26 @@ from numpy.testing import assert_array_equal
 
 import ITR
 from ITR import data_dir
-from ITR.interfaces import EScope, ETimeFrames, IntensityMetric
-from ITR.interfaces import (
-    ICompanyData,
-    ICompanyEIProjectionsScopes,
-    ICompanyEIProjections,
-    ICompanyEIProjection,
-)
-from ITR.interfaces import (
-    IProductionBenchmarkScopes,
-    IEIBenchmarkScopes,
-    PortfolioCompany,
-)
-
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
     BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
 )
-
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.temperature_score import TemperatureScore
+from ITR.interfaces import (
+    EScope,
+    ETimeFrames,
+    ICompanyData,
+    IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
+    PortfolioCompany,
+)
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.temperature_score import TemperatureScore
 
-from pint import Quantity
-from ITR.data.osc_units import ureg, Q_, PA_
+from ITR.data.osc_units import ureg, Q_
 
-from utils import gen_company_data, DequantifyQuantity
+from utils import gen_company_data
 
 # from utils import ITR_Encoder
 

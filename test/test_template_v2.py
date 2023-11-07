@@ -1,33 +1,29 @@
 import json
 import os
 import unittest
-from numpy.testing import assert_array_equal
-import pandas as pd
-from pint_pandas import PintArray as PA_
-
 import ITR
 from ITR import data_dir
-from ITR.data.osc_units import ureg, Q_, M_, asPintSeries, requantify_df_from_columns
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-
 from ITR.data.base_providers import (
-    EITargetProjector,
     BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
 )
-from ITR.data.template import TemplateProviderCompany
 from ITR.data.data_warehouse import DataWarehouse
+from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
+from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
-    PortfolioCompany,
     IProductionBenchmarkScopes,
     IEIBenchmarkScopes,
 )
-from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.temperature_score import TemperatureScore
 from utils import assert_pint_series_equal, assert_pint_frame_equal
 
+
+import pandas as pd
+from pint_pandas import PintArray as PA_
 
 pd.options.display.width = 999
 pd.options.display.max_columns = 99

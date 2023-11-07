@@ -3,42 +3,27 @@ import json
 import os
 import re
 import pandas as pd
-import numpy as np
-from numpy.testing import assert_array_equal
 
-import ITR
+import ITR  # noqa F401
 from ITR import data_dir
-from ITR.interfaces import EScope, ETimeFrames
-from ITR.interfaces import (
-    ICompanyData,
-    ICompanyEIProjectionsScopes,
-    ICompanyEIProjections,
-    ICompanyEIProjection,
-)
-from ITR.interfaces import (
-    IProductionBenchmarkScopes,
-    IEIBenchmarkScopes,
-    PortfolioCompany,
-    ITargetData,
-)
-
+from ITR.configs import ColumnsConfig
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
     BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
     EITargetProjector,
-    EITrajectoryProjector,
+)
+from ITR.data.data_warehouse import DataWarehouse
+from ITR.data.osc_units import Q_, PA_, asPintDataFrame
+from ITR.interfaces import (
+    EScope,
+    ICompanyData,
+    IProductionBenchmarkScopes,
+    IEIBenchmarkScopes,
+    ITargetData,
 )
 
-from ITR.data.data_warehouse import DataWarehouse
-from ITR.temperature_score import TemperatureScore
-from ITR.portfolio_aggregation import PortfolioAggregationMethod
-
-from pint import Quantity
-from ITR.data.osc_units import ureg, Q_, PA_, asPintSeries, asPintDataFrame
-from ITR.configs import ColumnsConfig
-
-from utils import gen_company_data, DequantifyQuantity, assert_pint_series_equal
+from utils import gen_company_data, assert_pint_series_equal
 
 
 def print_expected(target_df, company_data):

@@ -6,16 +6,15 @@ from typing import List
 import warnings
 import pandas as pd
 
-import ITR
+import ITR  # noqa F401
 from ITR import data_dir
-from utils import ITR_Encoder, assert_pint_series_equal
-from ITR.data.osc_units import Q_, PA_, asPintDataFrame
 from ITR.configs import ColumnsConfig, VariablesConfig
 from ITR.data.base_providers import (
     BaseProviderProductionBenchmark,
     EITrajectoryProjector,
     EITargetProjector,
 )
+from ITR.data.osc_units import Q_, PA_, asPintDataFrame
 from ITR.interfaces import (
     EScope,
     ICompanyData,
@@ -23,6 +22,7 @@ from ITR.interfaces import (
     IProductionBenchmarkScopes,
     ITargetData,
 )
+from utils import ITR_Encoder, assert_pint_series_equal
 
 
 def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
@@ -251,7 +251,7 @@ class TestProjector(unittest.TestCase):
         historic_df = ei_projector._extract_historic_df(fillna_data)
         ei_projector._align_and_compute_missing_historic_ei(fillna_data, historic_df)
 
-        historic_years = [column for column in historic_df.columns if type(column) == int]
+        historic_years = [column for column in historic_df.columns if isinstance(column, int)]
         projection_years = range(max(historic_years), ei_projector.projection_controls.TARGET_YEAR + 1)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose

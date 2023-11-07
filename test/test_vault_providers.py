@@ -7,6 +7,21 @@ else:
     pytestmark = pytest.mark.skip
     pytest.skip("skipping vault because Trino auth breaks CI/CD", allow_module_level=True)
 
+import ITR  # noqa F401
+from ITR import data_dir
+from ITR.configs import ColumnsConfig, TemperatureScoreConfig
+from ITR.data.data_warehouse import DataWarehouse
+from ITR.interfaces import (
+    ICompanyData,
+    EScope,
+    ETimeFrames,
+    PortfolioCompany,
+    IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
+)
+from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.temperature_score import TemperatureScore
+
 import json
 import unittest
 import os
@@ -18,21 +33,6 @@ from dotenv import load_dotenv
 import trino
 import osc_ingest_trino as osc
 from sqlalchemy.engine import create_engine
-
-import ITR
-from ITR import data_dir
-from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.temperature_score import TemperatureScore
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.data.data_warehouse import DataWarehouse
-from ITR.interfaces import (
-    ICompanyData,
-    EScope,
-    ETimeFrames,
-    PortfolioCompany,
-    IEIBenchmarkScopes,
-    IProductionBenchmarkScopes,
-)
 
 try:
     from ITR.data.vault_providers import (
