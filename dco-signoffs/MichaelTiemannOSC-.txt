@@ -223,4 +223,3 @@ Also removed many print statements no longer needed.
 We are now to the point where pint is raising questions about way our equations are using their units.  We know that the two ratios (target_overshoot_ratio and trajectory_overshoot_ratio) should be dimensionless, but there seems to be some confusion between emissions production and emissions intensity along the way...
 
 fa61110e0e3dce3c6a3fe034785222a044a5bb46 WIP Checkpoint
-

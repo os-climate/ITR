@@ -34,7 +34,6 @@ from . import ureg
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
 
 
-
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
