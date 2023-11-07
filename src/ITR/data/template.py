@@ -1,22 +1,26 @@
+import datetime
+import logging
 import re
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-import datetime
-from typing import Type, List, Optional
-import pandas as pd
-import numpy as np
+from typing import List, Optional, Type
 
+import numpy as np
+import pandas as pd
+import pint
+from pint_pandas import PintType
 from pydantic import ValidationError
 
 import ITR
+
 from ..configs import (
     ColumnsConfig,
-    VariablesConfig,
-    TabsConfig,
-    SectorsConfig,
-    ProjectionControls,
     LoggingConfig,
+    ProjectionControls,
+    SectorsConfig,
+    TabsConfig,
+    VariablesConfig,
 )
-from ..data import ureg, Q_, PA_
+from ..data import PA_, Q_, ureg
 from ..data.base_providers import BaseCompanyDataProvider
 from ..data.osc_units import (
     EmissionsMetric,
@@ -26,22 +30,17 @@ from ..data.osc_units import (
     fx_ctx,
 )
 from ..interfaces import (
-    ICompanyData,
     EScope,
+    ICompanyData,
+    IEIRealization,
+    IEmissionRealization,
+    IHistoricData,
+    IHistoricEIScopes,
     IHistoricEmissionsScopes,
     IProductionRealization,
-    IHistoricEIScopes,
-    IHistoricData,
     ITargetData,
-    IEmissionRealization,
-    IEIRealization,
 )
 from ..utils import get_project_root
-
-import pint
-from pint_pandas import PintType
-
-import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

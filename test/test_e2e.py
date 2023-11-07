@@ -1,18 +1,19 @@
-import unittest
 import copy
+import unittest
 from typing import List
 
 import ITR
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.osc_units import ureg, Q_
+from ITR.data.osc_units import Q_, ureg
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
+    ICompanyAggregates,
+    ICompanyEIProjectionsScopes,
     PortfolioCompany,
 )
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-from ITR.interfaces import ICompanyAggregates, ICompanyEIProjectionsScopes
 
 
 class e2e_DataProvider:  # if derived from CompanyDataProvider, we'd have to provide implementations for several methods we never use

@@ -4,13 +4,13 @@
 
 FILEPATH="pyproject.toml"
 
-for TAG in `git tag -l | sort | uniq`; do
+for TAG in $(git tag -l | sort | uniq); do
 echo "" > /dev/null
 done
-echo "Version string from tags: $TAG"
+echo "Version string from tags: ${TAG}"
 
-echo "Performing string substitution on: $FILEPATH"
-sed -i "s/.*version =.*/version = \"$TAG\"/" $FILEPATH
+echo "Performing string substitution on: ${FILEPATH}"
+sed -i "s/.*version =.*/version = \"$TAG\"/" "${FILEPATH}"
 echo "Versioning set to:"
-grep version $FILEPATH
+grep version "${FILEPATH}"
 echo "Script completed!"; exit 0

@@ -2,12 +2,14 @@
 This package helps companies and financial institutions to assess the temperature alignment of investment and lending
 portfolios.
 """
-import pandas as pd
-import numpy as np
 import os
-from .interfaces import EScope
-from . import data  # noqa F401
+
+import numpy as np
+import pandas as pd
 import pint
+
+from . import data  # noqa F401
+from .interfaces import EScope
 
 data_dir = os.path.join(__path__[0], "data", "json")
 
@@ -15,8 +17,8 @@ try:
     # Even if we have uncertainties available as a module, we don't have the right version of pint
     if hasattr(pint.compat, "tokenizer"):
         raise AttributeError
-    from uncertainties import ufloat, UFloat
-    from uncertainties.unumpy import uarray, isnan, nominal_values, std_devs
+    from uncertainties import UFloat, ufloat
+    from uncertainties.unumpy import isnan, nominal_values, std_devs, uarray
 
     _ufloat_nan = ufloat(np.nan, 0.0)
     pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
@@ -25,8 +27,9 @@ try:
     HAS_UNCERTAINTIES = True
 except (ImportError, ModuleNotFoundError, AttributeError) as exc:  # noqa F841
     HAS_UNCERTAINTIES = False
-    from numpy import isnan
     from statistics import mean
+
+    from numpy import isnan
 
     def ufloat(nom_val, std_val):
         return nom_val

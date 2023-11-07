@@ -2,14 +2,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import List
+
 import pandas as pd
 
-from ..configs import (  # noqa F401
-    ColumnsConfig,
-)
-
+from ..configs import ColumnsConfig  # noqa F401
 from ..data.osc_units import Quantity
-
 from ..interfaces import (  # noqa F401
     EScope,
     ICompanyData,

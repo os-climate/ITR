@@ -1,17 +1,20 @@
-import unittest
 import json
 import os
+import unittest
+
 import pandas as pd
 from numpy.testing import assert_array_equal
+from utils import gen_company_data
 
 import ITR
 from ITR import data_dir
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
 )
 from ITR.data.data_warehouse import DataWarehouse
+from ITR.data.osc_units import Q_, ureg
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
@@ -22,10 +25,6 @@ from ITR.interfaces import (
 )
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-
-from ITR.data.osc_units import ureg, Q_
-
-from utils import gen_company_data
 
 # from utils import ITR_Encoder
 

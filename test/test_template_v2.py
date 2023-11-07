@@ -1,29 +1,29 @@
 import json
 import os
 import unittest
+
+import pandas as pd
+from pint_pandas import PintArray as PA_
+from utils import assert_pint_frame_equal, assert_pint_series_equal
+
 import ITR
 from ITR import data_dir
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.base_providers import (
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
 )
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.osc_units import ureg, Q_, asPintSeries, requantify_df_from_columns
+from ITR.data.osc_units import Q_, asPintSeries, requantify_df_from_columns, ureg
 from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
-    IProductionBenchmarkScopes,
     IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
 )
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-from utils import assert_pint_series_equal, assert_pint_frame_equal
-
-
-import pandas as pd
-from pint_pandas import PintArray as PA_
 
 pd.options.display.width = 999
 pd.options.display.max_columns = 99

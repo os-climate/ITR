@@ -117,4 +117,3 @@ ab3ef272e749accf24f6284ddbb1283f1f870776 Update dependencies
 7c386b0580e30b75342f140096e62815d679564a Create example budgets
 
 2f7e19fdeeb08b9ffad210480784583bfd75e5d2 Add budget interface and remove unused code
-

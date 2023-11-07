@@ -2,10 +2,11 @@
 This module contains classes that create connections to data providers and initializes our system of units
 """
 
-import pint
-from pint import set_application_registry
-from openscm_units import unit_registry
 import re
+
+import pint
+from openscm_units import unit_registry
+from pint import set_application_registry
 
 currency_dict = {
     # 'US$':'USD', NOTE: don't try to re-define USD...it leads to infinite recursion

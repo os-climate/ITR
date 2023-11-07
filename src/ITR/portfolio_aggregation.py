@@ -1,20 +1,18 @@
-import ITR
-from .configs import PortfolioAggregationConfig, ColumnsConfig, LoggingConfig
-from .data.osc_units import asPintSeries, PA_
-from .interfaces import EScope
-
+import logging
+import warnings  # needed until apply behaves better with Pint quantities in arrays
 from abc import ABC
 from enum import Enum
-import warnings  # needed until apply behaves better with Pint quantities in arrays
-
 from typing import Type
 
 import numpy as np
 import pandas as pd
 from pint_pandas import PintType
 
-import logging
+import ITR
 
+from .configs import ColumnsConfig, LoggingConfig, PortfolioAggregationConfig
+from .data.osc_units import PA_, asPintSeries
+from .interfaces import EScope
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

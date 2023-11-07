@@ -1,29 +1,28 @@
+import itertools
+import logging
+import warnings  # needed until apply behaves better with Pint quantities in arrays
+from typing import List, Optional, Tuple, Type
+
+import numpy as np
+import pandas as pd
+
 import ITR
-from .configs import TemperatureScoreConfig, ColumnsConfig, LoggingConfig
+
+from .configs import ColumnsConfig, LoggingConfig, TemperatureScoreConfig
 from .data.data_warehouse import DataWarehouse
-from .data.osc_units import ureg, Q_, Quantity_type
+from .data.osc_units import Q_, Quantity_type, ureg
 from .interfaces import (
-    EScope,
-    ETimeFrames,
-    EScoreResultType,
     Aggregation,
     AggregationContribution,
-    ScoreAggregation,
-    ScoreAggregationScopes,
-    ScoreAggregations,
+    EScope,
+    EScoreResultType,
+    ETimeFrames,
     PortfolioCompany,
+    ScoreAggregation,
+    ScoreAggregations,
+    ScoreAggregationScopes,
 )
 from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-
-import warnings  # needed until apply behaves better with Pint quantities in arrays
-
-from typing import Optional, Tuple, Type, List
-
-import pandas as pd
-import numpy as np
-import itertools
-
-import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

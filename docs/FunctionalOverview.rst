@@ -66,7 +66,7 @@ individual companies. The available options are:
 It is also possible to calculate scores of the individual companies
 without aggregating to a portfolio score.
 
-Grouping data 
+Grouping data
 ~~~~~~~~~~~~~
 
 This functionality enables the user to analyze (for examples see Jupyter
@@ -181,4 +181,3 @@ underlying data.
    (LAR), compound annual growth/reduction (CAGR), mapped regression
    scenario, and parameters for the formula to calculate the
    temperature score.
-

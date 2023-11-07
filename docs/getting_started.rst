@@ -1,7 +1,7 @@
 ****************************
 Getting Started Using Python
 ****************************
-The most fundamental part of the project is the Python module, which takes care of all the heavy lifting. 
+The most fundamental part of the project is the Python module, which takes care of all the heavy lifting.
 You can install it easily through PIP from Pypi: :code:`pip install itr`.
 
 The typical end-user use cases have all been removed to the :code:`ITR-examples` package.  Please see documentation there for running and writing Jupyter notebooks and using the :code:`itr-ui` graphical user interface.

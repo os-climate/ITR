@@ -15,7 +15,6 @@ on:
 env:
   python-version: "3.10"
 
-
 ### BUILD ###
 
 jobs:
@@ -26,7 +25,6 @@ jobs:
       # IMPORTANT: mandatory for Sigstore
       id-token: write
     steps:
-
       ### BUILDING ###
 
       - name: "Checkout repository"
@@ -66,7 +64,6 @@ jobs:
           name: ${{ github.ref_name }}
           path: dist/
 
-
   ### PUBLISH GITHUB ###
 
   github:
@@ -80,7 +77,6 @@ jobs:
       # IMPORTANT: mandatory to publish artefacts
       contents: write
     steps:
-
       - name: "⬇ Download build artefacts"
         uses: actions/download-artifact@v3
         with:
@@ -100,7 +96,6 @@ jobs:
             dist/*.tar.gz
             dist/*.whl
 
-
   ### PUBLISH PYPI TEST ###
 
   testpypi:
@@ -116,7 +111,6 @@ jobs:
       # IMPORTANT: mandatory for trusted publishing
       id-token: write
     steps:
-
       - name: "⬇ Download build artefacts"
         uses: actions/download-artifact@v3
         with:
@@ -151,7 +145,6 @@ jobs:
       # IMPORTANT: mandatory for trusted publishing
       id-token: write
     steps:
-
       - name: "⬇ Download build artefacts"
         uses: actions/download-artifact@v3
         with:

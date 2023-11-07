@@ -1,7 +1,8 @@
 ---
 name: "⛔️ Update dependencies"
 
-on:  # yamllint disable-line rule:truthy
+# yamllint disable-line rule:truthy
+on:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * MON"

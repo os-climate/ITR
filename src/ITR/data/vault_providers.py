@@ -1,40 +1,38 @@
-from . import ureg
+import logging
+import os
+import pathlib
+from typing import List, Type
+
+import numpy as np
+import osc_ingest_trino as osc
+import pandas as pd
+import sqlalchemy
+from dotenv import load_dotenv
+from pint_pandas import PintArray
+
 from ..configs import ColumnsConfig, LoggingConfig
+from ..data import ureg
 
 # Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
 from ..data.base_providers import BaseCompanyDataProvider
 from ..data.data_providers import (
     CompanyDataProvider,
-    ProductionBenchmarkDataProvider,
     IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
 )
 from ..data.data_warehouse import DataWarehouse
 from ..data.osc_units import Quantity
 from ..interfaces import (
-    ICompanyData,
     EScope,
-    IProductionBenchmarkScopes,
-    IEIBenchmarkScopes,
     IBenchmark,
     ICompanyAggregates,
+    ICompanyData,
+    IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
 )
-
-import os
-import pathlib
-from dotenv import load_dotenv
-
-import osc_ingest_trino as osc
-import sqlalchemy
-
-import numpy as np
-import pandas as pd
-from typing import List, Type
 
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
 
-from pint_pandas import PintArray
-
-import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

@@ -1,30 +1,31 @@
 import json
-import unittest
 import os
+import unittest
 import warnings
+
 import pandas as pd
+from utils import assert_pint_frame_equal, assert_pint_series_equal
+
 import ITR
 from ITR import data_dir
-from ITR.data.osc_units import ureg, Q_, asPintSeries
-
-from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.temperature_score import TemperatureScore
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
-from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
 )
+from ITR.data.data_warehouse import DataWarehouse
+from ITR.data.osc_units import Q_, asPintSeries, ureg
 from ITR.interfaces import (
-    ICompanyData,
     EScope,
     ETimeFrames,
-    PortfolioCompany,
+    ICompanyData,
     IEIBenchmarkScopes,
     IProductionBenchmarkScopes,
+    PortfolioCompany,
 )
-from utils import assert_pint_frame_equal, assert_pint_series_equal
+from ITR.portfolio_aggregation import PortfolioAggregationMethod
+from ITR.temperature_score import TemperatureScore
 
 
 class TestBaseProvider(unittest.TestCase):

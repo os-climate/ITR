@@ -2,15 +2,13 @@
 name = "ITR"
 version = "v1.0.11"
 description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
-authors = [ { name = "Michael Tiemann", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" } ]
+authors = [
+  { name = "Michael Tiemann", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" },
+]
 requires-python = ">=3.9"
 readme = "README.md"
 license = { text = "Apache-2.0" }
-keywords = [
-  "Climate",
-  "ITR",
-  "Finance"
-]
+keywords = ["Climate", "ITR", "Finance"]
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
@@ -66,7 +64,7 @@ Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
 "Source Code" = "https://github.com/os-climate/ITR"
 
 [build-system]
-requires = [ "pdm-backend" ]
+requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.isort]
@@ -82,20 +80,10 @@ lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
 [tool.pdm.dev-dependencies]
-test = [
-  "pdm[pytest]",
-  "pdm[publish]",
-  "pytest-cov"
-]
-tox = [
-  "tox",
-  "tox-pdm>=0.5"
-]
-dev = [
-  "tox>=4.11.3",
-  "tox-pdm>=0.7.0"
-]
+test = ["pdm[pytest]", "pdm[publish]", "pytest-cov"]
+tox = ["tox", "tox-pdm>=0.5"]
 docs = ["sphinx>=7.2.6", "sphinx-copybutton>=0.5.2"]
+dev = ["tox>=4.11.3", "tox-pdm>=0.7.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["test/"]

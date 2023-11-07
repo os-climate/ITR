@@ -1,55 +1,48 @@
-import ITR
-from ..configs import (
-    ColumnsConfig,
-    VariablesConfig,
-    ProjectionControls,
-    LoggingConfig,
-)
-from ..data import ureg, Q_, PA_
-from ..data.data_providers import (
-    CompanyDataProvider,
-    ProductionBenchmarkDataProvider,
-    IntensityBenchmarkDataProvider,
-)
-from ..data.osc_units import (
-    asPintDataFrame,
-    asPintSeries,
-    align_production_to_bm,
-    Quantity,
-)
-
+import logging
 import warnings  # needed until quantile behaves better with Pint quantities in arrays
+from functools import partial, reduce
+from operator import add
+from typing import Dict, List, Type
+
 import numpy as np
 import pandas as pd
 from pint import DimensionalityError
 from pint_pandas import PintType
 
-from functools import reduce, partial
-from operator import add
-from typing import List, Type, Dict
+import ITR
 
-import logging
-
-from ITR.interfaces import (
-    ICompanyData,
+from ..configs import ColumnsConfig, LoggingConfig, ProjectionControls, VariablesConfig
+from ..data import PA_, Q_, ureg
+from ..data.data_providers import (
+    CompanyDataProvider,
+    IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
+)
+from ..data.osc_units import (
+    Quantity,
+    align_production_to_bm,
+    asPintDataFrame,
+    asPintSeries,
+)
+from ..interfaces import (
+    DF_ICompanyEIProjections,
+    EI_Quantity,
     EScope,
-    IProductionBenchmarkScopes,
-    IEIBenchmarkScopes,
     IBenchmark,
+    ICompanyData,
+    ICompanyEIProjection,
     ICompanyEIProjections,
     ICompanyEIProjectionsScopes,
+    IEIBenchmarkScopes,
+    IEIRealization,
+    IEmissionRealization,
+    IHistoricData,
     IHistoricEIScopes,
     IHistoricEmissionsScopes,
+    IProductionBenchmarkScopes,
     IProductionRealization,
     ITargetData,
-    IHistoricData,
-    ICompanyEIProjection,
-    IEmissionRealization,
-    IEIRealization,
-    DF_ICompanyEIProjections,
 )
-from ITR.interfaces import EI_Quantity
-
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
