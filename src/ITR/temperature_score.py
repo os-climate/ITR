@@ -1,14 +1,7 @@
-import warnings  # needed until apply behaves better with Pint quantities in arrays
-
-from typing import Optional, Tuple, Type, List
-
-import pandas as pd
-import numpy as np
-import itertools
-
 import ITR
-from .data.osc_units import ureg, Q_, PA_, Quantity_type
-
+from .configs import TemperatureScoreConfig, ColumnsConfig, LoggingConfig
+from .data.data_warehouse import DataWarehouse
+from .data.osc_units import ureg, Q_, Quantity_type
 from .interfaces import (
     EScope,
     ETimeFrames,
@@ -21,15 +14,19 @@ from .interfaces import (
     PortfolioCompany,
 )
 from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMethod
-from .configs import TemperatureScoreConfig, ColumnsConfig, LoggingConfig
+
+import warnings  # needed until apply behaves better with Pint quantities in arrays
+
+from typing import Optional, Tuple, Type, List
+
+import pandas as pd
+import numpy as np
+import itertools
 
 import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
-
-from . import utils
-from .data.data_warehouse import DataWarehouse
 
 
 class TemperatureScore(PortfolioAggregation):
@@ -334,13 +331,15 @@ class TemperatureScore(PortfolioAggregation):
             target_probability = TemperatureScoreConfig.CONTROLS_CONFIG.target_probability
         if data is None:
             if data_warehouse is not None and portfolio is not None:
+                from . import utils
+
                 data = utils.get_data(data_warehouse, portfolio)
             else:
                 raise ValueError("You need to pass and either a data set or a datawarehouse and companies")
 
-        logger.info(f"temperature score preparing data")
+        logger.info("temperature score preparing data")
         data = self._prepare_data(data, target_probability)
-        logger.info(f"temperature score data prepared")
+        logger.info("temperature score data prepared")
 
         if self.scopes:
             if EScope.S1S2S3 in self.scopes:
@@ -468,7 +467,7 @@ class TemperatureScore(PortfolioAggregation):
             for group_names, group in grouped_data:
                 group_name_joined = (
                     group_names
-                    if type(group_names) == str
+                    if isinstance(group_names, str)
                     else "-".join([str(group_name) for group_name in group_names])
                 )
                 (

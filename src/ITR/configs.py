@@ -9,10 +9,9 @@ from typing import List
 from pydantic import BaseModel, ConfigDict
 from dataclasses import dataclass
 
+from .data.osc_units import Quantity_type, EmissionsQuantity
+
 import pandas as pd
-import pint
-import ITR
-from ITR.data.osc_units import ureg, Q_, Quantity_type, EmissionsQuantity
 
 
 def ITR_median(*args, **kwargs):

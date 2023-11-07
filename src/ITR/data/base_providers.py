@@ -1,49 +1,41 @@
-import warnings  # needed until quantile behaves better with Pint quantities in arrays
-import numpy as np
-import pandas as pd
-import pint
-from pint import DimensionalityError
-import pydantic
-from pydantic import ValidationError
-
-from functools import reduce, partial
-from operator import add
-from typing import List, Type, Dict
-
 import ITR
-from . import ureg, Q_, PA_
-from ITR.data.osc_units import (
-    asPintDataFrame,
-    asPintSeries,
-    EI_Metric,
-    align_production_to_bm,
-)
-from pint_pandas import PintType
-
-from ITR.configs import (
+from ..configs import (
     ColumnsConfig,
     VariablesConfig,
     ProjectionControls,
     LoggingConfig,
 )
-
-import logging
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
-
-from ITR.data.data_providers import (
+from ..data import ureg, Q_, PA_
+from ..data.data_providers import (
     CompanyDataProvider,
     ProductionBenchmarkDataProvider,
     IntensityBenchmarkDataProvider,
 )
+from ..data.osc_units import (
+    asPintDataFrame,
+    asPintSeries,
+    align_production_to_bm,
+    Quantity,
+)
+
+import warnings  # needed until quantile behaves better with Pint quantities in arrays
+import numpy as np
+import pandas as pd
+from pint import DimensionalityError
+from pint_pandas import PintType
+
+from functools import reduce, partial
+from operator import add
+from typing import List, Type, Dict
+
+import logging
+
 from ITR.interfaces import (
     ICompanyData,
     EScope,
     IProductionBenchmarkScopes,
     IEIBenchmarkScopes,
     IBenchmark,
-    IProjection,
     ICompanyEIProjections,
     ICompanyEIProjectionsScopes,
     IHistoricEIScopes,
@@ -57,6 +49,10 @@ from ITR.interfaces import (
     DF_ICompanyEIProjections,
 )
 from ITR.interfaces import EI_Quantity
+
+
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
 
 
 # TODO handling of scopes in benchmarks
@@ -978,7 +974,7 @@ class EITrajectoryProjector(EIProjector):
         historic_df = self._extract_historic_df(companies)
         # This modifies historic_df in place...which feeds the intensity extrapolations below
         self._align_and_compute_missing_historic_ei(companies, historic_df)
-        historic_years = [column for column in historic_df.columns if type(column) == int]
+        historic_years = [column for column in historic_df.columns if isinstance(column, int)]
         projection_years = range(max(historic_years), self.projection_controls.TARGET_YEAR + 1)
         with warnings.catch_warnings():
             # Don't worry about warning that we are intentionally dropping units as we transpose
@@ -1931,9 +1927,9 @@ class EITargetProjector(EIProjector):
     def _compute_CAGR(
         self,
         first_year: int,
-        first_value: pint.Quantity,
+        first_value: Quantity,
         last_year: int,
-        last_value: pint.Quantity,
+        last_value: Quantity,
     ) -> pd.Series:
         """Compute CAGR, returning pd.Series of the growth (or reduction) applied to first to converge with last
         :param first_year: the year of the first datapoint in the Calculation (most recent actual datapoint)

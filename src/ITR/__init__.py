@@ -2,17 +2,12 @@
 This package helps companies and financial institutions to assess the temperature alignment of investment and lending
 portfolios.
 """
-import warnings
 import pandas as pd
 import numpy as np
 import os
-import json
 from .interfaces import EScope
-from . import data
-from . import utils
-from . import temperature_score
+from . import data  # noqa F401
 import pint
-from pint_pandas import PintType, PintArray
 
 data_dir = os.path.join(__path__[0], "data", "json")
 
@@ -28,7 +23,7 @@ try:
     from .utils import umean
 
     HAS_UNCERTAINTIES = True
-except (ImportError, ModuleNotFoundError, AttributeError) as exc:
+except (ImportError, ModuleNotFoundError, AttributeError) as exc:  # noqa F841
     HAS_UNCERTAINTIES = False
     from numpy import isnan
     from statistics import mean
@@ -70,7 +65,7 @@ def Q_m_as(value, units, inplace=False):
     Returns the MAGNITUDE of the (possibly) converted value.
     """
     x = value
-    if type(value) == str:
+    if isinstance(value, str):
         x = pint.Quantity(value)
     if x.u == units:
         return x.m

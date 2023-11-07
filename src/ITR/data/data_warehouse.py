@@ -7,14 +7,13 @@ from typing import List, Type
 from pydantic import ValidationError
 
 import ITR
-from . import ureg, Q_, PA_
-from ITR.data.osc_units import (
-    asPintSeries,
+from ..data import Q_, PA_
+from ..data.osc_units import (
     asPintDataFrame,
     EmissionsQuantity,
     Quantity_type,
 )
-from ITR.interfaces import (
+from ..interfaces import (
     EScope,
     IEmissionRealization,
     IEIRealization,
@@ -25,12 +24,12 @@ from ITR.interfaces import (
     DF_ICompanyEIProjections,
     IHistoricData,
 )
-from ITR.data.data_providers import (
+from ..data.data_providers import (
     CompanyDataProvider,
     ProductionBenchmarkDataProvider,
     IntensityBenchmarkDataProvider,
 )
-from ITR.configs import ColumnsConfig, LoggingConfig, ProjectionControls
+from ..configs import ColumnsConfig, LoggingConfig
 
 import logging
 
@@ -38,7 +37,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 LoggingConfig.add_config_to_logger(logger)
 
-import pint
 from pint import DimensionalityError
 
 
@@ -617,8 +615,8 @@ class DataWarehouse(ABC):
             bm_ei_s1s2 = None
 
         if company.projected_intensities.S1S2S3:
-            assert company.projected_intensities.S1S2 == None
-            assert company.projected_intensities.S1 == None
+            assert company.projected_intensities.S1S2 is None
+            assert company.projected_intensities.S1 is None
             ei_metric = company.projected_intensities.S1S2S3.ei_metric
             s1s2_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s1s2 / (bm_ei_s1s2 + bm_ei_s3)
             s3_projections = company.projected_intensities.S1S2S3.projections * bm_ei_s3 / (bm_ei_s1s2 + bm_ei_s3)
@@ -650,7 +648,7 @@ class DataWarehouse(ABC):
             # Penalize non-disclosure by assuming 2x aligned S3 emissions.  That's still likely undercounting, because
             # most non-disclosing companies are nowhere near the reduction rates of the benchmarks.
             # It would be lovely to use S1S2 or S1 data to inform S3, but that likely adds error on top of error
-            assert company.projected_intensities.S1S2S3 == None
+            assert company.projected_intensities.S1S2S3 is None
             ei_metric = str(bm_ei_s3.dtype.units)
             # If we don't have uncertainties, ITR.ufloat just returns the nom value 2.0
             s3_projections = bm_ei_s3 * ITR.ufloat(2.0, 1.0)

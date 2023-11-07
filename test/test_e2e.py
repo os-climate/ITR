@@ -3,23 +3,16 @@ import copy
 from typing import List
 
 import ITR
-from ITR.data.osc_units import ureg, Q_, PA_
-
+from ITR.data.data_warehouse import DataWarehouse
+from ITR.data.osc_units import ureg, Q_
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
     PortfolioCompany,
 )
-
-from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
-from ITR.data.data_providers import (
-    CompanyDataProvider,
-    ProductionBenchmarkDataProvider,
-    IntensityBenchmarkDataProvider,
-)
-from ITR.data.data_warehouse import DataWarehouse
-from ITR.interfaces import ICompanyAggregates, ICompanyEIProjectionsScopes, IProjection
+from ITR.temperature_score import TemperatureScore
+from ITR.interfaces import ICompanyAggregates, ICompanyEIProjectionsScopes
 
 
 class e2e_DataProvider:  # if derived from CompanyDataProvider, we'd have to provide implementations for several methods we never use

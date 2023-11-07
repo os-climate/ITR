@@ -1,6 +1,23 @@
 from __future__ import annotations
 
-import json
+import ITR
+from .configs import ProjectionControls, LoggingConfig
+from .data.osc_units import (
+    ureg,
+    Q_,
+    PA_,
+    BenchmarkMetric,
+    BenchmarkQuantity,
+    ProductionMetric,
+    ProductionQuantity,
+    EmissionsMetric,
+    EmissionsQuantity,
+    EI_Metric,
+    EI_Quantity,
+    MonetaryQuantity,
+    Quantity_type,
+)
+
 import numpy as np
 import pandas as pd
 
@@ -19,35 +36,14 @@ from pydantic import (
 )
 from pydantic.json_schema import JsonSchemaValue
 
-import ITR
-
-from ITR.data.osc_units import (
-    ureg,
-    Q_,
-    M_,
-    PA_,
-    BenchmarkMetric,
-    BenchmarkQuantity,
-    ProductionMetric,
-    ProductionQuantity,
-    EmissionsMetric,
-    EmissionsQuantity,
-    EI_Metric,
-    EI_Quantity,
-    MonetaryQuantity,
-    Quantity_type,
-)
-from ITR.configs import ProjectionControls, LoggingConfig
-
 import logging
+
+from pint_pandas import PintType
+from pint_pandas.pint_array import PintSeriesAccessor
+
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
-
-import pint
-from pint.errors import DimensionalityError
-from pint_pandas import PintType
-from pint_pandas.pint_array import PintSeriesAccessor
 
 
 class SortableEnum(Enum):
@@ -689,7 +685,6 @@ class ICompanyData(BaseModel):
             "Residential Buildings": {"Global": "billion m**2"},  # Should it be 'built m**2' ?
             "Commercial Buildings": {"Global": "billion m**2"},  # Should it be 'built m**2' ?
             "Textiles": {"Global": "billion USD"},
-            "Chemicals": {"Global": "billion USD"},
             "Chemicals": {"Global": "billion USD"},
             "Pharmaceuticals": {"Global": "billion USD"},
             "Ag Chem": {"Global": "billion USD"},

@@ -1,26 +1,16 @@
-import os
-import pathlib
-from dotenv import load_dotenv
+from . import ureg
+from ..configs import ColumnsConfig, LoggingConfig
 
-import trino
-import osc_ingest_trino as osc
-import sqlalchemy
-
-import pandas as pd
-from typing import List, Type
-from . import ureg, Q_, PA_
-from ITR.configs import ColumnsConfig, TemperatureScoreConfig, LoggingConfig
-from ITR.data.data_providers import (
+# Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
+from ..data.base_providers import BaseCompanyDataProvider
+from ..data.data_providers import (
     CompanyDataProvider,
     ProductionBenchmarkDataProvider,
     IntensityBenchmarkDataProvider,
 )
-
-# Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
-from ITR.data.base_providers import BaseCompanyDataProvider
-
-from ITR.data.data_warehouse import DataWarehouse
-from ITR.interfaces import (
+from ..data.data_warehouse import DataWarehouse
+from ..data.osc_units import Quantity
+from ..interfaces import (
     ICompanyData,
     EScope,
     IProductionBenchmarkScopes,
@@ -29,11 +19,19 @@ from ITR.interfaces import (
     ICompanyAggregates,
 )
 
+import os
+import pathlib
+from dotenv import load_dotenv
+
+import osc_ingest_trino as osc
+import sqlalchemy
+
+import numpy as np
+import pandas as pd
+from typing import List, Type
+
 # TODO handle ways to append information (from other providers, other benchmarks, new scope info, new corp data updates, etc)
 
-import trino
-from sqlalchemy.engine import create_engine
-from pint import Quantity
 from pint_pandas import PintArray
 
 import logging
@@ -60,7 +58,7 @@ engine = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=in
 # return a two-column dataframe of magnitudes and units.
 # If DF_COL contains no Pint quanities, return it unchanged.
 def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
-    if type(df_col.values) == PintArray:
+    if isinstance(df_col.values, PintArray):
         return pd.DataFrame(
             {
                 df_col.name: df_col.values.quantity.m,
@@ -625,7 +623,7 @@ class DataVaultWarehouse(DataWarehouse):
         # intensity_projections['source'] = self._schema
 
         # If there's no company data, we are just using the vault, not initializing it
-        if company_data == None:
+        if company_data is None:
             return
         if benchmark_projected_production is None and benchmarks_projected_ei is None:
             return

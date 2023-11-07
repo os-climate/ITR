@@ -8,37 +8,24 @@ import numpy as np
 from pydantic import ValidationError
 
 import ITR
-from . import ureg, Q_, PA_
-from ITR.data.osc_units import (
-    fx_ctx,
-    ProductionQuantity,
-    EmissionsQuantity,
-    EI_Quantity,
-    asPintSeries,
-    asPintDataFrame,
-    ProductionMetric,
-    EmissionsMetric,
-)
-import pint
-from pint_pandas import PintType
-
-from ITR.data.base_providers import BaseCompanyDataProvider
-from ITR.configs import (
+from ..configs import (
     ColumnsConfig,
-    TemperatureScoreConfig,
     VariablesConfig,
     TabsConfig,
     SectorsConfig,
     ProjectionControls,
     LoggingConfig,
 )
-
-import logging
-
-logger = logging.getLogger(__name__)
-LoggingConfig.add_config_to_logger(logger)
-
-from ITR.interfaces import (
+from ..data import ureg, Q_, PA_
+from ..data.base_providers import BaseCompanyDataProvider
+from ..data.osc_units import (
+    EmissionsMetric,
+    ProductionMetric,
+    asPintDataFrame,
+    asPintSeries,
+    fx_ctx,
+)
+from ..interfaces import (
     ICompanyData,
     EScope,
     IHistoricEmissionsScopes,
@@ -48,9 +35,16 @@ from ITR.interfaces import (
     ITargetData,
     IEmissionRealization,
     IEIRealization,
-    IProjection,
 )
-from ITR.utils import get_project_root
+from ..utils import get_project_root
+
+import pint
+from pint_pandas import PintType
+
+import logging
+
+logger = logging.getLogger(__name__)
+LoggingConfig.add_config_to_logger(logger)
 
 pkg_root = get_project_root()
 df_country_regions = pd.read_csv(f"{pkg_root}/data/input/country_region_info.csv")
@@ -744,9 +738,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Disable rows we do not yet handle
             df_esg = df_esg[~df_esg.metric.isin(["generation", "consumption"])]
             if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg.base_year.map(lambda x: type(x) != str or x.lower() != "x")]
+                df_esg = df_esg[df_esg.base_year.map(lambda x: isinstance(x, str) or x.lower() != "x")]
             if "submetric" in df_esg.columns:
-                df_esg = df_esg[df_esg.submetric.map(lambda x: type(x) != str or x.lower() != "ignore")]
+                df_esg = df_esg[df_esg.submetric.map(lambda x: isinstance(x, str) or x.lower() != "ignore")]
             # FIXME: Should we move more df_esg work up here?
             self.df_esg = df_esg
         self.df_fundamentals = df_fundamentals
@@ -1276,7 +1270,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_target_data = self._validate_target_data(df_target_data)
 
         # df_historic now ready for conversion to model for each company
-        self.historic_years = [column for column in df_historic_data.columns if type(column) == int]
+        self.historic_years = [column for column in df_historic_data.columns if isinstance(column, int)]
 
         def get_scoped_df(df, scope, names):
             mask = df.scope.eq(scope)

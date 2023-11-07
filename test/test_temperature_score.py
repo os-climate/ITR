@@ -2,19 +2,17 @@ import warnings
 import os
 import unittest
 import pandas as pd
-import numpy as np
 
-import ITR
+import ITR  # noqa F401
 from ITR.configs import ColumnsConfig
 from ITR.interfaces import ETimeFrames, EScope
 from ITR.temperature_score import TemperatureScore
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.data.osc_units import (
-    ureg,
     Q_,
-    asPintSeries,
-    requantify_df_from_columns,
     asPintDataFrame,
+    requantify_df_from_columns,
+    ureg,
 )
 from utils import assert_pint_series_equal
 
