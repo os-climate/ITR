@@ -29,11 +29,11 @@ from ..interfaces import (
     IHistoricData,
 )
 
+from pint import DimensionalityError
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 LoggingConfig.add_config_to_logger(logger)
-
-from pint import DimensionalityError
 
 
 class DataWarehouse(ABC):

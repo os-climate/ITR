@@ -3,8 +3,6 @@ import os
 import unittest
 
 import pandas as pd
-from pint_pandas import PintArray as PA_
-from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 import ITR
 from ITR import data_dir
@@ -24,6 +22,10 @@ from ITR.interfaces import (
 )
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
+
+from pint_pandas import PintArray as PA_
+from utils import assert_pint_frame_equal, assert_pint_series_equal
+
 
 pd.options.display.width = 999
 pd.options.display.max_columns = 99

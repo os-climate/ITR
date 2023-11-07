@@ -6,11 +6,22 @@ from typing import Dict, List, Type
 
 import numpy as np
 import pandas as pd
-from pint import DimensionalityError
-from pint_pandas import PintType
 
 import ITR
-from ITR.interfaces import (
+from ..configs import ColumnsConfig, LoggingConfig, ProjectionControls, VariablesConfig
+from ..data import PA_, Q_, ureg
+from ..data.data_providers import (
+    CompanyDataProvider,
+    IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
+)
+from ..data.osc_units import (
+    Quantity,
+    align_production_to_bm,
+    asPintDataFrame,
+    asPintSeries,
+)
+from ..interfaces import (
     DF_ICompanyEIProjections,
     EI_Quantity,
     EScope,
@@ -30,19 +41,8 @@ from ITR.interfaces import (
     ITargetData,
 )
 
-from ..configs import ColumnsConfig, LoggingConfig, ProjectionControls, VariablesConfig
-from ..data import PA_, Q_, ureg
-from ..data.data_providers import (
-    CompanyDataProvider,
-    IntensityBenchmarkDataProvider,
-    ProductionBenchmarkDataProvider,
-)
-from ..data.osc_units import (
-    Quantity,
-    align_production_to_bm,
-    asPintDataFrame,
-    asPintSeries,
-)
+from pint import DimensionalityError
+from pint_pandas import PintType
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

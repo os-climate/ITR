@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from typing import Annotated, Any, Dict
 
 import pandas as pd
+
+import ITR
+from ..data import PA_, Q_, ureg
+
 import pint
 from pint import Context, DimensionalityError
 from pint_pandas import PintType
@@ -21,10 +25,6 @@ from pydantic import (
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
-
-import ITR
-
-from ..data import PA_, Q_, ureg
 
 Quantity = ureg.Quantity
 
@@ -184,8 +184,6 @@ def convert_to_annual(x, errors="ignore"):
     If ERRORS=='ignore', allow time dimension to be reduced one step towards zero rather than only to zero.
     Returns the reduced quantity, or the original quantity if reduction would result in an error being raised.
     """
-    import pint
-
     unit_ct = pint.util.to_units_container(x)
     # print(unit_ct)
     # <UnitsContainer({'day': -1, 'kilogram': 1})>
@@ -221,8 +219,6 @@ def convert_to_annual(x, errors="ignore"):
 
 
 def dimension_as(x, dim_unit):
-    import pint
-
     unit_ct = pint.util.to_units_container(x)
     # print(unit_ct)
     # <UnitsContainer({'day': -1, 'kilogram': 1})>

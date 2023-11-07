@@ -6,7 +6,6 @@ import warnings
 from typing import List
 
 import pandas as pd
-from utils import ITR_Encoder, assert_pint_series_equal
 
 import ITR  # noqa F401
 from ITR import data_dir
@@ -24,6 +23,8 @@ from ITR.interfaces import (
     ITargetData,
     ProjectionControls,
 )
+
+from utils import ITR_Encoder, assert_pint_series_equal
 
 
 def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:

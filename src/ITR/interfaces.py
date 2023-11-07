@@ -7,18 +7,6 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pint_pandas import PintType
-from pint_pandas.pint_array import PintSeriesAccessor
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    GetJsonSchemaHandler,
-    ValidationError,
-    field_validator,
-    model_validator,
-)
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import CoreSchema
 
 import ITR
 
@@ -38,6 +26,20 @@ from .data.osc_units import (
     Quantity_type,
     ureg,
 )
+
+from pint_pandas import PintType
+from pint_pandas.pint_array import PintSeriesAccessor
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    GetJsonSchemaHandler,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import CoreSchema
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

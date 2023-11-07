@@ -6,10 +6,11 @@ import os
 
 import numpy as np
 import pandas as pd
-import pint
 
 from . import data  # noqa F401
 from .interfaces import EScope
+
+import pint
 
 data_dir = os.path.join(__path__[0], "data", "json")
 

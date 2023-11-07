@@ -6,13 +6,14 @@ from typing import Type
 
 import numpy as np
 import pandas as pd
-from pint_pandas import PintType
 
 import ITR
 
 from .configs import ColumnsConfig, LoggingConfig, PortfolioAggregationConfig
 from .data.osc_units import PA_, asPintSeries
 from .interfaces import EScope
+
+from pint_pandas import PintType
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
