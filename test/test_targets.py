@@ -1,29 +1,29 @@
-import unittest
 import json
 import os
 import re
+import unittest
+
 import pandas as pd
+from utils import assert_pint_series_equal, gen_company_data
 
 import ITR  # noqa F401
 from ITR import data_dir
 from ITR.configs import ColumnsConfig
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
     EITargetProjector,
 )
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.osc_units import Q_, PA_, asPintDataFrame
+from ITR.data.osc_units import PA_, Q_, asPintDataFrame
 from ITR.interfaces import (
     EScope,
     ICompanyData,
-    IProductionBenchmarkScopes,
     IEIBenchmarkScopes,
+    IProductionBenchmarkScopes,
     ITargetData,
 )
-
-from utils import gen_company_data, assert_pint_series_equal
 
 
 def print_expected(target_df, company_data):

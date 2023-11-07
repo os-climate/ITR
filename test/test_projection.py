@@ -1,28 +1,29 @@
-import json
-import unittest
-import os
 import datetime
-from typing import List
+import json
+import os
+import unittest
 import warnings
+from typing import List
+
 import pandas as pd
+from utils import ITR_Encoder, assert_pint_series_equal
 
 import ITR  # noqa F401
 from ITR import data_dir
 from ITR.configs import ColumnsConfig, VariablesConfig
 from ITR.data.base_providers import (
     BaseProviderProductionBenchmark,
-    EITrajectoryProjector,
     EITargetProjector,
+    EITrajectoryProjector,
 )
-from ITR.data.osc_units import Q_, PA_, asPintDataFrame
+from ITR.data.osc_units import PA_, Q_, asPintDataFrame
 from ITR.interfaces import (
     EScope,
     ICompanyData,
-    ProjectionControls,
     IProductionBenchmarkScopes,
     ITargetData,
+    ProjectionControls,
 )
-from utils import ITR_Encoder, assert_pint_series_equal
 
 
 def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:

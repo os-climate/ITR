@@ -2,16 +2,14 @@
 This module handles initialization of pint functionality
 """
 
-import ITR
-from ..data import PA_, Q_, ureg
-
 import re
-
 from dataclasses import dataclass
 from typing import Annotated, Any, Dict
 
-from pydantic_core import CoreSchema, core_schema
-
+import pandas as pd
+import pint
+from pint import Context, DimensionalityError
+from pint_pandas import PintType
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -20,13 +18,13 @@ from pydantic import (
     TypeAdapter,
     ValidationError,
 )
+from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pydantic.json_schema import JsonSchemaValue
-from pydantic.functional_validators import BeforeValidator, AfterValidator
+from pydantic_core import CoreSchema, core_schema
 
-import pandas as pd
-import pint
-from pint import Context, DimensionalityError
-from pint_pandas import PintType
+import ITR
+
+from ..data import PA_, Q_, ureg
 
 Quantity = ureg.Quantity
 

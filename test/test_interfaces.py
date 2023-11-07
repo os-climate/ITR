@@ -7,19 +7,19 @@ from ITR.configs import TemperatureScoreConfig
 from ITR.data.osc_units import (
     Q_,
     BenchmarkMetric,
-    ProductionMetric,
     EI_Metric,
     EI_Quantity,
+    ProductionMetric,
 )
 from ITR.interfaces import (
     EScope,
-    UProjection,
     IBenchmark,
     ICompanyData,
-    ICompanyEIProjectionsScopes,
-    ICompanyEIProjections,
     ICompanyEIProjection,
+    ICompanyEIProjections,
+    ICompanyEIProjectionsScopes,
     ITargetData,
+    UProjection,
 )
 
 

@@ -1,46 +1,43 @@
 from __future__ import annotations
 
-import ITR
-from .configs import ProjectionControls, LoggingConfig
-from .data.osc_units import (
-    ureg,
-    Q_,
-    PA_,
-    BenchmarkMetric,
-    BenchmarkQuantity,
-    ProductionMetric,
-    ProductionQuantity,
-    EmissionsMetric,
-    EmissionsQuantity,
-    EI_Metric,
-    EI_Quantity,
-    MonetaryQuantity,
-    Quantity_type,
-)
+import logging
+from enum import Enum
+from operator import add
+from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-
-from operator import add
-from enum import Enum
-from typing import Optional, Dict, List, Literal, Union
-from typing import TYPE_CHECKING, Callable
-from pydantic_core import CoreSchema
+from pint_pandas import PintType
+from pint_pandas.pint_array import PintSeriesAccessor
 from pydantic import (
     BaseModel,
     ConfigDict,
     GetJsonSchemaHandler,
-    model_validator,
-    field_validator,
     ValidationError,
+    field_validator,
+    model_validator,
 )
 from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import CoreSchema
 
-import logging
+import ITR
 
-from pint_pandas import PintType
-from pint_pandas.pint_array import PintSeriesAccessor
-
+from .configs import LoggingConfig, ProjectionControls
+from .data.osc_units import (
+    PA_,
+    Q_,
+    BenchmarkMetric,
+    BenchmarkQuantity,
+    EI_Metric,
+    EI_Quantity,
+    EmissionsMetric,
+    EmissionsQuantity,
+    MonetaryQuantity,
+    ProductionMetric,
+    ProductionQuantity,
+    Quantity_type,
+    ureg,
+)
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

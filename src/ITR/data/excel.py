@@ -1,50 +1,49 @@
+import logging
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-from typing import Type, List, Optional
-import pandas as pd
-import numpy as np
+from typing import List, Optional, Type
 
+import numpy as np
+import pandas as pd
 from pydantic import BaseModel, ValidationError
 
 from ..configs import (
     ColumnsConfig,
-    VariablesConfig,
-    TabsConfig,
-    ProjectionControls,
     LoggingConfig,
+    ProjectionControls,
+    TabsConfig,
+    VariablesConfig,
 )
 from ..data import Q_
 from ..data.base_providers import (
     BaseCompanyDataProvider,
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
 )
 from ..data.osc_units import (
     BenchmarkMetric,
-    EmissionsQuantity,
     EI_Quantity,
+    EmissionsQuantity,
     Quantity_type,
 )
 from ..interfaces import (
-    ICompanyData,
-    ICompanyEIProjection,
     EScope,
-    IEIBenchmarkScopes,
-    IProductionBenchmarkScopes,
     IBenchmark,
     IBenchmarks,
-    IHistoricEmissionsScopes,
-    IProductionRealization,
-    ProductionQuantity,
-    IHistoricEIScopes,
-    IHistoricData,
-    ITargetData,
-    IEmissionRealization,
+    ICompanyData,
+    ICompanyEIProjection,
+    IEIBenchmarkScopes,
     IEIRealization,
-    UProjection,
+    IEmissionRealization,
+    IHistoricData,
+    IHistoricEIScopes,
+    IHistoricEmissionsScopes,
+    IProductionBenchmarkScopes,
+    IProductionRealization,
     IProjection,
+    ITargetData,
+    ProductionQuantity,
+    UProjection,
 )
-
-import logging
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

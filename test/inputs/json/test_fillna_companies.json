@@ -194,7 +194,7 @@
             "year": 2021,
             "value": "382000000 t CO2"
           }
-	],
+        ],
         "S1S2S3": []
       },
       "emissions_intensities": {
@@ -316,7 +316,7 @@
             "year": 2021,
             "value": "1.0 t CO2/GJ"
           }
-	],
+        ],
         "S1S2S3": []
       }
     }
@@ -503,7 +503,7 @@
             "year": 2021,
             "value": null
           }
-	],
+        ],
         "S1S2S3": []
       },
       "emissions_intensities": {
@@ -625,7 +625,7 @@
             "year": 2021,
             "value": null
           }
-	],
+        ],
         "S1S2S3": []
       }
     }

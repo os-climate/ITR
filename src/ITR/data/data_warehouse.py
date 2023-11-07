@@ -1,37 +1,33 @@
+import logging
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-import pandas as pd
-import numpy as np
-
 from abc import ABC
 from typing import List, Type
+
+import numpy as np
+import pandas as pd
 from pydantic import ValidationError
 
 import ITR
-from ..data import Q_, PA_
-from ..data.osc_units import (
-    asPintDataFrame,
-    EmissionsQuantity,
-    Quantity_type,
-)
-from ..interfaces import (
-    EScope,
-    IEmissionRealization,
-    IEIRealization,
-    ICompanyData,
-    ICompanyAggregates,
-    ICompanyEIProjection,
-    ICompanyEIProjections,
-    DF_ICompanyEIProjections,
-    IHistoricData,
-)
+
+from ..configs import ColumnsConfig, LoggingConfig
+from ..data import PA_, Q_
 from ..data.data_providers import (
     CompanyDataProvider,
-    ProductionBenchmarkDataProvider,
     IntensityBenchmarkDataProvider,
+    ProductionBenchmarkDataProvider,
 )
-from ..configs import ColumnsConfig, LoggingConfig
-
-import logging
+from ..data.osc_units import EmissionsQuantity, Quantity_type, asPintDataFrame
+from ..interfaces import (
+    DF_ICompanyEIProjections,
+    EScope,
+    ICompanyAggregates,
+    ICompanyData,
+    ICompanyEIProjection,
+    ICompanyEIProjections,
+    IEIRealization,
+    IEmissionRealization,
+    IHistoricData,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

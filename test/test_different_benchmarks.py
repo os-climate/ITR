@@ -1,17 +1,19 @@
-import unittest
 import json
 import os
+import unittest
+
 import pandas as pd
+from utils import assert_pint_series_equal, gen_company_data
 
 import ITR
 from ITR import data_dir
 from ITR.data.base_providers import (
     BaseCompanyDataProvider,
-    BaseProviderProductionBenchmark,
     BaseProviderIntensityBenchmark,
+    BaseProviderProductionBenchmark,
 )
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.osc_units import ureg, Q_, PA_
+from ITR.data.osc_units import PA_, Q_, ureg
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
@@ -22,8 +24,6 @@ from ITR.interfaces import (
 )
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-
-from utils import gen_company_data, assert_pint_series_equal
 
 # For this test case, we prime the pump with known-aligned emissions intensities.
 # We can then construct companies that have some passing resemplemnce to these, and then verify alignment/non-alignment

@@ -5,13 +5,13 @@ the module, extend the respective config class and pass it to the class as the "
 from __future__ import annotations
 
 import logging
-from typing import List
-from pydantic import BaseModel, ConfigDict
 from dataclasses import dataclass
-
-from .data.osc_units import Quantity_type, EmissionsQuantity
+from typing import List
 
 import pandas as pd
+from pydantic import BaseModel, ConfigDict
+
+from .data.osc_units import EmissionsQuantity, Quantity_type
 
 
 def ITR_median(*args, **kwargs):

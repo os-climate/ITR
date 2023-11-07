@@ -1,21 +1,21 @@
 import os
 import unittest
+
 import pandas as pd
+from test_base_providers import assert_pint_frame_equal, assert_pint_series_equal
 
 import ITR
 from ITR.configs import ColumnsConfig, TemperatureScoreConfig
 from ITR.data.data_warehouse import DataWarehouse
 from ITR.data.excel import (
     ExcelProviderCompany,
-    ExcelProviderProductionBenchmark,
     ExcelProviderIntensityBenchmark,
+    ExcelProviderProductionBenchmark,
 )
 from ITR.data.osc_units import Q_, asPintSeries, ureg
 from ITR.interfaces import EScope, ETimeFrames, PortfolioCompany
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
-
-from test_base_providers import assert_pint_frame_equal, assert_pint_series_equal
 
 
 class TestExcelProvider(unittest.TestCase):
