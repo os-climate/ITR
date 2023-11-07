@@ -6,6 +6,9 @@ from typing import List, Optional, Type
 
 import numpy as np
 import pandas as pd
+import pint
+from pint_pandas import PintType
+from pydantic import ValidationError
 
 import ITR
 
@@ -38,10 +41,6 @@ from ..interfaces import (
     ITargetData,
 )
 from ..utils import get_project_root
-
-import pint
-from pint_pandas import PintType
-from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

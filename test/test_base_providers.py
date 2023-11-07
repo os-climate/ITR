@@ -4,6 +4,7 @@ import unittest
 import warnings
 
 import pandas as pd
+from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 import ITR
 from ITR import data_dir
@@ -26,7 +27,6 @@ from ITR.interfaces import (
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
 
-from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 class TestBaseProvider(unittest.TestCase):
     """

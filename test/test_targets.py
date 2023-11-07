@@ -4,6 +4,7 @@ import re
 import unittest
 
 import pandas as pd
+from utils import assert_pint_series_equal, gen_company_data
 
 import ITR  # noqa F401
 from ITR import data_dir
@@ -23,8 +24,6 @@ from ITR.interfaces import (
     IProductionBenchmarkScopes,
     ITargetData,
 )
-
-from utils import assert_pint_series_equal, gen_company_data
 
 
 def print_expected(target_df, company_data):

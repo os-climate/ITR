@@ -5,6 +5,7 @@ from typing import List, Type
 
 import numpy as np
 import pandas as pd
+from pint import DimensionalityError
 from pydantic import ValidationError
 
 import ITR
@@ -28,8 +29,6 @@ from ..interfaces import (
     IEmissionRealization,
     IHistoricData,
 )
-
-from pint import DimensionalityError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
