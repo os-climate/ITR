@@ -80,7 +80,7 @@ lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
 [tool.pdm.dev-dependencies]
-test = ["pdm[pytest]", "pdm[publish]", "pytest-cov"]
+test = ["pdm[pytest]", "pytest-cov"]
 tox = ["tox", "tox-pdm>=0.5"]
 docs = ["sphinx>=7.2.6", "sphinx-copybutton>=0.5.2"]
 dev = ["tox>=4.11.3", "tox-pdm>=0.7.0"]
