@@ -23,6 +23,7 @@ from ITR.interfaces import (
 )
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
+from ITR.utils import get_data
 
 from utils import assert_pint_series_equal, gen_company_data
 
@@ -250,7 +251,7 @@ class TestEIBenchmarks(unittest.TestCase):
             )
         # OECM S3
         # portfolio data
-        portfolio_data = ITR.utils.get_data(self.OECM_S3_warehouse, portfolio)
+        portfolio_data = get_data(self.OECM_S3_warehouse, portfolio)
         portfolio_data.sort_values(by="company_name", inplace=True)
 
         scores = oecm_S3_temp_score.calculate(portfolio_data)
