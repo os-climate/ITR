@@ -1,4 +1,12 @@
 ---
+ci:
+  autofix_commit_msg: "Chore: pre-commit autoupdate"
+  skip:
+    # pre-commit.ci cannot install WGET, so tomlint must be disabled
+    - tomllint
+    # pre-commit.ci throws some error related to Docker!
+    - shellcheck
+
 exclude: |
   (?x)^(
       docs\/conf.py|
@@ -85,12 +93,12 @@ repos:
       - id: bashate
         args: ["--ignore=E006"]
 
-  # - repo: https://github.com/koalaman/shellcheck-precommit
-  #   rev: v0.9.0
-  #   hooks:
-  #     - id: shellcheck
-  #     # Optionally only show errors and warnings
-  #     # args: ["--severity=warning"]
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.9.0
+    hooks:
+      - id: shellcheck
+      # Optionally only show errors and warnings
+      # args: ["--severity=warning"]
 
   # If you want to avoid flake8 errors due to unused vars or imports:
   # - repo: https://github.com/PyCQA/autoflake
