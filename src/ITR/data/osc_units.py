@@ -9,7 +9,6 @@ from typing import Annotated, Any, Dict
 import pandas as pd
 import pint
 from pint import Context, DimensionalityError
-from pint_pandas import PintType
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -24,7 +23,7 @@ from pydantic_core import CoreSchema, core_schema
 
 import ITR
 
-from ..data import PA_, Q_, ureg
+from ..data import PA_, Q_, PintType, ureg
 
 Quantity = ureg.Quantity
 

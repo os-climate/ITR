@@ -6,7 +6,7 @@ from typing import List
 import pandas as pd
 
 from ..configs import ColumnsConfig  # noqa F401
-from ..data.osc_units import Quantity
+from ..data.osc_units import Quantity_type
 from ..interfaces import (  # noqa F401
     EScope,
     ICompanyData,
@@ -137,8 +137,8 @@ class IntensityBenchmarkDataProvider(ABC):
 
     def __init__(
         self,
-        benchmark_temperature: Quantity["delta_degC"],
-        benchmark_global_budget: Quantity["CO2"],
+        benchmark_temperature: Quantity_type("delta_degC"),
+        benchmark_global_budget: Quantity_type("CO2"),
         is_AFOLU_included: bool,
         **kwargs,
     ):
@@ -164,14 +164,14 @@ class IntensityBenchmarkDataProvider(ABC):
         self._is_AFOLU_included = value
 
     @property
-    def benchmark_temperature(self) -> Quantity["delta_degC"]:
+    def benchmark_temperature(self) -> Quantity_type("delta_degC"):
         """
         :return: assumed temperature for the benchmark. for OECM 1.5C for example
         """
         return self._benchmark_temperature
 
     @property
-    def benchmark_global_budget(self) -> Quantity["CO2"]:
+    def benchmark_global_budget(self) -> Quantity_type("CO2"):
         """
         :return: Benchmark provider assumed global budget. if AFOLU is not included global budget is divided by 0.76
         """
