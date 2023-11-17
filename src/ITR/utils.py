@@ -17,7 +17,7 @@ from .configs import (
     TemperatureScoreControls,
 )
 from .data.data_warehouse import DataWarehouse
-from .data.osc_units import Q_, Quantity, asPintSeries
+from .data.osc_units import Q_, Quantity_type, asPintSeries
 from .interfaces import EScope, ETimeFrames, PortfolioCompany, ScoreAggregations
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
@@ -152,7 +152,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
 def calculate(
     portfolio_data: pd.DataFrame,
-    fallback_score: Quantity["delta_degC"],
+    fallback_score: Quantity_type("delta_degC"),
     aggregation_method: PortfolioAggregationMethod,
     grouping: Optional[List[str]],
     time_frames: List[ETimeFrames],
