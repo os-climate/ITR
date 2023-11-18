@@ -8,10 +8,9 @@ import osc_ingest_trino as osc
 import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
-from pint_pandas import PintArray
 
 from ..configs import ColumnsConfig, LoggingConfig
-from ..data import ureg
+from ..data import PintArray, ureg
 
 # Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
 from ..data.base_providers import BaseCompanyDataProvider

@@ -8,26 +8,27 @@ import numpy as np
 import pandas as pd
 import pint
 
-from . import data  # noqa F401
+from . import utils  # noqa F401
 from .interfaces import EScope
 
 data_dir = os.path.join(__path__[0], "data", "json")
 
 try:
-    # Even if we have uncertainties available as a module, we don't have the right version of pint
-    if hasattr(pint.compat, "tokenizer"):
-        raise AttributeError
     from uncertainties import UFloat, ufloat
     from uncertainties.unumpy import isnan, nominal_values, std_devs, uarray
 
+    # Even if we have uncertainties available as a module, we don't have the right version of pint
+    if hasattr(pint.compat, "tokenizer"):
+        raise AttributeError
+
     _ufloat_nan = ufloat(np.nan, 0.0)
     pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
-    from .utils import umean
+    from .utils import umean  # noqa F401
 
     HAS_UNCERTAINTIES = True
 except (ImportError, ModuleNotFoundError, AttributeError) as exc:  # noqa F841
     HAS_UNCERTAINTIES = False
-    from statistics import mean
+    from statistics import mean as umean  # noqa F401
 
     from numpy import isnan
 
@@ -44,9 +45,6 @@ except (ImportError, ModuleNotFoundError, AttributeError) as exc:  # noqa F841
 
     def uarray(nom_vals, std_devs):
         return nom_vals
-
-    def umean(unquantified_data):
-        return mean(unquantified_data)
 
 
 def isna(x):

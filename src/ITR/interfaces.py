@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pint_pandas import PintType
-from pint_pandas.pint_array import PintSeriesAccessor
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -23,6 +21,7 @@ from pydantic_core import CoreSchema
 import ITR
 
 from .configs import LoggingConfig, ProjectionControls
+from .data import PintType
 from .data.osc_units import (
     PA_,
     Q_,
@@ -378,6 +377,8 @@ class DF_ICompanyEIProjections(BaseModel):
 
     @field_validator("projections")
     def val_projections(cls, v: pd.Series):
+        from pint_pandas.pint_array import PintSeriesAccessor
+
         if isinstance(v.pint, PintSeriesAccessor):
             return v
         raise ValidationError(f"{v} is not composed of a PintArray")

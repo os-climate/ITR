@@ -7,7 +7,6 @@ from typing import List, Optional, Type
 import numpy as np
 import pandas as pd
 import pint
-from pint_pandas import PintType
 from pydantic import ValidationError
 
 import ITR
@@ -20,7 +19,7 @@ from ..configs import (
     TabsConfig,
     VariablesConfig,
 )
-from ..data import PA_, Q_, ureg
+from ..data import PA_, Q_, PintType, ureg
 from ..data.base_providers import BaseCompanyDataProvider
 from ..data.osc_units import (
     EmissionsMetric,
