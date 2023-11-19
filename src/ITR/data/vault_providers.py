@@ -1,7 +1,7 @@
 import logging
 import os
 import pathlib
-from typing import List, Type
+from typing import List, Optional, Type
 
 import numpy as np
 import osc_ingest_trino as osc
@@ -9,7 +9,7 @@ import pandas as pd
 import sqlalchemy
 from dotenv import load_dotenv
 
-from ..configs import ColumnsConfig, LoggingConfig
+from ..configs import ColumnsConfig, LoggingConfig, ProjectionControls
 from ..data import PintArray, ureg
 
 # Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
@@ -65,7 +65,7 @@ def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
         )
     elif df_col.size == 0:
         return df_col
-    elif isinstance(df_col.iloc[0], Quantity):
+    elif isinstance(df_col.iloc[0], Quantity):  # type: ignore
         m, u = list(zip(*df_col.map(lambda x: (np.nan, "dimensionless") if pd.isna(x) else (x.m, str(x.u)))))
         return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index)
     else:
@@ -208,9 +208,9 @@ class VaultCompanyDataProvider(CompanyDataProvider):
         self,
         engine: sqlalchemy.engine.base.Engine,
         company_table: str,
-        target_table: str = None,
-        trajectory_table: str = None,
-        company_schema: str = None,
+        target_table: str = "",
+        trajectory_table: str = "",
+        company_schema: str = "",
         column_config: Type[ColumnsConfig] = ColumnsConfig,
     ):
         super().__init__()
@@ -235,6 +235,23 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
             logger.error(
                 f"Provide either historic emissions data or projections for companies with IDs {companies_without_projections}"
             )
+
+    def get_projection_controls(self) -> ProjectionControls:
+        raise NotImplementedError
+
+    def get_company_ids(self) -> List[str]:
+        raise NotImplementedError
+
+    def _validate_projected_trajectories(
+        self, companies: List[ICompanyData], ei_benchmarks: IntensityBenchmarkDataProvider
+    ):
+        """
+        Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
+        COMPANIES are a list of companies with historic data that need to be projected.
+        EI_BENCHMARKS are the benchmarks for all sectors, regions, and scopes
+        In previous incarnations of this function, no benchmark data was needed for any reason.
+        """
+        raise NotImplementedError
 
     # The factors one would want to sum over companies for weighting purposes are:
     #   * market_cap_usd
@@ -338,7 +355,7 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
         weight_sum = weights.sum()
         return pa_temp_scores * weights / weight_sum
 
-    def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
+    def get_company_data(self, company_ids: Optional[List[str]] = None) -> List[ICompanyData]:
         """
         Get all relevant data for a list of company ids. This method should return a list of ICompanyData
         instances.
@@ -354,6 +371,20 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
         :param company_ids: list of company ids
         :param variable_name: variable name of the projected feature
         :return: series of values
+        """
+        raise NotImplementedError
+
+    def _calculate_target_projections(
+        self,
+        production_bm: ProductionBenchmarkDataProvider,
+        ei_bm: IntensityBenchmarkDataProvider,
+    ):
+        """
+        We cannot calculate target projections until after we have loaded benchmark data.
+        We do so when companies are associated with benchmarks, in the DataWarehouse construction
+
+        :param production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
+        :param ei_bm: Intensity Benchmarks for all sectors and scopes defined by the benchmark, 2020-2050
         """
         raise NotImplementedError
 
@@ -392,6 +423,20 @@ where EI.ei_s1_by_year is NULL and EI.ei_s1s2_by_year is NULL and EI.ei_s1s2s3_b
         """
         raise NotImplementedError
 
+    def _allocate_emissions(
+        self,
+        new_companies: List[ICompanyData],
+        benchmarks_projected_ei: IntensityBenchmarkDataProvider,
+        projection_controls: ProjectionControls,
+    ):
+        """
+        Use benchmark data from `ei_benchmarks` to allocate sector-level emissions from aggregated emissions.
+        For example, a Utility may supply both Electricity and Gas to customers, reported separately.
+        When we split the company into Electricity and Gas lines of business, we can allocate Scope emissions
+        to the respective lines of business using benchmark averages to guide the allocation.
+        """
+        raise NotImplementedError
+
 
 class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
     def __init__(
@@ -399,7 +444,7 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         engine: sqlalchemy.engine.base.Engine,
         benchmark_name: str,
         production_benchmarks: IProductionBenchmarkScopes,
-        ingest_schema: str = None,
+        ingest_schema: str = "",
         column_config: Type[ColumnsConfig] = ColumnsConfig,
     ):
         """
@@ -441,6 +486,10 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         df = df.convert_dtypes()
         create_table_from_df(df, self._schema, benchmark_name, engine)
 
+    def benchmark_changed(self, new_projected_production: ProductionBenchmarkDataProvider) -> bool:
+        # The Data Vault does not keep its own copies of benchmarks
+        return False
+
     def get_company_projected_production(self, *args, **kwargs):
         return BaseCompanyDataProvider.get_company_projected_production(*args, **kwargs)
 
@@ -454,8 +503,9 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         engine: sqlalchemy.engine.base.Engine,
         benchmark_name: str,
         EI_benchmarks: IEIBenchmarkScopes,
-        ingest_schema: str = None,
+        ingest_schema: str = "",
         column_config: Type[ColumnsConfig] = ColumnsConfig,
+        projection_controls: ProjectionControls = ProjectionControls(),
     ):
         super().__init__(
             EI_benchmarks.benchmark_temperature,
@@ -465,12 +515,14 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._engine = engine
         self._schema = ingest_schema or engine.dialect.default_schema_name or "demo_dv"
         self.benchmark_name = benchmark_name
+        self.column_config = column_config
+        self.projection_controls = projection_controls
         df = pd.DataFrame()
         for scope in EScope.get_scopes():
             if EI_benchmarks.dict()[scope] is None:
                 continue
             for benchmark in EI_benchmarks.dict()[scope]["benchmarks"]:
-                bdf = pd.DataFrame.from_dict(
+                benchmark_df = pd.DataFrame.from_dict(
                     {
                         r["year"]: [
                             r["value"],
@@ -493,24 +545,40 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                     orient="index",
                 )
                 # TODO: AFOLU correction
-                df = pd.concat([df, bdf])
+                df = pd.concat([df, benchmark_df])
         df.reset_index(inplace=True)
         df.rename(columns={"index": "year"}, inplace=True)
         df = df.convert_dtypes()
         create_table_from_df(df, self._schema, benchmark_name, engine)
 
+    def get_scopes(self) -> List[EScope]:
+        raise NotImplementedError
+
+    def benchmarks_changed(self, new_projected_ei: IntensityBenchmarkDataProvider) -> bool:
+        # The Data Vault does not keep its own copies of benchmarks
+        return False
+
+    def prod_centric_changed(self, new_projected_ei: IntensityBenchmarkDataProvider) -> bool:
+        # The Data Vault does not keep its own copies of benchmarks
+        return False
+
+    def is_production_centric(self) -> bool:
+        """
+        returns True if benchmark is "production_centric" (as defined by OECM)
+        """
+        raise NotImplementedError
+
     def get_SDA_intensity_benchmarks(self, company_info_at_base_year: pd.DataFrame) -> pd.DataFrame:
         """
         Overrides subclass method
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-        :param benchmark_name: the table name of the benchmark (in Trino)
         :param company_info_at_base_year: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
         """
         intensity_benchmarks = self._get_intensity_benchmarks(company_info_at_base_year)
         decarbonization_paths = self._get_decarbonizations_paths(intensity_benchmarks)
-        last_ei = intensity_benchmarks[self.temp_config.CONTROLS_CONFIG.target_end_year]
+        last_ei = intensity_benchmarks[self.projection_controls.TARGET_YEAR]
         ei_base = company_info_at_base_year[self.column_config.BASE_EI]
 
         return decarbonization_paths.mul((ei_base - last_ei), axis=0).add(last_ei, axis=0)
@@ -531,8 +599,8 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :param: A Series with company and intensity benchmarks per calendar year per row
         :return: A pd.Series with company and decarbonisation path s per calendar year per row
         """
-        first_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.base_year]
-        last_ei = intensity_benchmark_row[self.temp_config.CONTROLS_CONFIG.target_end_year]
+        first_ei = intensity_benchmark_row[self.projection_controls.BASE_YEAR]
+        last_ei = intensity_benchmark_row[self.projection_controls.TARGET_YEAR]
         return intensity_benchmark_row.apply(lambda x: (x - last_ei) / (first_ei - last_ei))
 
     def _convert_benchmark_to_series(self, benchmark: IBenchmark) -> pd.Series:
@@ -543,7 +611,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: pd.Series
         """
         return pd.Series(
-            {r.year: r.value for r in benchmark.projections},
+            {r.year: r.value for r in benchmark.projections},  # type: ignore
             name=(benchmark.region, benchmark.sector),
         )
 
@@ -554,7 +622,8 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :return: pd.Series
         """
         result = []
-        for bm in self._EI_benchmarks.dict()[str(scope)]["benchmarks"]:
+        breakpoint()
+        for bm in self._EI_benchmarks.dict()[str(scope)]["benchmarks"]:  # type: ignore
             result.append(self._convert_benchmark_to_series(IBenchmark.model_validate(bm)))
         df_bm = pd.DataFrame(result)
         df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
@@ -562,33 +631,17 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         return df_bm
 
     def _get_intensity_benchmarks(
-        self, company_sector_region_info: pd.DataFrame, scope: EScope = EScope.S1S2
+        self, company_sector_region_info: Optional[pd.DataFrame] = None, scope_to_calc: Optional[EScope] = None
     ) -> pd.DataFrame:
         """
         Overrides subclass method
-        returns a Dataframe with production benchmarks per company_id given a region and sector.
-        :param company_sector_region_info: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :param scope: a scope
-        :return: A DataFrame with company and intensity benchmarks per calendar year per row
+        returns dataframe of all EI benchmarks if COMPANY_SECTOR_REGION_SCOPE is None.  Otherwise
+        returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+        :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
+        with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
+        :return: A DataFrame with company and intensity benchmarks; rows are calendar years, columns are company data
         """
-        benchmark_projection = self._get_projected_intensities(scope)  # TODO optimize performance
-        sectors = company_sector_region_info[self.column_config.SECTOR]
-        regions = company_sector_region_info[self.column_config.REGION]
-        benchmark_regions = regions.copy()
-        mask = benchmark_regions.isin(benchmark_projection.reset_index()[self.column_config.REGION])
-        benchmark_regions.loc[~mask] = "Global"
-
-        benchmark_projection = benchmark_projection.loc[
-            list(zip(benchmark_regions, sectors)),
-            range(
-                self.temp_config.CONTROLS_CONFIG.base_year,
-                self.temp_config.CONTROLS_CONFIG.target_end_year + 1,
-            ),
-        ]
-        benchmark_projection.index = sectors.index
-
-        return benchmark_projection
+        raise NotImplementedError
 
 
 # FIXME: Need to reshape the tables TARGET_DATA and TRAJECTORY_DATA so scope is a column and the EI data relates only to that scope (wide to long)
@@ -601,12 +654,12 @@ class DataVaultWarehouse(DataWarehouse):
         benchmark_projected_production: VaultProviderProductionBenchmark,
         # This arrives as a table instantiated in the database
         benchmarks_projected_ei: VaultProviderIntensityBenchmark,
-        ingest_schema: str = None,
+        ingest_schema: str = "",
         itr_prefix: str = "",
         column_config: Type[ColumnsConfig] = ColumnsConfig,
     ):
         super().__init__(
-            company_data=None,
+            company_data=None,  # type: ignore
             benchmark_projected_production=None,
             benchmarks_projected_ei=None,
             column_config=column_config,
@@ -703,7 +756,7 @@ group by C.company_name, C.company_id, '{company_data._schema}', B.scope, 'bench
         self,
         engine: sqlalchemy.engine.base.Engine,
         company_data: VaultCompanyDataProvider,
-        ingest_schema: str = None,
+        ingest_schema: str = "",
         itr_prefix: str = "",
     ):
         # The Quant users of the DataVaultWarehouse produces two calculations per company:

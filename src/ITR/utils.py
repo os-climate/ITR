@@ -17,7 +17,7 @@ from .configs import (
     TemperatureScoreControls,
 )
 from .data.data_warehouse import DataWarehouse
-from .data.osc_units import Q_, Quantity_type, asPintSeries
+from .data.osc_units import Q_, asPintSeries, delta_degC_Quantity
 from .interfaces import EScope, ETimeFrames, PortfolioCompany, ScoreAggregations
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
@@ -95,8 +95,9 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     :param portfolio: A list of PortfolioCompany models
     :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
     """
+    company_ids = set(data_warehouse.company_data.get_company_ids())
     df_portfolio = pd.DataFrame.from_records(
-        [_flatten_user_fields(c) for c in portfolio if c.company_id not in data_warehouse.company_data.missing_ids]
+        [_flatten_user_fields(c) for c in portfolio if c.company_id in company_ids]
     )
     df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(df_portfolio[ColumnsConfig.INVESTMENT_VALUE])
 
@@ -152,7 +153,7 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
 def calculate(
     portfolio_data: pd.DataFrame,
-    fallback_score: Quantity_type("delta_degC"),
+    fallback_score: delta_degC_Quantity,
     aggregation_method: PortfolioAggregationMethod,
     grouping: Optional[List[str]],
     time_frames: List[ETimeFrames],

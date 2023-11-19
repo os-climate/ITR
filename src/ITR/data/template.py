@@ -2,7 +2,7 @@ import datetime
 import logging
 import re
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-from typing import List, Optional, Type
+from typing import Dict, List, Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -248,7 +248,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self,
         excel_path: str,
         column_config: Type[ColumnsConfig] = ColumnsConfig,
-        projection_controls: Type[ProjectionControls] = ProjectionControls,
+        projection_controls: ProjectionControls = ProjectionControls(),
     ):
         self.template_v2_start_year = None
         self.projection_controls = projection_controls
@@ -1665,7 +1665,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         if emissions_t.empty:
             return None
-        emissions_scopes = dict.fromkeys(EScope.get_scopes(), [])
+        emissions_scopes: Dict[str, List[IEmissionRealization]] = dict.fromkeys(EScope.get_scopes(), [])
         for scope_name, emissions in emissions_t.items():
             if not emissions.empty:
                 emissions_scopes[scope_name] = [
@@ -1699,7 +1699,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         """
         if intensities_t.empty:
             return None
-        intensity_scopes = dict.fromkeys(EScope.get_scopes(), [])
+        intensity_scopes: Dict[str, List[IEIRealization]] = dict.fromkeys(EScope.get_scopes(), [])
         for scope_name, intensities in intensities_t.items():
             if not intensities.empty:
                 intensity_scopes[scope_name] = [

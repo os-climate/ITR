@@ -34,7 +34,8 @@ from .data.osc_units import (
     MonetaryQuantity,
     ProductionMetric,
     ProductionQuantity,
-    Quantity_type,
+    delta_degC_Quantity,
+    percent_Quantity,
     ureg,
 )
 
@@ -133,7 +134,7 @@ class EScoreResultType(Enum):
         return self.__str__()
 
     @classmethod
-    def get_result_types(cls) -> List[str]:
+    def get_result_types(cls) -> List[EScoreResultType]:
         """
         Get a list of all result types, ordered by priority (first << last priority).
         :return: A list of the EScoreResultType values
@@ -151,9 +152,9 @@ class AggregationContribution(BaseModel):
 
     company_name: str
     company_id: str
-    temperature_score: Quantity_type("delta_degC")
-    contribution_relative: Optional[Quantity_type("percent")] = None
-    contribution: Optional[Quantity_type("delta_degC")] = None
+    temperature_score: delta_degC_Quantity
+    contribution_relative: Optional[percent_Quantity] = Q_(np.nan, "percent")
+    contribution: Optional[delta_degC_Quantity] = Q_(np.nan, "delta_degC")
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -162,41 +163,50 @@ class AggregationContribution(BaseModel):
 class Aggregation(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    score: Quantity_type("delta_degC")
+    score: delta_degC_Quantity = Q_(np.nan, "delta_degC")
     # proportion is a number from 0..1
-    proportion: float
-    contributions: List[AggregationContribution]
+    proportion: float = np.nan
+    contributions: List[AggregationContribution] = []
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+
+emptyAggregation = Aggregation()
 
 
 class ScoreAggregation(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    all: Aggregation
-    influence_percentage: Quantity_type("percent")
-    grouped: Dict[str, Aggregation]
+    all: Aggregation = emptyAggregation
+    influence_percentage: percent_Quantity = Q_(np.nan, "percent")
+    grouped: Dict[str, Aggregation] = {}
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+
+emptyScoreAggregation = ScoreAggregation()
 
 
 class ScoreAggregationScopes(BaseModel):
-    S1: Optional[ScoreAggregation] = None
-    S2: Optional[ScoreAggregation] = None
-    S1S2: Optional[ScoreAggregation] = None
-    S3: Optional[ScoreAggregation] = None
-    S1S2S3: Optional[ScoreAggregation] = None
+    S1: ScoreAggregation = emptyScoreAggregation
+    S2: ScoreAggregation = emptyScoreAggregation
+    S1S2: ScoreAggregation = emptyScoreAggregation
+    S3: ScoreAggregation = emptyScoreAggregation
+    S1S2S3: ScoreAggregation = emptyScoreAggregation
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
+emptyScoreAggregationScopes = ScoreAggregationScopes()
+
+
 class ScoreAggregations(BaseModel):
-    short: Optional[ScoreAggregationScopes] = None
-    mid: Optional[ScoreAggregationScopes] = None
-    long: Optional[ScoreAggregationScopes] = None
+    short: ScoreAggregationScopes = emptyScoreAggregationScopes
+    mid: ScoreAggregationScopes = emptyScoreAggregationScopes
+    long: ScoreAggregationScopes = emptyScoreAggregationScopes
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -310,8 +320,8 @@ class IEIBenchmarkScopes(BaseModel):
     S1S2: Optional[IBenchmarks] = None
     S3: Optional[IBenchmarks] = None
     S1S2S3: Optional[IBenchmarks] = None
-    benchmark_temperature: Quantity_type("delta_degC")
-    benchmark_global_budget: Quantity_type("Gt CO2")
+    benchmark_temperature: delta_degC_Quantity
+    benchmark_global_budget: EmissionsQuantity
     is_AFOLU_included: bool
 
     def __getitem__(self, item):
@@ -470,6 +480,56 @@ class ICompanyEIProjectionsScopes(BaseModel):
             if getattr(self, scope) is not None
         }
         return str(pd.DataFrame.from_dict(dict_items))
+
+    def _adjust_trajectories(self, primary_scope_attr: str):
+        if not getattr(self, primary_scope_attr):
+            setattr(self, primary_scope_attr, self.S3)
+        else:
+            scope = getattr(self, primary_scope_attr)
+            assert self.S3 is not None
+            if isinstance(self.S3.projections, pd.Series):
+                scope.projections = scope.projections.add(self.S3.projections)
+            else:
+                # Should not be reached as we are using DF_ICompanyEIProjections consistently now
+                # breakpoint()
+                assert False
+                scope.projections = list(
+                    map(
+                        ICompanyEIProjection.add,
+                        scope.projections,
+                        self.S3.projections,
+                    )
+                )
+
+    def _align_and_sum_projected_targets(self, primary_scope_attr):
+        scope = getattr(self, primary_scope_attr)
+        if scope is None:
+            raise AttributeError
+        primary_projections = scope.projections
+        s3_projections = self.S3.projections
+        if isinstance(s3_projections, pd.Series):
+            scope.projections = (
+                # We should convert S3 data from benchmark-type to disclosed-type earlier in the chain
+                primary_projections
+                + s3_projections.astype(primary_projections.dtype)
+            )
+        else:
+            # Should not be reached as we are using DF_ICompanyEIProjections consistently now
+            # breakpoint()
+            assert False
+            if primary_projections[0].year < s3_projections[0].year:
+                while primary_projections[0].year < s3_projections[0].year:
+                    primary_projections = primary_projections[1:]
+            elif primary_projections[0].year > s3_projections[0].year:
+                while primary_projections[0].year > s3_projections[0].year:
+                    s3_projections = s3_projections[1:]
+                    scope.projections = list(
+                        map(
+                            ICompanyEIProjection.add,
+                            primary_projections,
+                            s3_projections,
+                        )
+                    )
 
 
 class IProductionRealization(BaseModel):
@@ -899,7 +959,7 @@ class ICompanyAggregates(ICompanyData):
     cumulative_scaled_budget: Optional[EmissionsQuantity] = None
     cumulative_trajectory: Optional[EmissionsQuantity] = None
     cumulative_target: Optional[EmissionsQuantity] = None
-    benchmark_temperature: Optional[Quantity_type("delta_degC")] = None
+    benchmark_temperature: Optional[delta_degC_Quantity] = None
     benchmark_global_budget: Optional[EmissionsQuantity] = None
     scope: Optional[EScope] = None
 

@@ -1583,7 +1583,7 @@ class TestTargets(unittest.TestCase):
 
         self.base_company_data = BaseCompanyDataProvider(company_data)
         # Since we are not using a Data Warehouse to compute our graphics, we have to do this projection manually, with the benchmark's internal dataframe.
-        self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, ei_df_t)
+        self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, self.OECM_EI_S3_bm)
 
         co_pp = bm_production_data.droplevel("scope")
 

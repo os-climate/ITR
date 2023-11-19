@@ -6,12 +6,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import List
+from typing import Callable, List
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
 
-from .data.osc_units import EmissionsQuantity, Quantity_type
+from .data.osc_units import EmissionsQuantity, Quantity, delta_degC_Quantity
 
 
 def ITR_median(*args, **kwargs):
@@ -219,16 +219,16 @@ class TemperatureScoreControls(BaseModel):
 
     base_year: int
     target_end_year: int
-    tcre: Quantity_type("delta_degC")
+    tcre: delta_degC_Quantity
     carbon_conversion: EmissionsQuantity
-    scenario_target_temperature: Quantity_type("delta_degC")
+    scenario_target_temperature: delta_degC_Quantity
     target_probability: float
 
     def __getitem__(self, item):
         return getattr(self, item)
 
     @property
-    def tcre_multiplier(self) -> Quantity_type("delta_degC/(t CO2)"):
+    def tcre_multiplier(self) -> Quantity:
         return self.tcre / self.carbon_conversion
 
 

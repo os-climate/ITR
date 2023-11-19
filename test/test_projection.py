@@ -294,4 +294,5 @@ if __name__ == "__main__":
     s.interpolate(method="linear")
     test = TestProjector()
     test.setUp()
-    test.test_project()
+    test.test_trajectories()
+    test.test_targets()
