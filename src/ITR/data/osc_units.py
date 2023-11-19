@@ -4,7 +4,7 @@ This module handles initialization of pint functionality
 
 import re
 from dataclasses import dataclass
-from typing import Annotated, Any, Dict, List, TypeAlias, Union
+from typing import Annotated, Any, Dict, List, Union
 
 import pandas as pd
 import pint
@@ -20,6 +20,7 @@ from pydantic import (
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
+from typing_extensions import TypeAlias
 
 import ITR
 

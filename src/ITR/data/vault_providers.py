@@ -621,14 +621,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         :param scope: a scope
         :return: pd.Series
         """
-        result = []
-        breakpoint()
-        for bm in self._EI_benchmarks.dict()[str(scope)]["benchmarks"]:  # type: ignore
-            result.append(self._convert_benchmark_to_series(IBenchmark.model_validate(bm)))
-        df_bm = pd.DataFrame(result)
-        df_bm.index.names = [self.column_config.REGION, self.column_config.SECTOR]
-
-        return df_bm
+        raise NotImplementedError
 
     def _get_intensity_benchmarks(
         self, company_sector_region_info: Optional[pd.DataFrame] = None, scope_to_calc: Optional[EScope] = None

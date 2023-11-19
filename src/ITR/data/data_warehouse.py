@@ -50,8 +50,7 @@ class DataWarehouse(ABC):
         company_data: CompanyDataProvider,
         benchmark_projected_production: Optional[ProductionBenchmarkDataProvider],
         benchmarks_projected_ei: Optional[IntensityBenchmarkDataProvider],
-        # FIXME: How do we make the first argument to the Callable `DataWarehouse` not `Any`?
-        estimate_missing_data: Optional[Callable[[Any, ICompanyData], None]] = None,
+        estimate_missing_data: Optional[Callable[["DataWarehouse", ICompanyData], None]] = None,
         column_config: Type[ColumnsConfig] = ColumnsConfig,
     ):
         """
