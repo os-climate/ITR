@@ -7,12 +7,11 @@ from typing import Dict, List, Type
 import numpy as np
 import pandas as pd
 from pint import DimensionalityError
-from pint_pandas import PintType
 
 import ITR
 
 from ..configs import ColumnsConfig, LoggingConfig, ProjectionControls, VariablesConfig
-from ..data import PA_, Q_, ureg
+from ..data import PA_, Q_, PintType, ureg
 from ..data.data_providers import (
     CompanyDataProvider,
     IntensityBenchmarkDataProvider,

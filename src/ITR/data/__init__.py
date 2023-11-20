@@ -111,7 +111,7 @@ pint.Measurement = ureg.Measurement
 pint.Context = ureg.Context
 
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
-from pint_pandas import PintArray  # noqa E402
+from pint_pandas import PintArray, PintType  # noqa E402
 
 Q_ = ureg.Quantity
 M_ = ureg.Measurement
