@@ -217,9 +217,9 @@ class PortfolioCompany(BaseModel):
 
     company_name: str
     company_id: str
-    company_isin: Optional[str] = None
+    company_isin: Optional[str] = ""
     investment_value: MonetaryQuantity
-    user_fields: Optional[dict] = None
+    user_fields: Optional[Dict[str, str]] = {}
 
 
 # U is Unquantified, which is presently how our benchmarks come in (production_metric comes in elsewhere)
@@ -241,15 +241,15 @@ class IBenchmark(BaseModel):
     sector: str
     region: str
     benchmark_metric: BenchmarkMetric
-    projections_nounits: Optional[List[UProjection]] = None
-    projections: Optional[List[IProjection]] = None
+    projections_nounits: List[UProjection]
+    projections: List[IProjection]
     base_year_production: Optional[ProductionQuantity] = None  # FIXME: applies only to production benchmarks
 
     def __init__(
         self,
         benchmark_metric,
-        projections_nounits=None,
-        projections=None,
+        projections_nounits=[],
+        projections=[],
         base_year_production=None,
         *args,
         **kwargs,
@@ -295,18 +295,14 @@ class IBenchmarks(BaseModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+empty_IBenchmarks = IBenchmarks(benchmarks=[], production_centric=False)
 
 # These IProductionBenchmarkScopes and IEIBenchmarkScopes are vessels for holding initialization data
 # The CompanyDataProvider methods create their own dataframes that are then used throughout
 
 
 class IProductionBenchmarkScopes(BaseModel):
-    AnyScope: Optional[IBenchmarks] = None
-    S1: Optional[IBenchmarks] = None
-    S2: Optional[IBenchmarks] = None
-    S1S2: Optional[IBenchmarks] = None
-    S3: Optional[IBenchmarks] = None
-    S1S2S3: Optional[IBenchmarks] = None
+    AnyScope: IBenchmarks
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -315,11 +311,11 @@ class IProductionBenchmarkScopes(BaseModel):
 class IEIBenchmarkScopes(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    S1: Optional[IBenchmarks] = None
-    S2: Optional[IBenchmarks] = None
-    S1S2: Optional[IBenchmarks] = None
-    S3: Optional[IBenchmarks] = None
-    S1S2S3: Optional[IBenchmarks] = None
+    S1: Optional[IBenchmarks] = empty_IBenchmarks
+    S2: Optional[IBenchmarks] = empty_IBenchmarks
+    S1S2: Optional[IBenchmarks] = empty_IBenchmarks
+    S3: Optional[IBenchmarks] = empty_IBenchmarks
+    S1S2S3: Optional[IBenchmarks] = empty_IBenchmarks
     benchmark_temperature: delta_degC_Quantity
     benchmark_global_budget: EmissionsQuantity
     is_AFOLU_included: bool
@@ -332,7 +328,7 @@ class ICompanyEIProjection(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     year: int
-    value: Optional[EI_Quantity] = None
+    value: EI_Quantity
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -382,7 +378,7 @@ class ICompanyEIProjections(BaseModel):
 class DF_ICompanyEIProjections(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    ei_metric: Optional[EI_Metric] = None
+    ei_metric: EI_Metric
     projections: pd.Series
 
     @field_validator("projections")
