@@ -317,7 +317,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -921,7 +927,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -1334,8 +1346,14 @@
     "target_probability": 0.4285714285714285,
     "target_data": null,
     "historic_data": {
-      "productions": null,
-      "emissions": null,
+      "productions": [],
+      "emissions": {
+        "S1": [],
+        "S2": [],
+        "S1S2": [],
+        "S3": [],
+        "S1S2S3": []
+      },
       "emissions_intensities": {
         "S1": [
           {
@@ -1466,7 +1484,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -2176,7 +2200,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -2886,7 +2916,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -3596,7 +3632,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -4306,7 +4348,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -5016,7 +5064,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -5726,7 +5780,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -6436,7 +6496,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -7146,7 +7212,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -7856,7 +7928,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -8566,7 +8644,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -9276,7 +9360,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -9986,7 +10076,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/GJ",
@@ -10566,7 +10662,13 @@
         "S3": [],
         "S1S2S3": []
       },
-      "emissions_intensities": null
+      "emissions_intensities": {
+        "S1": [],
+        "S2": [],
+        "S1S2": [],
+        "S3": [],
+        "S1S2S3": []
+      }
     },
     "country": null,
     "emissions_metric": "t CO2",
@@ -10584,7 +10686,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": null,
       "S2": null,
@@ -10898,7 +11006,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -11608,7 +11722,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -12318,7 +12438,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -13028,7 +13154,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -13738,7 +13870,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -14448,7 +14586,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -15158,7 +15302,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -15868,7 +16018,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -16578,7 +16734,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -17288,7 +17450,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -17998,7 +18166,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -18708,7 +18882,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -19418,7 +19598,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",
@@ -20128,7 +20314,13 @@
     "company_ev_plus_cash": null,
     "company_total_assets": null,
     "company_cash_equivalents": null,
-    "projected_targets": null,
+    "projected_targets": {
+      "S1": null,
+      "S2": null,
+      "S1S2": null,
+      "S3": null,
+      "S1S2S3": null
+    },
     "projected_intensities": {
       "S1": {
         "ei_metric": "CO2\u00b7t/(t Steel)",

@@ -103,7 +103,7 @@ class TestTargets(unittest.TestCase):
         # By default, gen_company_data sets targets, but we want to set intensities...
         company_data.projected_intensities = company_data.projected_targets
         # And we will test how targets expressed in target_data get interpreted/extrapolated
-        company_data.projected_targets = None
+        company_data.projected_targets = ITR.interfaces.empty_ICompanyEIProjectionsScopes
         return company_data
 
     def test_target_netzero(self):

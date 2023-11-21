@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Callable, List
+from typing import Callable, List, Optional, Protocol
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
@@ -211,7 +211,7 @@ class ProjectionControls:
 
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050
-    TREND_CALC_METHOD: Callable[[pd.DataFrame], pd.DataFrame] = ITR_median
+    TREND_CALC_METHOD: Callable[[pd.DataFrame, Optional[str], Optional[bool]], pd.DataFrame] = ITR_median
 
 
 class TemperatureScoreControls(BaseModel):

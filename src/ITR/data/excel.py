@@ -523,7 +523,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :return: A list containing historic productions, or None if no data are provided
         """
         if productions.empty:
-            return None
+            return []
         return [
             IProductionRealization(year=year, value=ProductionQuantity(productions[year].squeeze()))
             for year in self.historic_years

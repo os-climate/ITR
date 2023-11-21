@@ -201,7 +201,7 @@ class DataWarehouse(ABC):
                     if not ITR.isna(c.ghg_s3):
                         c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
                     c.ghg_s3 = None  # Q_(0.0, c.ghg_s3.u)
-                if c.historic_data:
+                if not c.historic_data.empty():
 
                     def _adjust_historic_data(data, primary_scope_attr, data_adder):
                         if data[primary_scope_attr]:
@@ -232,14 +232,14 @@ class DataWarehouse(ABC):
                         else:
                             setattr(data, primary_scope_attr, data.S3)
 
-                    if c.historic_data.emissions and c.historic_data.emissions.S3:
+                    if c.historic_data.emissions.S3:
                         _adjust_historic_data(c.historic_data.emissions, "S1", IEmissionRealization.add)
                         _adjust_historic_data(c.historic_data.emissions, "S1S2", IEmissionRealization.add)
                         c.historic_data.emissions.S3 = []
-                    if c.historic_data.emissions and c.historic_data.emissions.S1S2S3:
+                    if c.historic_data.emissions.S1S2S3:
                         # assert c.historic_data.emissions.S1S2 == c.historic_data.emissions.S1S2S3
                         c.historic_data.emissions.S1S2S3 = []
-                    if c.historic_data.emissions_intensities and c.historic_data.emissions_intensities.S3:
+                    if c.historic_data.emissions_intensities.S3:
                         _adjust_historic_data(
                             c.historic_data.emissions_intensities,
                             "S1",
@@ -251,10 +251,10 @@ class DataWarehouse(ABC):
                             IEIRealization.add,
                         )
                         c.historic_data.emissions_intensities.S3 = []
-                    if c.historic_data.emissions_intensities and c.historic_data.emissions_intensities.S1S2S3:
+                    if c.historic_data.emissions_intensities.S1S2S3:
                         # assert c.historic_data.emissions_intensities.S1S2 == c.historic_data.emissions_intensities.S1S2S3
                         c.historic_data.emissions_intensities.S1S2S3 = []
-                if c.projected_intensities and c.projected_intensities.S3:
+                if c.projected_intensities.S3:
                     c.projected_intensities._adjust_trajectories("S1")
                     c.projected_intensities._adjust_trajectories("S1S2")
                     c.projected_intensities.S3 = None
@@ -262,7 +262,7 @@ class DataWarehouse(ABC):
                         # assert c.projected_intensities.S1S2.projections == c.projected_intensities.S1S2S3.projections
 
                         c.projected_intensities.S1S2S3 = None
-                if c.projected_targets and c.projected_targets.S3:
+                if c.projected_targets.S3:
                     # For production-centric benchmarks, S3 emissions are counted against S1 (and/or the S1 in S1+S2)
 
                     if c.projected_targets.S1:
@@ -320,7 +320,7 @@ class DataWarehouse(ABC):
                             f"S1+S2 targets not aligned with S3 targets for company with ID {c.company_id}; ignoring S3 data"
                         )
                     c.projected_targets.S3 = None
-                if c.projected_targets and c.projected_targets.S1S2S3:
+                if c.projected_targets.S1S2S3:
                     # assert c.projected_targets.S1S2 == c.projected_targets.S1S2S3
                     c.projected_targets.S1S2S3 = None
         elif new_prod_centric and self.orig_historic_data != {}:
