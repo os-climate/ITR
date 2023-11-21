@@ -6,8 +6,10 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # prettier-ignore
+  - package-ecosystem: "pip"  # See documentation for possible values
+    # prettier-ignore
+    directory: "/"  # Location of package manifests
     commit-message:
       prefix: "[dependabot] Chore:"
     open-pull-requests-limit: 1
