@@ -47,6 +47,9 @@ jobs:
       - name: "Publish documentation"
         if: success()
         uses: peaceiris/actions-gh-pages@v3
+        permissions:
+          # IMPORTANT: mandatory for documentation updates
+          id-token: write
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
