@@ -4,12 +4,11 @@ This module handles initialization of pint functionality
 
 import re
 from dataclasses import dataclass
-from typing import Annotated, Any, Dict
+from typing import Annotated, Any, Dict, List, Union
 
 import pandas as pd
 import pint
 from pint import Context, DimensionalityError
-from pint_pandas import PintType
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -21,12 +20,13 @@ from pydantic import (
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
+from typing_extensions import TypeAlias
 
 import ITR
 
-from ..data import PA_, Q_, ureg
+from ..data import PA_, Q_, PintType, ureg
 
-Quantity = ureg.Quantity
+Quantity: TypeAlias = ureg.Quantity
 
 ureg.define("CO2e = CO2 = CO2eq = CO2_eq")
 # openscm_units does this for all gas species...we just have to keep up.
@@ -145,7 +145,7 @@ ureg.enable_contexts("ngas", "coal")
 
 
 # from https://github.com/hgrecco/pint/discussions/1697
-def direct_conversions(ureg, unit) -> [str]:
+def direct_conversions(ureg, unit) -> List[str]:
     """
     Return a LIST of unit names that Pint can convert implicitly from/to UNIT.
     This does not include the list of additional unit names that can be explicitly
@@ -403,7 +403,7 @@ def check_BenchmarkMetric(units: str) -> str:
 BenchmarkMetric = Annotated[str, AfterValidator(check_BenchmarkMetric)]
 
 
-def to_Quantity(quantity: Any) -> Quantity:
+def to_Quantity(quantity: Union[Quantity, str]) -> Quantity:
     if isinstance(quantity, str):
         try:
             v, u = quantity.split(" ", 1)
@@ -413,7 +413,7 @@ def to_Quantity(quantity: Any) -> Quantity:
                 quantity = Q_(int(v), u)
         except ValueError:
             return ureg(quantity)
-    elif not isinstance(quantity, Quantity):
+    elif not isinstance(quantity, Quantity):  # type: ignore
         raise ValueError(f"{quantity} is not a Quantity")
     return quantity
 
@@ -519,6 +519,44 @@ def check_MonetaryQuantity(quantity: Quantity) -> Quantity:
 MonetaryQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_MonetaryQuantity)]
 
 
+def check_delta_degC_Quantity(quantity: Quantity) -> Quantity:
+    try:
+        if quantity.is_compatible_with("delta_degC"):
+            return quantity
+    except RecursionError:
+        # breakpoint()
+        raise
+    raise DimensionalityError(
+        quantity,
+        "delta_degC",
+        dim1="",
+        dim2="",
+        extra_msg=f"Dimensionality must be compatible with delta_degC",
+    )
+
+
+delta_degC_Quantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_delta_degC_Quantity)]
+
+
+def check_percent_Quantity(quantity: Quantity) -> Quantity:
+    try:
+        if quantity.dimensionless:
+            return quantity.to("percent")
+    except RecursionError:
+        # breakpoint()
+        raise
+    raise DimensionalityError(
+        quantity,
+        "percent",
+        dim1="",
+        dim2="",
+        extra_msg=f"Quantity must be dimensionless",
+    )
+
+
+percent_Quantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_percent_Quantity)]
+
+
 def Quantity_type(units: str) -> type:
     """A method for making a pydantic compliant Pint quantity field type."""
 
@@ -530,7 +568,6 @@ def Quantity_type(units: str) -> type:
     def __get_pydantic_core_schema__(source_type: Any) -> CoreSchema:
         return core_schema.general_plain_validator_function(lambda value, info: validate(value, units, info))
 
-    @classmethod
     def __get_pydantic_json_schema__(cls, core_schema: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
         json_schema = handler(core_schema)
         json_schema = handler.resolve_ref_schema(json_schema)
@@ -576,7 +613,7 @@ def asPintSeries(series: pd.Series, name=None, errors="ignore", inplace=False) -
             raise ValueError("Series not dtype('O')")
     # NA_VALUEs are true NaNs, missing units
     na_values = ITR.isna(series)
-    units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)
+    units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)  # type: ignore
     unit_first_idx = units.first_valid_index()
     if unit_first_idx is None:
         if errors != "ignore":

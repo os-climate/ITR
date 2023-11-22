@@ -18,17 +18,21 @@ from ITR.temperature_score import TemperatureScore
 
 class e2e_DataProvider:  # if derived from CompanyDataProvider, we'd have to provide implementations for several methods we never use
     def __init__(self, companies: List[ICompanyAggregates]):
-        self.companies = companies
-        self.missing_ids = set([])
+        self._companies = companies
+
+    def get_company_ids(self) -> List[str]:
+        company_ids = [c.company_id for c in self._companies]
+        return company_ids
 
 
 class e2e_DataWarehouse(DataWarehouse):
     def __init__(self, company_data: e2e_DataProvider):
         # super().__init__(company_data, ProductionBenchmarkDataProvider(), IntensityBenchmarkDataProvider())
-        self.company_data = company_data
+        self.company_data = company_data  # type: ignore
 
     def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
-        return self.company_data.companies
+        assert isinstance(self.company_data, e2e_DataProvider)
+        return self.company_data._companies
 
 
 class EndToEndTest(unittest.TestCase):
@@ -176,7 +180,7 @@ class EndToEndTest(unittest.TestCase):
 
     # Run some regression tests
     # @unittest.skip("only run for longer test runs")
-    def test_regression_companies(self):
+    def test_regression_companies(self) -> None:
         nr_companies = 1000
 
         # test 10000 companies
@@ -215,7 +219,7 @@ class EndToEndTest(unittest.TestCase):
 
         self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2)
 
-    def test_grouping(self):
+    def test_grouping(self) -> None:
         """
         Testing the grouping feature with two different industry levels and making sure the results are present
         """
