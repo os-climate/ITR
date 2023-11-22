@@ -4,8 +4,10 @@ ci:
   skip:
     # pre-commit.ci cannot install WGET, so tomlint must be disabled
     - tomllint
-    # pre-commit.ci throws some error related to Docker!
+    # pre-commit.ci throws an error related to Docker!
     - shellcheck
+    # pre-commit.ci does not allow network calls
+    - pip-audit
 
 exclude: |
   (?x)^(
@@ -151,3 +153,9 @@ repos:
     rev: "v1.7.0"
     hooks:
       - id: mypy
+
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.6.1
+    hooks:
+      - id: pip-audit
+        args: ["-r", "./docs/requirements.txt"]
