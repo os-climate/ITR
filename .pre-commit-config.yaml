@@ -4,8 +4,10 @@ ci:
   skip:
     # pre-commit.ci cannot install WGET, so tomlint must be disabled
     - tomllint
-    # pre-commit.ci throws some error related to Docker!
+    # pre-commit.ci throws an error related to Docker!
     - shellcheck
+    # pre-commit.ci does not allow network calls
+    - pip-audit
 
 exclude: |
   (?x)^(
@@ -29,7 +31,9 @@ repos:
     hooks:
       - id: check-added-large-files
       - id: check-ast
+      - id: check-byte-order-marker
       - id: check-case-conflict
+      - id: check-docstring-first
       - id: check-executables-have-shebangs
       - id: check-json
       - id: check-merge-conflict
@@ -53,7 +57,7 @@ repos:
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.3
+    rev: v3.1.0
     hooks:
       - id: prettier
         args:
@@ -73,12 +77,12 @@ repos:
   #       args: ['--py37-plus']
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.10.1
+    rev: 23.11.0
     hooks:
       - id: black
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.10.1
+    rev: 23.11.0
     hooks:
       - id: black-jupyter
 
@@ -117,7 +121,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.32.0
+    rev: v1.33.0
     hooks:
       - id: yamllint
         args: [--strict]
@@ -146,6 +150,12 @@ repos:
   #   - id: codespell
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.6.1"
+    rev: "v1.7.0"
     hooks:
       - id: mypy
+
+  - repo: https://github.com/pypa/pip-audit
+    rev: v2.6.1
+    hooks:
+      - id: pip-audit
+        args: ["-r", "./docs/requirements.txt"]

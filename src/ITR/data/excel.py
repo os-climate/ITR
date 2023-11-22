@@ -1,6 +1,6 @@
 import logging
 import warnings  # needed until apply behaves better with Pint quantities in arrays
-from typing import List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -24,6 +24,7 @@ from ..data.osc_units import (
     EI_Quantity,
     EmissionsQuantity,
     Quantity_type,
+    delta_degC_Quantity,
 )
 from ..interfaces import (
     EScope,
@@ -122,7 +123,7 @@ def convert_benchmarks_ei_excel_to_model(
         .reset_index(drop=True)
         .set_index([column_name_sector, column_name_region, "benchmark_metric", "scope"])
     )
-    bm_dict = {scope_name: [] for scope_name in EScope.get_scopes()}
+    bm_dict: Dict[str, Any] = {scope_name: [] for scope_name in EScope.get_scopes()}
     bm_dict["benchmark_temperature"] = benchmark_temperature
     bm_dict["benchmark_global_budget"] = benchmark_global_budget
     bm_dict["is_AFOLU_included"] = is_AFOLU_included
@@ -178,7 +179,7 @@ class ExcelProviderIntensityBenchmark(BaseProviderIntensityBenchmark):
     def __init__(
         self,
         excel_path: str,
-        benchmark_temperature: Quantity_type("delta_degC"),
+        benchmark_temperature: delta_degC_Quantity,
         benchmark_global_budget: EmissionsQuantity,
         is_AFOLU_included: bool,
         column_config: Type[ColumnsConfig] = ColumnsConfig,
@@ -214,11 +215,11 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         self,
         excel_path: str,
         column_config: Type[ColumnsConfig] = ColumnsConfig,
-        projection_controls: Type[ProjectionControls] = ProjectionControls,
+        projection_controls: ProjectionControls = ProjectionControls(),
     ):
         self.projection_controls = projection_controls
         self._companies = self._convert_from_excel_data(excel_path)
-        self.historic_years = None
+        self.historic_years: List[int] = []
         super().__init__(self._companies, column_config, projection_controls)
 
     def _check_company_data(self, company_tabs: dict) -> None:
@@ -308,7 +309,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
 
         return self._company_df_to_model(df_fundamentals, df_targets, df_ei, df_historic)
 
-    def _convert_series_to_projections(self, projections: pd.Series, ProjectionType: BaseModel) -> [IProjection]:
+    def _convert_series_to_projections(self, projections: pd.Series, ProjectionType: BaseModel) -> List[IProjection]:
         """
         Converts a Pandas Series to a list of IProjection
         :param projections: Pandas Series with years as indices
@@ -522,7 +523,7 @@ class ExcelProviderCompany(BaseCompanyDataProvider):
         :return: A list containing historic productions, or None if no data are provided
         """
         if productions.empty:
-            return None
+            return []
         return [
             IProductionRealization(year=year, value=ProductionQuantity(productions[year].squeeze()))
             for year in self.historic_years
