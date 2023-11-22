@@ -34,7 +34,9 @@ from .data.osc_units import (
     MonetaryQuantity,
     ProductionMetric,
     ProductionQuantity,
-    Quantity_type,
+    Quantity,
+    delta_degC_Quantity,
+    percent_Quantity,
     ureg,
 )
 
@@ -133,7 +135,7 @@ class EScoreResultType(Enum):
         return self.__str__()
 
     @classmethod
-    def get_result_types(cls) -> List[str]:
+    def get_result_types(cls) -> List[EScoreResultType]:
         """
         Get a list of all result types, ordered by priority (first << last priority).
         :return: A list of the EScoreResultType values
@@ -151,9 +153,9 @@ class AggregationContribution(BaseModel):
 
     company_name: str
     company_id: str
-    temperature_score: Quantity_type("delta_degC")
-    contribution_relative: Optional[Quantity_type("percent")] = None
-    contribution: Optional[Quantity_type("delta_degC")] = None
+    temperature_score: delta_degC_Quantity
+    contribution_relative: Optional[percent_Quantity] = Q_(np.nan, "percent")
+    contribution: Optional[delta_degC_Quantity] = Q_(np.nan, "delta_degC")
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -162,41 +164,56 @@ class AggregationContribution(BaseModel):
 class Aggregation(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    score: Quantity_type("delta_degC")
+    score: delta_degC_Quantity = Q_(np.nan, "delta_degC")
     # proportion is a number from 0..1
-    proportion: float
-    contributions: List[AggregationContribution]
+    proportion: float = np.nan
+    contributions: List[AggregationContribution] = []
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+    def empty(self):
+        return len(self.contributions) == 0
+
+
+emptyAggregation = Aggregation()
 
 
 class ScoreAggregation(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    all: Aggregation
-    influence_percentage: Quantity_type("percent")
-    grouped: Dict[str, Aggregation]
+    all: Aggregation = emptyAggregation
+    influence_percentage: percent_Quantity = Q_(np.nan, "percent")
+    grouped: Dict[str, Aggregation] = {}
 
     def __getitem__(self, item):
         return getattr(self, item)
+
+    def empty(self):
+        return self.all.empty()
+
+
+emptyScoreAggregation = ScoreAggregation()
 
 
 class ScoreAggregationScopes(BaseModel):
-    S1: Optional[ScoreAggregation] = None
-    S2: Optional[ScoreAggregation] = None
-    S1S2: Optional[ScoreAggregation] = None
-    S3: Optional[ScoreAggregation] = None
-    S1S2S3: Optional[ScoreAggregation] = None
+    S1: ScoreAggregation = emptyScoreAggregation
+    S2: ScoreAggregation = emptyScoreAggregation
+    S1S2: ScoreAggregation = emptyScoreAggregation
+    S3: ScoreAggregation = emptyScoreAggregation
+    S1S2S3: ScoreAggregation = emptyScoreAggregation
 
     def __getitem__(self, item):
         return getattr(self, item)
 
 
+emptyScoreAggregationScopes = ScoreAggregationScopes()
+
+
 class ScoreAggregations(BaseModel):
-    short: Optional[ScoreAggregationScopes] = None
-    mid: Optional[ScoreAggregationScopes] = None
-    long: Optional[ScoreAggregationScopes] = None
+    short: ScoreAggregationScopes = emptyScoreAggregationScopes
+    mid: ScoreAggregationScopes = emptyScoreAggregationScopes
+    long: ScoreAggregationScopes = emptyScoreAggregationScopes
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -207,9 +224,9 @@ class PortfolioCompany(BaseModel):
 
     company_name: str
     company_id: str
-    company_isin: Optional[str] = None
+    company_isin: Optional[str] = ""
     investment_value: MonetaryQuantity
-    user_fields: Optional[dict] = None
+    user_fields: Optional[Dict[str, str]] = {}
 
 
 # U is Unquantified, which is presently how our benchmarks come in (production_metric comes in elsewhere)
@@ -231,15 +248,15 @@ class IBenchmark(BaseModel):
     sector: str
     region: str
     benchmark_metric: BenchmarkMetric
-    projections_nounits: Optional[List[UProjection]] = None
-    projections: Optional[List[IProjection]] = None
+    projections_nounits: List[UProjection]
+    projections: List[IProjection]
     base_year_production: Optional[ProductionQuantity] = None  # FIXME: applies only to production benchmarks
 
     def __init__(
         self,
         benchmark_metric,
-        projections_nounits=None,
-        projections=None,
+        projections_nounits=[],
+        projections=[],
         base_year_production=None,
         *args,
         **kwargs,
@@ -286,17 +303,14 @@ class IBenchmarks(BaseModel):
         return getattr(self, item)
 
 
+empty_IBenchmarks = IBenchmarks(benchmarks=[], production_centric=False)
+
 # These IProductionBenchmarkScopes and IEIBenchmarkScopes are vessels for holding initialization data
 # The CompanyDataProvider methods create their own dataframes that are then used throughout
 
 
 class IProductionBenchmarkScopes(BaseModel):
-    AnyScope: Optional[IBenchmarks] = None
-    S1: Optional[IBenchmarks] = None
-    S2: Optional[IBenchmarks] = None
-    S1S2: Optional[IBenchmarks] = None
-    S3: Optional[IBenchmarks] = None
-    S1S2S3: Optional[IBenchmarks] = None
+    AnyScope: IBenchmarks
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -305,13 +319,13 @@ class IProductionBenchmarkScopes(BaseModel):
 class IEIBenchmarkScopes(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    S1: Optional[IBenchmarks] = None
-    S2: Optional[IBenchmarks] = None
-    S1S2: Optional[IBenchmarks] = None
-    S3: Optional[IBenchmarks] = None
-    S1S2S3: Optional[IBenchmarks] = None
-    benchmark_temperature: Quantity_type("delta_degC")
-    benchmark_global_budget: Quantity_type("Gt CO2")
+    S1: Optional[IBenchmarks] = empty_IBenchmarks
+    S2: Optional[IBenchmarks] = empty_IBenchmarks
+    S1S2: Optional[IBenchmarks] = empty_IBenchmarks
+    S3: Optional[IBenchmarks] = empty_IBenchmarks
+    S1S2S3: Optional[IBenchmarks] = empty_IBenchmarks
+    benchmark_temperature: delta_degC_Quantity
+    benchmark_global_budget: EmissionsQuantity
     is_AFOLU_included: bool
 
     def __getitem__(self, item):
@@ -322,7 +336,7 @@ class ICompanyEIProjection(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     year: int
-    value: Optional[EI_Quantity] = None
+    value: EI_Quantity
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -372,7 +386,7 @@ class ICompanyEIProjections(BaseModel):
 class DF_ICompanyEIProjections(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    ei_metric: Optional[EI_Metric] = None
+    ei_metric: EI_Metric
     projections: pd.Series
 
     @field_validator("projections")
@@ -471,11 +485,68 @@ class ICompanyEIProjectionsScopes(BaseModel):
         }
         return str(pd.DataFrame.from_dict(dict_items))
 
+    def _adjust_trajectories(self, primary_scope_attr: str):
+        if not getattr(self, primary_scope_attr):
+            setattr(self, primary_scope_attr, self.S3)
+        else:
+            scope = getattr(self, primary_scope_attr)
+            assert self.S3 is not None
+            if isinstance(self.S3.projections, pd.Series):
+                scope.projections = scope.projections.add(self.S3.projections)
+            else:
+                # Should not be reached as we are using DF_ICompanyEIProjections consistently now
+                # breakpoint()
+                assert False
+                scope.projections = list(
+                    map(
+                        ICompanyEIProjection.add,
+                        scope.projections,
+                        self.S3.projections,
+                    )
+                )
+
+    def _align_and_sum_projected_targets(self, primary_scope_attr):
+        scope = getattr(self, primary_scope_attr)
+        if scope is None:
+            raise AttributeError
+        primary_projections = scope.projections
+        s3_projections = self.S3.projections
+        if isinstance(s3_projections, pd.Series):
+            scope.projections = (
+                # We should convert S3 data from benchmark-type to disclosed-type earlier in the chain
+                primary_projections
+                + s3_projections.astype(primary_projections.dtype)
+            )
+        else:
+            # Should not be reached as we are using DF_ICompanyEIProjections consistently now
+            # breakpoint()
+            assert False
+            if primary_projections[0].year < s3_projections[0].year:
+                while primary_projections[0].year < s3_projections[0].year:
+                    primary_projections = primary_projections[1:]
+            elif primary_projections[0].year > s3_projections[0].year:
+                while primary_projections[0].year > s3_projections[0].year:
+                    s3_projections = s3_projections[1:]
+                    scope.projections = list(
+                        map(
+                            ICompanyEIProjection.add,
+                            primary_projections,
+                            s3_projections,
+                        )
+                    )
+
+    def empty(self):
+        return self == empty_ICompanyEIProjectionsScopes
+
+
+empty_ICompanyEIProjectionsScopes = ICompanyEIProjectionsScopes()
+
 
 class IProductionRealization(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     year: int
+    # Need to keep this if we want to be able to read JSON files with null for value
     value: Optional[ProductionQuantity] = None
 
 
@@ -483,6 +554,7 @@ class IEmissionRealization(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     year: int
+    # Need to keep this if we want to be able to read JSON files with null for value
     value: Optional[EmissionsQuantity] = None
 
     def __getitem__(self, item):
@@ -503,11 +575,11 @@ class IEmissionRealization(BaseModel):
 
 
 class IHistoricEmissionsScopes(BaseModel):
-    S1: List[IEmissionRealization]
-    S2: List[IEmissionRealization]
-    S1S2: List[IEmissionRealization]
-    S3: List[IEmissionRealization]
-    S1S2S3: List[IEmissionRealization]
+    S1: Optional[List[IEmissionRealization]] = []
+    S2: Optional[List[IEmissionRealization]] = []
+    S1S2: Optional[List[IEmissionRealization]] = []
+    S3: Optional[List[IEmissionRealization]] = []
+    S1S2S3: Optional[List[IEmissionRealization]] = []
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -526,11 +598,18 @@ class IHistoricEmissionsScopes(BaseModel):
         }
         return str(pd.DataFrame.from_dict(dict_items))
 
+    def empty(self):
+        return self == empty_IHistoricEmissionsScopes
+
+
+empty_IHistoricEmissionsScopes = IHistoricEmissionsScopes()
+
 
 class IEIRealization(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     year: int
+    # Need to keep this if we want to be able to read JSON files with null for value
     value: Optional[EI_Quantity] = None
 
     def __getitem__(self, item):
@@ -551,11 +630,11 @@ class IEIRealization(BaseModel):
 
 
 class IHistoricEIScopes(BaseModel):
-    S1: List[IEIRealization]
-    S2: List[IEIRealization]
-    S1S2: List[IEIRealization]
-    S3: List[IEIRealization]
-    S1S2S3: List[IEIRealization]
+    S1: Optional[List[IEIRealization]] = []
+    S2: Optional[List[IEIRealization]] = []
+    S1S2: Optional[List[IEIRealization]] = []
+    S3: Optional[List[IEIRealization]] = []
+    S1S2S3: Optional[List[IEIRealization]] = []
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -576,11 +655,80 @@ class IHistoricEIScopes(BaseModel):
         }
         return str(pd.DataFrame.from_dict(dict_items))
 
+    def empty(self):
+        return self == empty_IHistoricEIScopes
+
+
+empty_IHistoricEIScopes = IHistoricEIScopes()
+
 
 class IHistoricData(BaseModel):
-    productions: Optional[List[IProductionRealization]] = None
-    emissions: Optional[IHistoricEmissionsScopes] = None
-    emissions_intensities: Optional[IHistoricEIScopes] = None
+    productions: List[IProductionRealization]
+    emissions: IHistoricEmissionsScopes
+    emissions_intensities: IHistoricEIScopes
+
+    def __init__(
+        self,
+        productions=[],
+        emissions=empty_IHistoricEmissionsScopes,
+        emissions_intensities=empty_IHistoricEIScopes,
+        *args,
+        **kwargs,
+    ):
+        # Tolerate `null` values in JSON files that we don't tolerate within our programs
+        super().__init__(
+            productions=productions,
+            emissions=emissions or empty_IHistoricEmissionsScopes,
+            emissions_intensities=emissions_intensities or empty_IHistoricEIScopes,
+            *args,
+            **kwargs,
+        )
+
+    def _normalize(self, production_metric: ProductionMetric, emissions_metric: EmissionsMetric) -> None:
+        def _normalize_qty(value, metric) -> Quantity:
+            if value is None or ITR.isna(value):
+                return PintType(metric).na_value
+            if value.u == metric:
+                return value
+            # We've pre-conditioned metric so don't need to work around https://github.com/hgrecco/pint/issues/1687
+            return value.to(metric)
+
+        production_metric = ureg.parse_units(production_metric)  # Catch things like '$'
+        self.productions = [
+            IProductionRealization(year=p.year, value=_normalize_qty(p.value, production_metric))
+            for p in self.productions
+        ]
+
+        # Work-around for https://github.com/hgrecco/pint/issues/1687
+        # emissions_metric = ureg(emissions_metric).u
+        ei_metric = ureg.parse_units(f"{emissions_metric} / ({production_metric})")
+        for scope_name in EScope.get_scopes():
+            setattr(
+                self.emissions,
+                scope_name,
+                [
+                    IEmissionRealization(year=p.year, value=_normalize_qty(p.value, emissions_metric))
+                    for p in self.emissions[scope_name]
+                ],
+            )
+            setattr(
+                self.emissions_intensities,
+                scope_name,
+                [
+                    IEIRealization(year=p.year, value=_normalize_qty(p.value, ei_metric))
+                    for p in self.emissions_intensities[scope_name]
+                ],
+            )
+
+    def empty(self) -> bool:
+        if self.productions:
+            return False
+        for scope_name in EScope.get_scopes():
+            if getattr(self.emissions, scope_name, None):
+                return False
+            if getattr(self.emissions_intensities, scope_name, None):
+                return False
+        return True
 
 
 class ITargetData(BaseModel):
@@ -630,9 +778,9 @@ class ICompanyData(BaseModel):
     # while target_probability in ICompanyData is company-specific
     target_probability: float = np.nan
 
-    target_data: Optional[List[ITargetData]] = None
+    target_data: Optional[List[ITargetData]] = []
     # IHistoric data can contain None values; need to convert to Quantified NaNs
-    historic_data: Optional[IHistoricData] = None
+    historic_data: IHistoricData
 
     country: Optional[str] = None
 
@@ -659,8 +807,8 @@ class ICompanyData(BaseModel):
 
     # Initialized later when we have benchmark information.  It is OK to initialize as None and fix later.
     # They will show up as {'S1S2': { 'projections': [ ... ] }}
-    projected_targets: Optional[ICompanyEIProjectionsScopes] = None
-    projected_intensities: Optional[ICompanyEIProjectionsScopes] = None
+    projected_targets: ICompanyEIProjectionsScopes
+    projected_intensities: ICompanyEIProjectionsScopes
 
     # TODO: Do we want to do some sector inferencing here?
 
@@ -716,56 +864,6 @@ class ICompanyData(BaseModel):
             return retval
         return valid_realizations[0]
 
-    def _normalize_historic_data(
-        self,
-        historic_data: IHistoricData,
-        production_metric: ProductionMetric,
-        emissions_metric: EmissionsMetric,
-    ) -> IHistoricData:
-        def _normalize(value, metric):
-            if value is not None:
-                if value.u == metric:
-                    return value
-                if ITR.isna(value):
-                    return PintType(metric).na_value
-                # We've pre-conditioned metric so don't need to work around https://github.com/hgrecco/pint/issues/1687
-                return value.to(metric)
-            return PintType(metric).na_value
-
-        if historic_data is None:
-            return None
-
-        if historic_data.productions:
-            # Work-around for https://github.com/hgrecco/pint/issues/1687
-            production_metric = ureg.parse_units(production_metric)  # Catch things like '$'
-            historic_data.productions = [
-                IProductionRealization(year=p.year, value=_normalize(p.value, production_metric))
-                for p in historic_data.productions
-            ]
-        # Work-around for https://github.com/hgrecco/pint/issues/1687
-        # emissions_metric = ureg(emissions_metric).u
-        ei_metric = ureg.parse_units(f"{emissions_metric} / ({production_metric})")
-        for scope_name in EScope.get_scopes():
-            if historic_data.emissions:
-                setattr(
-                    historic_data.emissions,
-                    scope_name,
-                    [
-                        IEmissionRealization(year=p.year, value=_normalize(p.value, emissions_metric))
-                        for p in historic_data.emissions[scope_name]
-                    ],
-                )
-            if historic_data.emissions_intensities:
-                setattr(
-                    historic_data.emissions_intensities,
-                    scope_name,
-                    [
-                        IEIRealization(year=p.year, value=_normalize(p.value, ei_metric))
-                        for p in historic_data.emissions_intensities[scope_name]
-                    ],
-                )
-        return historic_data
-
     def __init__(
         self,
         emissions_metric=None,
@@ -775,6 +873,8 @@ class ICompanyData(BaseModel):
         ghg_s3=None,
         target_data=None,
         historic_data=None,
+        projected_targets=empty_ICompanyEIProjectionsScopes,
+        projected_intensities=empty_ICompanyEIProjectionsScopes,
         *args,
         **kwargs,
     ):
@@ -785,7 +885,9 @@ class ICompanyData(BaseModel):
             ghg_s1s2=ghg_s1s2,
             ghg_s3=ghg_s3,
             target_data=target_data,
-            historic_data=historic_data,
+            historic_data=historic_data or IHistoricData(),
+            projected_targets=projected_targets or empty_ICompanyEIProjectionsScopes,
+            projected_intensities=projected_intensities or empty_ICompanyEIProjectionsScopes,
             *args,
             **kwargs,
         )
@@ -808,12 +910,10 @@ class ICompanyData(BaseModel):
                 self.emissions_metric = EmissionsMetric("t CO2")
             # TODO: Should raise a warning here
 
-        # This is only a partial initialization
-        if self.historic_data is None:
+        if self.historic_data.empty():
+            # We are only partly initialized.  Remaining will be done later
             return
-        self.historic_data = self._normalize_historic_data(
-            self.historic_data, self.production_metric, self.emissions_metric
-        )
+        self.historic_data._normalize(self.production_metric, self.emissions_metric)
         base_year = None
         if self.base_year_production:
             pass
@@ -828,7 +928,7 @@ class ICompanyData(BaseModel):
         else:
             logger.warning(f"missing historic data for base_year_production for {self.company_name}")
             self.base_year_production = PintType(self.production_metric).na_value
-        if self.ghg_s1s2 is None and self.historic_data.emissions:
+        if self.ghg_s1s2 is None and (self.historic_data.emissions.S1S2 or self.historic_data.emissions.S1):
             if self.historic_data.emissions.S1S2:
                 base_realization = self._get_base_realization_from_historic(
                     self.historic_data.emissions.S1S2, self.emissions_metric, base_year
@@ -845,7 +945,9 @@ class ICompanyData(BaseModel):
                 base_year = base_year or base_realization_s1.year
                 if base_realization_s1.value is not None and base_realization_s2.value is not None:
                     self.ghg_s1s2 = base_realization_s1.value + base_realization_s2.value
-        if self.ghg_s1s2 is None and self.historic_data.emissions_intensities:
+        if self.ghg_s1s2 is None and (
+            self.historic_data.emissions_intensities.S1S2 or self.historic_data.emissions_intensities.S1
+        ):
             intensity_metric = ureg.parse_units(f"({self.emissions_metric}) / ({self.production_metric})")
             if self.historic_data.emissions_intensities.S1S2:
                 base_realization = self._get_base_realization_from_historic(
@@ -876,7 +978,7 @@ class ICompanyData(BaseModel):
             raise ValueError(
                 f"missing historic emissions or intensity data to calculate ghg_s1s2 for {self.company_name}"
             )
-        if self.ghg_s3 is None and self.historic_data.emissions and self.historic_data.emissions.S3:
+        if self.ghg_s3 is None and self.historic_data.emissions.S3:
             base_realization_s3 = self._get_base_realization_from_historic(
                 self.historic_data.emissions.S3, self.emissions_metric, base_year
             )
@@ -899,7 +1001,7 @@ class ICompanyAggregates(ICompanyData):
     cumulative_scaled_budget: Optional[EmissionsQuantity] = None
     cumulative_trajectory: Optional[EmissionsQuantity] = None
     cumulative_target: Optional[EmissionsQuantity] = None
-    benchmark_temperature: Optional[Quantity_type("delta_degC")] = None
+    benchmark_temperature: Optional[delta_degC_Quantity] = None
     benchmark_global_budget: Optional[EmissionsQuantity] = None
     scope: Optional[EScope] = None
 
@@ -908,8 +1010,8 @@ class ICompanyAggregates(ICompanyData):
     target_exceedance_year: Optional[int] = None
 
     # projected_production is computed but never saved, so computed at least 2x: initialiation/projection and cumulative budget
-    # projected_targets: Optional[ICompanyEIProjectionsScopes] = None
-    # projected_intensities: Optional[ICompanyEIProjectionsScopes] = None
+    # projected_targets: ICompanyEIProjectionsScopes
+    # projected_intensities: ICompanyEIProjectionsScopes
 
     # Custom validator here
     @field_validator("trajectory_exceedance_year", "target_exceedance_year")
