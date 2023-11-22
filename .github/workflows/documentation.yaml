@@ -20,6 +20,9 @@ jobs:
     permissions:
       # IMPORTANT: mandatory for documentation updates; used in final step
       id-token: write
+      pull-requests: write
+      contents: write
+      repository-projects: write
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
