@@ -172,6 +172,8 @@ class Aggregation(BaseModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+    def empty(self):
+        return len(self.contributions) == 0
 
 emptyAggregation = Aggregation()
 
@@ -186,6 +188,8 @@ class ScoreAggregation(BaseModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+    def empty(self):
+        return self.all.empty()
 
 emptyScoreAggregation = ScoreAggregation()
 
@@ -530,7 +534,7 @@ class ICompanyEIProjectionsScopes(BaseModel):
                     )
 
     def empty(self):
-        return self is empty_ICompanyEIProjectionsScopes
+        return self == empty_ICompanyEIProjectionsScopes
 
 
 empty_ICompanyEIProjectionsScopes = ICompanyEIProjectionsScopes()
@@ -593,7 +597,7 @@ class IHistoricEmissionsScopes(BaseModel):
         return str(pd.DataFrame.from_dict(dict_items))
 
     def empty(self):
-        return self is empty_IHistoricEmissionsScopes
+        return self == empty_IHistoricEmissionsScopes
 
 
 empty_IHistoricEmissionsScopes = IHistoricEmissionsScopes()
@@ -650,7 +654,7 @@ class IHistoricEIScopes(BaseModel):
         return str(pd.DataFrame.from_dict(dict_items))
 
     def empty(self):
-        return self is empty_IHistoricEIScopes
+        return self == empty_IHistoricEIScopes
 
 
 empty_IHistoricEIScopes = IHistoricEIScopes()
