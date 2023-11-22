@@ -10,7 +10,7 @@ import ITR
 
 from .configs import ColumnsConfig, LoggingConfig, TemperatureScoreConfig
 from .data.data_warehouse import DataWarehouse
-from .data.osc_units import Q_, Quantity_type, ureg
+from .data.osc_units import Q_, delta_degC_Quantity, ureg
 from .interfaces import (
     Aggregation,
     AggregationContribution,
@@ -63,14 +63,7 @@ class TemperatureScore(PortfolioAggregation):
 
     def get_score(
         self, scorable_row: pd.Series
-    ) -> Tuple[
-        Quantity_type("delta_degC"),
-        Quantity_type("delta_degC"),
-        float,
-        Quantity_type("delta_degC"),
-        float,
-        EScoreResultType,
-    ]:
+    ) -> Tuple[delta_degC_Quantity, delta_degC_Quantity, float, delta_degC_Quantity, float, EScoreResultType,]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
@@ -149,7 +142,7 @@ class TemperatureScore(PortfolioAggregation):
                 score_result_type,
             )
 
-    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Quantity_type("delta_degC"):
+    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> delta_degC_Quantity:
         """
         Get the aggregated temperature score. S1+S2+S3 is an emissions weighted sum of S1+S2 and S3.
 
@@ -178,7 +171,8 @@ class TemperatureScore(PortfolioAggregation):
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
             # FIXME: These should use cumulative emissions, not the anachronistic ghg_s1s2 and ghg_s33!
-            if (s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4).all():
+            company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
+            if (s3[self.c.COLS.GHG_SCOPE3] / company_emissions < 0.4).all():
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE]
             else:
                 return (
@@ -189,7 +183,7 @@ class TemperatureScore(PortfolioAggregation):
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
 
-    def get_default_score(self, target: pd.Series) -> Quantity_type("delta_degC"):
+    def get_default_score(self, target: pd.Series) -> delta_degC_Quantity:
         """
         :param target: The target as a row of a dataframe
         :return: The temperature score
