@@ -17,6 +17,9 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
+    permissions:
+      # IMPORTANT: mandatory for documentation updates; used in final step
+      id-token: write
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
