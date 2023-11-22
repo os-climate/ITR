@@ -175,6 +175,7 @@ class Aggregation(BaseModel):
     def empty(self):
         return len(self.contributions) == 0
 
+
 emptyAggregation = Aggregation()
 
 
@@ -190,6 +191,7 @@ class ScoreAggregation(BaseModel):
 
     def empty(self):
         return self.all.empty()
+
 
 emptyScoreAggregation = ScoreAggregation()
 

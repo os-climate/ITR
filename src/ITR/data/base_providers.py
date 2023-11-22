@@ -278,8 +278,11 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self._EI_df_t.sort_index(axis=1, inplace=True)
 
     def get_scopes(self) -> List[EScope]:
-        scopes = [scope for scope in EScope.get_result_scopes()
-                  if getattr(self._EI_benchmarks, scope.name) != ITR.interfaces.empty_IBenchmarks]
+        scopes = [
+            scope
+            for scope in EScope.get_result_scopes()
+            if getattr(self._EI_benchmarks, scope.name) != ITR.interfaces.empty_IBenchmarks
+        ]
         return scopes
 
     def benchmarks_changed(self, new_projected_ei: IntensityBenchmarkDataProvider) -> bool:
