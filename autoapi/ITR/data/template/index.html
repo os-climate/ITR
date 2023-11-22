@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITR.data.template &mdash; ITR Temperature Alignment tool  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="ITR.data.vault_providers" href="../vault_providers/index.html" />
+    <link rel="prev" title="ITR.data.osc_units" href="../osc_units/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            ITR Temperature Alignment tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting Started Using Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rest_api.html">Getting Started Using REST API &amp; UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../FunctionalOverview.html">Functional Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../DataRequirements.html">Data Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Legends.html">Data Legends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#contributing-code">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#releasing">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#code-of-conduct">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id4">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id10">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id13">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#documentation-improvements">Documentation Improvements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#maintainer-tasks">Maintainer tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../terms.html">Terms of Use</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">ITR Temperature Alignment tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a></li>
+          <li class="breadcrumb-item"><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.template</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/ITR/data/template/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ITR.data.template">
+<span id="itr-data-template"></span><h1><a class="reference internal" href="#module-ITR.data.template" title="ITR.data.template"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.template</span></code></a><a class="headerlink" href="#module-ITR.data.template" title="Link to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.template.TemplateProviderCompany" title="ITR.data.template.TemplateProviderCompany"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemplateProviderCompany</span></code></a></p></td>
+<td><p>Data provider skeleton for CSV files. This class serves primarily for testing purposes only!</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.template.ITR_country_to_region" title="ITR.data.template.ITR_country_to_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR_country_to_region</span></code></a>(→ str)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.template._estimated_value" title="ITR.data.template._estimated_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_estimated_value</span></code></a>(→ pint.Quantity)</p></td>
+<td><p>:param y : a pd.Series that arrives via a pd.GroupBy operation.  The elements of the series are all data (or np.nan) matching a metric/sub-metric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.template.prioritize_submetric" title="ITR.data.template.prioritize_submetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prioritize_submetric</span></code></a>(→ pandas.Series)</p></td>
+<td><p>:param x : pd.DataFrame.  The index of the DataFrame is (SECTOR, COMPANY_ID, SCOPE)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.template.maybe_other_s3_mappings" title="ITR.data.template.maybe_other_s3_mappings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">maybe_other_s3_mappings</span></code></a>(x)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.template.logger" title="ITR.data.template.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.template.pkg_root" title="ITR.data.template.pkg_root"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkg_root</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.template.df_country_regions" title="ITR.data.template.df_country_regions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">df_country_regions</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.template.s3_category_rdict" title="ITR.data.template.s3_category_rdict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">s3_category_rdict</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.template.s3_category_dict" title="ITR.data.template.s3_category_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">s3_category_dict</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.template.logger">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#ITR.data.template.logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.template.pkg_root">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">pkg_root</span></span><a class="headerlink" href="#ITR.data.template.pkg_root" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.template.df_country_regions">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">df_country_regions</span></span><a class="headerlink" href="#ITR.data.template.df_country_regions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.template.ITR_country_to_region">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">ITR_country_to_region</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">country</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#ITR.data.template.ITR_country_to_region" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.template._estimated_value">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">_estimated_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pint.Quantity</span></span></span><a class="headerlink" href="#ITR.data.template._estimated_value" title="Link to this definition"></a></dt>
+<dd><p>:param y : a pd.Series that arrives via a pd.GroupBy operation.  The elements of the series are all data (or np.nan) matching a metric/sub-metric.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Quantity which could be either the first or only element from the pd.Series, or an estimate of correct answer.
+The estimate is based on the mean of the non-null entries.
+It could be changed to output the last (most recent) value (if the inputs arrive sorted)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.template.prioritize_submetric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">prioritize_submetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.template.prioritize_submetric" title="Link to this definition"></a></dt>
+<dd><p>:param x : pd.DataFrame.  The index of the DataFrame is (SECTOR, COMPANY_ID, SCOPE)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>y : Based on the SECTOR, pick the highest priority Series based on the SUBMETRIC</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.template.s3_category_rdict">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">s3_category_rdict</span></span><a class="headerlink" href="#ITR.data.template.s3_category_rdict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.template.s3_category_dict">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">s3_category_dict</span></span><a class="headerlink" href="#ITR.data.template.s3_category_dict" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.template.maybe_other_s3_mappings">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">maybe_other_s3_mappings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.template.maybe_other_s3_mappings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.template.</span></span><span class="sig-name descname"><span class="pre">TemplateProviderCompany</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_controls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ProjectionControls()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../base_providers/index.html#ITR.data.base_providers.BaseCompanyDataProvider" title="ITR.data.base_providers.BaseCompanyDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.base_providers.BaseCompanyDataProvider</span></code></a></p>
+<p>Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
+As of Feb 2022, we are testing!!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excel_path</strong> – A path to the Excel file with the company data</p></li>
+<li><p><strong>column_config</strong> – An optional ColumnsConfig object containing relevant variable names</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._solve_intensities">
+<span class="sig-name descname"><span class="pre">_solve_intensities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_fundamentals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_esg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._solve_intensities" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._init_from_template_company_data">
+<span class="sig-name descname"><span class="pre">_init_from_template_company_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._init_from_template_company_data" title="Link to this definition"></a></dt>
+<dd><p>Converts first sheet of Excel template to list of minimal ICompanyData objects (fundamental data, but no ESG data).
+All dataprovider features will be inhereted from Base.
+:param excel_path: file path to excel file</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._convert_from_template_company_data">
+<span class="sig-name descname"><span class="pre">_convert_from_template_company_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._convert_from_template_company_data" title="Link to this definition"></a></dt>
+<dd><p>Converts ESG sheet of Excel template to flesh out ICompanyData objects.
+:return: List of ICompanyData objects</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._validate_target_data">
+<span class="sig-name descname"><span class="pre">_validate_target_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._validate_target_data" title="Link to this definition"></a></dt>
+<dd><p>Performs checks on the supplied target data. Some values are put in to make the tool function.
+:param target_data:
+:return:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._company_df_to_model">
+<span class="sig-name descname"><span class="pre">_company_df_to_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_fundamentals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_historic_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._company_df_to_model" title="Link to this definition"></a></dt>
+<dd><p>transforms target Dataframe into list of ICompanyData instances.
+We don’t necessarily have enough info to do target projections at this stage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_fundamentals</strong> – pandas Dataframe with fundamental data; if None, use self._companies</p></li>
+<li><p><strong>df_target_data</strong> – pandas Dataframe with target data; could be empty if we are partially initialized</p></li>
+<li><p><strong>df_historic_data</strong> – pandas Dataframe with historic emissions, intensity, and production information; could be empty</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list containing the ICompanyData objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._np_sum">
+<span class="sig-name descname"><span class="pre">_np_sum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._np_sum" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._convert_target_data">
+<span class="sig-name descname"><span class="pre">_convert_target_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ITargetData" title="ITR.interfaces.ITargetData"><span class="pre">ITR.interfaces.ITargetData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._convert_target_data" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>historic</strong> – historic production, emission and emission intensity data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>IHistoricData Pydantic object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._get_historic_data">
+<span class="sig-name descname"><span class="pre">_get_historic_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">historic_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._get_historic_data" title="Link to this definition"></a></dt>
+<dd><p>get the historic data for list of companies
+:param company_ids: list of company ids
+:param historic_data: Dataframe Productions, Emissions, and Emissions Intensities mixed together
+:return: historic data with unit attributes added on a per-element basis</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._convert_historic_data">
+<span class="sig-name descname"><span class="pre">_convert_historic_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">historic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IHistoricData" title="ITR.interfaces.IHistoricData"><span class="pre">ITR.interfaces.IHistoricData</span></a></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._convert_historic_data" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>historic</strong> – historic production, emission and emission intensity data for a company (already unitized)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>IHistoricData Pydantic object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._squeeze_NA_to_nan">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_squeeze_NA_to_nan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._squeeze_NA_to_nan" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._convert_to_historic_emissions">
+<span class="sig-name descname"><span class="pre">_convert_to_historic_emissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emissions_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IHistoricEmissionsScopes" title="ITR.interfaces.IHistoricEmissionsScopes"><span class="pre">ITR.interfaces.IHistoricEmissionsScopes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._convert_to_historic_emissions" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>emissions</strong> – historic emissions data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of historic emissions per scope, or None if no data are provided</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._convert_to_historic_productions">
+<span class="sig-name descname"><span class="pre">_convert_to_historic_productions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">productions_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IProductionRealization" title="ITR.interfaces.IProductionRealization"><span class="pre">ITR.interfaces.IProductionRealization</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._convert_to_historic_productions" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>productions</strong> – historic production data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list containing historic productions, or None if no data are provided</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany._convert_to_historic_ei">
+<span class="sig-name descname"><span class="pre">_convert_to_historic_ei</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intensities_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IHistoricEIScopes" title="ITR.interfaces.IHistoricEIScopes"><span class="pre">ITR.interfaces.IHistoricEIScopes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany._convert_to_historic_ei" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>intensities</strong> – historic emission intensity data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of historic emission intensities per scope, or None if no data are provided</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.template.TemplateProviderCompany.get_company_fundamentals">
+<span class="sig-name descname"><span class="pre">get_company_fundamentals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.template.TemplateProviderCompany.get_company_fundamentals" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>company_ids</strong> – A list of company IDs</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pandas DataFrame with company fundamental info per company (company_id is a column)</p>
+</dd>
+</dl>
+<p>FIXME: Callers want non-fundamental data here: base_year_production, ghg_s1s2, ghg_s3</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../osc_units/index.html" class="btn btn-neutral float-left" title="ITR.data.osc_units" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../vault_providers/index.html" class="btn btn-neutral float-right" title="ITR.data.vault_providers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, OS-Climate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

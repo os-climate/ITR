@@ -1,0 +1,113 @@
+:py:mod:`ITR.utils`
+===================
+
+.. py:module:: ITR.utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.utils.get_project_root
+   ITR.utils._flatten_user_fields
+   ITR.utils._make_isin_map
+   ITR.utils.dataframe_to_portfolio
+   ITR.utils.get_data
+   ITR.utils.calculate
+   ITR.utils.umean
+   ITR.utils.uround
+   ITR.utils.get_size
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.utils.logger
+
+
+.. py:data:: logger
+
+   
+
+.. py:function:: get_project_root() -> pathlib.Path
+
+
+.. py:function:: _flatten_user_fields(record: ITR.interfaces.PortfolioCompany)
+
+   Flatten the user fields in a portfolio company and return it as a dictionary.
+
+   :param record: The record to flatten
+   :return:
+
+
+.. py:function:: _make_isin_map(df_portfolio: pandas.DataFrame) -> dict
+
+   Create a mapping from company_id to ISIN
+
+   :param df_portfolio: The complete portfolio
+   :return: A mapping from company_id to ISIN
+
+
+.. py:function:: dataframe_to_portfolio(df_portfolio: pandas.DataFrame) -> List[ITR.interfaces.PortfolioCompany]
+
+   Convert a data frame to a list of portfolio company objects.
+
+   :param df_portfolio: The data frame to parse. The column names should align with the attribute names of the PortfolioCompany model.
+   :return: A list of portfolio companies
+
+
+.. py:function:: get_data(data_warehouse: ITR.data.data_warehouse.DataWarehouse, portfolio: List[ITR.interfaces.PortfolioCompany]) -> pandas.DataFrame
+
+   Get the required data from the data provider(s) and return a 9-box grid for each company.
+
+   :param data_warehouse: DataWarehouse instances
+   :param portfolio: A list of PortfolioCompany models
+   :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
+
+
+.. py:function:: calculate(portfolio_data: pandas.DataFrame, fallback_score: ITR.data.osc_units.delta_degC_Quantity, aggregation_method: ITR.portfolio_aggregation.PortfolioAggregationMethod, grouping: Optional[List[str]], time_frames: List[ITR.interfaces.ETimeFrames], scopes: List[ITR.interfaces.EScope], anonymize: bool, aggregate: bool = True, controls: Optional[ITR.configs.TemperatureScoreControls] = None) -> Tuple[pandas.DataFrame, Optional[ITR.interfaces.ScoreAggregations]]
+
+   Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).
+
+   :param portfolio_data: The portfolio data, already processed by the target validation module
+   :param fallback_score: The fallback score to use while calculating the temperature score
+   :param aggregation_method: The aggregation method to use
+   :param time_frames: The time frames that the temperature scores should be calculated for  (None to calculate all)
+   :param scopes: The scopes that the temperature scores should be calculated for (None to calculate all)
+   :param grouping: The names of the columns to group on
+   :param anonymize: Whether to anonymize the resulting data set or not
+   :param aggregate: Whether to aggregate the scores or not
+   :return: The scores, the aggregations and the column distribution (if a
+
+
+.. py:function:: umean(unquantified_data)
+
+   Assuming Gaussian statistics, uncertainties stem from Gaussian parent distributions. In such a case,
+   it is standard to weight the measurements (nominal values) by the inverse variance.
+
+   Following the pattern of np.mean, this function is really nan_mean, meaning it calculates based on non-NaN values.
+   If there are no such, it returns np.nan, just like np.mean does with an empty array.
+
+   This function uses error propagation on the to get an uncertainty of the weighted average.
+   :param: A set of uncertainty values
+   :return: The weighted mean of the values, with a freshly calculated error term
+
+
+.. py:function:: uround(u, ndigits)
+
+   Round an uncertainty to ndigits.
+
+
+.. py:function:: get_size(obj, seen=None)
+
+   Recursively finds size of objects
+
+

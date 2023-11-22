@@ -1,0 +1,193 @@
+:py:mod:`ITR`
+=============
+
+.. py:module:: ITR
+
+.. autoapi-nested-parse::
+
+   This package helps companies and financial institutions to assess the temperature alignment of investment and lending
+   portfolios.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   data/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   configs/index.rst
+   interfaces/index.rst
+   portfolio_aggregation/index.rst
+   temperature_score/index.rst
+   utils/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   ITR.EScope
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.isna
+   ITR.Q_m_as
+   ITR.recombine_nom_and_std
+   ITR.JSONEncoder
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data_dir
+   ITR._ufloat_nan
+
+
+.. py:class:: EScope(*args, **kwds)
+
+
+   Bases: :py:obj:`SortableEnum`
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access::
+
+   >>> Color.RED
+   <Color.RED: 1>
+
+   - value lookup:
+
+   >>> Color(1)
+   <Color.RED: 1>
+
+   - name lookup:
+
+   >>> Color['RED']
+   <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
+   .. py:attribute:: S1
+      :value: 'S1'
+
+      
+
+   .. py:attribute:: S2
+      :value: 'S2'
+
+      
+
+   .. py:attribute:: S3
+      :value: 'S3'
+
+      
+
+   .. py:attribute:: S1S2
+      :value: 'S1+S2'
+
+      
+
+   .. py:attribute:: S1S2S3
+      :value: 'S1+S2+S3'
+
+      
+
+   .. py:attribute:: AnyScope
+      :value: 'AnyScope'
+
+      
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+   .. py:method:: __repr__()
+
+      Return repr(self).
+
+
+   .. py:method:: get_scopes() -> List[str]
+      :classmethod:
+
+      Get a list of all scopes.
+      :return: A list of EScope string values
+
+
+   .. py:method:: get_result_scopes() -> List[EScope]
+      :classmethod:
+
+      Get a list of scopes that should be calculated if the user leaves it open.
+
+      :return: A list of EScope objects
+
+
+
+.. py:data:: data_dir
+
+   
+
+.. py:data:: _ufloat_nan
+
+   
+
+.. py:function:: isna(x)
+
+   True if X is either a NaN-like Quantity or otherwise NA-like
+
+
+.. py:function:: Q_m_as(value, units, inplace=False)
+
+   Convert VALUE from a string to a Quantity.
+   If the Quanity is not already in UNITS, then convert in place.
+   Returns the MAGNITUDE of the (possibly) converted value.
+
+
+.. py:function:: recombine_nom_and_std(nom: pandas.Series, std: pandas.Series) -> pandas.Series
+
+   A Pandas-friendly way to combine nominal and error terms for uncertainties
+
+
+.. py:function:: JSONEncoder(q)
+
+

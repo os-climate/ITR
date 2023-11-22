@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITR.data.data_providers &mdash; ITR Temperature Alignment tool  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="ITR.data.data_warehouse" href="../data_warehouse/index.html" />
+    <link rel="prev" title="ITR.data.base_providers" href="../base_providers/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            ITR Temperature Alignment tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting Started Using Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rest_api.html">Getting Started Using REST API &amp; UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../FunctionalOverview.html">Functional Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../DataRequirements.html">Data Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Legends.html">Data Legends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#contributing-code">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#releasing">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#code-of-conduct">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id4">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id10">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id13">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#documentation-improvements">Documentation Improvements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#maintainer-tasks">Maintainer tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../terms.html">Terms of Use</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">ITR Temperature Alignment tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a></li>
+          <li class="breadcrumb-item"><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.data_providers</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/ITR/data/data_providers/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ITR.data.data_providers">
+<span id="itr-data-data-providers"></span><h1><a class="reference internal" href="#module-ITR.data.data_providers" title="ITR.data.data_providers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.data_providers</span></code></a><a class="headerlink" href="#module-ITR.data.data_providers" title="Link to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.data_providers.CompanyDataProvider" title="ITR.data.data_providers.CompanyDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CompanyDataProvider</span></code></a></p></td>
+<td><p>Company data provider super class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProductionBenchmarkDataProvider</span></code></a></p></td>
+<td><p>Production projecton data provider super class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IntensityBenchmarkDataProvider</span></code></a></p></td>
+<td><p>Production intensity data provider super class.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.data_providers.</span></span><span class="sig-name descname"><span class="pre">CompanyDataProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Company data provider super class.
+Data container for company specific data. It expects both Fundamental (e.g. Company revenue, marktetcap etc) and
+emission and target data per company.</p>
+<p>Initialized CompanyDataProvider is required when setting up a data warehouse instance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider.get_projection_controls">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_projection_controls</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span></span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider.get_projection_controls" title="Link to this definition"></a></dt>
+<dd><p>Return the ProjectionControls associated with this CompanyDataProvider.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider.get_company_ids">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider.get_company_ids" title="Link to this definition"></a></dt>
+<dd><p>Return the list of Company IDs of this CompanyDataProvider</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider.get_company_data">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider.get_company_data" title="Link to this definition"></a></dt>
+<dd><p>Get all relevant data for a list of company ids (ISIN), or all company data if <cite>company_ids</cite> is None.
+This method should return a list of ICompanyData instances.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>company_ids</strong> – A list of company IDs (ISINs)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list containing the company data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider.get_value">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider.get_value" title="Link to this definition"></a></dt>
+<dd><p>Gets the value of a variable for a list of companies ids
+:param company_ids: list of company ids
+:param variable_name: variable name of the projected feature
+:return: series of values</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider.get_company_intensity_and_production_at_base_year">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_intensity_and_production_at_base_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider.get_company_intensity_and_production_at_base_year" title="Link to this definition"></a></dt>
+<dd><p>Get the emission intensity and the production for a list of companies at the base year.
+:param: company_ids: list of company ids
+:return: DataFrame the following columns :
+ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
+ColumnsConfig.REGION</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider.get_company_projected_trajectories">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_projected_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider.get_company_projected_trajectories" title="Link to this definition"></a></dt>
+<dd><p>Gets the emission intensities for a list of companies
+:param company_ids: list of company ids
+:return: dataframe of projected intensity trajectories for each company in company_ids</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider.get_company_projected_targets">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_projected_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider.get_company_projected_targets" title="Link to this definition"></a></dt>
+<dd><p>Gets the projected targets for a list of companies
+:param company_ids: list of company ids
+:return: dataframe of projected intensity targets for each company in company_ids</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider._allocate_emissions">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_allocate_emissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_companies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ei_benchmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">IntensityBenchmarkDataProvider</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_controls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider._allocate_emissions" title="Link to this definition"></a></dt>
+<dd><p>Use benchmark data from <cite>ei_benchmarks</cite> to allocate sector-level emissions from aggregated emissions.
+For example, a Utility may supply both Electricity and Gas to customers, reported separately.
+When we split the company into Electricity and Gas lines of business, we can allocate Scope emissions
+to the respective lines of business using benchmark averages to guide the allocation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider._validate_projected_trajectories">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_validate_projected_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">companies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ei_bm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider._validate_projected_trajectories" title="Link to this definition"></a></dt>
+<dd><p>Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
+COMPANY_IDS are a list of companies with historic data that need to be projected.
+EI_BENCHMARKS are the benchmarks for all sectors, regions, and scopes
+In previous incarnations of this function, no benchmark data was needed for any reason.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.CompanyDataProvider._calculate_target_projections">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_calculate_target_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">production_bm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><span class="pre">ProductionBenchmarkDataProvider</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ei_bm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.data_providers.CompanyDataProvider._calculate_target_projections" title="Link to this definition"></a></dt>
+<dd><p>Use benchmark data to calculate target projections</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.data_providers.ProductionBenchmarkDataProvider">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.data_providers.</span></span><span class="sig-name descname"><span class="pre">ProductionBenchmarkDataProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Production projecton data provider super class.</p>
+<p>This Data Container contains Production data on benchmark level. Data has a regions and sector indices.
+Initialized ProductionBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.ProductionBenchmarkDataProvider.benchmark_changed">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">benchmark_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">production_benchmark</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><span class="pre">ProductionBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.data_providers.ProductionBenchmarkDataProvider.benchmark_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.ProductionBenchmarkDataProvider.get_company_projected_production">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_projected_production</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ghg_scope12</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.data_providers.ProductionBenchmarkDataProvider.get_company_projected_production" title="Link to this definition"></a></dt>
+<dd><p>get the projected productions for all companies in ghg_scope12
+:param ghg_scope12: DataFrame with at least the following columns :
+ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+:return: Dataframe of projected productions for [base_year - base_year + 50]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.ProductionBenchmarkDataProvider.get_benchmark_projections">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_benchmark_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_secor_region_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.data_providers.ProductionBenchmarkDataProvider.get_benchmark_projections" title="Link to this definition"></a></dt>
+<dd><p>get the sector emissions for a list of companies.
+If there is no data for the sector, then it will be replaced by the global value
+:param company_secor_region_info: DataFrame with at least the following columns :
+ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+:return: A DataFrame with company and intensity benchmarks per calendar year per row</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.data_providers.</span></span><span class="sig-name descname"><span class="pre">IntensityBenchmarkDataProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">benchmark_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ITR.data.osc_units.delta_degC_Quantity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_global_budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ITR.data.osc_units.EmissionsQuantity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_AFOLU_included</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Production intensity data provider super class.
+This Data Container contains emission intensity data on benchmark level. Data has a regions and sector indices.
+Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.is_AFOLU_included">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_AFOLU_included</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.is_AFOLU_included" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>if AFOLU is included in the benchmarks global budget</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.benchmark_temperature">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">benchmark_temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ITR.data.osc_units.delta_degC_Quantity</span></em><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.benchmark_temperature" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>assumed temperature for the benchmark. for OECM 1.5C for example</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.benchmark_global_budget">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">benchmark_global_budget</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ITR.data.osc_units.EmissionsQuantity</span></em><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.benchmark_global_budget" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Benchmark provider assumed global budget. if AFOLU is not included global budget is divided by 0.76</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.AFOLU_CORRECTION_FACTOR">
+<span class="sig-name descname"><span class="pre">AFOLU_CORRECTION_FACTOR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.76</span></em><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.AFOLU_CORRECTION_FACTOR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.get_scopes">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_scopes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.get_scopes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.benchmarks_changed">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">benchmarks_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ei_benchmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.benchmarks_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.prod_centric_changed">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prod_centric_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ei_benchmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.prod_centric_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider._get_intensity_benchmarks">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_get_intensity_benchmarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_sector_region_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider._get_intensity_benchmarks" title="Link to this definition"></a></dt>
+<dd><p>returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+:param company_sector_region_info: DataFrame with at least the following columns :
+ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+:return: A DataFrame with company and intensity benchmarks per calendar year per row</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.get_SDA_intensity_benchmarks">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_SDA_intensity_benchmarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_sector_region_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.get_SDA_intensity_benchmarks" title="Link to this definition"></a></dt>
+<dd><p>returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+:param company_sector_region_info: DataFrame with at least the following columns :
+ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+:return: A DataFrame with company and intensity benchmarks per calendar year per row</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.data_providers.IntensityBenchmarkDataProvider.is_production_centric">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_production_centric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.data_providers.IntensityBenchmarkDataProvider.is_production_centric" title="Link to this definition"></a></dt>
+<dd><p>returns True if benchmark is “production_centric” (as defined by OECM)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../base_providers/index.html" class="btn btn-neutral float-left" title="ITR.data.base_providers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../data_warehouse/index.html" class="btn btn-neutral float-right" title="ITR.data.data_warehouse" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, OS-Climate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

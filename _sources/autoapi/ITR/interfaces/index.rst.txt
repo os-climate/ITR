@@ -1,0 +1,2052 @@
+:py:mod:`ITR.interfaces`
+========================
+
+.. py:module:: ITR.interfaces
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   ITR.interfaces.SortableEnum
+   ITR.interfaces.EScope
+   ITR.interfaces.ETimeFrames
+   ITR.interfaces.ECarbonBudgetScenario
+   ITR.interfaces.EScoreResultType
+   ITR.interfaces.AggregationContribution
+   ITR.interfaces.Aggregation
+   ITR.interfaces.ScoreAggregation
+   ITR.interfaces.ScoreAggregationScopes
+   ITR.interfaces.ScoreAggregations
+   ITR.interfaces.PortfolioCompany
+   ITR.interfaces.UProjection
+   ITR.interfaces.IProjection
+   ITR.interfaces.IBenchmark
+   ITR.interfaces.IBenchmarks
+   ITR.interfaces.IProductionBenchmarkScopes
+   ITR.interfaces.IEIBenchmarkScopes
+   ITR.interfaces.ICompanyEIProjection
+   ITR.interfaces.ICompanyEIProjections
+   ITR.interfaces.DF_ICompanyEIProjections
+   ITR.interfaces.ICompanyEIProjectionsScopes
+   ITR.interfaces.IProductionRealization
+   ITR.interfaces.IEmissionRealization
+   ITR.interfaces.IHistoricEmissionsScopes
+   ITR.interfaces.IEIRealization
+   ITR.interfaces.IHistoricEIScopes
+   ITR.interfaces.IHistoricData
+   ITR.interfaces.ITargetData
+   ITR.interfaces.ICompanyData
+   ITR.interfaces.ICompanyAggregates
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.interfaces.logger
+   ITR.interfaces.emptyAggregation
+   ITR.interfaces.emptyScoreAggregation
+   ITR.interfaces.emptyScoreAggregationScopes
+   ITR.interfaces.empty_IBenchmarks
+   ITR.interfaces.empty_ICompanyEIProjectionsScopes
+   ITR.interfaces.empty_IHistoricEmissionsScopes
+   ITR.interfaces.empty_IHistoricEIScopes
+
+
+.. py:data:: logger
+
+   
+
+.. py:class:: SortableEnum(*args, **kwds)
+
+
+   Bases: :py:obj:`enum.Enum`
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access::
+
+   >>> Color.RED
+   <Color.RED: 1>
+
+   - value lookup:
+
+   >>> Color(1)
+   <Color.RED: 1>
+
+   - name lookup:
+
+   >>> Color['RED']
+   <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+   .. py:method:: __ge__(other)
+
+      Return self>=value.
+
+
+   .. py:method:: __gt__(other)
+
+      Return self>value.
+
+
+   .. py:method:: __le__(other)
+
+      Return self<=value.
+
+
+   .. py:method:: __lt__(other)
+
+      Return self<value.
+
+
+
+.. py:class:: EScope(*args, **kwds)
+
+
+   Bases: :py:obj:`SortableEnum`
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access::
+
+   >>> Color.RED
+   <Color.RED: 1>
+
+   - value lookup:
+
+   >>> Color(1)
+   <Color.RED: 1>
+
+   - name lookup:
+
+   >>> Color['RED']
+   <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
+   .. py:attribute:: S1
+      :value: 'S1'
+
+      
+
+   .. py:attribute:: S2
+      :value: 'S2'
+
+      
+
+   .. py:attribute:: S3
+      :value: 'S3'
+
+      
+
+   .. py:attribute:: S1S2
+      :value: 'S1+S2'
+
+      
+
+   .. py:attribute:: S1S2S3
+      :value: 'S1+S2+S3'
+
+      
+
+   .. py:attribute:: AnyScope
+      :value: 'AnyScope'
+
+      
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+   .. py:method:: __repr__()
+
+      Return repr(self).
+
+
+   .. py:method:: get_scopes() -> List[str]
+      :classmethod:
+
+      Get a list of all scopes.
+      :return: A list of EScope string values
+
+
+   .. py:method:: get_result_scopes() -> List[EScope]
+      :classmethod:
+
+      Get a list of scopes that should be calculated if the user leaves it open.
+
+      :return: A list of EScope objects
+
+
+
+.. py:class:: ETimeFrames(*args, **kwds)
+
+
+   Bases: :py:obj:`SortableEnum`
+
+   TODO: add support for multiple timeframes. Long currently corresponds to 2050.
+
+   .. py:attribute:: SHORT
+      :value: 'short'
+
+      
+
+   .. py:attribute:: MID
+      :value: 'mid'
+
+      
+
+   .. py:attribute:: LONG
+      :value: 'long'
+
+      
+
+
+.. py:class:: ECarbonBudgetScenario(*args, **kwds)
+
+
+   Bases: :py:obj:`enum.Enum`
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access::
+
+   >>> Color.RED
+   <Color.RED: 1>
+
+   - value lookup:
+
+   >>> Color(1)
+   <Color.RED: 1>
+
+   - name lookup:
+
+   >>> Color['RED']
+   <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
+   .. py:attribute:: P25
+      :value: '25 percentile'
+
+      
+
+   .. py:attribute:: P75
+      :value: '75 percentile'
+
+      
+
+   .. py:attribute:: MEAN
+      :value: 'Average'
+
+      
+
+
+.. py:class:: EScoreResultType(*args, **kwds)
+
+
+   Bases: :py:obj:`enum.Enum`
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access::
+
+   >>> Color.RED
+   <Color.RED: 1>
+
+   - value lookup:
+
+   >>> Color(1)
+   <Color.RED: 1>
+
+   - name lookup:
+
+   >>> Color['RED']
+   <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
+   .. py:attribute:: DEFAULT
+      :value: 'Default'
+
+      
+
+   .. py:attribute:: TRAJECTORY_ONLY
+      :value: 'Trajectory only'
+
+      
+
+   .. py:attribute:: TARGET_ONLY
+      :value: 'Target only'
+
+      
+
+   .. py:attribute:: COMPLETE
+      :value: 'Complete'
+
+      
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+   .. py:method:: __repr__()
+
+      Return repr(self).
+
+
+   .. py:method:: get_result_types() -> List[EScoreResultType]
+      :classmethod:
+
+      Get a list of all result types, ordered by priority (first << last priority).
+      :return: A list of the EScoreResultType values
+
+
+
+.. py:class:: AggregationContribution(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: company_name
+      :type: str
+
+      
+
+   .. py:attribute:: company_id
+      :type: str
+
+      
+
+   .. py:attribute:: temperature_score
+      :type: ITR.data.osc_units.delta_degC_Quantity
+
+      
+
+   .. py:attribute:: contribution_relative
+      :type: Optional[ITR.data.osc_units.percent_Quantity]
+
+      
+
+   .. py:attribute:: contribution
+      :type: Optional[ITR.data.osc_units.delta_degC_Quantity]
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:class:: Aggregation(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: score
+      :type: ITR.data.osc_units.delta_degC_Quantity
+
+      
+
+   .. py:attribute:: proportion
+      :type: float
+
+      
+
+   .. py:attribute:: contributions
+      :type: List[AggregationContribution]
+      :value: []
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: empty()
+
+
+
+.. py:data:: emptyAggregation
+
+   
+
+.. py:class:: ScoreAggregation(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: all
+      :type: Aggregation
+
+      
+
+   .. py:attribute:: influence_percentage
+      :type: ITR.data.osc_units.percent_Quantity
+
+      
+
+   .. py:attribute:: grouped
+      :type: Dict[str, Aggregation]
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: empty()
+
+
+
+.. py:data:: emptyScoreAggregation
+
+   
+
+.. py:class:: ScoreAggregationScopes(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: S1
+      :type: ScoreAggregation
+
+      
+
+   .. py:attribute:: S2
+      :type: ScoreAggregation
+
+      
+
+   .. py:attribute:: S1S2
+      :type: ScoreAggregation
+
+      
+
+   .. py:attribute:: S3
+      :type: ScoreAggregation
+
+      
+
+   .. py:attribute:: S1S2S3
+      :type: ScoreAggregation
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:data:: emptyScoreAggregationScopes
+
+   
+
+.. py:class:: ScoreAggregations(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: short
+      :type: ScoreAggregationScopes
+
+      
+
+   .. py:attribute:: mid
+      :type: ScoreAggregationScopes
+
+      
+
+   .. py:attribute:: long
+      :type: ScoreAggregationScopes
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:class:: PortfolioCompany(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: company_name
+      :type: str
+
+      
+
+   .. py:attribute:: company_id
+      :type: str
+
+      
+
+   .. py:attribute:: company_isin
+      :type: Optional[str]
+      :value: ''
+
+      
+
+   .. py:attribute:: investment_value
+      :type: ITR.data.osc_units.MonetaryQuantity
+
+      
+
+   .. py:attribute:: user_fields
+      :type: Optional[Dict[str, str]]
+
+      
+
+
+.. py:class:: UProjection(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: year
+      :type: int
+
+      
+
+   .. py:attribute:: value
+      :type: float
+
+      
+
+
+.. py:class:: IProjection(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: year
+      :type: int
+
+      
+
+   .. py:attribute:: value
+      :type: ITR.data.osc_units.BenchmarkQuantity
+
+      
+
+
+.. py:class:: IBenchmark(benchmark_metric, projections_nounits=[], projections=[], base_year_production=None, *args, **kwargs)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: sector
+      :type: str
+
+      
+
+   .. py:attribute:: region
+      :type: str
+
+      
+
+   .. py:attribute:: benchmark_metric
+      :type: ITR.data.osc_units.BenchmarkMetric
+
+      
+
+   .. py:attribute:: projections_nounits
+      :type: List[UProjection]
+
+      
+
+   .. py:attribute:: projections
+      :type: List[IProjection]
+
+      
+
+   .. py:attribute:: base_year_production
+      :type: Optional[ITR.data.osc_units.ProductionQuantity]
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:class:: IBenchmarks(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: benchmarks
+      :type: List[IBenchmark]
+
+      
+
+   .. py:attribute:: production_centric
+      :type: bool
+      :value: False
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:data:: empty_IBenchmarks
+
+   
+
+.. py:class:: IProductionBenchmarkScopes(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: AnyScope
+      :type: IBenchmarks
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:class:: IEIBenchmarkScopes(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: S1
+      :type: Optional[IBenchmarks]
+
+      
+
+   .. py:attribute:: S2
+      :type: Optional[IBenchmarks]
+
+      
+
+   .. py:attribute:: S1S2
+      :type: Optional[IBenchmarks]
+
+      
+
+   .. py:attribute:: S3
+      :type: Optional[IBenchmarks]
+
+      
+
+   .. py:attribute:: S1S2S3
+      :type: Optional[IBenchmarks]
+
+      
+
+   .. py:attribute:: benchmark_temperature
+      :type: ITR.data.osc_units.delta_degC_Quantity
+
+      
+
+   .. py:attribute:: benchmark_global_budget
+      :type: ITR.data.osc_units.EmissionsQuantity
+
+      
+
+   .. py:attribute:: is_AFOLU_included
+      :type: bool
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:class:: ICompanyEIProjection(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: year
+      :type: int
+
+      
+
+   .. py:attribute:: value
+      :type: ITR.data.osc_units.EI_Quantity
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: __eq__(o)
+
+      Return self==value.
+
+
+   .. py:method:: add(o)
+
+
+   .. py:method:: min(o)
+
+
+
+.. py:class:: ICompanyEIProjections(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: ei_metric
+      :type: ITR.data.osc_units.EI_Metric
+
+      
+
+   .. py:attribute:: projections
+      :type: List[ICompanyEIProjection]
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+
+.. py:class:: DF_ICompanyEIProjections(icompany_ei_projections=None, *args, **kwargs)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: ei_metric
+      :type: ITR.data.osc_units.EI_Metric
+
+      
+
+   .. py:attribute:: projections
+      :type: pandas.Series
+
+      
+
+   .. py:method:: val_projections(v: pandas.Series)
+
+
+
+.. py:class:: ICompanyEIProjectionsScopes(*args, **kwargs)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: S1
+      :type: Optional[DF_ICompanyEIProjections]
+
+      
+
+   .. py:attribute:: S2
+      :type: Optional[DF_ICompanyEIProjections]
+
+      
+
+   .. py:attribute:: S1S2
+      :type: Optional[DF_ICompanyEIProjections]
+
+      
+
+   .. py:attribute:: S3
+      :type: Optional[DF_ICompanyEIProjections]
+
+      
+
+   .. py:attribute:: S1S2S3
+      :type: Optional[DF_ICompanyEIProjections]
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+   .. py:method:: _adjust_trajectories(primary_scope_attr: str)
+
+
+   .. py:method:: _align_and_sum_projected_targets(primary_scope_attr)
+
+
+   .. py:method:: empty()
+
+
+
+.. py:data:: empty_ICompanyEIProjectionsScopes
+
+   
+
+.. py:class:: IProductionRealization(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: year
+      :type: int
+
+      
+
+   .. py:attribute:: value
+      :type: Optional[ITR.data.osc_units.ProductionQuantity]
+
+      
+
+
+.. py:class:: IEmissionRealization(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: year
+      :type: int
+
+      
+
+   .. py:attribute:: value
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: __eq__(o)
+
+      Return self==value.
+
+
+   .. py:method:: add(o)
+
+
+
+.. py:class:: IHistoricEmissionsScopes(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: S1
+      :type: Optional[List[IEmissionRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S2
+      :type: Optional[List[IEmissionRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S1S2
+      :type: Optional[List[IEmissionRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S3
+      :type: Optional[List[IEmissionRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S1S2S3
+      :type: Optional[List[IEmissionRealization]]
+      :value: []
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+   .. py:method:: empty()
+
+
+
+.. py:data:: empty_IHistoricEmissionsScopes
+
+   
+
+.. py:class:: IEIRealization(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: year
+      :type: int
+
+      
+
+   .. py:attribute:: value
+      :type: Optional[ITR.data.osc_units.EI_Quantity]
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: __eq__(o)
+
+      Return self==value.
+
+
+   .. py:method:: add(o)
+
+
+
+.. py:class:: IHistoricEIScopes(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: S1
+      :type: Optional[List[IEIRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S2
+      :type: Optional[List[IEIRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S1S2
+      :type: Optional[List[IEIRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S3
+      :type: Optional[List[IEIRealization]]
+      :value: []
+
+      
+
+   .. py:attribute:: S1S2S3
+      :type: Optional[List[IEIRealization]]
+      :value: []
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+   .. py:method:: __str__()
+
+      Return str(self).
+
+
+   .. py:method:: empty()
+
+
+
+.. py:data:: empty_IHistoricEIScopes
+
+   
+
+.. py:class:: IHistoricData(productions=[], emissions=empty_IHistoricEmissionsScopes, emissions_intensities=empty_IHistoricEIScopes, *args, **kwargs)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: productions
+      :type: List[IProductionRealization]
+
+      
+
+   .. py:attribute:: emissions
+      :type: IHistoricEmissionsScopes
+
+      
+
+   .. py:attribute:: emissions_intensities
+      :type: IHistoricEIScopes
+
+      
+
+   .. py:method:: _normalize(production_metric: ITR.data.osc_units.ProductionMetric, emissions_metric: ITR.data.osc_units.EmissionsMetric) -> None
+
+
+   .. py:method:: empty() -> bool
+
+
+
+.. py:class:: ITargetData(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: netzero_year
+      :type: Optional[int]
+
+      
+
+   .. py:attribute:: target_type
+      :type: Union[Literal[intensity], Literal[absolute], Literal[Intensity], Literal[Absolute]]
+
+      
+
+   .. py:attribute:: target_scope
+      :type: EScope
+
+      
+
+   .. py:attribute:: target_start_year
+      :type: Optional[int]
+
+      
+
+   .. py:attribute:: target_base_year
+      :type: int
+
+      
+
+   .. py:attribute:: target_end_year
+      :type: int
+
+      
+
+   .. py:attribute:: target_base_year_qty
+      :type: float
+
+      
+
+   .. py:attribute:: target_base_year_err
+      :type: Optional[float]
+
+      
+
+   .. py:attribute:: target_base_year_unit
+      :type: str
+
+      
+
+   .. py:attribute:: target_reduction_pct
+      :type: float
+
+      
+
+   .. py:method:: start_end_base_order(v)
+
+
+
+.. py:class:: ICompanyData(emissions_metric=None, production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None, target_data=None, historic_data=None, projected_targets=empty_ICompanyEIProjectionsScopes, projected_intensities=empty_ICompanyEIProjectionsScopes, *args, **kwargs)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: company_name
+      :type: str
+
+      
+
+   .. py:attribute:: company_id
+      :type: str
+
+      
+
+   .. py:attribute:: sector
+      :type: str
+
+      
+
+   .. py:attribute:: region
+      :type: str
+
+      
+
+   .. py:attribute:: target_probability
+      :type: float
+
+      
+
+   .. py:attribute:: target_data
+      :type: Optional[List[ITargetData]]
+      :value: []
+
+      
+
+   .. py:attribute:: historic_data
+      :type: IHistoricData
+
+      
+
+   .. py:attribute:: country
+      :type: Optional[str]
+
+      
+
+   .. py:attribute:: emissions_metric
+      :type: Optional[ITR.data.osc_units.EmissionsMetric]
+
+      
+
+   .. py:attribute:: production_metric
+      :type: Optional[ITR.data.osc_units.ProductionMetric]
+
+      
+
+   .. py:attribute:: base_year_production
+      :type: Optional[ITR.data.osc_units.ProductionQuantity]
+
+      
+
+   .. py:attribute:: ghg_s1s2
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:attribute:: ghg_s3
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:attribute:: industry_level_1
+      :type: Optional[str]
+
+      
+
+   .. py:attribute:: industry_level_2
+      :type: Optional[str]
+
+      
+
+   .. py:attribute:: industry_level_3
+      :type: Optional[str]
+
+      
+
+   .. py:attribute:: industry_level_4
+      :type: Optional[str]
+
+      
+
+   .. py:attribute:: company_revenue
+      :type: Optional[ITR.data.osc_units.MonetaryQuantity]
+
+      
+
+   .. py:attribute:: company_market_cap
+      :type: Optional[ITR.data.osc_units.MonetaryQuantity]
+
+      
+
+   .. py:attribute:: company_enterprise_value
+      :type: Optional[ITR.data.osc_units.MonetaryQuantity]
+
+      
+
+   .. py:attribute:: company_ev_plus_cash
+      :type: Optional[ITR.data.osc_units.MonetaryQuantity]
+
+      
+
+   .. py:attribute:: company_total_assets
+      :type: Optional[ITR.data.osc_units.MonetaryQuantity]
+
+      
+
+   .. py:attribute:: company_cash_equivalents
+      :type: Optional[ITR.data.osc_units.MonetaryQuantity]
+
+      
+
+   .. py:attribute:: projected_targets
+      :type: ICompanyEIProjectionsScopes
+
+      
+
+   .. py:attribute:: projected_intensities
+      :type: ICompanyEIProjectionsScopes
+
+      
+
+   .. py:method:: _sector_to_production_units(sector, region='Global')
+
+
+   .. py:method:: _get_base_realization_from_historic(realized_values: List[pydantic.BaseModel], metric, base_year=None)
+
+
+
+.. py:class:: ICompanyAggregates(emissions_metric=None, production_metric=None, base_year_production=None, ghg_s1s2=None, ghg_s3=None, target_data=None, historic_data=None, projected_targets=empty_ICompanyEIProjectionsScopes, projected_intensities=empty_ICompanyEIProjectionsScopes, *args, **kwargs)
+
+
+   Bases: :py:obj:`ICompanyData`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:attribute:: cumulative_budget
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:attribute:: cumulative_scaled_budget
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:attribute:: cumulative_trajectory
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:attribute:: cumulative_target
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:attribute:: benchmark_temperature
+      :type: Optional[ITR.data.osc_units.delta_degC_Quantity]
+
+      
+
+   .. py:attribute:: benchmark_global_budget
+      :type: Optional[ITR.data.osc_units.EmissionsQuantity]
+
+      
+
+   .. py:attribute:: scope
+      :type: Optional[EScope]
+
+      
+
+   .. py:attribute:: trajectory_exceedance_year
+      :type: Optional[int]
+
+      
+
+   .. py:attribute:: target_exceedance_year
+      :type: Optional[int]
+
+      
+
+   .. py:method:: val_exceedance_year(v)
+
+
+   .. py:method:: from_ICompanyData(super_instance, scope_company_data)
+      :classmethod:
+
+      Fast way to add instance variables to a pre-validated SUPER_INSTANCE
+      SCOPE_COMPANY_DATA is the dictionary of the new values we want to add...for this one company
+
+
+

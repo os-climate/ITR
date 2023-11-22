@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITR.data.osc_units &mdash; ITR Temperature Alignment tool  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="ITR.data.template" href="../template/index.html" />
+    <link rel="prev" title="ITR.data.excel" href="../excel/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            ITR Temperature Alignment tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting Started Using Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rest_api.html">Getting Started Using REST API &amp; UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../FunctionalOverview.html">Functional Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../DataRequirements.html">Data Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Legends.html">Data Legends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#contributing-code">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#releasing">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#code-of-conduct">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id4">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id10">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id13">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#documentation-improvements">Documentation Improvements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#maintainer-tasks">Maintainer tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../terms.html">Terms of Use</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">ITR Temperature Alignment tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a></li>
+          <li class="breadcrumb-item"><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.osc_units</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/ITR/data/osc_units/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ITR.data.osc_units">
+<span id="itr-data-osc-units"></span><h1><a class="reference internal" href="#module-ITR.data.osc_units" title="ITR.data.osc_units"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.osc_units</span></code></a><a class="headerlink" href="#module-ITR.data.osc_units" title="Link to this heading"></a></h1>
+<p>This module handles initialization of pint functionality</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.direct_conversions" title="ITR.data.osc_units.direct_conversions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">direct_conversions</span></code></a>(→ List[str])</p></td>
+<td><p>Return a LIST of unit names that Pint can convert implicitly from/to UNIT.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.time_dimension" title="ITR.data.osc_units.time_dimension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">time_dimension</span></code></a>(→ bool)</p></td>
+<td><p>True if UNIT can be converted to something related only to time.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.convert_to_annual" title="ITR.data.osc_units.convert_to_annual"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_to_annual</span></code></a>(x[, errors])</p></td>
+<td><p>For a quantity X that has units of [time], reduce the time dimension, leaving an &quot;implictly annual&quot; metric.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.dimension_as" title="ITR.data.osc_units.dimension_as"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dimension_as</span></code></a>(x, dim_unit)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.align_production_to_bm" title="ITR.data.osc_units.align_production_to_bm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">align_production_to_bm</span></code></a>(→ pandas.Series)</p></td>
+<td><p>A timeseries of production unit values can be aligned with a timeseries of Emissions Intensity (EI)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_ProductionMetric" title="ITR.data.osc_units.check_ProductionMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_ProductionMetric</span></code></a>(→ str)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_EmissionsMetric" title="ITR.data.osc_units.check_EmissionsMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_EmissionsMetric</span></code></a>(→ str)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_EI_Metric" title="ITR.data.osc_units.check_EI_Metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_EI_Metric</span></code></a>(→ str)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_BenchmarkMetric" title="ITR.data.osc_units.check_BenchmarkMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_BenchmarkMetric</span></code></a>(→ str)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.to_Quantity" title="ITR.data.osc_units.to_Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_Quantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_EmissionsQuantity" title="ITR.data.osc_units.check_EmissionsQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_EmissionsQuantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_ProductionQuantity" title="ITR.data.osc_units.check_ProductionQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_ProductionQuantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_EI_Quantity" title="ITR.data.osc_units.check_EI_Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_EI_Quantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_BenchmarkQuantity" title="ITR.data.osc_units.check_BenchmarkQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_BenchmarkQuantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_MonetaryQuantity" title="ITR.data.osc_units.check_MonetaryQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_MonetaryQuantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_delta_degC_Quantity" title="ITR.data.osc_units.check_delta_degC_Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_delta_degC_Quantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.check_percent_Quantity" title="ITR.data.osc_units.check_percent_Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_percent_Quantity</span></code></a>(→ Quantity)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.Quantity_type" title="ITR.data.osc_units.Quantity_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Quantity_type</span></code></a>(→ type)</p></td>
+<td><p>A method for making a pydantic compliant Pint quantity field type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.asPintSeries" title="ITR.data.osc_units.asPintSeries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asPintSeries</span></code></a>(→ pandas.Series)</p></td>
+<td><p>:param series : pd.Series possibly containing Quantity values, not already in a PintArray.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.asPintDataFrame" title="ITR.data.osc_units.asPintDataFrame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asPintDataFrame</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p>:param df : pd.DataFrame with columns to be converted into PintArrays where possible.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.requantify_df_from_columns" title="ITR.data.osc_units.requantify_df_from_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">requantify_df_from_columns</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">param df<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.Quantity" title="ITR.data.osc_units.Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Quantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.base_currency_unit" title="ITR.data.osc_units.base_currency_unit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base_currency_unit</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.fx_ctx" title="ITR.data.osc_units.fx_ctx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fx_ctx</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.NG_DENS" title="ITR.data.osc_units.NG_DENS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NG_DENS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.NG_SE" title="ITR.data.osc_units.NG_SE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NG_SE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.ng" title="ITR.data.osc_units.ng"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ng</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.COAL_SE" title="ITR.data.osc_units.COAL_SE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COAL_SE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.coal" title="ITR.data.osc_units.coal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coal</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.oil" title="ITR.data.osc_units.oil"><code class="xref py py-obj docutils literal notranslate"><span class="pre">oil</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units._production_units" title="ITR.data.osc_units._production_units"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_production_units</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units._ei_units" title="ITR.data.osc_units._ei_units"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_ei_units</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.ProductionMetric" title="ITR.data.osc_units.ProductionMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProductionMetric</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.EmissionsMetric" title="ITR.data.osc_units.EmissionsMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EmissionsMetric</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.EI_Metric" title="ITR.data.osc_units.EI_Metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EI_Metric</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.BenchmarkMetric" title="ITR.data.osc_units.BenchmarkMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BenchmarkMetric</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.EmissionsQuantity" title="ITR.data.osc_units.EmissionsQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EmissionsQuantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.ProductionQuantity" title="ITR.data.osc_units.ProductionQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProductionQuantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.EI_Quantity" title="ITR.data.osc_units.EI_Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EI_Quantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.BenchmarkQuantity" title="ITR.data.osc_units.BenchmarkQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BenchmarkQuantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.MonetaryQuantity" title="ITR.data.osc_units.MonetaryQuantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MonetaryQuantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.osc_units.delta_degC_Quantity" title="ITR.data.osc_units.delta_degC_Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delta_degC_Quantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.osc_units.percent_Quantity" title="ITR.data.osc_units.percent_Quantity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">percent_Quantity</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">Quantity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">typing_extensions.TypeAlias</span></em><a class="headerlink" href="#ITR.data.osc_units.Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.base_currency_unit">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">base_currency_unit</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'USD'</span></em><a class="headerlink" href="#ITR.data.osc_units.base_currency_unit" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.fx_ctx">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">fx_ctx</span></span><a class="headerlink" href="#ITR.data.osc_units.fx_ctx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.NG_DENS">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">NG_DENS</span></span><a class="headerlink" href="#ITR.data.osc_units.NG_DENS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.NG_SE">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">NG_SE</span></span><a class="headerlink" href="#ITR.data.osc_units.NG_SE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.ng">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">ng</span></span><a class="headerlink" href="#ITR.data.osc_units.ng" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.COAL_SE">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">COAL_SE</span></span><a class="headerlink" href="#ITR.data.osc_units.COAL_SE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.coal">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">coal</span></span><a class="headerlink" href="#ITR.data.osc_units.coal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.direct_conversions">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">direct_conversions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ureg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.osc_units.direct_conversions" title="Link to this definition"></a></dt>
+<dd><p>Return a LIST of unit names that Pint can convert implicitly from/to UNIT.
+This does not include the list of additional unit names that can be explicitly
+converted by using the <cite>Quantity.to</cite> method.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.time_dimension">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">time_dimension</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.osc_units.time_dimension" title="Link to this definition"></a></dt>
+<dd><p>True if UNIT can be converted to something related only to time.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.convert_to_annual">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">convert_to_annual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ignore'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.osc_units.convert_to_annual" title="Link to this definition"></a></dt>
+<dd><p>For a quantity X that has units of [time], reduce the time dimension, leaving an “implictly annual” metric.
+If X has no time dimension, or if it cannot be reduced to zero in a single step, raise a DimensionalityError.
+If ERRORS==’ignore’, allow time dimension to be reduced one step towards zero rather than only to zero.
+Returns the reduced quantity, or the original quantity if reduction would result in an error being raised.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.dimension_as">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">dimension_as</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_unit</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.osc_units.dimension_as" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.align_production_to_bm">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">align_production_to_bm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prod_series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ei_bm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.osc_units.align_production_to_bm" title="Link to this definition"></a></dt>
+<dd><p>A timeseries of production unit values can be aligned with a timeseries of Emissions Intensity (EI)
+metrics that uses different units of production.  For example, the production timeseries might be
+<cite>bbl</cite> (<cite>Blue Barrels of Oil</cite>) but the EI might be <cite>t CO2e/GJ</cite> (<cite>CO2e * metric_ton / gigajoule</cite>).
+By converting the production series to gigajoules up front, there are no complex conversions
+needed later (such as trying to convert <cite>t CO2e * metric_ton / bbl</cite> to
+<cite>CO2e * metric_ton / gigajoule</cite>, which is not straightfowrard, as the former is
+<cite>[mass] / [length]**3</cite> whereas the latter is <cite>[seconds] ** 2 / [length] **2</cite>.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.oil">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">oil</span></span><a class="headerlink" href="#ITR.data.osc_units.oil" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units._production_units">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">_production_units</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['Wh',</span> <span class="pre">'pkm',</span> <span class="pre">'tkm',</span> <span class="pre">'bcm</span> <span class="pre">CH4',</span> <span class="pre">'bbl',</span> <span class="pre">'boe',</span> <span class="pre">'t</span> <span class="pre">Alloys',</span> <span class="pre">'t</span> <span class="pre">Aluminum',</span> <span class="pre">'t</span> <span class="pre">Cement',</span> <span class="pre">'t</span> <span class="pre">Coal',</span> <span class="pre">'t...</span></em><a class="headerlink" href="#ITR.data.osc_units._production_units" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units._ei_units">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">_ei_units</span></span><a class="headerlink" href="#ITR.data.osc_units._ei_units" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_ProductionMetric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_ProductionMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_ProductionMetric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.ProductionMetric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">ProductionMetric</span></span><a class="headerlink" href="#ITR.data.osc_units.ProductionMetric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_EmissionsMetric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_EmissionsMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_EmissionsMetric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.EmissionsMetric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">EmissionsMetric</span></span><a class="headerlink" href="#ITR.data.osc_units.EmissionsMetric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_EI_Metric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_EI_Metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_EI_Metric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.EI_Metric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">EI_Metric</span></span><a class="headerlink" href="#ITR.data.osc_units.EI_Metric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_BenchmarkMetric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_BenchmarkMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_BenchmarkMetric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.BenchmarkMetric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">BenchmarkMetric</span></span><a class="headerlink" href="#ITR.data.osc_units.BenchmarkMetric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.to_Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">to_Quantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.to_Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_EmissionsQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_EmissionsQuantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_EmissionsQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.EmissionsQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">EmissionsQuantity</span></span><a class="headerlink" href="#ITR.data.osc_units.EmissionsQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_ProductionQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_ProductionQuantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_ProductionQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.ProductionQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">ProductionQuantity</span></span><a class="headerlink" href="#ITR.data.osc_units.ProductionQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_EI_Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_EI_Quantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_EI_Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.EI_Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">EI_Quantity</span></span><a class="headerlink" href="#ITR.data.osc_units.EI_Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_BenchmarkQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_BenchmarkQuantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_BenchmarkQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.BenchmarkQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">BenchmarkQuantity</span></span><a class="headerlink" href="#ITR.data.osc_units.BenchmarkQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_MonetaryQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_MonetaryQuantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_MonetaryQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.MonetaryQuantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">MonetaryQuantity</span></span><a class="headerlink" href="#ITR.data.osc_units.MonetaryQuantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_delta_degC_Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_delta_degC_Quantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_delta_degC_Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.delta_degC_Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">delta_degC_Quantity</span></span><a class="headerlink" href="#ITR.data.osc_units.delta_degC_Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.check_percent_Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">check_percent_Quantity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quantity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Quantity</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Quantity</span></span></span><a class="headerlink" href="#ITR.data.osc_units.check_percent_Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.osc_units.percent_Quantity">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">percent_Quantity</span></span><a class="headerlink" href="#ITR.data.osc_units.percent_Quantity" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.Quantity_type">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">Quantity_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">type</span></span></span><a class="headerlink" href="#ITR.data.osc_units.Quantity_type" title="Link to this definition"></a></dt>
+<dd><p>A method for making a pydantic compliant Pint quantity field type.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.asPintSeries">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">asPintSeries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ignore'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.osc_units.asPintSeries" title="Link to this definition"></a></dt>
+<dd><p>:param series : pd.Series possibly containing Quantity values, not already in a PintArray.
+:param name : the name to give to the resulting series
+:param errors : { ‘raise’, ‘ignore’ }, default ‘ignore’
+:param inplace : bool, default False.  If True, perform operation in-place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If there is only one type of unit in the series, a PintArray version of the series, replacing NULL values with Quantity (np.nan, unit_type).</p>
+</dd>
+</dl>
+<p>Raises ValueError if there are more than one type of units in the series.
+Silently returns series if no conversion needed to be done.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.asPintDataFrame">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">asPintDataFrame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ignore'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.osc_units.asPintDataFrame" title="Link to this definition"></a></dt>
+<dd><p>:param df : pd.DataFrame with columns to be converted into PintArrays where possible.
+:param errors : { ‘raise’, ‘ignore’ }, default ‘ignore’
+:param inplace : bool, default False.  If True, perform operation in-place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A pd.DataFrame with columns converted to PintArrays where possible.</p>
+</dd>
+</dl>
+<p>Raises ValueError if there are more than one type of units in any of the columns.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.osc_units.requantify_df_from_columns">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.osc_units.</span></span><span class="sig-name descname"><span class="pre">requantify_df_from_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.osc_units.requantify_df_from_columns" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – pd.DataFrame</p></li>
+<li><p><strong>inplace</strong> – bool, default False.  If True, perform operation in-place.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka ‘pint[UNITS]’)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../excel/index.html" class="btn btn-neutral float-left" title="ITR.data.excel" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../template/index.html" class="btn btn-neutral float-right" title="ITR.data.template" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, OS-Climate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

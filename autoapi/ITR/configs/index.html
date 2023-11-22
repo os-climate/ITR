@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITR.configs &mdash; ITR Temperature Alignment tool  documentation</title>
+      <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="ITR.interfaces" href="../interfaces/index.html" />
+    <link rel="prev" title="ITR.data.vault_providers" href="../data/vault_providers/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ITR Temperature Alignment tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting Started Using Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../rest_api.html">Getting Started Using REST API &amp; UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FunctionalOverview.html">Functional Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DataRequirements.html">Data Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Legends.html">Data Legends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#contributing-code">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#releasing">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#code-of-conduct">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#id4">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#id10">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#id13">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#documentation-improvements">Documentation Improvements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html#maintainer-tasks">Maintainer tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../terms.html">Terms of Use</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../index.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.configs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../interfaces/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.interfaces</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../portfolio_aggregation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.portfolio_aggregation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../temperature_score/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.temperature_score</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ITR Temperature Alignment tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.configs</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/ITR/configs/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ITR.configs">
+<span id="itr-configs"></span><h1><a class="reference internal" href="#module-ITR.configs" title="ITR.configs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.configs</span></code></a><a class="headerlink" href="#module-ITR.configs" title="Link to this heading"></a></h1>
+<p>This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
+the module, extend the respective config class and pass it to the class as the “constants” parameter.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnsConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.configs.SectorsConfig" title="ITR.configs.SectorsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SectorsConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.configs.VariablesConfig" title="ITR.configs.VariablesConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VariablesConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.configs.TargetConfig" title="ITR.configs.TargetConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TargetConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.configs.TabsConfig" title="ITR.configs.TabsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TabsConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.configs.PortfolioAggregationConfig" title="ITR.configs.PortfolioAggregationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PortfolioAggregationConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProjectionControls</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.configs.TemperatureScoreControls" title="ITR.configs.TemperatureScoreControls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemperatureScoreControls</span></code></a></p></td>
+<td><p>Usage docs: <a class="reference external" href="https://docs.pydantic.dev/2.5/concepts/models/">https://docs.pydantic.dev/2.5/concepts/models/</a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.configs.TemperatureScoreConfig" title="ITR.configs.TemperatureScoreConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TemperatureScoreConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.configs.LoggingConfig" title="ITR.configs.LoggingConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LoggingConfig</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.configs.ITR_median" title="ITR.configs.ITR_median"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR_median</span></code></a>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.configs.ITR_mean" title="ITR.configs.ITR_mean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR_mean</span></code></a>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.configs.ITR_median">
+<span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">ITR_median</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.configs.ITR_median" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.configs.ITR_mean">
+<span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">ITR_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.configs.ITR_mean" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">ColumnsConfig</span></span><a class="headerlink" href="#ITR.configs.ColumnsConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_ID">
+<span class="sig-name descname"><span class="pre">COMPANY_ID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_id'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_ID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_LEI">
+<span class="sig-name descname"><span class="pre">COMPANY_LEI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_lei'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_LEI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_ISIN">
+<span class="sig-name descname"><span class="pre">COMPANY_ISIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_isin'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_ISIN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_ISIC">
+<span class="sig-name descname"><span class="pre">COMPANY_ISIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'isic'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_ISIC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_CURRENCY">
+<span class="sig-name descname"><span class="pre">COMPANY_CURRENCY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'currency'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_CURRENCY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_MARKET_CAP">
+<span class="sig-name descname"><span class="pre">COMPANY_MARKET_CAP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_market_cap'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_MARKET_CAP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.INVESTMENT_VALUE">
+<span class="sig-name descname"><span class="pre">INVESTMENT_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'investment_value'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.INVESTMENT_VALUE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_ENTERPRISE_VALUE">
+<span class="sig-name descname"><span class="pre">COMPANY_ENTERPRISE_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_enterprise_value'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_ENTERPRISE_VALUE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_EV_PLUS_CASH">
+<span class="sig-name descname"><span class="pre">COMPANY_EV_PLUS_CASH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_ev_plus_cash'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_EV_PLUS_CASH" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_TOTAL_ASSETS">
+<span class="sig-name descname"><span class="pre">COMPANY_TOTAL_ASSETS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_total_assets'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_TOTAL_ASSETS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.SCOPE">
+<span class="sig-name descname"><span class="pre">SCOPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'scope'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.SCOPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.START_YEAR">
+<span class="sig-name descname"><span class="pre">START_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'start_year'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.START_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.VARIABLE">
+<span class="sig-name descname"><span class="pre">VARIABLE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'variable'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.VARIABLE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.SLOPE">
+<span class="sig-name descname"><span class="pre">SLOPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'slope'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.SLOPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TIME_FRAME">
+<span class="sig-name descname"><span class="pre">TIME_FRAME</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'time_frame'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TIME_FRAME" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPERATURE_SCORE">
+<span class="sig-name descname"><span class="pre">TEMPERATURE_SCORE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'temperature_score'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPERATURE_SCORE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_NAME">
+<span class="sig-name descname"><span class="pre">COMPANY_NAME</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_name'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_NAME" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.OWNED_EMISSIONS">
+<span class="sig-name descname"><span class="pre">OWNED_EMISSIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'owned_emissions'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.OWNED_EMISSIONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COUNTRY">
+<span class="sig-name descname"><span class="pre">COUNTRY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'country'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COUNTRY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.SECTOR">
+<span class="sig-name descname"><span class="pre">SECTOR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sector'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.SECTOR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_EXPOSURE">
+<span class="sig-name descname"><span class="pre">TEMPLATE_EXPOSURE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'exposure'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_EXPOSURE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_FX_QUOTE">
+<span class="sig-name descname"><span class="pre">TEMPLATE_FX_QUOTE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fx_quote'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_FX_QUOTE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_FX_RATE">
+<span class="sig-name descname"><span class="pre">TEMPLATE_FX_RATE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fx_rate'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_FX_RATE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_REPORT_DATE">
+<span class="sig-name descname"><span class="pre">TEMPLATE_REPORT_DATE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'report_date'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_REPORT_DATE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.EMISSIONS_METRIC">
+<span class="sig-name descname"><span class="pre">EMISSIONS_METRIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'emissions_metric'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.EMISSIONS_METRIC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.PRODUCTION_METRIC">
+<span class="sig-name descname"><span class="pre">PRODUCTION_METRIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'production_metric'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.PRODUCTION_METRIC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.BASE_YEAR_PRODUCTION">
+<span class="sig-name descname"><span class="pre">BASE_YEAR_PRODUCTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'base_year_production'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.BASE_YEAR_PRODUCTION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.GHG_SCOPE12">
+<span class="sig-name descname"><span class="pre">GHG_SCOPE12</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ghg_s1s2'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.GHG_SCOPE12" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.GHG_SCOPE3">
+<span class="sig-name descname"><span class="pre">GHG_SCOPE3</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ghg_s3'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.GHG_SCOPE3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_SCOPE1">
+<span class="sig-name descname"><span class="pre">TEMPLATE_SCOPE1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'em_s1'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_SCOPE1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_SCOPE2">
+<span class="sig-name descname"><span class="pre">TEMPLATE_SCOPE2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'em_s2'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_SCOPE2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_SCOPE12">
+<span class="sig-name descname"><span class="pre">TEMPLATE_SCOPE12</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'em_s1s2'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_SCOPE12" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_SCOPE3">
+<span class="sig-name descname"><span class="pre">TEMPLATE_SCOPE3</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'em_s3'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_SCOPE3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_SCOPE123">
+<span class="sig-name descname"><span class="pre">TEMPLATE_SCOPE123</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'em_s1s2s3'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_SCOPE123" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.HISTORIC_DATA">
+<span class="sig-name descname"><span class="pre">HISTORIC_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'historic_data'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.HISTORIC_DATA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TARGET_DATA">
+<span class="sig-name descname"><span class="pre">TARGET_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_data'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TARGET_DATA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TEMPLATE_PRODUCTION">
+<span class="sig-name descname"><span class="pre">TEMPLATE_PRODUCTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'production'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TEMPLATE_PRODUCTION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_REVENUE">
+<span class="sig-name descname"><span class="pre">COMPANY_REVENUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_revenue'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_REVENUE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.COMPANY_CASH_EQUIVALENTS">
+<span class="sig-name descname"><span class="pre">COMPANY_CASH_EQUIVALENTS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_cash_equivalents'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.COMPANY_CASH_EQUIVALENTS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.BASE_YEAR">
+<span class="sig-name descname"><span class="pre">BASE_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'base_year'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.BASE_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.END_YEAR">
+<span class="sig-name descname"><span class="pre">END_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'end_year'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.END_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.ISIC">
+<span class="sig-name descname"><span class="pre">ISIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'isic'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.ISIC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.INDUSTRY_LVL1">
+<span class="sig-name descname"><span class="pre">INDUSTRY_LVL1</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'industry_level_1'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.INDUSTRY_LVL1" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.INDUSTRY_LVL2">
+<span class="sig-name descname"><span class="pre">INDUSTRY_LVL2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'industry_level_2'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.INDUSTRY_LVL2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.INDUSTRY_LVL3">
+<span class="sig-name descname"><span class="pre">INDUSTRY_LVL3</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'industry_level_3'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.INDUSTRY_LVL3" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.INDUSTRY_LVL4">
+<span class="sig-name descname"><span class="pre">INDUSTRY_LVL4</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'industry_level_4'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.INDUSTRY_LVL4" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.REGION">
+<span class="sig-name descname"><span class="pre">REGION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'region'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.REGION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.CUMULATIVE_BUDGET">
+<span class="sig-name descname"><span class="pre">CUMULATIVE_BUDGET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cumulative_budget'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.CUMULATIVE_BUDGET" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.CUMULATIVE_SCALED_BUDGET">
+<span class="sig-name descname"><span class="pre">CUMULATIVE_SCALED_BUDGET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cumulative_scaled_budget'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.CUMULATIVE_SCALED_BUDGET" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.CUMULATIVE_TRAJECTORY">
+<span class="sig-name descname"><span class="pre">CUMULATIVE_TRAJECTORY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cumulative_trajectory'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.CUMULATIVE_TRAJECTORY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.CUMULATIVE_TARGET">
+<span class="sig-name descname"><span class="pre">CUMULATIVE_TARGET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cumulative_target'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.CUMULATIVE_TARGET" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TRAJECTORY_EXCEEDANCE_YEAR">
+<span class="sig-name descname"><span class="pre">TRAJECTORY_EXCEEDANCE_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'trajectory_exceedance_year'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TRAJECTORY_EXCEEDANCE_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TARGET_EXCEEDANCE_YEAR">
+<span class="sig-name descname"><span class="pre">TARGET_EXCEEDANCE_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_exceedance_year'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TARGET_EXCEEDANCE_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TARGET_PROBABILITY">
+<span class="sig-name descname"><span class="pre">TARGET_PROBABILITY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_probability'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TARGET_PROBABILITY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.BENCHMARK_TEMP">
+<span class="sig-name descname"><span class="pre">BENCHMARK_TEMP</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'benchmark_temperature'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.BENCHMARK_TEMP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.BENCHMARK_GLOBAL_BUDGET">
+<span class="sig-name descname"><span class="pre">BENCHMARK_GLOBAL_BUDGET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'benchmark_global_budget'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.BENCHMARK_GLOBAL_BUDGET" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.BASE_EI">
+<span class="sig-name descname"><span class="pre">BASE_EI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ei_at_base_year'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.BASE_EI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.PROJECTED_EI">
+<span class="sig-name descname"><span class="pre">PROJECTED_EI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'projected_intensities'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.PROJECTED_EI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.PROJECTED_TARGETS">
+<span class="sig-name descname"><span class="pre">PROJECTED_TARGETS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'projected_targets'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.PROJECTED_TARGETS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.HISTORIC_PRODUCTIONS">
+<span class="sig-name descname"><span class="pre">HISTORIC_PRODUCTIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'historic_productions'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.HISTORIC_PRODUCTIONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.HISTORIC_EMISSIONS">
+<span class="sig-name descname"><span class="pre">HISTORIC_EMISSIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'historic_emissions'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.HISTORIC_EMISSIONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.HISTORIC_EI">
+<span class="sig-name descname"><span class="pre">HISTORIC_EI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'historic_ei'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.HISTORIC_EI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TRAJECTORY_SCORE">
+<span class="sig-name descname"><span class="pre">TRAJECTORY_SCORE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'trajectory_score'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TRAJECTORY_SCORE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TRAJECTORY_OVERSHOOT">
+<span class="sig-name descname"><span class="pre">TRAJECTORY_OVERSHOOT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'trajectory_overshoot_ratio'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TRAJECTORY_OVERSHOOT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TARGET_SCORE">
+<span class="sig-name descname"><span class="pre">TARGET_SCORE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_score'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TARGET_SCORE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.TARGET_OVERSHOOT">
+<span class="sig-name descname"><span class="pre">TARGET_OVERSHOOT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_overshoot_ratio'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.TARGET_OVERSHOOT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.WEIGHTED_TEMPERATURE_SCORE">
+<span class="sig-name descname"><span class="pre">WEIGHTED_TEMPERATURE_SCORE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'weighted_temperature_score'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.WEIGHTED_TEMPERATURE_SCORE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.CONTRIBUTION_RELATIVE">
+<span class="sig-name descname"><span class="pre">CONTRIBUTION_RELATIVE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'contribution_relative'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.CONTRIBUTION_RELATIVE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ColumnsConfig.CONTRIBUTION">
+<span class="sig-name descname"><span class="pre">CONTRIBUTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'contribution'</span></em><a class="headerlink" href="#ITR.configs.ColumnsConfig.CONTRIBUTION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">SectorsConfig</span></span><a class="headerlink" href="#ITR.configs.SectorsConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.POWER_UTILITY">
+<span class="sig-name descname"><span class="pre">POWER_UTILITY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Electricity</span> <span class="pre">Utilities'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.POWER_UTILITY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.GAS_UTILITY">
+<span class="sig-name descname"><span class="pre">GAS_UTILITY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Gas</span> <span class="pre">Utilities'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.GAS_UTILITY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.UTILITY">
+<span class="sig-name descname"><span class="pre">UTILITY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Utilities'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.UTILITY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.STEEL">
+<span class="sig-name descname"><span class="pre">STEEL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Steel'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.STEEL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.ALUMINUM">
+<span class="sig-name descname"><span class="pre">ALUMINUM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Aluminum'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.ALUMINUM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.ENERGY">
+<span class="sig-name descname"><span class="pre">ENERGY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Energy'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.ENERGY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.OIL_AND_GAS">
+<span class="sig-name descname"><span class="pre">OIL_AND_GAS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Oil</span> <span class="pre">&amp;</span> <span class="pre">Gas'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.OIL_AND_GAS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.COAL">
+<span class="sig-name descname"><span class="pre">COAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Coal'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.COAL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.OIL">
+<span class="sig-name descname"><span class="pre">OIL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Oil'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.OIL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.GAS">
+<span class="sig-name descname"><span class="pre">GAS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Gas'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.GAS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.AUTOMOBILE">
+<span class="sig-name descname"><span class="pre">AUTOMOBILE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Autos'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.AUTOMOBILE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.TRUCKING">
+<span class="sig-name descname"><span class="pre">TRUCKING</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Trucking'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.TRUCKING" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.CEMENT">
+<span class="sig-name descname"><span class="pre">CEMENT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Cement'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.CEMENT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.BUILDINGS_CONSTRUCTION">
+<span class="sig-name descname"><span class="pre">BUILDINGS_CONSTRUCTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Construction</span> <span class="pre">Buildings'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.BUILDINGS_CONSTRUCTION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.BUILDINGS_RESIDENTIAL">
+<span class="sig-name descname"><span class="pre">BUILDINGS_RESIDENTIAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Residential</span> <span class="pre">Buildings'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.BUILDINGS_RESIDENTIAL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.BUILDINGS_COMMERCIAL">
+<span class="sig-name descname"><span class="pre">BUILDINGS_COMMERCIAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Commercial</span> <span class="pre">Buildings'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.BUILDINGS_COMMERCIAL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.TEXTILES">
+<span class="sig-name descname"><span class="pre">TEXTILES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Textiles'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.TEXTILES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.CHEMICALS">
+<span class="sig-name descname"><span class="pre">CHEMICALS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Chemicals'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.CHEMICALS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.PLASTICS">
+<span class="sig-name descname"><span class="pre">PLASTICS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Petrochem</span> <span class="pre">&amp;</span> <span class="pre">Plastics'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.PLASTICS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.AG_CHEM">
+<span class="sig-name descname"><span class="pre">AG_CHEM</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Ag</span> <span class="pre">Chem'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.AG_CHEM" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.CONSUMER_PRODUCTS">
+<span class="sig-name descname"><span class="pre">CONSUMER_PRODUCTS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Consumer</span> <span class="pre">Products'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.CONSUMER_PRODUCTS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.PHARMACEUTICALS">
+<span class="sig-name descname"><span class="pre">PHARMACEUTICALS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Pharmaceuticals'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.PHARMACEUTICALS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.FIBERS_AND_RUBBER">
+<span class="sig-name descname"><span class="pre">FIBERS_AND_RUBBER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Fiber</span> <span class="pre">&amp;</span> <span class="pre">Rubber'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.FIBERS_AND_RUBBER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.INFORMATION_TECHNOLOGY">
+<span class="sig-name descname"><span class="pre">INFORMATION_TECHNOLOGY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Information</span> <span class="pre">Technology'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.INFORMATION_TECHNOLOGY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.INDUSTRIALS">
+<span class="sig-name descname"><span class="pre">INDUSTRIALS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Industrials'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.INDUSTRIALS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.FINANCIALS">
+<span class="sig-name descname"><span class="pre">FINANCIALS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Financials'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.FINANCIALS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.HEALTH_CARE">
+<span class="sig-name descname"><span class="pre">HEALTH_CARE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Health</span> <span class="pre">Care'</span></em><a class="headerlink" href="#ITR.configs.SectorsConfig.HEALTH_CARE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.configs.SectorsConfig.get_configured_sectors">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_configured_sectors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.configs.SectorsConfig.get_configured_sectors" title="Link to this definition"></a></dt>
+<dd><p>Get a list of sectors configured in the tool.
+:return: A list of sectors string values</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.VariablesConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">VariablesConfig</span></span><a class="headerlink" href="#ITR.configs.VariablesConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.VariablesConfig.EMISSIONS">
+<span class="sig-name descname"><span class="pre">EMISSIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Emissions'</span></em><a class="headerlink" href="#ITR.configs.VariablesConfig.EMISSIONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.VariablesConfig.PRODUCTIONS">
+<span class="sig-name descname"><span class="pre">PRODUCTIONS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Productions'</span></em><a class="headerlink" href="#ITR.configs.VariablesConfig.PRODUCTIONS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.VariablesConfig.EMISSIONS_INTENSITIES">
+<span class="sig-name descname"><span class="pre">EMISSIONS_INTENSITIES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Emissions</span> <span class="pre">Intensities'</span></em><a class="headerlink" href="#ITR.configs.VariablesConfig.EMISSIONS_INTENSITIES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">TargetConfig</span></span><a class="headerlink" href="#ITR.configs.TargetConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.COMPANY_ID">
+<span class="sig-name descname"><span class="pre">COMPANY_ID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_id'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.COMPANY_ID" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.COMPANY_LEI">
+<span class="sig-name descname"><span class="pre">COMPANY_LEI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_lei'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.COMPANY_LEI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.COMPANY_ISIN">
+<span class="sig-name descname"><span class="pre">COMPANY_ISIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'company_isin'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.COMPANY_ISIN" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.COMPANY_ISIC">
+<span class="sig-name descname"><span class="pre">COMPANY_ISIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'isic'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.COMPANY_ISIC" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.NETZERO_DATE">
+<span class="sig-name descname"><span class="pre">NETZERO_DATE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'netzero_date'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.NETZERO_DATE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_TYPE">
+<span class="sig-name descname"><span class="pre">TARGET_TYPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_type'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_TYPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_SCOPE">
+<span class="sig-name descname"><span class="pre">TARGET_SCOPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_scope'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_SCOPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_START_YEAR">
+<span class="sig-name descname"><span class="pre">TARGET_START_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_start_year'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_START_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_BASE_YEAR">
+<span class="sig-name descname"><span class="pre">TARGET_BASE_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_base_year'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_BASE_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_BASE_MAGNITUDE">
+<span class="sig-name descname"><span class="pre">TARGET_BASE_MAGNITUDE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_base_year_qty'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_BASE_MAGNITUDE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_BASE_UNITS">
+<span class="sig-name descname"><span class="pre">TARGET_BASE_UNITS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_base_year_unit'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_BASE_UNITS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_YEAR">
+<span class="sig-name descname"><span class="pre">TARGET_YEAR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_year'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TargetConfig.TARGET_REDUCTION_VS_BASE">
+<span class="sig-name descname"><span class="pre">TARGET_REDUCTION_VS_BASE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'target_reduction_ambition'</span></em><a class="headerlink" href="#ITR.configs.TargetConfig.TARGET_REDUCTION_VS_BASE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">TabsConfig</span></span><a class="headerlink" href="#ITR.configs.TabsConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.FUNDAMENTAL">
+<span class="sig-name descname"><span class="pre">FUNDAMENTAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'fundamental_data'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.FUNDAMENTAL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.PROJECTED_EI">
+<span class="sig-name descname"><span class="pre">PROJECTED_EI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'projected_ei'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.PROJECTED_EI" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.PROJECTED_PRODUCTION">
+<span class="sig-name descname"><span class="pre">PROJECTED_PRODUCTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'projected_production'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.PROJECTED_PRODUCTION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.PROJECTED_TARGET">
+<span class="sig-name descname"><span class="pre">PROJECTED_TARGET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'projected_target'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.PROJECTED_TARGET" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.HISTORIC_DATA">
+<span class="sig-name descname"><span class="pre">HISTORIC_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'historic_data'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.HISTORIC_DATA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.TEMPLATE_INPUT_DATA">
+<span class="sig-name descname"><span class="pre">TEMPLATE_INPUT_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ITR</span> <span class="pre">input</span> <span class="pre">data'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.TEMPLATE_INPUT_DATA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.TEMPLATE_INPUT_DATA_V2">
+<span class="sig-name descname"><span class="pre">TEMPLATE_INPUT_DATA_V2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ITR</span> <span class="pre">V2</span> <span class="pre">input</span> <span class="pre">data'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.TEMPLATE_INPUT_DATA_V2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.TEMPLATE_ESG_DATA_V2">
+<span class="sig-name descname"><span class="pre">TEMPLATE_ESG_DATA_V2</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ITR</span> <span class="pre">V2</span> <span class="pre">esg</span> <span class="pre">data'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.TEMPLATE_ESG_DATA_V2" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TabsConfig.TEMPLATE_TARGET_DATA">
+<span class="sig-name descname"><span class="pre">TEMPLATE_TARGET_DATA</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ITR</span> <span class="pre">target</span> <span class="pre">input</span> <span class="pre">data'</span></em><a class="headerlink" href="#ITR.configs.TabsConfig.TEMPLATE_TARGET_DATA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.PortfolioAggregationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">PortfolioAggregationConfig</span></span><a class="headerlink" href="#ITR.configs.PortfolioAggregationConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.PortfolioAggregationConfig.COLS">
+<span class="sig-name descname"><span class="pre">COLS</span></span><a class="headerlink" href="#ITR.configs.PortfolioAggregationConfig.COLS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">ProjectionControls</span></span><a class="headerlink" href="#ITR.configs.ProjectionControls" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls.LOWER_PERCENTILE">
+<span class="sig-name descname"><span class="pre">LOWER_PERCENTILE</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></em><a class="headerlink" href="#ITR.configs.ProjectionControls.LOWER_PERCENTILE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls.UPPER_PERCENTILE">
+<span class="sig-name descname"><span class="pre">UPPER_PERCENTILE</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.9</span></em><a class="headerlink" href="#ITR.configs.ProjectionControls.UPPER_PERCENTILE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls.LOWER_DELTA">
+<span class="sig-name descname"><span class="pre">LOWER_DELTA</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#ITR.configs.ProjectionControls.LOWER_DELTA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls.UPPER_DELTA">
+<span class="sig-name descname"><span class="pre">UPPER_DELTA</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#ITR.configs.ProjectionControls.UPPER_DELTA" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls.BASE_YEAR">
+<span class="sig-name descname"><span class="pre">BASE_YEAR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2019</span></em><a class="headerlink" href="#ITR.configs.ProjectionControls.BASE_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls.TARGET_YEAR">
+<span class="sig-name descname"><span class="pre">TARGET_YEAR</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2050</span></em><a class="headerlink" href="#ITR.configs.ProjectionControls.TARGET_YEAR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.ProjectionControls.TREND_CALC_METHOD">
+<span class="sig-name descname"><span class="pre">TREND_CALC_METHOD</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">pandas.DataFrame</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ITR.configs.ProjectionControls.TREND_CALC_METHOD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">TemperatureScoreControls</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.configs.TemperatureScoreControls" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pydantic.BaseModel</span></code></p>
+<p>Usage docs: <a class="reference external" href="https://docs.pydantic.dev/2.5/concepts/models/">https://docs.pydantic.dev/2.5/concepts/models/</a></p>
+<p>A base class for creating Pydantic models.</p>
+<dl>
+<dt>Attributes:</dt><dd><p>__class_vars__: The names of classvars defined on the model.
+__private_attributes__: Metadata about the private attributes of the model.
+__signature__: The signature for instantiating the model.</p>
+<p>__pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+__pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+__pydantic_custom_init__: Whether the model has a custom <cite>__init__</cite> function.
+__pydantic_decorators__: Metadata containing the decorators defined on the model.</p>
+<blockquote>
+<div><p>This replaces <cite>Model.__validators__</cite> and <cite>Model.__root_validators__</cite> from Pydantic V1.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>__pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to</dt><dd><p>__args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.</p>
+</dd>
+</dl>
+<p>__pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+__pydantic_post_init__: The name of the post-init method for the model, if defined.
+__pydantic_root_model__: Whether the model is a <cite>RootModel</cite>.
+__pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+__pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.</p>
+<dl class="simple">
+<dt>__pydantic_extra__: An instance attribute with the values of extra fields from validation when</dt><dd><p><cite>model_config[‘extra’] == ‘allow’</cite>.</p>
+</dd>
+</dl>
+<p>__pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+__pydantic_private__: Instance attribute with the values of private attributes set on the model instance.</p>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.tcre_multiplier">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tcre_multiplier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ITR.data.osc_units.Quantity</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.tcre_multiplier" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.model_config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.base_year">
+<span class="sig-name descname"><span class="pre">base_year</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.base_year" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.target_end_year">
+<span class="sig-name descname"><span class="pre">target_end_year</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.target_end_year" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.tcre">
+<span class="sig-name descname"><span class="pre">tcre</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ITR.data.osc_units.delta_degC_Quantity</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.tcre" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.carbon_conversion">
+<span class="sig-name descname"><span class="pre">carbon_conversion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ITR.data.osc_units.EmissionsQuantity</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.carbon_conversion" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.scenario_target_temperature">
+<span class="sig-name descname"><span class="pre">scenario_target_temperature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ITR.data.osc_units.delta_degC_Quantity</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.scenario_target_temperature" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.target_probability">
+<span class="sig-name descname"><span class="pre">target_probability</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.target_probability" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreControls.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.configs.TemperatureScoreControls.__getitem__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">TemperatureScoreConfig</span></span><a class="headerlink" href="#ITR.configs.TemperatureScoreConfig" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ITR.configs.PortfolioAggregationConfig" title="ITR.configs.PortfolioAggregationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PortfolioAggregationConfig</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreConfig.SCORE_RESULT_TYPE">
+<span class="sig-name descname"><span class="pre">SCORE_RESULT_TYPE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'score_result_type'</span></em><a class="headerlink" href="#ITR.configs.TemperatureScoreConfig.SCORE_RESULT_TYPE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.TemperatureScoreConfig.CONTROLS_CONFIG">
+<span class="sig-name descname"><span class="pre">CONTROLS_CONFIG</span></span><a class="headerlink" href="#ITR.configs.TemperatureScoreConfig.CONTROLS_CONFIG" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.configs.LoggingConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.configs.</span></span><span class="sig-name descname"><span class="pre">LoggingConfig</span></span><a class="headerlink" href="#ITR.configs.LoggingConfig" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="ITR.configs.LoggingConfig.FORMAT">
+<span class="sig-name descname"><span class="pre">FORMAT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'%(asctime)s</span> <span class="pre">-</span> <span class="pre">%(name)s</span> <span class="pre">-</span> <span class="pre">%(levelname)s</span> <span class="pre">-</span> <span class="pre">%(message)s'</span></em><a class="headerlink" href="#ITR.configs.LoggingConfig.FORMAT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.configs.LoggingConfig.add_config_to_logger">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_config_to_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">logging.Logger</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.configs.LoggingConfig.add_config_to_logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../data/vault_providers/index.html" class="btn btn-neutral float-left" title="ITR.data.vault_providers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../interfaces/index.html" class="btn btn-neutral float-right" title="ITR.interfaces" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, OS-Climate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

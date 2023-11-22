@@ -1,0 +1,271 @@
+:py:mod:`ITR.data.osc_units`
+============================
+
+.. py:module:: ITR.data.osc_units
+
+.. autoapi-nested-parse::
+
+   This module handles initialization of pint functionality
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.osc_units.direct_conversions
+   ITR.data.osc_units.time_dimension
+   ITR.data.osc_units.convert_to_annual
+   ITR.data.osc_units.dimension_as
+   ITR.data.osc_units.align_production_to_bm
+   ITR.data.osc_units.check_ProductionMetric
+   ITR.data.osc_units.check_EmissionsMetric
+   ITR.data.osc_units.check_EI_Metric
+   ITR.data.osc_units.check_BenchmarkMetric
+   ITR.data.osc_units.to_Quantity
+   ITR.data.osc_units.check_EmissionsQuantity
+   ITR.data.osc_units.check_ProductionQuantity
+   ITR.data.osc_units.check_EI_Quantity
+   ITR.data.osc_units.check_BenchmarkQuantity
+   ITR.data.osc_units.check_MonetaryQuantity
+   ITR.data.osc_units.check_delta_degC_Quantity
+   ITR.data.osc_units.check_percent_Quantity
+   ITR.data.osc_units.Quantity_type
+   ITR.data.osc_units.asPintSeries
+   ITR.data.osc_units.asPintDataFrame
+   ITR.data.osc_units.requantify_df_from_columns
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.osc_units.Quantity
+   ITR.data.osc_units.base_currency_unit
+   ITR.data.osc_units.fx_ctx
+   ITR.data.osc_units.NG_DENS
+   ITR.data.osc_units.NG_SE
+   ITR.data.osc_units.ng
+   ITR.data.osc_units.COAL_SE
+   ITR.data.osc_units.coal
+   ITR.data.osc_units.oil
+   ITR.data.osc_units._production_units
+   ITR.data.osc_units._ei_units
+   ITR.data.osc_units.ProductionMetric
+   ITR.data.osc_units.EmissionsMetric
+   ITR.data.osc_units.EI_Metric
+   ITR.data.osc_units.BenchmarkMetric
+   ITR.data.osc_units.EmissionsQuantity
+   ITR.data.osc_units.ProductionQuantity
+   ITR.data.osc_units.EI_Quantity
+   ITR.data.osc_units.BenchmarkQuantity
+   ITR.data.osc_units.MonetaryQuantity
+   ITR.data.osc_units.delta_degC_Quantity
+   ITR.data.osc_units.percent_Quantity
+
+
+.. py:data:: Quantity
+   :type: typing_extensions.TypeAlias
+
+   
+
+.. py:data:: base_currency_unit
+   :value: 'USD'
+
+   
+
+.. py:data:: fx_ctx
+
+   
+
+.. py:data:: NG_DENS
+
+   
+
+.. py:data:: NG_SE
+
+   
+
+.. py:data:: ng
+
+   
+
+.. py:data:: COAL_SE
+
+   
+
+.. py:data:: coal
+
+   
+
+.. py:function:: direct_conversions(ureg, unit) -> List[str]
+
+   Return a LIST of unit names that Pint can convert implicitly from/to UNIT.
+   This does not include the list of additional unit names that can be explicitly
+   converted by using the `Quantity.to` method.
+
+
+.. py:function:: time_dimension(unit, exp) -> bool
+
+   True if UNIT can be converted to something related only to time.
+
+
+.. py:function:: convert_to_annual(x, errors='ignore')
+
+   For a quantity X that has units of [time], reduce the time dimension, leaving an "implictly annual" metric.
+   If X has no time dimension, or if it cannot be reduced to zero in a single step, raise a DimensionalityError.
+   If ERRORS=='ignore', allow time dimension to be reduced one step towards zero rather than only to zero.
+   Returns the reduced quantity, or the original quantity if reduction would result in an error being raised.
+
+
+.. py:function:: dimension_as(x, dim_unit)
+
+
+.. py:function:: align_production_to_bm(prod_series: pandas.Series, ei_bm: pandas.Series) -> pandas.Series
+
+   A timeseries of production unit values can be aligned with a timeseries of Emissions Intensity (EI)
+   metrics that uses different units of production.  For example, the production timeseries might be
+   `bbl` (`Blue Barrels of Oil`) but the EI might be `t CO2e/GJ` (`CO2e * metric_ton / gigajoule`).
+   By converting the production series to gigajoules up front, there are no complex conversions
+   needed later (such as trying to convert `t CO2e * metric_ton / bbl` to
+   `CO2e * metric_ton / gigajoule`, which is not straightfowrard, as the former is
+   `[mass] / [length]**3` whereas the latter is `[seconds] ** 2 / [length] **2`.
+
+
+.. py:data:: oil
+
+   
+
+.. py:data:: _production_units
+   :value: ['Wh', 'pkm', 'tkm', 'bcm CH4', 'bbl', 'boe', 't Alloys', 't Aluminum', 't Cement', 't Coal', 't...
+
+   
+
+.. py:data:: _ei_units
+
+   
+
+.. py:function:: check_ProductionMetric(units: str) -> str
+
+
+.. py:data:: ProductionMetric
+
+   
+
+.. py:function:: check_EmissionsMetric(units: str) -> str
+
+
+.. py:data:: EmissionsMetric
+
+   
+
+.. py:function:: check_EI_Metric(units: str) -> str
+
+
+.. py:data:: EI_Metric
+
+   
+
+.. py:function:: check_BenchmarkMetric(units: str) -> str
+
+
+.. py:data:: BenchmarkMetric
+
+   
+
+.. py:function:: to_Quantity(quantity: Union[Quantity, str]) -> Quantity
+
+
+.. py:function:: check_EmissionsQuantity(quantity: Quantity) -> Quantity
+
+
+.. py:data:: EmissionsQuantity
+
+   
+
+.. py:function:: check_ProductionQuantity(quantity: Quantity) -> Quantity
+
+
+.. py:data:: ProductionQuantity
+
+   
+
+.. py:function:: check_EI_Quantity(quantity: Quantity) -> Quantity
+
+
+.. py:data:: EI_Quantity
+
+   
+
+.. py:function:: check_BenchmarkQuantity(quantity: Quantity) -> Quantity
+
+
+.. py:data:: BenchmarkQuantity
+
+   
+
+.. py:function:: check_MonetaryQuantity(quantity: Quantity) -> Quantity
+
+
+.. py:data:: MonetaryQuantity
+
+   
+
+.. py:function:: check_delta_degC_Quantity(quantity: Quantity) -> Quantity
+
+
+.. py:data:: delta_degC_Quantity
+
+   
+
+.. py:function:: check_percent_Quantity(quantity: Quantity) -> Quantity
+
+
+.. py:data:: percent_Quantity
+
+   
+
+.. py:function:: Quantity_type(units: str) -> type
+
+   A method for making a pydantic compliant Pint quantity field type.
+
+
+.. py:function:: asPintSeries(series: pandas.Series, name=None, errors='ignore', inplace=False) -> pandas.Series
+
+   :param series : pd.Series possibly containing Quantity values, not already in a PintArray.
+   :param name : the name to give to the resulting series
+   :param errors : { 'raise', 'ignore' }, default 'ignore'
+   :param inplace : bool, default False.  If True, perform operation in-place.
+
+   :return: If there is only one type of unit in the series, a PintArray version of the series, replacing NULL values with Quantity (np.nan, unit_type).
+
+   Raises ValueError if there are more than one type of units in the series.
+   Silently returns series if no conversion needed to be done.
+
+
+.. py:function:: asPintDataFrame(df: pandas.DataFrame, errors='ignore', inplace=False) -> pandas.DataFrame
+
+   :param df : pd.DataFrame with columns to be converted into PintArrays where possible.
+   :param errors : { 'raise', 'ignore' }, default 'ignore'
+   :param inplace : bool, default False.  If True, perform operation in-place.
+
+   :return: A pd.DataFrame with columns converted to PintArrays where possible.
+
+   Raises ValueError if there are more than one type of units in any of the columns.
+
+
+.. py:function:: requantify_df_from_columns(df: pandas.DataFrame, inplace=False) -> pandas.DataFrame
+
+   :param df: pd.DataFrame
+   :param inplace: bool, default False.  If True, perform operation in-place.
+
+   :return: A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka 'pint[UNITS]')
+
+

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contributing &mdash; ITR Temperature Alignment tool  documentation</title>
+      <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Project Links" href="links.html" />
+    <link rel="prev" title="Data Legends" href="Legends.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            ITR Temperature Alignment tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Using Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api.html">Getting Started Using REST API &amp; UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FunctionalOverview.html">Functional Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataRequirements.html">Data Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Legends.html">Data Legends</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#contributing-code">Contributing code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#coding-guidelines">Coding guidelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#releasing">Releasing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#generate-documentation">Generate documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#code-of-conduct">Code of conduct</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#id4">Contributing code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id5">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">Coding guidelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#id10">Releasing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id11">Generate documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#id13">Code of conduct</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#documentation-improvements">Documentation Improvements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#submit-an-issue">Submit an issue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-an-environment">Create an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#clone-the-repository">Clone the repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#implement-your-changes">Implement your changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#submit-your-contribution">Submit your contribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#maintainer-tasks">Maintainer tasks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#releases">Releases</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terms.html">Terms of Use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">ITR Temperature Alignment tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Contributing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/contributing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading"></a></h1>
+<p>Any contribution to this project is highly appreciated. The most common way to contribute to the project is through coding, however contributions to the documentation are also very welcome.</p>
+</section>
+<section id="submitting-a-bug-report-or-a-feature-request">
+<h1>Submitting a bug report or a feature request<a class="headerlink" href="#submitting-a-bug-report-or-a-feature-request" title="Link to this heading"></a></h1>
+<p>To keep track of open issues and feature requests, we will use <a class="reference external" href="https://github.com/os-climate/ITR/issues/">Github’s https://github.com/os-climate/ITR/issues</a>.</p>
+<p>If you encounter any bugs or missing features, please do not hesitate to open a ticket. Before submitting a report, please check that the issue has not already been reported.
+For ease of comprehension, please ensure your report includes the following characteristics:</p>
+<ul class="simple">
+<li><p>Reproducible: It should be possible for others to reproduce the issue, ideally through a small code snippet in the description of the issue</p></li>
+<li><p>Labelled: Add a label that describes the contents of the ticket, e.g. “bug”, “feature request” or “documentation”</p></li>
+</ul>
+</section>
+<section id="contributing-code">
+<h1>Contributing code<a class="headerlink" href="#contributing-code" title="Link to this heading"></a></h1>
+<p>Our preferred way for contributing code is to fork the repository, make changes on your personal fork and then create a pull request to merge your changes back into the main repository.
+Before a pull request can be approved it needs to be reviewed by two core contributors, then these automated checks need to be passed (see “Coding Guidelines” section below).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Please assign the issue you are working on to yourself so we can avoid duplicate efforts.</p>
+</div>
+<section id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<p>Before getting started it is important to have a clean Python environment. The recommended Python version is 3.9 or higher.
+An anaconda environment file is provided in the root of the project, as is a PIP requirements.txt file.
+The easiest way to work on the Python module is by installing it in development mode. This can be done using the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This will install the module as a reference to your current directory.
+The Jupyter notebooks in the “examples” directory have been setup to use auto-reload. Thus, if you now make any changes to your local code, they will be automatically reflected in the notebook.</p>
+</section>
+<section id="coding-guidelines">
+<h2>Coding guidelines<a class="headerlink" href="#coding-guidelines" title="Link to this heading"></a></h2>
+<p>In general the code follows three principals, <a class="reference external" href="https://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>, <a class="reference external" href="https://www.python.org/dev/peps/pep-0008/">PEP8 (code style)</a> and <a class="reference external" href="https://www.python.org/dev/peps/pep-0484/">PEP 484 (type hinting)</a>.
+In addition, we use Flake8 to lint the code, MyPy to check the type hints and Nose2 to do unit testing. These checks are done automatically when attempting to merge a pull request into master.</p>
+</section>
+</section>
+<section id="releasing">
+<h1>Releasing<a class="headerlink" href="#releasing" title="Link to this heading"></a></h1>
+<p>To release a new version of the module you need to take two steps, create a new PyPi release and generate the documentation.</p>
+<section id="generate-documentation">
+<h2>Generate documentation<a class="headerlink" href="#generate-documentation" title="Link to this heading"></a></h2>
+<p>To generate the documentation, you should follow these steps in the “ITR” repository (the one containing the Python module).</p>
+<ol class="arabic simple">
+<li><p><cite>cd docs</cite></p></li>
+<li><p><cite>make html</cite></p></li>
+<li><p>Copy the contents of the <cite>docs/_build/</cite> folder into the <cite>gh_pages</cite> branch</p></li>
+<li><p>Start the FastAPI server from the <cite>ITR_api</cite> branch</p></li>
+<li><p>Go to <a class="reference external" href="http://127.0.0.1/openapi.json">the docs</a> and copy this file to the “swagger” directory in the <cite>gh_pages</cite> branch.</p></li>
+<li><p>Commit and push the gh_pages branch</p></li>
+</ol>
+</section>
+</section>
+<section id="code-of-conduct">
+<h1>Code of conduct<a class="headerlink" href="#code-of-conduct" title="Link to this heading"></a></h1>
+<p>Everyone’s goals here are aligned: to help asset owners and asset managers reduce their impact on climate change.
+The only way we can achieve this goal is by fostering an inclusive and welcome environment. Therefore, this project is governed by a <a class="reference external" href="https://github.com/OFBDABV/ITR/blob/master/CODE_OF_CONDUCT.md">code of conduct</a>. By participating, you are expected to uphold this code. If you encounter any violations, please report them.</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+<section id="id2">
+<h1>Contributing<a class="headerlink" href="#id2" title="Link to this heading"></a></h1>
+<p>Any contribution is highly appreciated. The most common way to contribute to the project is through coding, however contributions to
+the documentation are also very welcome.</p>
+</section>
+<section id="id3">
+<h1>Submitting a bug report or a feature request<a class="headerlink" href="#id3" title="Link to this heading"></a></h1>
+<p>To keep track of open issues and feature requests, we will use <code class="docutils literal notranslate"><span class="pre">Github's</span> <span class="pre">https://github.com/os-climate/ITR/issues</span> <span class="pre">&lt;https://github.com/os-climate/ITR/issues&gt;</span></code>.</p>
+<p>If you encounter any bugs or missing features, please do not hesitate to open a ticket. Before submitting a report, please check that the issue has not already been reported.
+For ease of comprehension, please ensure your report includes the following characteristics:</p>
+<ul class="simple">
+<li><p>Reproducible: It should be possible for others to reproduce the issue, ideally through a small code snippet in the description of the issue</p></li>
+<li><p>Labelled: Add a label that describes the contents of the ticket, e.g. “bug”, “feature request” or “documentation”</p></li>
+</ul>
+</section>
+<section id="id4">
+<h1>Contributing code<a class="headerlink" href="#id4" title="Link to this heading"></a></h1>
+<p>Our preferred way for contributing code is to fork the repository, make changes on your personal fork and then create a pull request to merge your changes back into the main repository.
+Before a pull request can be approved it needs to be reviewed by two core contributors, then these automated checks need to be passed (see “Coding Guidelines” section below).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Please assign the issue you are working on to yourself so we can avoid duplicate efforts.</p>
+</div>
+<section id="id5">
+<h2>Getting started<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<p>Before getting started it is important to have a clean Python environment. The recommended Python version is 3.6 or higher.
+An anaconda environment file is provided in the root of the project, as is a PIP requirements.txt file.
+The easiest way to work on the Python module is by installing it in development mode. This can be done using the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This will install the module as a reference to your current directory.
+The Jupyter notebooks in the “examples” directory have been setup to use auto-reload. Thus, if you now make any changes to your local code, they will be automatically reflected in the notebook.</p>
+</section>
+<section id="id6">
+<h2>Coding guidelines<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<p>In general the code follows three principals, <a class="reference external" href="https://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>, <a class="reference external" href="https://www.python.org/dev/peps/pep-0008/">PEP8 (code style)</a> and <a class="reference external" href="https://www.python.org/dev/peps/pep-0484/">PEP 484 (type hinting)</a>.
+In addition, we use Flake8 to lint the code, MyPy to check the type hints and Nose2 to do unit testing. These checks are done automatically when attempting to merge a pull request into master.</p>
+</section>
+</section>
+<section id="id10">
+<h1>Releasing<a class="headerlink" href="#id10" title="Link to this heading"></a></h1>
+<p>To release a new version of the module you need to take two steps, create a new PyPi release and generate the documentation.</p>
+<section id="id11">
+<h2>Generate documentation<a class="headerlink" href="#id11" title="Link to this heading"></a></h2>
+<p>To generate the documentation, you should follow these steps in the “ITR” repository (the one containing the Python module).</p>
+<ol class="arabic simple">
+<li><p><cite>cd docs</cite></p></li>
+<li><p><cite>make html</cite></p></li>
+<li><p>Copy the contents of the <cite>docs/_build/</cite> folder into the <cite>gh_pages</cite> branch</p></li>
+<li><p>Start the FastAPI server from the <cite>ITR_api</cite> branch</p></li>
+<li><p>Go to <a class="reference external" href="http://127.0.0.1/openapi.json">the docs</a> and copy this file to the “swagger” directory in the <cite>gh_pages</cite> branch.</p></li>
+<li><p>Commit and push the gh_pages branch</p></li>
+</ol>
+</section>
+</section>
+<section id="id13">
+<h1>Code of conduct<a class="headerlink" href="#id13" title="Link to this heading"></a></h1>
+<p>Everyone’s goals here are aligned: to help asset owners and asset managers reduce their impact on climate change.
+The only way we can achieve this goal is by fostering an inclusive and welcome environment. Therefore, this project is governed by a <a class="reference external" href="https://github.com/OFBDABV/ITR/blob/master/CODE_OF_CONDUCT.md">code of conduct</a>. By participating, you are expected to uphold this code. If you encounter any violations, please report them.</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+<section id="id15">
+<h1>Contributing<a class="headerlink" href="#id15" title="Link to this heading"></a></h1>
+<p>Welcome to <code class="docutils literal notranslate"><span class="pre">ITR</span></code> contributor’s guide.</p>
+<p>This document focuses on getting any potential contributor familiarized
+with the development processes, but <a class="reference external" href="https://opensource.guide/how-to-contribute">other kinds of contributions</a> are also
+appreciated.</p>
+<p>If you are new to using <a class="reference external" href="https://git-scm.com">git</a> or have never collaborated in a project previously,
+please have a look at <a class="reference external" href="https://www.contribution-guide.org/">contribution-guide.org</a>. Other resources are also
+listed in the excellent <a class="reference external" href="https://github.com/FreeCodeCamp/how-to-contribute-to-open-source">guide created by FreeCodeCamp</a> <a class="footnote-reference brackets" href="#contrib1" id="id16" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
+<p>Please notice, all users and contributors are expected to be <strong>open,
+considerate, reasonable, and respectful</strong>. When in doubt, <a class="reference external" href="https://www.python.org/psf/conduct/">Python Software
+Foundation’s Code of Conduct</a> is a good reference in terms of behavior
+guidelines.</p>
+</section>
+<section id="issue-reports">
+<h1>Issue Reports<a class="headerlink" href="#issue-reports" title="Link to this heading"></a></h1>
+<p>If you experience bugs or general issues with <code class="docutils literal notranslate"><span class="pre">ITR</span></code>, please have a look
+on the <code class="docutils literal notranslate"><span class="pre">https://github.com/os-climate/ITR/issues</span></code>. If you don’t see anything useful there, please feel
+free to fire an issue report.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Please don’t forget to include the closed issues in your search.
+Sometimes a solution was already reported, and the problem is considered
+<strong>solved</strong>.</p>
+</div>
+<p>New issue reports should include information about your programming environment
+(e.g., operating system, Python version) and steps to reproduce the problem.
+Please try also to simplify the reproduction steps to a very minimal example
+that still illustrates the problem you are facing. By removing other factors,
+you help us to identify the root cause of the issue.</p>
+</section>
+<section id="documentation-improvements">
+<h1>Documentation Improvements<a class="headerlink" href="#documentation-improvements" title="Link to this heading"></a></h1>
+<p>You can help improve <code class="docutils literal notranslate"><span class="pre">ITR</span></code> docs by making them more readable and coherent, or
+by adding missing information and correcting mistakes.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ITR</span></code> documentation uses <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a> as its main documentation compiler.
+This means that the docs are kept in the same repository as the project code, and
+that any documentation update is done in the same way was a code contribution.</p>
+<blockquote>
+<div><blockquote>
+<div><p>e.g.,  <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/">reStructuredText</a> or <a class="reference external" href="https://commonmark.org/">CommonMark</a> with <a class="reference external" href="https://myst-parser.readthedocs.io/en/latest/syntax/syntax.html">MyST</a> extensions.</p>
+</div></blockquote>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Please notice that the <a class="reference external" href="https://docs.github.com/en/repositories/working-with-files/managing-files/editing-files">GitHub web interface</a> provides a quick way of
+propose changes in <code class="docutils literal notranslate"><span class="pre">ITR</span></code>’s files. While this mechanism can
+be tricky for normal code contributions, it works perfectly fine for
+contributing to the docs, and can be quite handy.</p>
+<p>If you are interested in trying this method out, please navigate to
+the <code class="docutils literal notranslate"><span class="pre">docs</span></code> folder in the source <code class="docutils literal notranslate"><span class="pre">repository</span></code>, find which file you
+would like to propose changes and click in the little pencil icon at the
+top, to open <a class="reference external" href="https://docs.github.com/en/repositories/working-with-files/managing-files/editing-files">GitHub’s code editor</a>. Once you finish editing the file,
+please write a message in the form at the bottom of the page describing
+which changes have you made and what are the motivations behind them and
+submit your proposal.</p>
+</div>
+</div></blockquote>
+<p>When working on documentation changes in your local machine, you can
+compile them using <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span> <span class="o">-</span><span class="n">e</span> <span class="n">docs</span>
+</pre></div>
+</div>
+<p>and use Python’s built-in web server for a preview in your web browser
+(<code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">http</span><span class="o">.</span><span class="n">server</span> <span class="o">--</span><span class="n">directory</span> <span class="s1">&#39;docs/_build/html&#39;</span>
+</pre></div>
+</div>
+<section id="submit-an-issue">
+<h2>Submit an issue<a class="headerlink" href="#submit-an-issue" title="Link to this heading"></a></h2>
+<p>Before you work on any non-trivial code contribution it’s best to first create
+a report in the <code class="docutils literal notranslate"><span class="pre">https://github.com/os-climate/ITR/issues</span></code> to start a discussion on the subject.
+This often provides additional considerations and avoids unnecessary work.</p>
+</section>
+<section id="create-an-environment">
+<h2>Create an environment<a class="headerlink" href="#create-an-environment" title="Link to this heading"></a></h2>
+<p>Before you start coding, we recommend creating an isolated <a class="reference external" href="https://realpython.com/python-virtual-environments-a-primer/">virtual
+environment</a> to avoid any problems with your installed Python packages.
+This can easily be done via either <a class="reference external" href="https://virtualenv.pypa.io/en/stable/"><code class="docutils literal notranslate"><span class="pre">virtualenv</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">virtualenv</span> <span class="o">&lt;</span><span class="n">PATH</span> <span class="n">TO</span> <span class="n">VENV</span><span class="o">&gt;</span>
+<span class="n">source</span> <span class="o">&lt;</span><span class="n">PATH</span> <span class="n">TO</span> <span class="n">VENV</span><span class="o">&gt;/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+<p>or <a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="n">ITR</span> <span class="n">python</span><span class="o">=</span><span class="mi">3</span> <span class="n">six</span> <span class="n">virtualenv</span> <span class="n">pytest</span> <span class="n">pytest</span><span class="o">-</span><span class="n">cov</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="n">ITR</span>
+</pre></div>
+</div>
+</section>
+<section id="clone-the-repository">
+<h2>Clone the repository<a class="headerlink" href="#clone-the-repository" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>Create an user account on GitHub if you do not already have one.</p></li>
+<li><p>Fork the project <code class="docutils literal notranslate"><span class="pre">repository</span></code>: click on the <em>Fork</em> button near the top of the
+page. This creates a copy of the code under your account on GitHub.</p></li>
+<li><p>Clone this copy to your local disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="nd">@github</span><span class="o">.</span><span class="n">com</span><span class="p">:</span><span class="n">YourLogin</span><span class="o">/</span><span class="n">ITR</span><span class="o">.</span><span class="n">git</span>
+<span class="n">cd</span> <span class="n">ITR</span>
+</pre></div>
+</div>
+</li>
+<li><p>You should run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">pip</span> <span class="n">setuptools</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>to be able to import the package under development in the Python REPL.</p>
+</li>
+<li><p>Install <a class="reference external" href="https://pre-commit.com/"><code class="docutils literal notranslate"><span class="pre">pre-commit</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">pre</span><span class="o">-</span><span class="n">commit</span>
+<span class="n">pre</span><span class="o">-</span><span class="n">commit</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ITR</span></code> comes with a lot of hooks configured to automatically help the
+developer to check the code being written.</p>
+</li>
+</ol>
+</section>
+<section id="implement-your-changes">
+<h2>Implement your changes<a class="headerlink" href="#implement-your-changes" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>Create a branch to hold your changes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="o">-</span><span class="n">b</span> <span class="n">my</span><span class="o">-</span><span class="n">feature</span>
+</pre></div>
+</div>
+<p>and start making changes. Never work on the main branch!</p>
+</li>
+<li><p>Start your work on this branch. Don’t forget to add <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html">docstrings</a> to new
+functions, modules and classes, especially if they are part of public APIs.</p></li>
+<li><p>Add yourself to the list of contributors in <code class="docutils literal notranslate"><span class="pre">AUTHORS.rst</span></code>.</p></li>
+<li><p>When you’re done editing, do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">add</span> <span class="o">&lt;</span><span class="n">MODIFIED</span> <span class="n">FILES</span><span class="o">&gt;</span>
+<span class="n">git</span> <span class="n">commit</span>
+</pre></div>
+</div>
+<p>to record your changes in <a class="reference external" href="https://git-scm.com">git</a>.</p>
+<p>Please make sure to see the validation messages from <a class="reference external" href="https://pre-commit.com/"><code class="docutils literal notranslate"><span class="pre">pre-commit</span></code></a> and fix
+any eventual issues.
+This should automatically use <a class="reference external" href="https://flake8.pycqa.org/en/stable/">flake8</a>/<a class="reference external" href="https://pypi.org/project/black/">black</a> to check/fix the code style
+in a way that is compatible with the project.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Don’t forget to add unit tests and documentation in case your
+contribution adds an additional feature and is not just a bugfix.</p>
+<p>Moreover, writing a <a class="reference external" href="https://chris.beams.io/posts/git-commit">descriptive commit message</a> is highly recommended.
+In case of doubt, you can check the commit history with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">log</span> <span class="o">--</span><span class="n">graph</span> <span class="o">--</span><span class="n">decorate</span> <span class="o">--</span><span class="n">pretty</span><span class="o">=</span><span class="n">oneline</span> <span class="o">--</span><span class="n">abbrev</span><span class="o">-</span><span class="n">commit</span> <span class="o">--</span><span class="nb">all</span>
+</pre></div>
+</div>
+<p>to look for recurring communication patterns.</p>
+</div>
+</li>
+<li><p>Please check that your changes don’t break any unit tests with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span>
+</pre></div>
+</div>
+<p>(after having installed <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a> with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">tox</span></code> or <code class="docutils literal notranslate"><span class="pre">pipx</span></code>).</p>
+<p>You can also use <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a> to run several other pre-configured tasks in the
+repository. Try <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-av</span></code> to see a list of the available checks.</p>
+</li>
+</ol>
+</section>
+<section id="submit-your-contribution">
+<h2>Submit your contribution<a class="headerlink" href="#submit-your-contribution" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>If everything works fine, push your local branch to GitHub with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">push</span> <span class="o">-</span><span class="n">u</span> <span class="n">origin</span> <span class="n">my</span><span class="o">-</span><span class="n">feature</span>
+</pre></div>
+</div>
+</li>
+<li><p>Go to the web page of your fork and click Create pull request
+to send your changes for review.</p></li>
+</ol>
+<p>Find more detailed information in <a class="reference external" href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request">creating a PR</a>. You might also want to open
+the PR as a draft first and mark it as ready for review after the feedbacks
+from the continuous integration (CI) system or any required fixes.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p>The following tips can be used when facing problems to build or test the
+package:</p>
+<ol class="arabic">
+<li><p>Make sure to fetch all the tags from the upstream <code class="docutils literal notranslate"><span class="pre">repository</span></code>.
+The command <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">describe</span> <span class="pre">--abbrev=0</span> <span class="pre">--tags</span></code> should return the version you
+are expecting. If you are trying to run CI scripts in a fork repository,
+make sure to push all the tags.
+You can also try to remove all the egg files or the complete egg folder, i.e.,
+<code class="docutils literal notranslate"><span class="pre">.eggs</span></code>, as well as the <code class="docutils literal notranslate"><span class="pre">*.egg-info</span></code> folders in the <code class="docutils literal notranslate"><span class="pre">src</span></code> folder or
+potentially in the root of your project.</p></li>
+<li><p>Sometimes <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a> misses out when new dependencies are added, especially to
+<code class="docutils literal notranslate"><span class="pre">setup.cfg</span></code> and <code class="docutils literal notranslate"><span class="pre">docs/requirements.txt</span></code>. If you find any problems with
+missing dependencies when running a command with <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a>, try to recreate the
+<code class="docutils literal notranslate"><span class="pre">tox</span></code> environment using the <code class="docutils literal notranslate"><span class="pre">-r</span></code> flag. For example, instead of:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span> <span class="o">-</span><span class="n">e</span> <span class="n">docs</span>
+</pre></div>
+</div>
+<p>Try running:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span> <span class="o">-</span><span class="n">r</span> <span class="o">-</span><span class="n">e</span> <span class="n">docs</span>
+</pre></div>
+</div>
+</li>
+<li><p>Make sure to have a reliable <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a> installation that uses the correct
+Python version (e.g., 3.7+). When in doubt you can run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tox</span> <span class="o">--</span><span class="n">version</span>
+<span class="c1"># OR</span>
+<span class="n">which</span> <span class="n">tox</span>
+</pre></div>
+</div>
+<p>If you have trouble and are seeing weird errors upon running <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a>, you can
+also try to create a dedicated <a class="reference external" href="https://realpython.com/python-virtual-environments-a-primer/">virtual environment</a> with a <a class="reference external" href="https://tox.wiki/en/stable/"><code class="docutils literal notranslate"><span class="pre">tox</span></code></a> binary
+freshly installed. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">virtualenv</span> <span class="o">.</span><span class="n">venv</span>
+<span class="n">source</span> <span class="o">.</span><span class="n">venv</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="o">.</span><span class="n">venv</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">pip</span> <span class="n">install</span> <span class="n">tox</span>
+<span class="o">.</span><span class="n">venv</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">tox</span> <span class="o">-</span><span class="n">e</span> <span class="nb">all</span>
+</pre></div>
+</div>
+</li>
+<li><p><a class="reference external" href="https://docs.pytest.org/en/stable/how-to/failures.html#using-python-library-pdb-with-pytest">Pytest can drop you</a> in an interactive session in the case an error occurs.
+In order to do that you need to pass a <code class="docutils literal notranslate"><span class="pre">--pdb</span></code> option (for example by
+running <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">--</span> <span class="pre">-k</span> <span class="pre">&lt;NAME</span> <span class="pre">OF</span> <span class="pre">THE</span> <span class="pre">FALLING</span> <span class="pre">TEST&gt;</span> <span class="pre">--pdb</span></code>).
+You can also setup breakpoints manually instead of using the <code class="docutils literal notranslate"><span class="pre">--pdb</span></code> option.</p></li>
+</ol>
+</section>
+</section>
+<section id="maintainer-tasks">
+<h1>Maintainer tasks<a class="headerlink" href="#maintainer-tasks" title="Link to this heading"></a></h1>
+<section id="releases">
+<h2>Releases<a class="headerlink" href="#releases" title="Link to this heading"></a></h2>
+<blockquote>
+<div><p>If instead you are using a different/private package index, please update
+the instructions accordingly.</p>
+</div></blockquote>
+<p>If you are part of the group of maintainers and have correct user permissions
+on <a class="reference external" href="https://pypi.org/">PyPI</a>, the following steps can be used to release a new version for
+<code class="docutils literal notranslate"><span class="pre">ITR</span></code>:</p>
+<ol class="arabic simple">
+<li><p>Make sure all unit tests are successful.</p></li>
+<li><p>Tag the current commit on the main branch with a release tag, e.g., <code class="docutils literal notranslate"><span class="pre">v1.2.3</span></code>.</p></li>
+<li><p>Push the new tag to the upstream <code class="docutils literal notranslate"><span class="pre">repository</span></code>, e.g., <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">upstream</span> <span class="pre">v1.2.3</span></code></p></li>
+<li><p>Clean up the <code class="docutils literal notranslate"><span class="pre">dist</span></code> and <code class="docutils literal notranslate"><span class="pre">build</span></code> folders with <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">clean</span></code>
+(or <code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">dist</span> <span class="pre">build</span></code>)
+to avoid confusion with old builds and Sphinx docs.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">build</span></code> and check that the files in <code class="docutils literal notranslate"><span class="pre">dist</span></code> have
+the correct version (no <code class="docutils literal notranslate"><span class="pre">.dirty</span></code> or <a class="reference external" href="https://git-scm.com">git</a> hash) according to the <a class="reference external" href="https://git-scm.com">git</a> tag.
+Also check the sizes of the distributions, if they are too big (e.g., &gt;
+500KB), unwanted clutter may have been accidentally included.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">publish</span> <span class="pre">--</span> <span class="pre">--repository</span> <span class="pre">pypi</span></code> and check that everything was
+uploaded to <a class="reference external" href="https://pypi.org/">PyPI</a> correctly.</p></li>
+</ol>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="contrib1" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id16">1</a><span class="fn-bracket">]</span></span>
+<p>Even though, these resources focus on open source projects and
+communities, the general ideas behind collaborating with other developers
+to collectively create software are general and can be applied to all sorts
+of environments, including private companies and proprietary code bases.</p>
+</aside>
+</aside>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="Legends.html" class="btn btn-neutral float-left" title="Data Legends" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="links.html" class="btn btn-neutral float-right" title="Project Links" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, OS-Climate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+:py:mod:`ITR.data.template`
+===========================
+
+.. py:module:: ITR.data.template
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.template.TemplateProviderCompany
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.template.ITR_country_to_region
+   ITR.data.template._estimated_value
+   ITR.data.template.prioritize_submetric
+   ITR.data.template.maybe_other_s3_mappings
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.template.logger
+   ITR.data.template.pkg_root
+   ITR.data.template.df_country_regions
+   ITR.data.template.s3_category_rdict
+   ITR.data.template.s3_category_dict
+
+
+.. py:data:: logger
+
+   
+
+.. py:data:: pkg_root
+
+   
+
+.. py:data:: df_country_regions
+
+   
+
+.. py:function:: ITR_country_to_region(country: str) -> str
+
+
+.. py:function:: _estimated_value(y: pandas.Series) -> pint.Quantity
+
+   :param y : a pd.Series that arrives via a pd.GroupBy operation.  The elements of the series are all data (or np.nan) matching a metric/sub-metric.
+
+   :return: A Quantity which could be either the first or only element from the pd.Series, or an estimate of correct answer.
+       The estimate is based on the mean of the non-null entries.
+       It could be changed to output the last (most recent) value (if the inputs arrive sorted)
+
+
+.. py:function:: prioritize_submetric(x: pandas.DataFrame) -> pandas.Series
+
+   :param x : pd.DataFrame.  The index of the DataFrame is (SECTOR, COMPANY_ID, SCOPE)
+
+   :return: y : Based on the SECTOR, pick the highest priority Series based on the SUBMETRIC
+
+
+.. py:data:: s3_category_rdict
+
+   
+
+.. py:data:: s3_category_dict
+
+   
+
+.. py:function:: maybe_other_s3_mappings(x: str)
+
+
+.. py:class:: TemplateProviderCompany(excel_path: str, column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig, projection_controls: ITR.configs.ProjectionControls = ProjectionControls())
+
+
+   Bases: :py:obj:`ITR.data.base_providers.BaseCompanyDataProvider`
+
+   Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
+   As of Feb 2022, we are testing!!
+
+   :param excel_path: A path to the Excel file with the company data
+   :param column_config: An optional ColumnsConfig object containing relevant variable names
+
+   .. py:method:: _solve_intensities(df_fundamentals: pandas.DataFrame, df_esg: pandas.DataFrame) -> pandas.DataFrame
+
+
+   .. py:method:: _init_from_template_company_data(excel_path: str)
+
+      Converts first sheet of Excel template to list of minimal ICompanyData objects (fundamental data, but no ESG data).
+      All dataprovider features will be inhereted from Base.
+      :param excel_path: file path to excel file
+
+
+   .. py:method:: _convert_from_template_company_data() -> List[ITR.interfaces.ICompanyData]
+
+      Converts ESG sheet of Excel template to flesh out ICompanyData objects.
+      :return: List of ICompanyData objects
+
+
+   .. py:method:: _validate_target_data(target_data: pandas.DataFrame) -> pandas.DataFrame
+
+      Performs checks on the supplied target data. Some values are put in to make the tool function.
+      :param target_data:
+      :return:
+
+
+   .. py:method:: _company_df_to_model(df_fundamentals: pandas.DataFrame, df_target_data: pandas.DataFrame, df_historic_data: pandas.DataFrame) -> List[ITR.interfaces.ICompanyData]
+
+      transforms target Dataframe into list of ICompanyData instances.
+      We don't necessarily have enough info to do target projections at this stage.
+
+      :param df_fundamentals: pandas Dataframe with fundamental data; if None, use self._companies
+      :param df_target_data: pandas Dataframe with target data; could be empty if we are partially initialized
+      :param df_historic_data: pandas Dataframe with historic emissions, intensity, and production information; could be empty
+      :return: A list containing the ICompanyData objects
+
+
+   .. py:method:: _np_sum()
+
+
+   .. py:method:: _convert_target_data(target_data: pandas.DataFrame) -> List[ITR.interfaces.ITargetData]
+
+      :param historic: historic production, emission and emission intensity data for a company
+      :return: IHistoricData Pydantic object
+
+
+   .. py:method:: _get_historic_data(company_ids: List[str], historic_data: pandas.DataFrame) -> pandas.DataFrame
+
+      get the historic data for list of companies
+      :param company_ids: list of company ids
+      :param historic_data: Dataframe Productions, Emissions, and Emissions Intensities mixed together
+      :return: historic data with unit attributes added on a per-element basis
+
+
+   .. py:method:: _convert_historic_data(historic: pandas.DataFrame) -> ITR.interfaces.IHistoricData
+
+      :param historic: historic production, emission and emission intensity data for a company (already unitized)
+      :return: IHistoricData Pydantic object
+
+
+   .. py:method:: _squeeze_NA_to_nan(ser)
+      :classmethod:
+
+
+   .. py:method:: _convert_to_historic_emissions(emissions_t: pandas.DataFrame) -> Optional[ITR.interfaces.IHistoricEmissionsScopes]
+
+      :param emissions: historic emissions data for a company
+      :return: List of historic emissions per scope, or None if no data are provided
+
+
+   .. py:method:: _convert_to_historic_productions(productions_t: pandas.DataFrame) -> Optional[List[ITR.interfaces.IProductionRealization]]
+
+      :param productions: historic production data for a company
+      :return: A list containing historic productions, or None if no data are provided
+
+
+   .. py:method:: _convert_to_historic_ei(intensities_t: pandas.DataFrame) -> Optional[ITR.interfaces.IHistoricEIScopes]
+
+      :param intensities: historic emission intensity data for a company
+      :return: A list of historic emission intensities per scope, or None if no data are provided
+
+
+   .. py:method:: get_company_fundamentals(company_ids: List[str]) -> pandas.DataFrame
+
+      :param company_ids: A list of company IDs
+      :return: A pandas DataFrame with company fundamental info per company (company_id is a column)
+
+      FIXME: Callers want non-fundamental data here: base_year_production, ghg_s1s2, ghg_s3
+
+
+

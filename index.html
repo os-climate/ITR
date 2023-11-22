@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITR Temperature Scoring &mdash; ITR Temperature Alignment tool  documentation</title>
+      <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction to temperature scoring method" href="intro.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            ITR Temperature Alignment tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Using Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api.html">Getting Started Using REST API &amp; UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FunctionalOverview.html">Functional Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DataRequirements.html">Data Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Legends.html">Data Legends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#contributing-code">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#releasing">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#code-of-conduct">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id4">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id10">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id13">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#documentation-improvements">Documentation Improvements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#maintainer-tasks">Maintainer tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terms.html">Terms of Use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">ITR Temperature Alignment tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ITR Temperature Scoring</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="itr-temperature-scoring">
+<h1>ITR Temperature Scoring<a class="headerlink" href="#itr-temperature-scoring" title="Link to this heading"></a></h1>
+<p><em>Do you want to understand what drives the temperature score of your
+portfolio to make better engagement and investment decisions?</em></p>
+<p><a class="reference internal" href="_images/image1.png"><img alt="image1" src="_images/image1.png" style="width: 6.47222in; height: 4.97682in;" /></a></p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><strong>Quickstart</strong></p>
+<p>If you prefer to get up and running quickly, we’ve got a no-code and a Python option:</p>
+<ul class="simple">
+<li><p><strong>No-code</strong>: Run the project locally as a <a class="reference external" href="https://os-c.github.io/ITR/rest_api.html#locally">web application using Docker</a></p></li>
+<li><p><strong>Python</strong>: Run a Jupyter notebook, without any installation in <a class="reference external" href="https://os-c.github.io/ITR/getting_started.html#google-colab">Google Colab</a> or <a class="reference external" href="https://os-c.github.io/ITR/getting_started.html#jupyter-notebooks">locally</a>.</p></li>
+</ul>
+<p class="rubric" id="section">Quickstart</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If you are unsure whether the tool will be useful for your application
+and workflow, or you would first like to run some examples to get a
+better idea of how the tool works and what types of outputs it
+generates, the &#64;TODO: add link
+offers a quick and no-code opportunity for such testing. The notebook
+combines text and code to provide a testing environment for your
+research, to give you an understanding for how the tool can help you
+analyze companies’ and portfolios’ temperature scores, to aid your
+engagement and investment decisions.</p>
+<p>The notebook is loaded with example data, but you can also use your own
+data. For your first test, you can simply run the code cells one by one
+in the current sequence, to get an understanding of how it works. If you
+are not familiar with Notebooks, please refer to <a class="reference external" href="https://colab.research.google.com/notebooks/basic_features_overview.ipynb">this
+introduction</a>.</p>
+<p>The following diagram provides an overview of the different parts of the
+full toolkit and their dependencies:</p>
+<p><a class="reference internal" href="_images/image2.png"><img alt="image2" src="_images/image2.png" style="width: 3.71642in; height: 3.58652in;" /></a></p>
+<p>As shown above, the Python code forms the core codebase of the
+ITR tool. It is recommended to use the Python package if the
+user would like to integrate the tool in their own codebase. In turn,
+the second option is running the tool via the API if the user’s
+preference is to include the tool as a Microservice in their existing IT
+infrastructure in the cloud or on premise. The development project also
+included the creation of a simple user interface (UI), which can be used
+for easier user interaction in combination with the API.</p>
+<p>The ITR tool enables two main ways of installing and/or running the
+tool:</p>
+<ol class="arabic simple">
+<li><p>Users can integrate the <strong>Python package</strong> in their codebase. For
+more detailed and up-to-date information on how to run the tool via
+the Python package, please consult the ‘Getting Started Using Python’
+section.</p></li>
+<li><p>The tool can be included as a Microservice (<strong>containerized REST
+API</strong>) in any IT infrastructure (in the cloud or on premise). For
+more detailed and up-to-date information on how to run the tool via
+the API, please consult the ‘Getting Started Using REST API’ section.
+Optionally, the API can be run with a frontend (UI). This simple user
+interface makes testing by non-technical users easier. For more
+detailed and up-to-date information on how to use the UI as a
+frontend to the API, please consult the ‘Getting Started Using REST
+API’ section.</p></li>
+</ol>
+<p>Given the open source nature of the tool, the community is encouraged to
+make contributions (refer to <a class="reference external" href="https://os-c.github.io/ITR/contributing.html">Contributing</a> section to further develop
+and/or update the codebase. Contributions can range from submitting a
+bug report, to submitting a new feature request, all the way to further
+enhancing the tool’s functionalities by contributing code.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started Using Python</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api.html">Getting Started Using REST API &amp; UI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rest_api.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rest_api.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rest_api.html#locally">Locally</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rest_api.html#amazon-aws">Amazon AWS</a><ul class="simple">
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="FunctionalOverview.html">Functional Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="FunctionalOverview.html#temperature-score">Temperature Score</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="FunctionalOverview.html#time-frames">Time Frames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FunctionalOverview.html#scopes">Scopes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FunctionalOverview.html#aggregation-methods">Aggregation methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FunctionalOverview.html#grouping-data">Grouping data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FunctionalOverview.html#choose-fields-to-show">Choose fields to show</a></li>
+<li class="toctree-l3"><a class="reference internal" href="FunctionalOverview.html#what-if-analyses">What-If Analyses</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="FunctionalOverview.html#output-options">Output options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DataRequirements.html">Data Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="DataRequirements.html#portfolio-data">Portfolio data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="DataRequirements.html#company-data">Company data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="DataRequirements.html#fundamental-data">Fundamental data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="DataRequirements.html#target-data">Target data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Legends.html">Data Legends</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Legends.html#input-data">Input Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="Legends.html#portfolio-data">Portfolio Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Legends.html#fundamental-data">Fundamental Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="Legends.html#target-data">Target data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="Legends.html#output-data">Output data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#contributing-code">Contributing code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#getting-started">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#coding-guidelines">Coding guidelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#releasing">Releasing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#generate-documentation">Generate documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#code-of-conduct">Code of conduct</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id4">Contributing code</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#id5">Getting started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#id6">Coding guidelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id10">Releasing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#id11">Generate documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id13">Code of conduct</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#documentation-improvements">Documentation Improvements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#submit-an-issue">Submit an issue</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#create-an-environment">Create an environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#clone-the-repository">Clone the repository</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#implement-your-changes">Implement your changes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#submit-your-contribution">Submit your contribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html#maintainer-tasks">Maintainer tasks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#releases">Releases</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="terms.html">Terms of Use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/ITR/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/ITR/index.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/data/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/ITR/index.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/configs/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.configs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/interfaces/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.interfaces</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/portfolio_aggregation/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.portfolio_aggregation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/temperature_score/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.temperature_score</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.utils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/ITR/index.html#package-contents">Package Contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/index.html#classes">Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/index.html#functions">Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/ITR/index.html#attributes">Attributes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="intro.html" class="btn btn-neutral float-right" title="Introduction to temperature scoring method" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, OS-Climate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

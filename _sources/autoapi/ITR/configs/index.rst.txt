@@ -1,0 +1,834 @@
+:py:mod:`ITR.configs`
+=====================
+
+.. py:module:: ITR.configs
+
+.. autoapi-nested-parse::
+
+   This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
+   the module, extend the respective config class and pass it to the class as the "constants" parameter.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   ITR.configs.ColumnsConfig
+   ITR.configs.SectorsConfig
+   ITR.configs.VariablesConfig
+   ITR.configs.TargetConfig
+   ITR.configs.TabsConfig
+   ITR.configs.PortfolioAggregationConfig
+   ITR.configs.ProjectionControls
+   ITR.configs.TemperatureScoreControls
+   ITR.configs.TemperatureScoreConfig
+   ITR.configs.LoggingConfig
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.configs.ITR_median
+   ITR.configs.ITR_mean
+
+
+
+.. py:function:: ITR_median(*args, **kwargs)
+
+
+.. py:function:: ITR_mean(*args, **kwargs)
+
+
+.. py:class:: ColumnsConfig
+
+
+   .. py:attribute:: COMPANY_ID
+      :value: 'company_id'
+
+      
+
+   .. py:attribute:: COMPANY_LEI
+      :value: 'company_lei'
+
+      
+
+   .. py:attribute:: COMPANY_ISIN
+      :value: 'company_isin'
+
+      
+
+   .. py:attribute:: COMPANY_ISIC
+      :value: 'isic'
+
+      
+
+   .. py:attribute:: COMPANY_CURRENCY
+      :value: 'currency'
+
+      
+
+   .. py:attribute:: COMPANY_MARKET_CAP
+      :value: 'company_market_cap'
+
+      
+
+   .. py:attribute:: INVESTMENT_VALUE
+      :value: 'investment_value'
+
+      
+
+   .. py:attribute:: COMPANY_ENTERPRISE_VALUE
+      :value: 'company_enterprise_value'
+
+      
+
+   .. py:attribute:: COMPANY_EV_PLUS_CASH
+      :value: 'company_ev_plus_cash'
+
+      
+
+   .. py:attribute:: COMPANY_TOTAL_ASSETS
+      :value: 'company_total_assets'
+
+      
+
+   .. py:attribute:: SCOPE
+      :value: 'scope'
+
+      
+
+   .. py:attribute:: START_YEAR
+      :value: 'start_year'
+
+      
+
+   .. py:attribute:: VARIABLE
+      :value: 'variable'
+
+      
+
+   .. py:attribute:: SLOPE
+      :value: 'slope'
+
+      
+
+   .. py:attribute:: TIME_FRAME
+      :value: 'time_frame'
+
+      
+
+   .. py:attribute:: TEMPERATURE_SCORE
+      :value: 'temperature_score'
+
+      
+
+   .. py:attribute:: COMPANY_NAME
+      :value: 'company_name'
+
+      
+
+   .. py:attribute:: OWNED_EMISSIONS
+      :value: 'owned_emissions'
+
+      
+
+   .. py:attribute:: COUNTRY
+      :value: 'country'
+
+      
+
+   .. py:attribute:: SECTOR
+      :value: 'sector'
+
+      
+
+   .. py:attribute:: TEMPLATE_EXPOSURE
+      :value: 'exposure'
+
+      
+
+   .. py:attribute:: TEMPLATE_FX_QUOTE
+      :value: 'fx_quote'
+
+      
+
+   .. py:attribute:: TEMPLATE_FX_RATE
+      :value: 'fx_rate'
+
+      
+
+   .. py:attribute:: TEMPLATE_REPORT_DATE
+      :value: 'report_date'
+
+      
+
+   .. py:attribute:: EMISSIONS_METRIC
+      :value: 'emissions_metric'
+
+      
+
+   .. py:attribute:: PRODUCTION_METRIC
+      :value: 'production_metric'
+
+      
+
+   .. py:attribute:: BASE_YEAR_PRODUCTION
+      :value: 'base_year_production'
+
+      
+
+   .. py:attribute:: GHG_SCOPE12
+      :value: 'ghg_s1s2'
+
+      
+
+   .. py:attribute:: GHG_SCOPE3
+      :value: 'ghg_s3'
+
+      
+
+   .. py:attribute:: TEMPLATE_SCOPE1
+      :value: 'em_s1'
+
+      
+
+   .. py:attribute:: TEMPLATE_SCOPE2
+      :value: 'em_s2'
+
+      
+
+   .. py:attribute:: TEMPLATE_SCOPE12
+      :value: 'em_s1s2'
+
+      
+
+   .. py:attribute:: TEMPLATE_SCOPE3
+      :value: 'em_s3'
+
+      
+
+   .. py:attribute:: TEMPLATE_SCOPE123
+      :value: 'em_s1s2s3'
+
+      
+
+   .. py:attribute:: HISTORIC_DATA
+      :value: 'historic_data'
+
+      
+
+   .. py:attribute:: TARGET_DATA
+      :value: 'target_data'
+
+      
+
+   .. py:attribute:: TEMPLATE_PRODUCTION
+      :value: 'production'
+
+      
+
+   .. py:attribute:: COMPANY_REVENUE
+      :value: 'company_revenue'
+
+      
+
+   .. py:attribute:: COMPANY_CASH_EQUIVALENTS
+      :value: 'company_cash_equivalents'
+
+      
+
+   .. py:attribute:: BASE_YEAR
+      :value: 'base_year'
+
+      
+
+   .. py:attribute:: END_YEAR
+      :value: 'end_year'
+
+      
+
+   .. py:attribute:: ISIC
+      :value: 'isic'
+
+      
+
+   .. py:attribute:: INDUSTRY_LVL1
+      :value: 'industry_level_1'
+
+      
+
+   .. py:attribute:: INDUSTRY_LVL2
+      :value: 'industry_level_2'
+
+      
+
+   .. py:attribute:: INDUSTRY_LVL3
+      :value: 'industry_level_3'
+
+      
+
+   .. py:attribute:: INDUSTRY_LVL4
+      :value: 'industry_level_4'
+
+      
+
+   .. py:attribute:: REGION
+      :value: 'region'
+
+      
+
+   .. py:attribute:: CUMULATIVE_BUDGET
+      :value: 'cumulative_budget'
+
+      
+
+   .. py:attribute:: CUMULATIVE_SCALED_BUDGET
+      :value: 'cumulative_scaled_budget'
+
+      
+
+   .. py:attribute:: CUMULATIVE_TRAJECTORY
+      :value: 'cumulative_trajectory'
+
+      
+
+   .. py:attribute:: CUMULATIVE_TARGET
+      :value: 'cumulative_target'
+
+      
+
+   .. py:attribute:: TRAJECTORY_EXCEEDANCE_YEAR
+      :value: 'trajectory_exceedance_year'
+
+      
+
+   .. py:attribute:: TARGET_EXCEEDANCE_YEAR
+      :value: 'target_exceedance_year'
+
+      
+
+   .. py:attribute:: TARGET_PROBABILITY
+      :value: 'target_probability'
+
+      
+
+   .. py:attribute:: BENCHMARK_TEMP
+      :value: 'benchmark_temperature'
+
+      
+
+   .. py:attribute:: BENCHMARK_GLOBAL_BUDGET
+      :value: 'benchmark_global_budget'
+
+      
+
+   .. py:attribute:: BASE_EI
+      :value: 'ei_at_base_year'
+
+      
+
+   .. py:attribute:: PROJECTED_EI
+      :value: 'projected_intensities'
+
+      
+
+   .. py:attribute:: PROJECTED_TARGETS
+      :value: 'projected_targets'
+
+      
+
+   .. py:attribute:: HISTORIC_PRODUCTIONS
+      :value: 'historic_productions'
+
+      
+
+   .. py:attribute:: HISTORIC_EMISSIONS
+      :value: 'historic_emissions'
+
+      
+
+   .. py:attribute:: HISTORIC_EI
+      :value: 'historic_ei'
+
+      
+
+   .. py:attribute:: TRAJECTORY_SCORE
+      :value: 'trajectory_score'
+
+      
+
+   .. py:attribute:: TRAJECTORY_OVERSHOOT
+      :value: 'trajectory_overshoot_ratio'
+
+      
+
+   .. py:attribute:: TARGET_SCORE
+      :value: 'target_score'
+
+      
+
+   .. py:attribute:: TARGET_OVERSHOOT
+      :value: 'target_overshoot_ratio'
+
+      
+
+   .. py:attribute:: WEIGHTED_TEMPERATURE_SCORE
+      :value: 'weighted_temperature_score'
+
+      
+
+   .. py:attribute:: CONTRIBUTION_RELATIVE
+      :value: 'contribution_relative'
+
+      
+
+   .. py:attribute:: CONTRIBUTION
+      :value: 'contribution'
+
+      
+
+
+.. py:class:: SectorsConfig
+
+
+   .. py:attribute:: POWER_UTILITY
+      :value: 'Electricity Utilities'
+
+      
+
+   .. py:attribute:: GAS_UTILITY
+      :value: 'Gas Utilities'
+
+      
+
+   .. py:attribute:: UTILITY
+      :value: 'Utilities'
+
+      
+
+   .. py:attribute:: STEEL
+      :value: 'Steel'
+
+      
+
+   .. py:attribute:: ALUMINUM
+      :value: 'Aluminum'
+
+      
+
+   .. py:attribute:: ENERGY
+      :value: 'Energy'
+
+      
+
+   .. py:attribute:: OIL_AND_GAS
+      :value: 'Oil & Gas'
+
+      
+
+   .. py:attribute:: COAL
+      :value: 'Coal'
+
+      
+
+   .. py:attribute:: OIL
+      :value: 'Oil'
+
+      
+
+   .. py:attribute:: GAS
+      :value: 'Gas'
+
+      
+
+   .. py:attribute:: AUTOMOBILE
+      :value: 'Autos'
+
+      
+
+   .. py:attribute:: TRUCKING
+      :value: 'Trucking'
+
+      
+
+   .. py:attribute:: CEMENT
+      :value: 'Cement'
+
+      
+
+   .. py:attribute:: BUILDINGS_CONSTRUCTION
+      :value: 'Construction Buildings'
+
+      
+
+   .. py:attribute:: BUILDINGS_RESIDENTIAL
+      :value: 'Residential Buildings'
+
+      
+
+   .. py:attribute:: BUILDINGS_COMMERCIAL
+      :value: 'Commercial Buildings'
+
+      
+
+   .. py:attribute:: TEXTILES
+      :value: 'Textiles'
+
+      
+
+   .. py:attribute:: CHEMICALS
+      :value: 'Chemicals'
+
+      
+
+   .. py:attribute:: PLASTICS
+      :value: 'Petrochem & Plastics'
+
+      
+
+   .. py:attribute:: AG_CHEM
+      :value: 'Ag Chem'
+
+      
+
+   .. py:attribute:: CONSUMER_PRODUCTS
+      :value: 'Consumer Products'
+
+      
+
+   .. py:attribute:: PHARMACEUTICALS
+      :value: 'Pharmaceuticals'
+
+      
+
+   .. py:attribute:: FIBERS_AND_RUBBER
+      :value: 'Fiber & Rubber'
+
+      
+
+   .. py:attribute:: INFORMATION_TECHNOLOGY
+      :value: 'Information Technology'
+
+      
+
+   .. py:attribute:: INDUSTRIALS
+      :value: 'Industrials'
+
+      
+
+   .. py:attribute:: FINANCIALS
+      :value: 'Financials'
+
+      
+
+   .. py:attribute:: HEALTH_CARE
+      :value: 'Health Care'
+
+      
+
+   .. py:method:: get_configured_sectors() -> List[str]
+      :classmethod:
+
+      Get a list of sectors configured in the tool.
+      :return: A list of sectors string values
+
+
+
+.. py:class:: VariablesConfig
+
+
+   .. py:attribute:: EMISSIONS
+      :value: 'Emissions'
+
+      
+
+   .. py:attribute:: PRODUCTIONS
+      :value: 'Productions'
+
+      
+
+   .. py:attribute:: EMISSIONS_INTENSITIES
+      :value: 'Emissions Intensities'
+
+      
+
+
+.. py:class:: TargetConfig
+
+
+   .. py:attribute:: COMPANY_ID
+      :value: 'company_id'
+
+      
+
+   .. py:attribute:: COMPANY_LEI
+      :value: 'company_lei'
+
+      
+
+   .. py:attribute:: COMPANY_ISIN
+      :value: 'company_isin'
+
+      
+
+   .. py:attribute:: COMPANY_ISIC
+      :value: 'isic'
+
+      
+
+   .. py:attribute:: NETZERO_DATE
+      :value: 'netzero_date'
+
+      
+
+   .. py:attribute:: TARGET_TYPE
+      :value: 'target_type'
+
+      
+
+   .. py:attribute:: TARGET_SCOPE
+      :value: 'target_scope'
+
+      
+
+   .. py:attribute:: TARGET_START_YEAR
+      :value: 'target_start_year'
+
+      
+
+   .. py:attribute:: TARGET_BASE_YEAR
+      :value: 'target_base_year'
+
+      
+
+   .. py:attribute:: TARGET_BASE_MAGNITUDE
+      :value: 'target_base_year_qty'
+
+      
+
+   .. py:attribute:: TARGET_BASE_UNITS
+      :value: 'target_base_year_unit'
+
+      
+
+   .. py:attribute:: TARGET_YEAR
+      :value: 'target_year'
+
+      
+
+   .. py:attribute:: TARGET_REDUCTION_VS_BASE
+      :value: 'target_reduction_ambition'
+
+      
+
+
+.. py:class:: TabsConfig
+
+
+   .. py:attribute:: FUNDAMENTAL
+      :value: 'fundamental_data'
+
+      
+
+   .. py:attribute:: PROJECTED_EI
+      :value: 'projected_ei'
+
+      
+
+   .. py:attribute:: PROJECTED_PRODUCTION
+      :value: 'projected_production'
+
+      
+
+   .. py:attribute:: PROJECTED_TARGET
+      :value: 'projected_target'
+
+      
+
+   .. py:attribute:: HISTORIC_DATA
+      :value: 'historic_data'
+
+      
+
+   .. py:attribute:: TEMPLATE_INPUT_DATA
+      :value: 'ITR input data'
+
+      
+
+   .. py:attribute:: TEMPLATE_INPUT_DATA_V2
+      :value: 'ITR V2 input data'
+
+      
+
+   .. py:attribute:: TEMPLATE_ESG_DATA_V2
+      :value: 'ITR V2 esg data'
+
+      
+
+   .. py:attribute:: TEMPLATE_TARGET_DATA
+      :value: 'ITR target input data'
+
+      
+
+
+.. py:class:: PortfolioAggregationConfig
+
+
+   .. py:attribute:: COLS
+
+      
+
+
+.. py:class:: ProjectionControls
+
+
+   .. py:attribute:: LOWER_PERCENTILE
+      :type: float
+      :value: 0.1
+
+      
+
+   .. py:attribute:: UPPER_PERCENTILE
+      :type: float
+      :value: 0.9
+
+      
+
+   .. py:attribute:: LOWER_DELTA
+      :type: float
+
+      
+
+   .. py:attribute:: UPPER_DELTA
+      :type: float
+
+      
+
+   .. py:attribute:: BASE_YEAR
+      :type: int
+      :value: 2019
+
+      
+
+   .. py:attribute:: TARGET_YEAR
+      :type: int
+      :value: 2050
+
+      
+
+   .. py:attribute:: TREND_CALC_METHOD
+      :type: Callable[[pandas.DataFrame, Optional[str], Optional[bool]], pandas.DataFrame]
+
+      
+
+
+.. py:class:: TemperatureScoreControls(**data: Any)
+
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+
+   A base class for creating Pydantic models.
+
+   Attributes:
+       __class_vars__: The names of classvars defined on the model.
+       __private_attributes__: Metadata about the private attributes of the model.
+       __signature__: The signature for instantiating the model.
+
+       __pydantic_complete__: Whether model building is completed, or if there are still undefined fields.
+       __pydantic_core_schema__: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+       __pydantic_custom_init__: Whether the model has a custom `__init__` function.
+       __pydantic_decorators__: Metadata containing the decorators defined on the model.
+           This replaces `Model.__validators__` and `Model.__root_validators__` from Pydantic V1.
+       __pydantic_generic_metadata__: Metadata for generic models; contains data used for a similar purpose to
+           __args__, __origin__, __parameters__ in typing-module generics. May eventually be replaced by these.
+       __pydantic_parent_namespace__: Parent namespace of the model, used for automatic rebuilding of models.
+       __pydantic_post_init__: The name of the post-init method for the model, if defined.
+       __pydantic_root_model__: Whether the model is a `RootModel`.
+       __pydantic_serializer__: The pydantic-core SchemaSerializer used to dump instances of the model.
+       __pydantic_validator__: The pydantic-core SchemaValidator used to validate instances of the model.
+
+       __pydantic_extra__: An instance attribute with the values of extra fields from validation when
+           `model_config['extra'] == 'allow'`.
+       __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
+       __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
+
+   .. py:property:: tcre_multiplier
+      :type: ITR.data.osc_units.Quantity
+
+
+   .. py:attribute:: model_config
+
+      
+
+   .. py:attribute:: base_year
+      :type: int
+
+      
+
+   .. py:attribute:: target_end_year
+      :type: int
+
+      
+
+   .. py:attribute:: tcre
+      :type: ITR.data.osc_units.delta_degC_Quantity
+
+      
+
+   .. py:attribute:: carbon_conversion
+      :type: ITR.data.osc_units.EmissionsQuantity
+
+      
+
+   .. py:attribute:: scenario_target_temperature
+      :type: ITR.data.osc_units.delta_degC_Quantity
+
+      
+
+   .. py:attribute:: target_probability
+      :type: float
+
+      
+
+   .. py:method:: __getitem__(item)
+
+
+
+.. py:class:: TemperatureScoreConfig
+
+
+   Bases: :py:obj:`PortfolioAggregationConfig`
+
+   .. py:attribute:: SCORE_RESULT_TYPE
+      :value: 'score_result_type'
+
+      
+
+   .. py:attribute:: CONTROLS_CONFIG
+
+      
+
+
+.. py:class:: LoggingConfig
+
+
+   .. py:attribute:: FORMAT
+      :value: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+      
+
+   .. py:method:: add_config_to_logger(logger: logging.Logger)
+      :classmethod:
+
+
+

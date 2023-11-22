@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITR.data.excel &mdash; ITR Temperature Alignment tool  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="ITR.data.osc_units" href="../osc_units/index.html" />
+    <link rel="prev" title="ITR.data.data_warehouse" href="../data_warehouse/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            ITR Temperature Alignment tool
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Introduction to temperature scoring method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting Started Using Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rest_api.html">Getting Started Using REST API &amp; UI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../FunctionalOverview.html">Functional Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../DataRequirements.html">Data Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../Legends.html">Data Legends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#submitting-a-bug-report-or-a-feature-request">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#contributing-code">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#releasing">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#code-of-conduct">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id2">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id3">Submitting a bug report or a feature request</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id4">Contributing code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id10">Releasing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id13">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#id15">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#issue-reports">Issue Reports</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#documentation-improvements">Documentation Improvements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html#maintainer-tasks">Maintainer tasks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../links.html">Project Links</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../terms.html">Terms of Use</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../index.html#package-contents">Package Contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">ITR Temperature Alignment tool</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR</span></code></a></li>
+          <li class="breadcrumb-item"><a href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data</span></code></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.excel</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/ITR/data/excel/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-ITR.data.excel">
+<span id="itr-data-excel"></span><h1><a class="reference internal" href="#module-ITR.data.excel" title="ITR.data.excel"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ITR.data.excel</span></code></a><a class="headerlink" href="#module-ITR.data.excel" title="Link to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.excel.ExcelProviderProductionBenchmark" title="ITR.data.excel.ExcelProviderProductionBenchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExcelProviderProductionBenchmark</span></code></a></p></td>
+<td><p>Production projecton data provider super class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.excel.ExcelProviderIntensityBenchmark" title="ITR.data.excel.ExcelProviderIntensityBenchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExcelProviderIntensityBenchmark</span></code></a></p></td>
+<td><p>Production intensity data provider super class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.excel.ExcelProviderCompany" title="ITR.data.excel.ExcelProviderCompany"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExcelProviderCompany</span></code></a></p></td>
+<td><p>Data provider skeleton for CSV files. This class serves primarily for testing purposes only!</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.excel.convert_dimensionless_benchmark_excel_to_model" title="ITR.data.excel.convert_dimensionless_benchmark_excel_to_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_dimensionless_benchmark_excel_to_model</span></code></a>(...)</p></td>
+<td><p>Converts excel into IBenchmarks</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.excel.convert_benchmarks_ei_excel_to_model" title="ITR.data.excel.convert_benchmarks_ei_excel_to_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_benchmarks_ei_excel_to_model</span></code></a>(...)</p></td>
+<td><p>Converts excel into IBenchmarks</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.excel.logger" title="ITR.data.excel.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.excel.sector_to_production_metric" title="ITR.data.excel.sector_to_production_metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sector_to_production_metric</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.excel.sector_to_intensity_metric" title="ITR.data.excel.sector_to_intensity_metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sector_to_intensity_metric</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.excel.logger">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#ITR.data.excel.logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.excel.sector_to_production_metric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">sector_to_production_metric</span></span><a class="headerlink" href="#ITR.data.excel.sector_to_production_metric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.excel.sector_to_intensity_metric">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">sector_to_intensity_metric</span></span><a class="headerlink" href="#ITR.data.excel.sector_to_intensity_metric" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.excel.convert_dimensionless_benchmark_excel_to_model">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">convert_dimensionless_benchmark_excel_to_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_excel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheetname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_name_sector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_name_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IBenchmarks" title="ITR.interfaces.IBenchmarks"><span class="pre">ITR.interfaces.IBenchmarks</span></a></span></span><a class="headerlink" href="#ITR.data.excel.convert_dimensionless_benchmark_excel_to_model" title="Link to this definition"></a></dt>
+<dd><p>Converts excel into IBenchmarks
+:param df_excel: dictionary with a pd.DataFrame for each key representing a sheet of an Excel file
+:param sheetname: name of Excel file sheet to convert
+:param column_name_sector: name of sector
+:param column_name_region: name of region
+:return: IBenchmarks instance (list of IBenchmark)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.excel.convert_benchmarks_ei_excel_to_model">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">convert_benchmarks_ei_excel_to_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_excel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sheetname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_name_sector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_name_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_global_budget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_AFOLU_included</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IEIBenchmarkScopes" title="ITR.interfaces.IEIBenchmarkScopes"><span class="pre">ITR.interfaces.IEIBenchmarkScopes</span></a></span></span><a class="headerlink" href="#ITR.data.excel.convert_benchmarks_ei_excel_to_model" title="Link to this definition"></a></dt>
+<dd><p>Converts excel into IBenchmarks
+:param excal_path: file path to excel
+:return: IEIBenchmarkScopes instance</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderProductionBenchmark">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">ExcelProviderProductionBenchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.excel.ExcelProviderProductionBenchmark" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../base_providers/index.html#ITR.data.base_providers.BaseProviderProductionBenchmark" title="ITR.data.base_providers.BaseProviderProductionBenchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.base_providers.BaseProviderProductionBenchmark</span></code></a></p>
+<p>Production projecton data provider super class.</p>
+<p>This Data Container contains Production data on benchmark level. Data has a regions and sector indices.
+Initialized ProductionBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderProductionBenchmark._get_projected_production">
+<span class="sig-name descname"><span class="pre">_get_projected_production</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">EScope.S1S2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderProductionBenchmark._get_projected_production" title="Link to this definition"></a></dt>
+<dd><p>interface from excel file and internally used DataFrame
+:param scope:
+:return:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderIntensityBenchmark">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">ExcelProviderIntensityBenchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ITR.data.osc_units.delta_degC_Quantity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_global_budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ITR.data.osc_units.EmissionsQuantity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_AFOLU_included</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.excel.ExcelProviderIntensityBenchmark" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../base_providers/index.html#ITR.data.base_providers.BaseProviderIntensityBenchmark" title="ITR.data.base_providers.BaseProviderIntensityBenchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.base_providers.BaseProviderIntensityBenchmark</span></code></a></p>
+<p>Production intensity data provider super class.
+This Data Container contains emission intensity data on benchmark level. Data has a regions and sector indices.
+Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.excel.</span></span><span class="sig-name descname"><span class="pre">ExcelProviderCompany</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_controls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ProjectionControls()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../base_providers/index.html#ITR.data.base_providers.BaseCompanyDataProvider" title="ITR.data.base_providers.BaseCompanyDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.base_providers.BaseCompanyDataProvider</span></code></a></p>
+<p>Data provider skeleton for CSV files. This class serves primarily for testing purposes only!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excel_path</strong> – A path to the Excel file with the company data</p></li>
+<li><p><strong>column_config</strong> – An optional ColumnsConfig object containing relevant variable names</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._check_company_data">
+<span class="sig-name descname"><span class="pre">_check_company_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_tabs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._check_company_data" title="Link to this definition"></a></dt>
+<dd><p>Checks if the company data excel contains the data in the right format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._convert_from_excel_data">
+<span class="sig-name descname"><span class="pre">_convert_from_excel_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">excel_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._convert_from_excel_data" title="Link to this definition"></a></dt>
+<dd><p>Converts the Excel template to list of ICompanyDta objects. All dataprovider features will be inhereted from
+Base
+:param excel_path: file path to excel file
+:return: List of ICompanyData objects</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._convert_series_to_projections">
+<span class="sig-name descname"><span class="pre">_convert_series_to_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">projections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ProjectionType</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pydantic.BaseModel</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IProjection" title="ITR.interfaces.IProjection"><span class="pre">ITR.interfaces.IProjection</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._convert_series_to_projections" title="Link to this definition"></a></dt>
+<dd><p>Converts a Pandas Series to a list of IProjection
+:param projections: Pandas Series with years as indices
+:return: List of IProjection objects</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._company_df_to_model">
+<span class="sig-name descname"><span class="pre">_company_df_to_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_fundamentals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_historic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._company_df_to_model" title="Link to this definition"></a></dt>
+<dd><p>transforms target Dataframe into list of IDataProviderTarget instances
+:param df_fundamentals: pandas Dataframe with fundamental data
+:param df_targets: pandas Dataframe with targets
+:param df_ei: pandas Dataframe with emission intensities
+:return: A list containing the ICompanyData objects</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._np_sum">
+<span class="sig-name descname"><span class="pre">_np_sum</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._np_sum" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._get_projection">
+<span class="sig-name descname"><span class="pre">_get_projection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._get_projection" title="Link to this definition"></a></dt>
+<dd><p>get the projected emission intensities for list of companies
+:param company_ids: list of company ids
+:param projections: Dataframe with listed projections per company
+:param production_metric: Dataframe with production_metric per company
+:return: series of projected emission intensities</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._convert_target_data">
+<span class="sig-name descname"><span class="pre">_convert_target_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ITargetData" title="ITR.interfaces.ITargetData"><span class="pre">ITR.interfaces.ITargetData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._convert_target_data" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>historic</strong> – historic production, emission and emission intensity data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>IHistoricData Pydantic object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._get_historic_data">
+<span class="sig-name descname"><span class="pre">_get_historic_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">historic_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._get_historic_data" title="Link to this definition"></a></dt>
+<dd><p>get the historic data for list of companies
+:param company_ids: list of company ids
+:param historic_data: Dataframe Productions, Emissions, and Emissions Intensities mixed together
+:return: historic data with unit attributes added on a per-element basis</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._convert_historic_data">
+<span class="sig-name descname"><span class="pre">_convert_historic_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">historic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IHistoricData" title="ITR.interfaces.IHistoricData"><span class="pre">ITR.interfaces.IHistoricData</span></a></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._convert_historic_data" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>historic</strong> – historic production, emission and emission intensity data for a company (already unitized)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>IHistoricData Pydantic object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._convert_to_historic_emissions">
+<span class="sig-name descname"><span class="pre">_convert_to_historic_emissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emissions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IHistoricEmissionsScopes" title="ITR.interfaces.IHistoricEmissionsScopes"><span class="pre">ITR.interfaces.IHistoricEmissionsScopes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._convert_to_historic_emissions" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>emissions</strong> – historic emissions data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of historic emissions per scope, or None if no data are provided</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._convert_to_historic_productions">
+<span class="sig-name descname"><span class="pre">_convert_to_historic_productions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">productions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IProductionRealization" title="ITR.interfaces.IProductionRealization"><span class="pre">ITR.interfaces.IProductionRealization</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._convert_to_historic_productions" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>productions</strong> – historic production data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list containing historic productions, or None if no data are provided</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.excel.ExcelProviderCompany._convert_to_historic_ei">
+<span class="sig-name descname"><span class="pre">_convert_to_historic_ei</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intensities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IHistoricEIScopes" title="ITR.interfaces.IHistoricEIScopes"><span class="pre">ITR.interfaces.IHistoricEIScopes</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#ITR.data.excel.ExcelProviderCompany._convert_to_historic_ei" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>intensities</strong> – historic emission intensity data for a company</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of historic emission intensities per scope, or None if no data are provided</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../data_warehouse/index.html" class="btn btn-neutral float-left" title="ITR.data.data_warehouse" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../osc_units/index.html" class="btn btn-neutral float-right" title="ITR.data.osc_units" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, OS-Climate.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

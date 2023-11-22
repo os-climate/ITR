@@ -1,0 +1,92 @@
+:py:mod:`ITR.data`
+==================
+
+.. py:module:: ITR.data
+
+.. autoapi-nested-parse::
+
+   This module contains classes that create connections to data providers and initializes our system of units
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   base_providers/index.rst
+   data_providers/index.rst
+   data_warehouse/index.rst
+   excel/index.rst
+   osc_units/index.rst
+   template/index.rst
+   vault_providers/index.rst
+
+
+Package Contents
+----------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.escape_currency_symbols
+   ITR.data.translate_currency_symbols_1
+   ITR.data.translate_currency_symbols
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.currency_dict
+   ITR.data.currency_keep_regexp
+   ITR.data.currency_split_regexp
+   ITR.data.ureg
+   ITR.data.Q_
+   ITR.data.M_
+   ITR.data.PA_
+
+
+.. py:data:: currency_dict
+
+   
+
+.. py:function:: escape_currency_symbols(text)
+
+
+.. py:data:: currency_keep_regexp
+
+   
+
+.. py:data:: currency_split_regexp
+
+   
+
+.. py:function:: translate_currency_symbols_1(text)
+
+
+.. py:function:: translate_currency_symbols(text)
+
+
+.. py:data:: ureg
+
+   
+
+.. py:data:: Q_
+
+   
+
+.. py:data:: M_
+
+   
+
+.. py:data:: PA_
+
+   
+

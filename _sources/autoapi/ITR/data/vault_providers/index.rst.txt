@@ -1,0 +1,341 @@
+:py:mod:`ITR.data.vault_providers`
+==================================
+
+.. py:module:: ITR.data.vault_providers
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.vault_providers.VaultCompanyDataProvider
+   ITR.data.vault_providers.VaultProviderProductionBenchmark
+   ITR.data.vault_providers.VaultProviderIntensityBenchmark
+   ITR.data.vault_providers.DataVaultWarehouse
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.vault_providers.dequantify_column
+   ITR.data.vault_providers.dequantify_df
+   ITR.data.vault_providers.requantify_df
+   ITR.data.vault_providers.create_table_from_df
+   ITR.data.vault_providers.read_quantified_sql
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.vault_providers.logger
+   ITR.data.vault_providers.dotenv_dir
+   ITR.data.vault_providers.dotenv_path
+   ITR.data.vault_providers.ingest_catalog
+   ITR.data.vault_providers.ingest_schema
+   ITR.data.vault_providers.demo_schema
+   ITR.data.vault_providers.engine
+
+
+.. py:data:: logger
+
+   
+
+.. py:data:: dotenv_dir
+
+   
+
+.. py:data:: dotenv_path
+
+   
+
+.. py:data:: ingest_catalog
+   :value: 'osc_datacommons_dev'
+
+   
+
+.. py:data:: ingest_schema
+   :value: 'demo_dv'
+
+   
+
+.. py:data:: demo_schema
+   :value: 'demo_dv'
+
+   
+
+.. py:data:: engine
+
+   
+
+.. py:function:: dequantify_column(df_col: pandas.Series) -> pandas.DataFrame
+
+
+.. py:function:: dequantify_df(df: pandas.DataFrame) -> pandas.DataFrame
+
+
+.. py:function:: requantify_df(df: pandas.DataFrame, typemap={}) -> pandas.DataFrame
+
+
+.. py:function:: create_table_from_df(df: pandas.DataFrame, schemaname: str, tablename: str, engine: sqlalchemy.engine.base.Engine, verbose=False)
+
+
+.. py:function:: read_quantified_sql(sql: str, tablename, schemaname, engine: sqlalchemy.engine.base.Engine, index_col=None) -> pandas.DataFrame
+
+
+.. py:class:: VaultCompanyDataProvider(engine: sqlalchemy.engine.base.Engine, company_table: str, target_table: str = '', trajectory_table: str = '', company_schema: str = '', column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig)
+
+
+   Bases: :py:obj:`ITR.data.data_providers.CompanyDataProvider`
+
+   This class serves primarily for connecting to the ITR tool to the Data Vault via Trino.
+
+   :param company_table: the name of the Trino table that contains fundamental data for companies
+   :param target_table: the name of the Trino table that contains company (emissions intensity) target data (and possibly historical data)
+   :param trajectory_table: the name of the Trino table that contains company (emissions intensity) historical data (and possibly trajectory data)
+   :param company_schema: the name of the schema where the company_table is found
+   :param column_config: An optional ColumnsConfig object containing relevant variable names
+
+   .. py:method:: get_projection_controls() -> ITR.configs.ProjectionControls
+      :abstractmethod:
+
+      Return the ProjectionControls associated with this CompanyDataProvider.
+
+
+   .. py:method:: get_company_ids() -> List[str]
+      :abstractmethod:
+
+      Return the list of Company IDs of this CompanyDataProvider
+
+
+   .. py:method:: _validate_projected_trajectories(companies: List[ITR.interfaces.ICompanyData], ei_benchmarks: ITR.data.data_providers.IntensityBenchmarkDataProvider)
+      :abstractmethod:
+
+      Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
+      COMPANIES are a list of companies with historic data that need to be projected.
+      EI_BENCHMARKS are the benchmarks for all sectors, regions, and scopes
+      In previous incarnations of this function, no benchmark data was needed for any reason.
+
+
+   .. py:method:: sum_over_companies(company_ids: List[str], year: int, factor: str, scope: ITR.interfaces.EScope = EScope.S1S2) -> float
+
+
+   .. py:method:: compute_portfolio_weights(pa_temp_scores: pandas.Series, year: int, factor: str, scope: ITR.interfaces.EScope = EScope.S1S2) -> pandas.Series
+
+      Portfolio values could be position size, temperature scores, anything that can be multiplied by a factor.
+
+      :param company_ids: A pd.Series of company IDs (ISINs)
+      :return: A pd.Series weighted by the factor
+
+
+   .. py:method:: get_company_data(company_ids: Optional[List[str]] = None) -> List[ITR.interfaces.ICompanyData]
+      :abstractmethod:
+
+      Get all relevant data for a list of company ids. This method should return a list of ICompanyData
+      instances.
+
+      :param company_ids: A list of company IDs (ISINs)
+      :return: A list containing the company data
+
+
+   .. py:method:: get_value(company_ids: List[str], variable_name: str) -> pandas.Series
+      :abstractmethod:
+
+      Gets the value of a variable for a list of companies ids
+      :param company_ids: list of company ids
+      :param variable_name: variable name of the projected feature
+      :return: series of values
+
+
+   .. py:method:: _calculate_target_projections(production_bm: ITR.data.data_providers.ProductionBenchmarkDataProvider, ei_bm: ITR.data.data_providers.IntensityBenchmarkDataProvider)
+      :abstractmethod:
+
+      We cannot calculate target projections until after we have loaded benchmark data.
+      We do so when companies are associated with benchmarks, in the DataWarehouse construction
+
+      :param production_bm: A Production Benchmark (multi-sector, single-scope, 2020-2050)
+      :param ei_bm: Intensity Benchmarks for all sectors and scopes defined by the benchmark, 2020-2050
+
+
+   .. py:method:: get_company_intensity_and_production_at_base_year(company_ids: List[str]) -> pandas.DataFrame
+      :abstractmethod:
+
+      overrides subclass method
+      :param: company_ids: list of company ids
+      :return: DataFrame the following columns :
+      ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
+      ColumnsConfig.REGION
+
+
+   .. py:method:: get_company_fundamentals(company_ids: List[str]) -> pandas.DataFrame
+
+      :param company_ids: A list of company IDs
+      :return: A pandas DataFrame with company fundamental info per company
+
+
+   .. py:method:: get_company_projected_trajectories(company_ids: List[str]) -> pandas.DataFrame
+      :abstractmethod:
+
+      :param company_ids: A list of company IDs
+      :return: A pandas DataFrame with projected intensities per company
+
+
+   .. py:method:: get_company_projected_targets(company_ids: List[str]) -> pandas.DataFrame
+      :abstractmethod:
+
+      :param company_ids: A list of company IDs
+      :return: A pandas DataFrame with projected targets per company
+
+
+   .. py:method:: _allocate_emissions(new_companies: List[ITR.interfaces.ICompanyData], benchmarks_projected_ei: ITR.data.data_providers.IntensityBenchmarkDataProvider, projection_controls: ITR.configs.ProjectionControls)
+      :abstractmethod:
+
+      Use benchmark data from `ei_benchmarks` to allocate sector-level emissions from aggregated emissions.
+      For example, a Utility may supply both Electricity and Gas to customers, reported separately.
+      When we split the company into Electricity and Gas lines of business, we can allocate Scope emissions
+      to the respective lines of business using benchmark averages to guide the allocation.
+
+
+
+.. py:class:: VaultProviderProductionBenchmark(engine: sqlalchemy.engine.base.Engine, benchmark_name: str, production_benchmarks: ITR.interfaces.IProductionBenchmarkScopes, ingest_schema: str = '', column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig)
+
+
+   Bases: :py:obj:`ITR.data.data_providers.ProductionBenchmarkDataProvider`
+
+   Production projecton data provider super class.
+
+   This Data Container contains Production data on benchmark level. Data has a regions and sector indices.
+   Initialized ProductionBenchmarkDataProvider is required when setting up a data warehouse instance.
+
+   .. py:method:: benchmark_changed(new_projected_production: ITR.data.data_providers.ProductionBenchmarkDataProvider) -> bool
+
+
+   .. py:method:: get_company_projected_production(*args, **kwargs)
+
+      get the projected productions for all companies in ghg_scope12
+      :param ghg_scope12: DataFrame with at least the following columns :
+      ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+      :return: Dataframe of projected productions for [base_year - base_year + 50]
+
+
+   .. py:method:: get_benchmark_projections(*args, **kwargs)
+
+      get the sector emissions for a list of companies.
+      If there is no data for the sector, then it will be replaced by the global value
+      :param company_secor_region_info: DataFrame with at least the following columns :
+      ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
+      :return: A DataFrame with company and intensity benchmarks per calendar year per row
+
+
+
+.. py:class:: VaultProviderIntensityBenchmark(engine: sqlalchemy.engine.base.Engine, benchmark_name: str, EI_benchmarks: ITR.interfaces.IEIBenchmarkScopes, ingest_schema: str = '', column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig, projection_controls: ITR.configs.ProjectionControls = ProjectionControls())
+
+
+   Bases: :py:obj:`ITR.data.data_providers.IntensityBenchmarkDataProvider`
+
+   Production intensity data provider super class.
+   This Data Container contains emission intensity data on benchmark level. Data has a regions and sector indices.
+   Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.
+
+   .. py:method:: get_scopes() -> List[ITR.interfaces.EScope]
+      :abstractmethod:
+
+
+   .. py:method:: benchmarks_changed(new_projected_ei: ITR.data.data_providers.IntensityBenchmarkDataProvider) -> bool
+
+
+   .. py:method:: prod_centric_changed(new_projected_ei: ITR.data.data_providers.IntensityBenchmarkDataProvider) -> bool
+
+
+   .. py:method:: is_production_centric() -> bool
+      :abstractmethod:
+
+      returns True if benchmark is "production_centric" (as defined by OECM)
+
+
+   .. py:method:: get_SDA_intensity_benchmarks(company_info_at_base_year: pandas.DataFrame) -> pandas.DataFrame
+
+      Overrides subclass method
+      returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+      :param company_info_at_base_year: DataFrame with at least the following columns :
+      ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI ColumnsConfig.SECTOR and ColumnsConfig.REGION
+      :return: A DataFrame with company and SDA intensity benchmarks per calendar year per row
+
+
+   .. py:method:: _get_decarbonizations_paths(intensity_benchmarks: pandas.DataFrame) -> pandas.DataFrame
+
+      Overrides subclass method
+      Returns a DataFrame with the projected decarbonization paths for the supplied companies in intensity_benchmarks.
+      :param: A DataFrame with company and intensity benchmarks per calendar year per row
+      :return: A pd.DataFrame with company and decarbonisation path s per calendar year per row
+
+
+   .. py:method:: _get_decarbonization(intensity_benchmark_row: pandas.Series) -> pandas.Series
+
+      Overrides subclass method
+      returns a Series with the decarbonization path for a benchmark.
+      :param: A Series with company and intensity benchmarks per calendar year per row
+      :return: A pd.Series with company and decarbonisation path s per calendar year per row
+
+
+   .. py:method:: _convert_benchmark_to_series(benchmark: ITR.interfaces.IBenchmark) -> pandas.Series
+
+      extracts the company projected intensities or targets for a given scope
+      :param feature: PROJECTED_EI or PROJECTED_TARGETS
+      :param scope: a scope
+      :return: pd.Series
+
+
+   .. py:method:: _get_projected_intensities(scope: ITR.interfaces.EScope = EScope.S1S2) -> pandas.Series
+      :abstractmethod:
+
+      Converts IBenchmarkScopes into dataframe for a scope
+      :param scope: a scope
+      :return: pd.Series
+
+
+   .. py:method:: _get_intensity_benchmarks(company_sector_region_info: Optional[pandas.DataFrame] = None, scope_to_calc: Optional[ITR.interfaces.EScope] = None) -> pandas.DataFrame
+      :abstractmethod:
+
+      Overrides subclass method
+      returns dataframe of all EI benchmarks if COMPANY_SECTOR_REGION_SCOPE is None.  Otherwise
+      returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+      :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
+      with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
+      :return: A DataFrame with company and intensity benchmarks; rows are calendar years, columns are company data
+
+
+
+.. py:class:: DataVaultWarehouse(engine: sqlalchemy.engine.base.Engine, company_data: VaultCompanyDataProvider, benchmark_projected_production: VaultProviderProductionBenchmark, benchmarks_projected_ei: VaultProviderIntensityBenchmark, ingest_schema: str = '', itr_prefix: str = '', column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig)
+
+
+   Bases: :py:obj:`ITR.data.data_warehouse.DataWarehouse`
+
+   General data provider super class.
+
+   .. py:method:: quant_init(engine: sqlalchemy.engine.base.Engine, company_data: VaultCompanyDataProvider, ingest_schema: str = '', itr_prefix: str = '')
+
+
+   .. py:method:: get_preprocessed_company_data(company_ids: List[str]) -> List[ITR.interfaces.ICompanyAggregates]
+      :abstractmethod:
+
+      Get all relevant data for a list of company ids. This method should return a list of ICompanyAggregates
+      instances.
+
+      :param company_ids: A list of company IDs (ISINs)
+      :return: A list containing the company data and additional precalculated fields
+
+
+   .. py:method:: get_pa_temp_scores(probability: float, company_ids: List[str]) -> pandas.Series
+
+
+

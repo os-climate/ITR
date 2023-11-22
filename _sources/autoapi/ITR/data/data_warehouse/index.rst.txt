@@ -1,0 +1,100 @@
+:py:mod:`ITR.data.data_warehouse`
+=================================
+
+.. py:module:: ITR.data.data_warehouse
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.data_warehouse.DataWarehouse
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   ITR.data.data_warehouse.logger
+
+
+.. py:data:: logger
+
+   
+
+.. py:class:: DataWarehouse(company_data: ITR.data.data_providers.CompanyDataProvider, benchmark_projected_production: Optional[ITR.data.data_providers.ProductionBenchmarkDataProvider], benchmarks_projected_ei: Optional[ITR.data.data_providers.IntensityBenchmarkDataProvider], estimate_missing_data: Optional[Callable[[DataWarehouse, ITR.interfaces.ICompanyData], None]] = None, column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig)
+
+
+   Bases: :py:obj:`abc.ABC`
+
+   General data provider super class.
+
+   .. py:method:: _preserve_historic_data()
+
+
+   .. py:method:: _restore_historic_data()
+
+
+   .. py:method:: update_benchmarks(benchmark_projected_production: Optional[ITR.data.data_providers.ProductionBenchmarkDataProvider], benchmarks_projected_ei: Optional[ITR.data.data_providers.IntensityBenchmarkDataProvider])
+
+      Update the benchmark data used in this instance of the DataWarehouse.  If there is no change, do nothing.
+
+
+   .. py:method:: update_trajectories()
+
+      Update the trajectory calculations after changing global ProjectionControls.  Production and EI benchmarks remain the same.
+
+
+   .. py:method:: estimate_missing_s3_data(company: ITR.interfaces.ICompanyData)
+
+
+   .. py:method:: _process_company_data(df_company_data: pandas.DataFrame, projected_production: pandas.DataFrame, projected_trajectories: pandas.DataFrame, projected_targets: pandas.DataFrame, base_year: int, target_year: int, budgeted_ei: pandas.DataFrame, benchmark_temperature: ITR.data.osc_units.delta_degC_Quantity, global_budget: ITR.data.osc_units.EmissionsQuantity) -> pandas.DataFrame
+      :classmethod:
+
+
+   .. py:method:: get_preprocessed_company_data(company_ids: List[str]) -> List[ITR.interfaces.ICompanyAggregates]
+
+      Get all relevant data for a list of company ids. This method should return a list of ICompanyAggregates
+      instances.
+
+      :param company_ids: A list of company IDs (ISINs)
+      :return: A list containing the company data and additional precalculated fields
+
+
+   .. py:method:: _convert_df_to_model(df_company_data: pandas.DataFrame) -> List[ITR.interfaces.ICompanyAggregates]
+
+      transforms Dataframe Company data and preprocessed values into list of ICompanyAggregates instances
+
+      :param df_company_data: pandas Dataframe with targets
+      :return: A list containing the targets
+
+
+   .. py:method:: _get_cumulative_emissions(projected_ei: pandas.DataFrame, projected_production: pandas.DataFrame) -> pandas.DataFrame
+      :classmethod:
+
+      get the weighted sum of the projected emission
+      :param projected_ei: Rows of projected emissions intensities indexed by (company_id, scope)
+      :param projected_production: Rows of projected production amounts indexed by (company_id, scope)
+      :return: cumulative emissions, by year, based on weighted sum of emissions intensity * production
+
+
+   .. py:method:: _get_exceedance_year(df_subject: pandas.DataFrame, df_budget: pandas.DataFrame, base_year: int, target_year: int, budget_year: Optional[int]) -> pandas.Series
+      :classmethod:
+
+      :param df_subject: DataFrame of cumulative emissions values over time
+      :param df_budget: DataFrame of cumulative emissions budget allowed over time
+      :param budget_year: if not None, set the exceedence budget to that year; otherwise budget starts low and grows year-by-year
+      :return: The furthest-out year where df_subject < df_budget, or np.nan if none
+
+      Where the (df_subject-aligned) budget defines a value but df_subject doesn't have a value, return pd.NA
+      Where the benchmark (df_budget) fails to provide a metric for the subject scope, return no rows
+
+
+
