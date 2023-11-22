@@ -41,8 +41,6 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                     if not result[i][k]:
                         continue
                     for scope in result[i][k]:
-                        if reference[i][k] is None:
-                            breakpoint()
                         if reference[i][k].get(scope):
                             vref = reference[i][k]
                             if not v.get(scope):
