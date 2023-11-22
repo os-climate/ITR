@@ -64,6 +64,6 @@ html_context = {
 }
 
 # -- Auto API
-autoapi_dirs = ["../ITR"]
+autoapi_dirs = ["../src/ITR"]
 autoapi_type = "python"
 autoapi_template_dir = "_autoapi_templates"
