@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
-from ..configs import ColumnsConfig  # noqa F401
-from ..data.osc_units import Quantity
+from ..configs import ColumnsConfig, ProjectionControls  # noqa F401
+from ..data.osc_units import EmissionsQuantity, Quantity_type, delta_degC_Quantity
 from ..interfaces import (  # noqa F401
     EScope,
     ICompanyData,
@@ -38,10 +38,24 @@ class CompanyDataProvider(ABC):
         pass
 
     @abstractmethod
-    def get_company_data(self, company_ids: List[str]) -> List[ICompanyData]:
+    def get_projection_controls(self) -> ProjectionControls:
         """
-        Get all relevant data for a list of company ids (ISIN). This method should return a list of ICompanyData
-        instances.
+        Return the ProjectionControls associated with this CompanyDataProvider.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_company_ids(self) -> List[str]:
+        """
+        Return the list of Company IDs of this CompanyDataProvider
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_company_data(self, company_ids: Optional[List[str]] = None) -> List[ICompanyData]:
+        """
+        Get all relevant data for a list of company ids (ISIN), or all company data if `company_ids` is None.
+        This method should return a list of ICompanyData instances.
 
         :param company_ids: A list of company IDs (ISINs)
         :return: A list containing the company data
@@ -87,6 +101,40 @@ class CompanyDataProvider(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def _allocate_emissions(
+        self,
+        new_companies: List[ICompanyData],
+        ei_benchmarks: IntensityBenchmarkDataProvider,
+        projection_controls: ProjectionControls,
+    ):
+        """
+        Use benchmark data from `ei_benchmarks` to allocate sector-level emissions from aggregated emissions.
+        For example, a Utility may supply both Electricity and Gas to customers, reported separately.
+        When we split the company into Electricity and Gas lines of business, we can allocate Scope emissions
+        to the respective lines of business using benchmark averages to guide the allocation.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _validate_projected_trajectories(self, companies: List[ICompanyData], ei_bm: IntensityBenchmarkDataProvider):
+        """
+        Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
+        COMPANY_IDS are a list of companies with historic data that need to be projected.
+        EI_BENCHMARKS are the benchmarks for all sectors, regions, and scopes
+        In previous incarnations of this function, no benchmark data was needed for any reason.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _calculate_target_projections(
+        self, production_bm: ProductionBenchmarkDataProvider, ei_bm: IntensityBenchmarkDataProvider
+    ):
+        """
+        Use benchmark data to calculate target projections
+        """
+        raise NotImplementedError
+
 
 class ProductionBenchmarkDataProvider(ABC):
     """
@@ -103,6 +151,10 @@ class ProductionBenchmarkDataProvider(ABC):
         :param config: A dictionary containing the configuration parameters for this data provider.
         """
         pass
+
+    @abstractmethod
+    def benchmark_changed(self, production_benchmark: ProductionBenchmarkDataProvider) -> bool:
+        raise NotImplementedError
 
     @abstractmethod
     def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
@@ -137,8 +189,8 @@ class IntensityBenchmarkDataProvider(ABC):
 
     def __init__(
         self,
-        benchmark_temperature: Quantity["delta_degC"],
-        benchmark_global_budget: Quantity["CO2"],
+        benchmark_temperature: delta_degC_Quantity,
+        benchmark_global_budget: EmissionsQuantity,
         is_AFOLU_included: bool,
         **kwargs,
     ):
@@ -152,6 +204,18 @@ class IntensityBenchmarkDataProvider(ABC):
         self._is_AFOLU_included = is_AFOLU_included
         self._benchmark_global_budget = benchmark_global_budget
 
+    @abstractmethod
+    def get_scopes(self) -> List[EScope]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def benchmarks_changed(self, ei_benchmarks: IntensityBenchmarkDataProvider) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def prod_centric_changed(self, ei_benchmarks: IntensityBenchmarkDataProvider) -> bool:
+        raise NotImplementedError
+
     @property
     def is_AFOLU_included(self) -> bool:
         """
@@ -164,14 +228,14 @@ class IntensityBenchmarkDataProvider(ABC):
         self._is_AFOLU_included = value
 
     @property
-    def benchmark_temperature(self) -> Quantity["delta_degC"]:
+    def benchmark_temperature(self) -> delta_degC_Quantity:
         """
         :return: assumed temperature for the benchmark. for OECM 1.5C for example
         """
         return self._benchmark_temperature
 
     @property
-    def benchmark_global_budget(self) -> Quantity["CO2"]:
+    def benchmark_global_budget(self) -> EmissionsQuantity:
         """
         :return: Benchmark provider assumed global budget. if AFOLU is not included global budget is divided by 0.76
         """
@@ -186,7 +250,7 @@ class IntensityBenchmarkDataProvider(ABC):
         self._benchmark_global_budget = value
 
     @abstractmethod
-    def _get_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
+    def _get_intensity_benchmarks(self, company_sector_region_info: Optional[pd.DataFrame] = None) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_sector_region_info: DataFrame with at least the following columns :
@@ -202,5 +266,12 @@ class IntensityBenchmarkDataProvider(ABC):
         :param company_sector_region_info: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: A DataFrame with company and intensity benchmarks per calendar year per row
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_production_centric(self) -> bool:
+        """
+        returns True if benchmark is "production_centric" (as defined by OECM)
         """
         raise NotImplementedError

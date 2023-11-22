@@ -6,11 +6,11 @@ from typing import Type
 
 import numpy as np
 import pandas as pd
-from pint_pandas import PintType
 
 import ITR
 
 from .configs import ColumnsConfig, LoggingConfig, PortfolioAggregationConfig
+from .data import PintType
 from .data.osc_units import PA_, asPintSeries
 from .interfaces import EScope
 
