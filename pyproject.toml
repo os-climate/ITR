@@ -9,6 +9,7 @@ requires-python = ">=3.9"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 keywords = ["Climate", "ITR", "Finance"]
+
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
@@ -18,14 +19,15 @@ classifiers = [
   "Operating System :: Unix",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.9",
   "Topic :: Office/Business :: Financial",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
 ]
+
 dependencies = [
   "autoapi>=2.0.1",
   "iam-units>=2022.10.27",
@@ -67,6 +69,9 @@ Documentation = "https://github.com/os-climate/ITR/tree/main/docs"
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
+[tool.isort]
+profile = "black"
+
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"
 release = "scripts/release-versioning.sh"
@@ -88,5 +93,8 @@ testpaths = ["test/"]
 [tool.black]
 line-length = 120
 
-[tool.isort]
-profile = "black"
+[tool.flake8]
+max-line-length = "120"
+extend-ignore = [
+  "E501",
+]
