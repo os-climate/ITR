@@ -1,6 +1,6 @@
 [project]
 name = "ITR"
-version = "v1.0.11"
+version = "v1.1.1"
 description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
 authors = [
   { name = "Michael Tiemann", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" },
@@ -30,6 +30,7 @@ classifiers = [
 
 dependencies = [
   "autoapi>=2.0.1",
+  "fastparquet>=2023.10.1",
   "iam-units>=2022.10.27",
   "numpy==1.24.3",
   "openpyxl==3.0.10",

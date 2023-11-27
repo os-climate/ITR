@@ -27,6 +27,9 @@ from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMet
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
+nan_delta_degC = Q_(pd.NA, "delta_degC")
+nan_dimensionless = Q_(pd.NA, "dimensionless")
+
 
 class TemperatureScore(PortfolioAggregation):
     """
@@ -78,17 +81,17 @@ class TemperatureScore(PortfolioAggregation):
         ) or scorable_row[self.budget_column].m <= 0:
             return (
                 self.get_default_score(scorable_row),
-                np.nan,
-                np.nan,
-                np.nan,
-                np.nan,
+                nan_delta_degC,
+                nan_dimensionless,
+                nan_delta_degC,
+                nan_dimensionless,
                 EScoreResultType.DEFAULT,
             )
 
         # If only target data missing assign only trajectory_score to final score
         elif ITR.isna(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
-            target_overshoot_ratio = np.nan
-            target_temperature_score = np.nan
+            target_overshoot_ratio = nan_dimensionless
+            target_temperature_score = nan_delta_degC
             trajectory_overshoot_ratio = (
                 scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[self.budget_column]
             )
@@ -200,7 +203,7 @@ class TemperatureScore(PortfolioAggregation):
         company_id_and_scope = [self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE]
         companies = data.index.get_level_values(self.c.COLS.COMPANY_ID).unique()
 
-        # If taregt score not provided, use non-specific probability
+        # If target score not provided, use non-specific probability
         data = data.fillna({self.c.COLS.TARGET_PROBABILITY: target_probability})
 
         # If scope S1S2S3 is in the list of scopes to calculate, we need to calculate the other two as well
@@ -287,7 +290,7 @@ class TemperatureScore(PortfolioAggregation):
                     ]
                 ]
                 .groupby([self.c.COLS.TIME_FRAME])[self.c.SCORE_RESULT_TYPE]
-                .transform(max)
+                .transform("max")
                 == data[self.c.SCORE_RESULT_TYPE]
             )
 

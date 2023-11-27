@@ -3,6 +3,7 @@ import os
 import pathlib
 from typing import List, Optional, Type
 
+from mypy_boto3_s3.service_resource import Bucket
 import numpy as np
 import osc_ingest_trino as osc
 import pandas as pd
@@ -36,20 +37,6 @@ from ..interfaces import (
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
 
-# Load some standard environment variables from a dot-env file, if it exists.
-# If no such file can be found, does not fail, and so allows these environment vars to
-# be populated in some other way
-dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.environ.get("HOME", "/opt/app-root/src"))
-dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path=dotenv_path, override=True)
-
-ingest_catalog = "osc_datacommons_dev"
-ingest_schema = "demo_dv"
-demo_schema = "demo_dv"
-
-engine = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=ingest_schema)
-
 
 # If DF_COL contains Pint quantities (because it is a PintArray or an array of Pint Quantities),
 # return a two-column dataframe of magnitudes and units.
@@ -67,7 +54,7 @@ def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
         return df_col
     elif isinstance(df_col.iloc[0], Quantity):  # type: ignore
         m, u = list(zip(*df_col.map(lambda x: (np.nan, "dimensionless") if pd.isna(x) else (x.m, str(x.u)))))
-        return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index)
+        return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index).convert_dtypes()
     else:
         return df_col
 
@@ -123,6 +110,9 @@ def create_table_from_df(
     schemaname: str,
     tablename: str,
     engine: sqlalchemy.engine.base.Engine,
+    hive_bucket: Optional[Bucket] = None,
+    hive_catalog: Optional[str] = None,
+    hive_schema: Optional[str] = None,
     verbose=False,
 ):
     drop_table = f"drop table if exists {schemaname}.{tablename}"
@@ -131,16 +121,29 @@ def create_table_from_df(
     logger.debug(df.dtypes)
     logger.debug(df.columns)
     logger.debug(df.index)
-    new_df = dequantify_df(df)
-    new_df.to_sql(
-        tablename,
-        con=engine,
-        schema=schemaname,
-        if_exists="append",
-        index=False,
-        method=osc.TrinoBatchInsert(batch_size=5000, verbose=True),
-    )
-
+    new_df = dequantify_df(df).convert_dtypes()
+    if hive_bucket is not None:
+        osc.fast_pandas_ingest_via_hive(
+            new_df,
+            engine,
+            None, schemaname, tablename,
+            hive_bucket, hive_catalog, hive_schema,
+            partition_columns = ['year'] if 'year' in new_df.columns else None,
+            overwrite = True,
+            typemap={"datetime64[ns]":"timestamp(6)", "datetime64[ns, UTC]":"timestamp(6)",
+                     # "Int16":"integer", "int16":"integer"
+            },
+            verbose = True
+        )
+    else:
+        new_df.to_sql(
+            tablename,
+            con=engine,
+            schema=schemaname,
+            if_exists="append",
+            index=False,
+            method=osc.TrinoBatchInsert(batch_size=5000, verbose=True),
+        )
 
 # When reading SQL tables to import into DataFrames, it is up to the user to preserve {COL}, {COL}_units pairings so they can be reconstructed.
 # If the user does a naive "select * from ..." this happens naturally.
@@ -445,6 +448,9 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         benchmark_name: str,
         production_benchmarks: IProductionBenchmarkScopes,
         ingest_schema: str = "",
+        hive_bucket: Optional[Bucket] = None,
+        hive_catalog: Optional[str] = None,
+        hive_schema: Optional[str] = None,
         column_config: Type[ColumnsConfig] = ColumnsConfig,
     ):
         """
@@ -483,8 +489,7 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
                 df = pd.concat([df, bdf])
         df.reset_index(inplace=True)
         df.rename(columns={"index": "year"}, inplace=True)
-        df = df.convert_dtypes()
-        create_table_from_df(df, self._schema, benchmark_name, engine)
+        create_table_from_df(df, self._schema, benchmark_name, engine, hive_bucket, hive_catalog, hive_schema)
 
     def benchmark_changed(self, new_projected_production: ProductionBenchmarkDataProvider) -> bool:
         # The Data Vault does not keep its own copies of benchmarks
@@ -504,6 +509,9 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         benchmark_name: str,
         EI_benchmarks: IEIBenchmarkScopes,
         ingest_schema: str = "",
+        hive_bucket: Optional[Bucket] = None,
+        hive_catalog: Optional[str] = None,
+        hive_schema: Optional[str] = None,
         column_config: Type[ColumnsConfig] = ColumnsConfig,
         projection_controls: ProjectionControls = ProjectionControls(),
     ):
@@ -548,8 +556,7 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
                 df = pd.concat([df, benchmark_df])
         df.reset_index(inplace=True)
         df.rename(columns={"index": "year"}, inplace=True)
-        df = df.convert_dtypes()
-        create_table_from_df(df, self._schema, benchmark_name, engine)
+        create_table_from_df(df, self._schema, benchmark_name, engine, hive_bucket, hive_catalog, hive_schema)
 
     def get_scopes(self) -> List[EScope]:
         raise NotImplementedError
@@ -687,59 +694,56 @@ create table {self._schema}.{itr_prefix}cumulative_emissions with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2' as scope,
-       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)) * P.production_by_year) as cumulative_trajectory,
+select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2' as scope, P.year,
+       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)) * P.production_by_year) over (order by P.year) as cumulative_trajectory,
        concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_trajectory_units,
-       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) as cumulative_target,
+       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)) * P.production_by_year) over (order by P.year) as cumulative_target,
        concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {company_data._schema}.{company_data._target_table} EI on EI.company_id=C.company_id and EI.year=P.year and EI.ei_s1_by_year is not NULL
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_id=C.company_id and ET.year=P.year and ET.ei_s1_by_year is not NULL
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2',
-         concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units),
-         concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units)
 UNION ALL
-select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2S3' as scope,
-       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)+if(is_nan(ET.ei_s3_by_year),0.0,ET.ei_s3_by_year)) * P.production_by_year) as cumulative_trajectory,
+select C.company_name, C.company_id, '{company_data._schema}' as source, 'S1S2S3' as scope, P.year,
+       sum((ET.ei_s1_by_year+if(is_nan(ET.ei_s2_by_year),0.0,ET.ei_s2_by_year)+if(is_nan(ET.ei_s3_by_year),0.0,ET.ei_s3_by_year)) * P.production_by_year) over (order by P.year) as cumulative_trajectory,
        concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_trajectory_units,
-       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)+if(is_nan(EI.ei_s3_by_year),0.0,EI.ei_s3_by_year)) * P.production_by_year) as cumulative_target,
+       sum((EI.ei_s1_by_year+if(is_nan(EI.ei_s2_by_year),0.0,EI.ei_s2_by_year)+if(is_nan(EI.ei_s3_by_year),0.0,EI.ei_s3_by_year)) * P.production_by_year) over (order by P.year) as cumulative_target,
        concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units) as cumulative_target_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {company_data._schema}.{company_data._target_table} EI on EI.company_id=C.company_id and EI.year=P.year and EI.ei_s1_by_year is not NULL
      join {company_data._schema}.{company_data._trajectory_table} ET on ET.company_id=C.company_id and ET.year=P.year and ET.ei_s1_by_year is not NULL
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', 'S1S2S3',
-         concat(ET.ei_s1_by_year_units, ' * ', P.production_by_year_units),
-         concat(EI.ei_s1_by_year_units, ' * ', P.production_by_year_units)
 """,
             self._engine,
             verbose=True,
         )
 
         qres = osc._do_sql(
-            f"drop table if exists {self._schema}.{itr_prefix}cumulative_budget_1",
+            f"drop table if exists {self._schema}.{itr_prefix}cumulative_budgets",
             self._engine,
             verbose=False,
         )
         qres = osc._do_sql(
             f"""
-create table {self._schema}.{itr_prefix}cumulative_budget_1 with (
+create table {self._schema}.{itr_prefix}cumulative_budgets with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select C.company_name, C.company_id, '{company_data._schema}' as source, B.scope, 'benchmark_1' as benchmark,
+select C.company_name, C.company_id, '{company_data._schema}' as source, B.scope, P.year,  -- FIXME: should have scenario_name and year released
        B.global_budget, B.benchmark_temp,
-       sum(B.intensity * P.production_by_year) as cumulative_budget,
-       concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_budget_units
+       sum(B.intensity * P.production_by_year) over (order by P.year) as cumulative_budget,
+       concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_budget_units,
+       (CE_BY.cumulative_trajectory/coalesce(B_BY.intensity * P_BY.production_by_year,0)) * sum(B.intensity * P.production_by_year) over (order by P.year) as cumulative_scaled_budget,
+       concat(B.intensity_units, ' * ', P.production_by_year_units) as cumulative_scaled_budget_units
 from {company_data._schema}.{company_data._company_table} C
      join {company_data._schema}.{company_data._production_table} P on P.company_id=C.company_id
      join {self._schema}.{benchmarks_projected_ei.benchmark_name} B on P.year=B.year and C.region=B.region and C.sector=B.sector
+     join {self._schema}.{itr_prefix}cumulative_emissions CE_BY on CE_BY.company_id=C.company_id and B.scope=CE_BY.scope and CE_BY.year=2019
+     join {company_data._schema}.{company_data._production_table} P_BY on P_BY.company_id=C.company_id and CE_BY.year=P_BY.year
+     join {self._schema}.{benchmarks_projected_ei.benchmark_name} B_BY on CE_BY.year=B_BY.year and C.region=B_BY.region and C.sector=B_BY.sector
 where P.year>=2020
-group by C.company_name, C.company_id, '{company_data._schema}', B.scope, 'benchmark_1', B.global_budget, B.benchmark_temp,
-         concat(B.intensity_units, ' * ', P.production_by_year_units)
 """,
             self._engine,
             verbose=True,
@@ -767,14 +771,14 @@ create table {self._schema}.{itr_prefix}overshoot_ratios with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select E.company_name, E.company_id, '{company_data._schema}' as source, B.scope, 'benchmark_1' as benchmark,
+select E.company_name, E.company_id, '{company_data._schema}' as source, B.scope, B.year, -- FIXME: should have scenario_name and year released
        B.global_budget, B.benchmark_temp,
        E.cumulative_trajectory/B.cumulative_budget as trajectory_overshoot_ratio,
        concat(E.cumulative_trajectory_units, ' / (', B.cumulative_budget_units, ')') as trajectory_overshoot_ratio_units,
        E.cumulative_target/B.cumulative_budget as target_overshoot_ratio,
        concat(E.cumulative_target_units, ' / (', B.cumulative_budget_units, ')') as target_overshoot_ratio_units
 from {self._schema}.{itr_prefix}cumulative_emissions E
-     join {self._schema}.{itr_prefix}cumulative_budget_1 B on E.company_id=B.company_id and E.scope=B.scope
+     join {self._schema}.{itr_prefix}cumulative_budgets B on E.company_id=B.company_id and E.scope=B.scope and E.year=B.year
 """,
             self._engine,
             verbose=True,
@@ -791,7 +795,7 @@ create table {self._schema}.{self._tempscore_table} with (
     format = 'ORC',
     partitioning = array['scope']
 ) as
-select R.company_name, R.company_id, '{company_data._schema}' as source, R.scope, 'benchmark_1' as benchmark,
+select R.company_name, R.company_id, '{company_data._schema}' as source, R.scope,  -- FIXME: should have scenario_name and year released
        R.benchmark_temp + R.global_budget * (R.trajectory_overshoot_ratio-1) * 2.2/3664.0 as trajectory_temperature_score,
        'delta_degC' as trajectory_temperature_score_units,
        R.benchmark_temp + R.global_budget * (R.target_overshoot_ratio-1) * 2.2/3664.0 as target_temperature_score,

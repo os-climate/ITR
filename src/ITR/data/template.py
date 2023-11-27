@@ -514,7 +514,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ].ffill()
 
         # NA in exposure is how we drop rows we want to ignore
-        df = df[df.exposure.notna()]
+        df = df[df.exposure.notna()].copy()
 
         # TODO: Fix market_cap column naming inconsistency
         df.rename(
@@ -736,9 +736,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Disable rows we do not yet handle
             df_esg = df_esg[~df_esg.metric.isin(["generation", "consumption"])]
             if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg.base_year.map(lambda x: isinstance(x, str) or x.lower() != "x")]
+                df_esg = df_esg[df_esg[ColumnsConfig.BASE_YEAR].map(lambda x: not isinstance(x, str) or x.lower() != "x")]
             if "submetric" in df_esg.columns:
-                df_esg = df_esg[df_esg.submetric.map(lambda x: isinstance(x, str) or x.lower() != "ignore")]
+                df_esg = df_esg[df_esg.submetric.map(lambda x: not isinstance(x, str) or x.lower() != "ignore")]
             # FIXME: Should we move more df_esg work up here?
             self.df_esg = df_esg
         self.df_fundamentals = df_fundamentals
