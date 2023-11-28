@@ -464,9 +464,9 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         )
         df = pd.DataFrame()
         for scope in ["AnyScope"]:
-            if production_benchmarks.dict()[scope] is None:
+            if production_benchmarks.model_dump()[scope] is None:
                 continue
-            for benchmark in production_benchmarks.dict()[scope]["benchmarks"]:
+            for benchmark in production_benchmarks.model_dump()[scope]["benchmarks"]:
                 bdf = pd.DataFrame.from_dict(
                     {
                         r["year"]: [
@@ -519,9 +519,9 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         self.projection_controls = projection_controls
         df = pd.DataFrame()
         for scope in EScope.get_scopes():
-            if EI_benchmarks.dict()[scope] is None:
+            if EI_benchmarks.model_dump()[scope] is None:
                 continue
-            for benchmark in EI_benchmarks.dict()[scope]["benchmarks"]:
+            for benchmark in EI_benchmarks.model_dump()[scope]["benchmarks"]:
                 benchmark_df = pd.DataFrame.from_dict(
                     {
                         r["year"]: [
