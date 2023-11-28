@@ -25,8 +25,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Update dependencies
-        uses: pdm-project/update-deps-action@main
+        uses: ModeSevenIndustrialSolutions/update-deps-action@v1
         with:
+          sign-off-commit: "true"
           token: ${{ secrets.GH_TOKEN }}
           commit-message: "Chore: Update dependencies and pdm.lock"
           pr-title: "Update Python module dependencies"
