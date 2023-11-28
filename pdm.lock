@@ -126,22 +126,22 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.29.6"
+version = "1.33.1"
 requires_python = ">= 3.7"
 summary = "The AWS SDK for Python"
 dependencies = [
-    "botocore<1.33.0,>=1.32.6",
+    "botocore<1.34.0,>=1.33.1",
     "jmespath<2.0.0,>=0.7.1",
-    "s3transfer<0.8.0,>=0.7.0",
+    "s3transfer<0.9.0,>=0.8.0",
 ]
 files = [
-    {file = "boto3-1.29.6-py3-none-any.whl", hash = "sha256:f4d19e01d176c3a5a05e4af733185ff1891b08a3c38d4a439800fa132aa6e9be"},
-    {file = "boto3-1.29.6.tar.gz", hash = "sha256:d1d0d979a70bf9b0b13ae3b017f8523708ad953f62d16f39a602d67ee9b25554"},
+    {file = "boto3-1.33.1-py3-none-any.whl", hash = "sha256:fa5aa92d16763cb906fb4a83d6eba887342202a980bea07862af5ba40827aa5a"},
+    {file = "boto3-1.33.1.tar.gz", hash = "sha256:1fe5fa75ff0f0c29a6f55e818d149d33571731e692a7b785ded7a28ac832cae8"},
 ]
 
 [[package]]
 name = "botocore"
-version = "1.32.6"
+version = "1.33.1"
 requires_python = ">= 3.7"
 summary = "Low-level, data-driven core of boto 3."
 dependencies = [
@@ -151,8 +151,8 @@ dependencies = [
     "urllib3<2.1,>=1.25.4; python_version >= \"3.10\"",
 ]
 files = [
-    {file = "botocore-1.32.6-py3-none-any.whl", hash = "sha256:4454f967a4d1a01e3e6205c070455bc4e8fd53b5b0753221581ae679c55a9dfd"},
-    {file = "botocore-1.32.6.tar.gz", hash = "sha256:ecec876103783b5efe6099762dda60c2af67e45f7c0ab4568e8265d11c6c449b"},
+    {file = "botocore-1.33.1-py3-none-any.whl", hash = "sha256:c744b90980786c610dd9ad9c50cf2cdde3f1c4634b954a33613f6f8a1865a1de"},
+    {file = "botocore-1.33.1.tar.gz", hash = "sha256:d22d29916905e5f0670b91f07688e92b2c4a2075f9a474d6edbe7d22040d8fbf"},
 ]
 
 [[package]]
@@ -1477,15 +1477,15 @@ files = [
 
 [[package]]
 name = "s3transfer"
-version = "0.7.0"
+version = "0.8.0"
 requires_python = ">= 3.7"
 summary = "An Amazon S3 Transfer Manager"
 dependencies = [
-    "botocore<2.0a.0,>=1.12.36",
+    "botocore<2.0a.0,>=1.32.7",
 ]
 files = [
-    {file = "s3transfer-0.7.0-py3-none-any.whl", hash = "sha256:10d6923c6359175f264811ef4bf6161a3156ce8e350e705396a7557d6293c33a"},
-    {file = "s3transfer-0.7.0.tar.gz", hash = "sha256:fd3889a66f5fe17299fe75b82eae6cf722554edca744ca5d5fe308b104883d2e"},
+    {file = "s3transfer-0.8.0-py3-none-any.whl", hash = "sha256:baa479dc2e63e5c2ed51611b4d46cdf0295e2070d8d0b86b22f335ee5b954986"},
+    {file = "s3transfer-0.8.0.tar.gz", hash = "sha256:e8d6bd52ffd99841e3a57b34370a54841f12d3aab072af862cdcc50955288002"},
 ]
 
 [[package]]
@@ -1738,34 +1738,34 @@ files = [
 
 [[package]]
 name = "tables"
-version = "3.9.1"
+version = "3.9.2"
 requires_python = ">=3.9"
 summary = "Hierarchical datasets for Python"
 dependencies = [
-    "blosc2>=2.2.8",
+    "blosc2>=2.3.0",
     "numexpr>=2.6.2",
     "numpy>=1.19.0",
     "packaging",
     "py-cpuinfo",
 ]
 files = [
-    {file = "tables-3.9.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:784c1ffe7f972e69a9c97c0f164064e43617727668df4333802a7f23cfb06ee3"},
-    {file = "tables-3.9.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:af92f1e63b9fcadea621ab544540b7312553ea4f9456cf3d2728b48346fa557c"},
-    {file = "tables-3.9.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1f725f69d49f414736de24616b4ffa400127b86417bd14a11854aacd2a505b4d"},
-    {file = "tables-3.9.1-cp310-cp310-win_amd64.whl", hash = "sha256:e346249116b2eb95dd9277336c12f0d10d5328a5a3e8e16c74faa3c815817dc3"},
-    {file = "tables-3.9.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:f49e899247b541ed69d12fef10b5505b97243317a91b93927328c19a15d38671"},
-    {file = "tables-3.9.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4d1f2c947d63019db20728c6ecec39a1c900be00a65cae8025ac770148b641e8"},
-    {file = "tables-3.9.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cb89fab4a3c3cd98bd781913234e1f67464ff6e17662180cf718e67645a09271"},
-    {file = "tables-3.9.1-cp311-cp311-win_amd64.whl", hash = "sha256:aa176e1c72b0f935b0e607218ea8302378a39ed4fef5a544ebbd8d0523b56b86"},
-    {file = "tables-3.9.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:f482aaaa4b12d394421013cd4617d3e8a53a8d4a7a872454f7a13fb16c51a68e"},
-    {file = "tables-3.9.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1813c0eced77540598987db32ce9e619d02b6032acdc3f59590d83c13bdb910c"},
-    {file = "tables-3.9.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a64ce39652a2e2934f6d41500b2c6f8d4922e2022f1361e2302f3e85df4e2393"},
-    {file = "tables-3.9.1-cp312-cp312-win_amd64.whl", hash = "sha256:b49015aa8f576c6d5108c4aeb4d430bfcfc91ee8d0cca4d03e574e5485ffdc8b"},
-    {file = "tables-3.9.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:50140091af9d60eb3f806d3ee43f542beae569888c37ae96d6a1c887c389d8c8"},
-    {file = "tables-3.9.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:282a0747b3ce4e3108bcd443361e031c9817bf7e84358317723a51b9c02c5655"},
-    {file = "tables-3.9.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0295123272bb49efbebdc9b1e2b72baa99c5761b78fccacedbf44c52a5fa51ac"},
-    {file = "tables-3.9.1-cp39-cp39-win_amd64.whl", hash = "sha256:22084019437c504917ba8c0b2af75419e3d5c8ffc6d2ef4cd44031f06939518c"},
-    {file = "tables-3.9.1.tar.gz", hash = "sha256:48331503cd509c9f1f95cf2f5c64a57c48c0aa5141423f0eca352965c4f9bf81"},
+    {file = "tables-3.9.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:8a4e71fc9d2a3a0cacce4994afd47cd5f4797093ff9cee2cc7dc87e51f308107"},
+    {file = "tables-3.9.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5fbea426ce9bdd60cda435a265823b31d18f2b36e9045fb2d565679825a7aa46"},
+    {file = "tables-3.9.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e756c272bb111d016fec1d03a60095403a8fb42a5fbaf5f317dcf6e3b9d8e92e"},
+    {file = "tables-3.9.2-cp310-cp310-win_amd64.whl", hash = "sha256:eea41cb32dd22b30d6f3dd4e113f6d693384d301c89f3c4b4712f90c9c955875"},
+    {file = "tables-3.9.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:d71913fb8147dc6132595b94fc82f88f6c2436a3b5c57aadfe26c680f96aa387"},
+    {file = "tables-3.9.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9d6bbc477d038a17c5062ab6ccd94c8b1fa365cf017b9a2ad6c2dff1a07abb2b"},
+    {file = "tables-3.9.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8e67c71070b871fade3694a4c764504e03836bb1843321766cf2e40b7d280e84"},
+    {file = "tables-3.9.2-cp311-cp311-win_amd64.whl", hash = "sha256:ab9291ff4d243e7966b6706a2675b83138bd9bbe82721d695b78971660d59632"},
+    {file = "tables-3.9.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:c14dc879b041cf53be1afe9e5ed581e1aeacdcee9e2e1ee79110dc96a4c8d97c"},
+    {file = "tables-3.9.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2848fb3dce30a7b83fa099d026a91d7b10ad48afae04fa10f974f1da3f1e2bbf"},
+    {file = "tables-3.9.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b131c9b4e003816a45e2efe5c5c797d01d8308cac4aee72597a15837cedb605c"},
+    {file = "tables-3.9.2-cp312-cp312-win_amd64.whl", hash = "sha256:c6304d321452fd56865e5c309e38373011b0f0f6c714786c5660613ceb623acb"},
+    {file = "tables-3.9.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:c52087ed8b90a5f6ba87f0adcd1c433e5f5db7c7ca5984b08ff45f2247635f7d"},
+    {file = "tables-3.9.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:164b945d0cb731c7232775fd3657f150bcf05413928b86033b023a1dc8dbeb05"},
+    {file = "tables-3.9.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a068d4ad08d5a6b2ad457f60ac6676efdab9e29459e776e433d5537a46e62e41"},
+    {file = "tables-3.9.2-cp39-cp39-win_amd64.whl", hash = "sha256:bca5a6bf162a84a6ef74ca4017b28c59c1526cffdbd93ce94c98ff8f9593f1d5"},
+    {file = "tables-3.9.2.tar.gz", hash = "sha256:d470263c2e50c4b7c8635a0d99ac1ff2f9e704c24d71e5fa33c4529e7d0ad9c3"},
 ]
 
 [[package]]
@@ -1800,7 +1800,7 @@ files = [
 
 [[package]]
 name = "tox"
-version = "4.11.3"
+version = "4.11.4"
 requires_python = ">=3.8"
 summary = "tox is a generic virtualenv management and test command line tool"
 dependencies = [
@@ -1816,8 +1816,8 @@ dependencies = [
     "virtualenv>=20.24.3",
 ]
 files = [
-    {file = "tox-4.11.3-py3-none-any.whl", hash = "sha256:599af5e5bb0cad0148ac1558a0b66f8fff219ef88363483b8d92a81e4246f28f"},
-    {file = "tox-4.11.3.tar.gz", hash = "sha256:5039f68276461fae6a9452a3b2c7295798f00a0e92edcd9a3b78ba1a73577951"},
+    {file = "tox-4.11.4-py3-none-any.whl", hash = "sha256:2adb83d68f27116812b69aa36676a8d6a52249cb0d173649de0e7d0c2e3e7229"},
+    {file = "tox-4.11.4.tar.gz", hash = "sha256:73a7240778fabf305aeb05ab8ea26e575e042ab5a18d71d0ed13e343a51d6ce1"},
 ]
 
 [[package]]
