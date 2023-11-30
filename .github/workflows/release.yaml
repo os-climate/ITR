@@ -31,12 +31,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: "Setup PDM for build commands"
-        uses: pdm-project/setup-pdm@v3.3
-        with:
-          version: 2.10.4
+        uses: pdm-project/setup-pdm@v3
 
       - name: "Setup Python 3.10"
-        uses: actions/setup-python@v4.7.0
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ env.python-version }}
 
@@ -122,7 +120,6 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.crt dist/*.sig*
 
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -156,7 +153,6 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.crt dist/*.sig*
 
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
