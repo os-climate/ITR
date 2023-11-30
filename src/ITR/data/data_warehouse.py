@@ -365,7 +365,9 @@ class DataWarehouse(ABC):
         # We cannot only update trajectories without regard for all that depend on those trajectories
         # For example, different benchmarks may have different scopes defined, units for benchmarks, etc.
         logger.info(
-            f"re-calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)"
+            f"re-calculating trajectories for {len(self.company_data._companies)} companies"
+            f"\n    (times {len(EScope.get_scopes())} scopes times "
+            f"{self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)"
         )
         for company in self.company_data._companies:
             company.projected_intensities = None

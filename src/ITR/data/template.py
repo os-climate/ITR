@@ -736,7 +736,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Disable rows we do not yet handle
             df_esg = df_esg[~df_esg.metric.isin(["generation", "consumption"])]
             if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg[ColumnsConfig.BASE_YEAR].map(lambda x: not isinstance(x, str) or x.lower() != "x")]
+                df_esg = df_esg[
+                    df_esg[ColumnsConfig.BASE_YEAR].map(lambda x: not isinstance(x, str) or x.lower() != "x")
+                ]
             if "submetric" in df_esg.columns:
                 df_esg = df_esg[df_esg.submetric.map(lambda x: not isinstance(x, str) or x.lower() != "ignore")]
             # FIXME: Should we move more df_esg work up here?
