@@ -33,7 +33,6 @@ jobs:
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
 
-
       - name: "Setup Python 3.10"
         uses: actions/setup-python@v4
         with:
@@ -154,7 +153,6 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.crt dist/*.sig*
 
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
