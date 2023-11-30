@@ -31,9 +31,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: "Setup PDM for build commands"
-        uses: pdm-project/setup-pdm@v3
+        uses: pdm-project/setup-pdm@v3.3
         with:
-          version: 2.10.0
+          version: 2.10.4
 
       - name: "Setup Python 3.10"
         uses: actions/setup-python@v4.7.0
@@ -52,7 +52,7 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v1.2.3
+        uses: sigstore/gh-action-sigstore-python@v2.1.0
         with:
           inputs: >-
             ./dist/*.tar.gz
