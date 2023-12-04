@@ -95,6 +95,7 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.whl
+            dist/*.sigstore
 
   ### PUBLISH PYPI TEST ###
 
@@ -122,7 +123,7 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.crt dist/*.sig*
+          rm dist/*.sigstore
 
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -156,7 +157,7 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.crt dist/*.sig*
+          rm dist/*.sigstore
 
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
