@@ -54,6 +54,7 @@ repos:
     rev: v4.0.0-alpha.3
     hooks:
       - id: prettier
+        entry: prettier --write --ignore-unknown
         args:
           ["--ignore-unknown", "--no-error-on-unmatched-pattern", "!chart/**"]
 
