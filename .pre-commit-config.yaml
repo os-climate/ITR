@@ -4,8 +4,6 @@ ci:
   skip:
     # pre-commit.ci cannot install WGET, so tomlint must be disabled
     - tomllint
-    # pre-commit.ci throws some error related to Docker!
-    - shellcheck
 
 exclude: |
   (?x)^(
@@ -56,6 +54,9 @@ repos:
     rev: v4.0.0-alpha.3
     hooks:
       - id: prettier
+        # Possible workaround for 4.0.0a3 errors
+        # See: https://github.com/prettier/prettier/issues/15742
+        # entry: prettier --write --ignore-unknown
         args:
           ["--ignore-unknown", "--no-error-on-unmatched-pattern", "!chart/**"]
 
@@ -93,8 +94,8 @@ repos:
       - id: bashate
         args: ["--ignore=E006"]
 
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.9.0
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
     hooks:
       - id: shellcheck
       # Optionally only show errors and warnings
@@ -153,4 +154,4 @@ repos:
       - id: mypy
         verbose: true
         args: [--show-error-codes]
-        additional_dependencies: ['types-requests']
+        additional_dependencies: ["types-requests"]
