@@ -172,6 +172,7 @@ class Aggregation(BaseModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+    @property
     def empty(self):
         return len(self.contributions) == 0
 
@@ -189,8 +190,9 @@ class ScoreAggregation(BaseModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+    @property
     def empty(self):
-        return self.all.empty()
+        return self.all.empty
 
 
 emptyScoreAggregation = ScoreAggregation()
@@ -289,7 +291,7 @@ class IBenchmark(BaseModel):
                 if p.year in range(ProjectionControls.BASE_YEAR, ProjectionControls.TARGET_YEAR + 1)
             ]
         elif not self.projections:
-            logger.warning(f"Empty Benchmark for sector {sector}, region {region}")
+            logger.warning(f"Empty Benchmark for sector {self.sector}, region {self.region}")
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -535,6 +537,7 @@ class ICompanyEIProjectionsScopes(BaseModel):
                         )
                     )
 
+    @property
     def empty(self):
         return self == empty_ICompanyEIProjectionsScopes
 
@@ -598,6 +601,7 @@ class IHistoricEmissionsScopes(BaseModel):
         }
         return str(pd.DataFrame.from_dict(dict_items))
 
+    @property
     def empty(self):
         return self == empty_IHistoricEmissionsScopes
 
@@ -655,6 +659,7 @@ class IHistoricEIScopes(BaseModel):
         }
         return str(pd.DataFrame.from_dict(dict_items))
 
+    @property
     def empty(self):
         return self == empty_IHistoricEIScopes
 
@@ -720,6 +725,7 @@ class IHistoricData(BaseModel):
                 ],
             )
 
+    @property
     def empty(self) -> bool:
         if self.productions:
             return False
@@ -910,7 +916,7 @@ class ICompanyData(BaseModel):
                 self.emissions_metric = EmissionsMetric("t CO2")
             # TODO: Should raise a warning here
 
-        if self.historic_data.empty():
+        if self.historic_data.empty:
             # We are only partly initialized.  Remaining will be done later
             return
         self.historic_data._normalize(self.production_metric, self.emissions_metric)

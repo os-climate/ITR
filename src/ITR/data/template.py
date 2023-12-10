@@ -253,10 +253,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self.template_v2_start_year = None
         self.projection_controls = projection_controls
         # The initial population of companies' data
-        self._companies = self._init_from_template_company_data(excel_path)
-        super().__init__(self._companies, column_config, projection_controls)
-        # The perfection of historic ESG data (adding synthethic company sectors, dropping those with missing data)
-        self._companies = self._convert_from_template_company_data()
+        if excel_path:
+            self._own_data = True
+            self._companies = self._init_from_template_company_data(excel_path)
+            super().__init__(self._companies, column_config, projection_controls)
+            # The perfection of historic ESG data (adding synthethic company sectors, dropping those with missing data)
+            self._companies = self._convert_from_template_company_data()
+        else:
+            self._own_data = False
+            self._companies = []
 
     # When rows of data are expressed in terms of scope intensities, solve for the implied production
     # This function is called before we've decided on "best" production, and indeed generates candidates for "best" emissions
@@ -569,7 +574,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     )
                 )
             ):
-                error_message = f"All data should be in the same currency."
+                error_message = "All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
             elif fx_quote.any():
@@ -633,7 +638,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     )
         else:
             if len(df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].unique()) != 1:
-                error_message = f"All data should be in the same currency."
+                error_message = "All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
             for col in fundamental_metrics:
@@ -864,7 +869,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         f"Company {company_id} uses multiple units describing scopes "
                         f"{[s for s in em_unit_ambig.loc[[company_id]]['metric']]}"
                     )
-                logger.warning(f"The ITR Tool will choose one and covert all to that")
+                logger.warning("The ITR Tool will choose one and covert all to that")
 
             em_units = em_metrics.groupby(by=["company_id"], group_keys=True).first()
             # We update the metrics we were told with the metrics we are given
@@ -1382,7 +1387,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         )
         if c_ids_with_nonnumeric_target:
             error_message = (
-                f"Non-numeric target reduction ambition is invalid; please fix companies with ID: "
+                "Non-numeric target reduction ambition is invalid; please fix companies with ID: "
                 f"{c_ids_with_nonnumeric_target}"
             )
             logger.error(error_message)
@@ -1390,7 +1395,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         c_ids_with_increase_target = list(target_data[target_data["target_reduction_ambition"] < 0].index)
         if c_ids_with_increase_target:
             error_message = (
-                f"Negative target reduction ambition is invalid and entered for companies with ID: "
+                "Negative target reduction ambition is invalid and entered for companies with ID: "
                 f"{c_ids_with_increase_target}"
             )
             logger.error(error_message)
