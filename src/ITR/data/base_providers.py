@@ -1648,7 +1648,7 @@ class EITargetProjector(EIProjector):
         # We then infer netzero year targets for constituents of compound scopes from compound scopes
         # and infer netzero year taregts for compound scopes as the last of all constituents
         if nz_target_years["S1S2S3"] < nz_target_years["S1S2"]:
-            logger.warn("target S1S2S3 date <= S1S2 date")
+            logger.warning("target S1S2S3 date <= S1S2 date")
             nz_target_years["S1S2"] = nz_target_years["S1S2S3"]
         nz_target_years["S1"] = min(nz_target_years["S1S2"], nz_target_years["S1"])
         nz_target_years["S2"] = min(nz_target_years["S1S2"], nz_target_years["S2"])
