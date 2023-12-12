@@ -101,7 +101,8 @@ def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
             else:
                 # Make a pd.Series of Quantity in a way that does not throw UnitStrippedWarning
                 if df[col].map(lambda x: x is None).any():
-                    breakpoint()
+                    # breakpoint()
+                    raise
                 new_col = pd.Series(data=df[col], name=col) * pd.Series(
                     data=df[units_col].map(
                         lambda x: typemap.get(col, ureg("dimensionless").u) if pd.isna(x) else ureg(x).u
@@ -304,7 +305,8 @@ class VaultProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         """
 
         if self._prod_df.empty:
-            breakpoint()
+            # breakpoint()
+            raise
             # select company_id, year, production_by_year, production_by_year_units from itr_production_data where company_id='US00130H1059' order by year;
         else:
             from ..utils import get_benchmark_projections

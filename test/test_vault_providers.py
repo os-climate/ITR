@@ -223,7 +223,8 @@ def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
     )
     vault_production_bm, vault_ei_bm = vault_benchmarks
 
-    for tablename in [
+    # Verify that we have all the tables we need
+    tablenames = [
         "company_data",
         "benchmark_prod",
         "benchmark_ei",
@@ -232,9 +233,14 @@ def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
         "target_data",
         "cumulative_emissions",
         "cumulative_budgets",
-    ]:
-        qres = osc._do_sql(f"select count (*) from {itr_prefix}{tablename}", engine=engine_init, verbose=True)
-        assert len(qres) > 0 and len(qres[0]) > 0 and qres[0][0] > 0
+    ]
+    sql_counts = ",".join(
+        [f"{tablename}_cnt as (select count (*) as cnt from {itr_prefix}{tablename})" for tablename in tablenames]
+    )
+    sql_sums = "+".join([f"{tablename}_cnt.cnt" for tablename in tablenames])
+    sql_joins = ",".join([f"{tablename}_cnt" for tablename in tablenames])
+    # One N-clause statement executes about N times faster than N individual checks
+    qres = osc._do_sql(f"with {sql_counts} select {sql_sums} from {sql_joins}", engine=vault.engine, verbose=True)
     warehouse = DataVaultWarehouse(
         vault,
         company_data=vault_company_data,
