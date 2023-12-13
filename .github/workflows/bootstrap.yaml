@@ -1,5 +1,5 @@
 ---
-name: "♻️ Update DevOps tooling, GitHub Actions"
+name: "♻️ Update shared DevOps tooling"
 
 # yamllint disable-line rule:truthy
 on:
@@ -44,6 +44,6 @@ jobs:
           cp devops/.pre-commit-config.yaml .pre-commit-config.yaml
           git add .github scripts/* .pre-commit-config.yaml
           git commit -m "Chore: Update DevOps tooling from upstream repository"
-          git push --set-upstream origin update-gha-workflows
+          git push -u
           gh pr create --title "Chore: Update DevOps tooling from upstream repository" \
            --body 'This process automated by a GitHub workflow: bootstrap.yaml'
