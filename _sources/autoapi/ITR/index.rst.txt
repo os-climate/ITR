@@ -49,6 +49,8 @@ Functions
 
 .. autoapisummary::
 
+   ITR._AffineScalarFunc__hash__
+   ITR._Variable__hash__
    ITR.isna
    ITR.Q_m_as
    ITR.recombine_nom_and_std
@@ -166,6 +168,12 @@ Attributes
 .. py:data:: data_dir
 
    
+
+.. py:function:: _AffineScalarFunc__hash__(self)
+
+
+.. py:function:: _Variable__hash__(self)
+
 
 .. py:data:: _ufloat_nan
 
