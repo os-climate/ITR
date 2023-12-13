@@ -38,6 +38,9 @@ jobs:
           git config user.email \
            "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "update-devops-toolkit"
+          ls -la | true
+          ls -la devops | true 
+          ls -la devops/.github | true
           cp devops/.github/dependabot.yml .github/dependabot.yml
           cp devops/.github/workflows/* .github/workflows/
           cp devops/scripts/* scripts
