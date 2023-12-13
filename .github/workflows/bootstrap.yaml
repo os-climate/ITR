@@ -1,5 +1,5 @@
 ---
-name: "♻️ Update shared DevOps tooling"
+name: "♻️ Update DevOps tooling, GitHub Actions"
 
 # yamllint disable-line rule:truthy
 on:
@@ -37,13 +37,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email \
            "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "update-devops-tooling"
-          cp devops/dependabot.yml .github/dependabot.yml
-          cp devops/workflows/* .github/workflows/
+          git checkout -b "update-devops-toolkit"
+          cp devops/.github/dependabot.yml .github/dependabot.yml
+          cp devops/.github/workflows/* .github/workflows/
           cp devops/scripts/* scripts
           cp devops/.pre-commit-config.yaml .pre-commit-config.yaml
           git add .github scripts/* .pre-commit-config.yaml
-          git commit -m "Chore: Pull DevOps tooling from upstream repository"
-          git push --set-upstream origin update-devops-tooling
-          gh pr create --title "Chore: Pull DevOps tooling from upstream repository" \
-           --body 'This process automated by a GitHub workflow: bootstrap.yaml'
+          git commit -m "Chore: Pull DevOps  from shared repository"
+          git push --set-upstream origin update-gha-workflows
+          gh pr create --title "Chore: Update GitHub Actions" --body ''
