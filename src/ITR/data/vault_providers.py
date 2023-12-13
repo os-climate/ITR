@@ -62,8 +62,11 @@ def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
     elif df_col.size == 0:
         return df_col
     elif isinstance(df_col.iloc[0], Quantity):  # type: ignore
-        m, u = list(zip(*df_col.map(lambda x: (np.nan, "dimensionless") if pd.isna(x) else (x.m, str(x.u)))))
-        return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index).convert_dtypes()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            m, u = list(zip(*df_col.map(lambda x: (np.nan, "dimensionless") if pd.isna(x) else (x.m, str(x.u)))))
+            return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index).convert_dtypes()
     else:
         return df_col
 
@@ -391,7 +394,10 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
             self._own_data = True
             self._EI_df_t = ei_df_t
             self.production_centric = production_centric
-            df = ei_df_t.T.stack(level=0).to_frame("intensity").reset_index()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+                df = ei_df_t.T.stack(level=0).to_frame("intensity").reset_index()
             df.scope = df.scope.map(lambda x: x.name)
             df["global_budget"] = benchmark_global_budget
             df["benchmark_temp"] = benchmark_temperature
@@ -599,23 +605,26 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
             self._v.engine,
             index_col=self.column_config.COMPANY_ID,
         )
-        df_prod = pd.read_sql(
-            f"select company_id, production_by_year, production_by_year_units from {self._production_table}"
-            f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
-            self._v.engine,
-            index_col=self.column_config.COMPANY_ID,
-        ).apply(lambda x: Q_(x.production_by_year, x.production_by_year_units), axis=1)
-        df_prod.name = self.column_config.BASE_YEAR_PRODUCTION
-        df_ei = pd.read_sql(
-            f"select company_id, ei_s1s2_by_year, ei_s1s2_by_year_units, ei_s3_by_year, ei_s3_by_year_units from {self._trajectory_table}"
-            f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
-            self._v.engine,
-            index_col=self.column_config.COMPANY_ID,
-        ).apply(
-            lambda x: [Q_(x.ei_s1s2_by_year, x.ei_s1s2_by_year_units), Q_(x.ei_s3_by_year, x.ei_s3_by_year_units)],
-            axis=1,
-            result_type="expand",
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            df_prod = pd.read_sql(
+                f"select company_id, production_by_year, production_by_year_units from {self._production_table}"
+                f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
+                self._v.engine,
+                index_col=self.column_config.COMPANY_ID,
+            ).apply(lambda x: Q_(x.production_by_year, x.production_by_year_units), axis=1)
+            df_prod.name = self.column_config.BASE_YEAR_PRODUCTION
+            df_ei = pd.read_sql(
+                f"select company_id, ei_s1s2_by_year, ei_s1s2_by_year_units, ei_s3_by_year, ei_s3_by_year_units from {self._trajectory_table}"
+                f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
+                self._v.engine,
+                index_col=self.column_config.COMPANY_ID,
+            ).apply(
+                lambda x: [Q_(x.ei_s1s2_by_year, x.ei_s1s2_by_year_units), Q_(x.ei_s3_by_year, x.ei_s3_by_year_units)],
+                axis=1,
+                result_type="expand",
+            )
         df_em = df_ei.mul(df_prod, axis=0).rename(
             columns={0: self.column_config.GHG_SCOPE12, 1: self.column_config.GHG_SCOPE3}
         )
@@ -651,10 +660,13 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
             else:
                 df_ei.drop(columns=col, inplace=True)
         df_ei.columns.name = "scope"
-        if year is not None:
-            df_ei = df_ei.unstack(level=0)
-        else:
-            df_ei = df_ei.set_index("year", append=True).stack(level=0).unstack(level=1)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            if year is not None:
+                df_ei = df_ei.unstack(level=0)
+            else:
+                df_ei = df_ei.set_index("year", append=True).stack(level=0).unstack(level=1)
         return df_ei.reorder_levels(["company_id", "scope"])
 
     # TODO: make return value a Quantity (USD or CO2)
@@ -799,16 +811,19 @@ class DataVaultWarehouse(DataWarehouse):
                 if c.company_id in company_data.get_company_ids()
             ]
         )
-        df = pd.DataFrame(
-            data={
-                "sector": sector_data,
-                "region": region_data,
-                "scope": [EScope.AnyScope] * len(company_idx),
-                "base_year_production": prod_data,
-            },
-            index=pd.Index(company_idx, name="company_id"),
-        ).drop_duplicates()
-        company_info_at_base_year = df[~df["base_year_production"].map(lambda x: pd.isna(x))]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            df = pd.DataFrame(
+                data={
+                    "sector": sector_data,
+                    "region": region_data,
+                    "scope": [EScope.AnyScope] * len(company_idx),
+                    "base_year_production": prod_data,
+                },
+                index=pd.Index(company_idx, name="company_id"),
+            ).drop_duplicates()
+            company_info_at_base_year = df[~df["base_year_production"].map(lambda x: pd.isna(x))]
         projected_production = benchmark_projected_production.get_company_projected_production(
             company_info_at_base_year
         ).droplevel("scope")
@@ -845,7 +860,10 @@ class DataVaultWarehouse(DataWarehouse):
                     columns=["company_name", "company_lei", "company_id", "sector", "region"],
                 )
                 projection_dfs.append(pd.concat([df, ei_data], axis=1))
-            df2 = pd.concat(projection_dfs).reset_index(drop=True)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+                df2 = pd.concat(projection_dfs).reset_index(drop=True)
             create_vault_table_from_df(
                 df2,
                 getattr(self, projection_slots[i]),

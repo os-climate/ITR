@@ -117,8 +117,11 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
                 )
         except AttributeError:
             assert False
-        # See comment above to understand use of `cumprod` function
-        self._prod_df = _prod_delta_df_t.add(1.0).cumprod(axis=0).astype("pint[dimensionless]").T
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            # See comment above to understand use of `cumprod` function
+            self._prod_df = _prod_delta_df_t.add(1.0).cumprod(axis=0).astype("pint[dimensionless]").T
         self._prod_df.columns.name = "year"
         self._prod_df.index.names = [
             self.column_config.SECTOR,

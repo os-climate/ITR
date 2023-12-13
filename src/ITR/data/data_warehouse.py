@@ -547,9 +547,12 @@ class DataWarehouse(ABC):
         df_budget = DataWarehouse._get_cumulative_emissions(
             projected_ei=budgeted_ei, projected_production=projected_production
         )
-        base_year_scale = df_trajectory.loc[df_budget.index][base_year].mul(
-            df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m == 0.0 else 1 / x)
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            base_year_scale = df_trajectory.loc[df_budget.index][base_year].mul(
+                df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m == 0.0 else 1 / x)
+            )
         df_scaled_budget = df_budget.mul(base_year_scale, axis=0)
         # FIXME: we calculate exceedance only against df_budget, not also df_scaled_budget
         # df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR, None)
@@ -692,31 +695,34 @@ class DataWarehouse(ABC):
 
         # Ensure that projected_production is ordered the same as projected_ei, preserving order of projected_ei
         # projected_production is constructed to be limited to the years we want to analyze
-        proj_prod_t = asPintDataFrame(projected_production.loc[projected_ei.index].T)
-        # Limit projected_ei to the year range of projected_production
-        proj_ei_t = asPintDataFrame(projected_ei[proj_prod_t.index].T)
-        units_CO2e = "t CO2e"
-        # We use pd.concat because pd.combine reverts our PintArrays into object arrays :-/
-        proj_CO2e_m_t = pd.concat(
-            [
-                ITR.data.osc_units.align_production_to_bm(proj_prod_t[col], proj_ei_t[col])
-                .mul(proj_ei_t[col])
-                .pint.m_as(units_CO2e)
-                for col in proj_ei_t.columns
-            ],
-            axis=1,
-        )
-        # pd.concat names parameter refers to index.names; there's no way to set columns.names
-        proj_CO2e_m_t.columns.names = proj_ei_t.columns.names
-        if ITR.HAS_UNCERTAINTIES:
-            # Sum both the nominal and std_dev values, because these series are completely correlated
-            # Note that NaNs in this dataframe will be nan+/-nan, showing up in both nom and err
-            nom_CO2e_m_t = proj_CO2e_m_t.apply(ITR.nominal_values).cumsum()
-            err_CO2e_m_t = proj_CO2e_m_t.apply(ITR.std_devs).cumsum()
-            cumulative_emissions_m_t = nom_CO2e_m_t.combine(err_CO2e_m_t, ITR.recombine_nom_and_std)
-        else:
-            cumulative_emissions_m_t = proj_CO2e_m_t.cumsum()
-        return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}]")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            proj_prod_t = asPintDataFrame(projected_production.loc[projected_ei.index].T)
+            # Limit projected_ei to the year range of projected_production
+            proj_ei_t = asPintDataFrame(projected_ei[proj_prod_t.index].T)
+            units_CO2e = "t CO2e"
+            # We use pd.concat because pd.combine reverts our PintArrays into object arrays :-/
+            proj_CO2e_m_t = pd.concat(
+                [
+                    ITR.data.osc_units.align_production_to_bm(proj_prod_t[col], proj_ei_t[col])
+                    .mul(proj_ei_t[col])
+                    .pint.m_as(units_CO2e)
+                    for col in proj_ei_t.columns
+                ],
+                axis=1,
+            )
+            # pd.concat names parameter refers to index.names; there's no way to set columns.names
+            proj_CO2e_m_t.columns.names = proj_ei_t.columns.names
+            if ITR.HAS_UNCERTAINTIES:
+                # Sum both the nominal and std_dev values, because these series are completely correlated
+                # Note that NaNs in this dataframe will be nan+/-nan, showing up in both nom and err
+                nom_CO2e_m_t = proj_CO2e_m_t.apply(ITR.nominal_values).cumsum()
+                err_CO2e_m_t = proj_CO2e_m_t.apply(ITR.std_devs).cumsum()
+                cumulative_emissions_m_t = nom_CO2e_m_t.combine(err_CO2e_m_t, ITR.recombine_nom_and_std)
+            else:
+                cumulative_emissions_m_t = proj_CO2e_m_t.cumsum()
+            return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}]")
 
     @classmethod
     def _get_exceedance_year(

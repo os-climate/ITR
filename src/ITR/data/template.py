@@ -416,13 +416,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ],
                 axis=1,
             )
-            if ITR.HAS_UNCERTAINTIES:
-                df4 = df3_t.astype(
-                    "pint[t CO2e]"
-                ).T  # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
-                # Also https://github.com/pandas-dev/pandas/issues/12693
-            else:
-                df4 = df3_t.astype("pint[t CO2e]").T.drop_duplicates()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                if ITR.HAS_UNCERTAINTIES:
+                    df4 = df3_t.astype(
+                        "pint[t CO2e]"
+                    ).T  # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
+                    # Also https://github.com/pandas-dev/pandas/issues/12693
+                else:
+                    df4 = df3_t.astype("pint[t CO2e]").T.drop_duplicates()
             df5 = df4.droplevel(
                 [ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]
             ).swaplevel()  # .sort_index()
@@ -1251,14 +1253,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 logger.warning(f"Dropping NULL-valued production data for these indexes\n{df3_null_idx}")
                 df3_num_t = df3_num_t[~df3_null_idx]
                 df3_denom_t = df3_denom_t[~df3_null_idx]
-            df4 = (
-                df3_num_t
-                * df3_denom_t.rdiv(1.0).apply(
-                    lambda x: x.map(
-                        lambda y: x.dtype.na_value if ITR.isna(y) else Q_(0, x.dtype.units) if y.m == np.inf else y
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+                df4 = (
+                    df3_num_t
+                    * df3_denom_t.rdiv(1.0).apply(
+                        lambda x: x.map(
+                            lambda y: x.dtype.na_value if ITR.isna(y) else Q_(0, x.dtype.units) if np.isinf(ITR.nominal_values(y.m)) else y
+                        )
                     )
-                )
-            ).T
+                ).T
             df4["variable"] = VariablesConfig.EMISSIONS_INTENSITIES
             df4 = df4.reset_index().set_index(["company_id", "variable", "scope"])
             # Build df5 from PintArrays, not object types
@@ -1267,7 +1272,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df3_denom_t = pd.concat({VariablesConfig.PRODUCTIONS: df3_denom_t}, names=["variable"], axis=1)
             df3_denom_t = pd.concat({"production": df3_denom_t}, names=["scope"], axis=1)
             df3_denom_t.columns = df3_denom_t.columns.reorder_levels(["company_id", "variable", "scope"])
-            df5 = pd.concat([df3_num_t.T, df3_denom_t.T, df4])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+                df5 = pd.concat([df3_num_t.T, df3_denom_t.T, df4])
 
             df_historic_data = df5
 
