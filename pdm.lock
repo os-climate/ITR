@@ -5,7 +5,7 @@
 groups = ["default", "dev", "doc", "test", "tox"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:7c858f5eb3962bc71793f64f9b4f389db15651e87fc5e1c22ba7bcc28cc87c28"
+content_hash = "sha256:77a6ce5373d71ad88844c627629edab640a35d5de9bc5fc79e43ccd23cadabb2"
 
 [[package]]
 name = "alabaster"
@@ -144,17 +144,17 @@ files = [
 
 [[package]]
 name = "boto3-stubs-lite"
-version = "1.29.7"
+version = "1.33.13"
 requires_python = ">=3.7"
-summary = "Type annotations for boto3 1.29.7 generated with mypy-boto3-builder 7.20.3"
+summary = "Type annotations for boto3 1.33.13 generated with mypy-boto3-builder 7.21.0"
 dependencies = [
     "botocore-stubs",
     "types-s3transfer",
     "typing-extensions>=4.1.0; python_version < \"3.12\"",
 ]
 files = [
-    {file = "boto3-stubs-lite-1.29.7.tar.gz", hash = "sha256:52677ca8d74a4529bd4bef597f9b8acc2f4b74ef7ea6adcaaf63e20386393030"},
-    {file = "boto3_stubs_lite-1.29.7-py3-none-any.whl", hash = "sha256:32c12d5267757413f2f8a598162d40842c0c474a286fa6b899acd2315212681c"},
+    {file = "boto3-stubs-lite-1.33.13.tar.gz", hash = "sha256:c60afcdd4a396c3565115b8a7adf147ec040c1bbc69324ba837bc8aadcd128f7"},
+    {file = "boto3_stubs_lite-1.33.13-py3-none-any.whl", hash = "sha256:475d871300f60aa998bdf31d16737f02e6b72b30e697272c59576e0c9037e1bc"},
 ]
 
 [[package]]
@@ -939,6 +939,19 @@ files = [
     {file = "msgpack-1.0.7-cp39-cp39-win32.whl", hash = "sha256:f26a07a6e877c76a88e3cecac8531908d980d3d5067ff69213653649ec0f60ad"},
     {file = "msgpack-1.0.7-cp39-cp39-win_amd64.whl", hash = "sha256:1dc93e8e4653bdb5910aed79f11e165c85732067614f180f70534f056da97db3"},
     {file = "msgpack-1.0.7.tar.gz", hash = "sha256:572efc93db7a4d27e404501975ca6d2d9775705c2d922390d878fcf768d92c87"},
+]
+
+[[package]]
+name = "mypy-boto3-s3"
+version = "1.33.2"
+requires_python = ">=3.7"
+summary = "Type annotations for boto3.S3 1.33.2 service generated with mypy-boto3-builder 7.20.3"
+dependencies = [
+    "typing-extensions>=4.1.0; python_version < \"3.12\"",
+]
+files = [
+    {file = "mypy-boto3-s3-1.33.2.tar.gz", hash = "sha256:f54a3ad3288f4e4719ebada3dde68c320507b0fc451d59bc68af7e6ab15cbdad"},
+    {file = "mypy_boto3_s3-1.33.2-py3-none-any.whl", hash = "sha256:9d463df6def30de31a467d49ab92ff7795d46709d56eff6f52216a08bac27918"},
 ]
 
 [[package]]
