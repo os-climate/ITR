@@ -126,9 +126,11 @@ ng.add_transformation(
     "[carbon] * [mass] / [length] ** 3 / [methane]",
     lambda ureg, x: x * NG_DENS * NG_SE,
 )
-
-# Cannot convert from 'megawatt_hour / CH4 / mmscf' ([mass] / [length] / [methane] / [time] ** 2) to 'dimensionless' (dimensionless)
-# conversion to dimensionless throws key error on '' in ureg
+ng.add_transformation(
+    "[mass] / [length] / [methane] / [time] ** 2",
+    "[]",
+    lambda ureg, x: x / (NG_DENS * NG_SE),
+)
 
 ng.add_transformation("Mscf CH4", "kg CO2e", lambda ureg, x: x * ureg("54.87 kg CO2e / (Mscf CH4)"))
 ng.add_transformation("g CH4", "g CO2e", lambda ureg, x: x * ureg("44 g CO2e / (16 g CH4)"))
@@ -214,7 +216,7 @@ def convert_to_annual(x, errors="ignore"):
             )
     except StopIteration:
         if errors != "ignore":
-            raise DimensionalityError(x, "", extra_msg=f"; dimensionality must contain [time] or 1/[time]")
+            raise DimensionalityError(x, "", extra_msg="; dimensionality must contain [time] or 1/[time]")
     return x_implied_annual
 
 
@@ -229,7 +231,7 @@ def dimension_as(x, dim_unit):
         orig_dim_unit = ureg(str(unit))
         return (x * orig_dim_unit.to(dim_unit) / orig_dim_unit).to_reduced_units()
     except StopIteration:
-        raise DimensionalityError(x, dim_unit, extra_msg=f"; no compatible dimension not found")
+        raise DimensionalityError(x, dim_unit, extra_msg="; no compatible dimension not found")
 
 
 def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Series:
@@ -267,7 +269,7 @@ def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Serie
                 "",
                 dim1=str(prod_series.dtype.units),
                 dim2=ei_unit_bottom,
-                extra_msg=f"cannot align units",
+                extra_msg="cannot align units",
             )
     return asPintSeries(prod_series).pint.to(ei_unit_bottom)
 
@@ -426,7 +428,7 @@ def check_EmissionsQuantity(quantity: Quantity) -> Quantity:
         "t CO2",
         dim1="",
         dim2="",
-        extra_msg=f"Dimensionality must be compatible with 't CO2'",
+        extra_msg="Dimensionality must be compatible with 't CO2'",
     )
 
 
@@ -531,7 +533,7 @@ def check_delta_degC_Quantity(quantity: Quantity) -> Quantity:
         "delta_degC",
         dim1="",
         dim2="",
-        extra_msg=f"Dimensionality must be compatible with delta_degC",
+        extra_msg="Dimensionality must be compatible with delta_degC",
     )
 
 
