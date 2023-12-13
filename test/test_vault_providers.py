@@ -9,7 +9,6 @@ import osc_ingest_trino as osc
 import pandas as pd
 import pytest
 import trino
-
 from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import ProgrammingError
 
