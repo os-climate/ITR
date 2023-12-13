@@ -13,7 +13,37 @@ from .interfaces import EScope
 
 data_dir = os.path.join(__path__[0], "data", "json")
 
+def _AffineScalarFunc__hash__(self):
+    if not self._linear_part.expanded():
+       self._linear_part.expand()
+    combo = tuple(iter(self._linear_part.linear_combo.items()))
+    if len(combo) > 1 or combo[0][1] != 1.0:
+       return hash(combo)
+    # The unique value that comes from a unique variable (which it also hashes to)
+    return id(combo[0][0])
+
+def _Variable__hash__(self):
+    # All Variable objects are by definition independent
+    # variables, so they never compare equal; therefore, their
+    # id() are allowed to differ
+    # (http://docs.python.org/reference/datamodel.html#object.__hash__):
+
+    # Also, since the _linear_part of a variable is based on self, we can use
+    # that as a hash (uniqueness of self), which allows us to also
+    # preserve the invariance that x == y implies hash(x) == hash(y)
+    if hasattr(self, '_linear_part'):
+        if (
+            hasattr(self._linear_part, 'linear_combo')
+            and self in iter(self._linear_part.linear_combo.keys())
+        ):
+            return id(tuple(iter(self._linear_part.linear_combo.keys()))[0])
+        return hash(self._linear_part)
+    else:
+        return id(self)
+
+
 try:
+    import uncertainties
     from uncertainties import UFloat, ufloat
     from uncertainties.unumpy import isnan, nominal_values, std_devs, uarray
 
@@ -24,6 +54,9 @@ try:
     _ufloat_nan = ufloat(np.nan, 0.0)
     pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
     from .utils import umean  # noqa F401
+
+    uncertainties.AffineScalarFunc.__hash__ = _AffineScalarFunc__hash__
+    uncertainties.Variable.__hash__ = _Variable__hash__
 
     HAS_UNCERTAINTIES = True
 except (ImportError, ModuleNotFoundError, AttributeError) as exc:  # noqa F841
