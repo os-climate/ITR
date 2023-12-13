@@ -47,12 +47,6 @@ xlsx_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inputs
 # If there's no credientials file, this fails silently without raising
 osc.load_credentials_dotenv()
 
-# bucket must be configured with credentials for trino, and accessible to the hive catalog
-# You may need to use a different prefix here depending on how you name your credentials.env variables
-hive_bucket = osc.attach_s3_bucket("S3_OSCCL2")
-hive_catalog = "osc_datacommons_hive_ingest"
-hive_schema = "ingest"
-
 ingest_catalog = "osc_datacommons_dev"
 ingest_schema = "demo_dv"
 itr_prefix = "itr_"
@@ -81,6 +75,16 @@ except KeyError:
         pytestmark = pytest.mark.skip
         pytest.skip("skipping vault because Trino auth breaks CI/CD", allow_module_level=True)
 
+# bucket must be configured with credentials for trino, and accessible to the hive catalog
+# You may need to use a different prefix here depending on how you name your credentials.env variables
+try:
+    hive_bucket = osc.attach_s3_bucket("S3_OSCCL2")
+    hive_catalog = "osc_datacommons_hive_ingest"
+    hive_schema = "ingest"
+except KeyError:
+    hive_bucket = None
+    hive_catalog = None
+    hive_schema = None
 
 company_data_path = os.path.join(xlsx_data_dir, "20230106 ITR V2 Sample Data.xlsx")
 
