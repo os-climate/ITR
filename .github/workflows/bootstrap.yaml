@@ -41,8 +41,8 @@ jobs:
           ls -la || true
           ls -la devops || true
           ls -la devops/.github || true
-          cp devops/.github/dependabot.yml .github/dependabot.yml
-          cp devops/.github/workflows/* .github/workflows/
+          cp devops/dependabot.yml .github/dependabot.yml
+          cp devops/workflows/* .github/workflows/
           cp devops/scripts/* scripts
           cp devops/.pre-commit-config.yaml .pre-commit-config.yaml
           git add .github scripts/* .pre-commit-config.yaml
