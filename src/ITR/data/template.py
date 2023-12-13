@@ -1260,7 +1260,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     df3_num_t
                     * df3_denom_t.rdiv(1.0).apply(
                         lambda x: x.map(
-                            lambda y: x.dtype.na_value if ITR.isna(y) else Q_(0, x.dtype.units) if np.isinf(ITR.nominal_values(y.m)) else y
+                            lambda y: x.dtype.na_value
+                            if ITR.isna(y)
+                            else Q_(0, x.dtype.units)
+                            if np.isinf(ITR.nominal_values(y.m))
+                            else y
                         )
                     )
                 ).T
