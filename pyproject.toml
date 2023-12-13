@@ -56,6 +56,7 @@ dependencies = [
     "trino==0.326.0",
     "wheel>=0.41.0",
     "xlrd==2.0.1",
+    "boto3-stubs-lite==1.29.7",
 ]
 
 [project.urls]

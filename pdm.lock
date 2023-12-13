@@ -5,7 +5,7 @@
 groups = ["default", "dev", "doc", "test", "tox"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:12552c150f74d2a10b412a28501f03e85c1d87e4845d1229a886fb8688e7d795"
+content_hash = "sha256:7c858f5eb3962bc71793f64f9b4f389db15651e87fc5e1c22ba7bcc28cc87c28"
 
 [[package]]
 name = "alabaster"
@@ -143,6 +143,21 @@ files = [
 ]
 
 [[package]]
+name = "boto3-stubs-lite"
+version = "1.29.7"
+requires_python = ">=3.7"
+summary = "Type annotations for boto3 1.29.7 generated with mypy-boto3-builder 7.20.3"
+dependencies = [
+    "botocore-stubs",
+    "types-s3transfer",
+    "typing-extensions>=4.1.0; python_version < \"3.12\"",
+]
+files = [
+    {file = "boto3-stubs-lite-1.29.7.tar.gz", hash = "sha256:52677ca8d74a4529bd4bef597f9b8acc2f4b74ef7ea6adcaaf63e20386393030"},
+    {file = "boto3_stubs_lite-1.29.7-py3-none-any.whl", hash = "sha256:32c12d5267757413f2f8a598162d40842c0c474a286fa6b899acd2315212681c"},
+]
+
+[[package]]
 name = "botocore"
 version = "1.33.11"
 requires_python = ">= 3.7"
@@ -156,6 +171,19 @@ dependencies = [
 files = [
     {file = "botocore-1.33.11-py3-none-any.whl", hash = "sha256:b46227eb3fa9cfdc8f5a83920ef347e67adea8095830ed265a3373b13b54421f"},
     {file = "botocore-1.33.11.tar.gz", hash = "sha256:b14b328f902d120de0a09eaa657a9a701c0ceeb711197c2f01ef0523f855086c"},
+]
+
+[[package]]
+name = "botocore-stubs"
+version = "1.33.13"
+requires_python = ">=3.7,<4.0"
+summary = "Type annotations and code completion for botocore"
+dependencies = [
+    "types-awscrt",
+]
+files = [
+    {file = "botocore_stubs-1.33.13-py3-none-any.whl", hash = "sha256:138dfc7bebf6c16d3754ce625bd761f607438e778bfb397824906e5ab36fa301"},
+    {file = "botocore_stubs-1.33.13.tar.gz", hash = "sha256:b7b08a1beec9e6605fba12ffcd007b695bfc0a29f379a039f1ed69ec8eb1f7c7"},
 ]
 
 [[package]]
@@ -1989,6 +2017,26 @@ summary = "Verify certificates using native system trust stores"
 files = [
     {file = "truststore-0.8.0-py3-none-any.whl", hash = "sha256:e37a5642ae9fc48caa8f120b6283d77225d600d224965a672c9e8ef49ce4bb4c"},
     {file = "truststore-0.8.0.tar.gz", hash = "sha256:dc70da89634944a579bfeec70a7a4523c53ffdb3cf52d1bb4a431fda278ddb96"},
+]
+
+[[package]]
+name = "types-awscrt"
+version = "0.19.19"
+requires_python = ">=3.7,<4.0"
+summary = "Type annotations and code completion for awscrt"
+files = [
+    {file = "types_awscrt-0.19.19-py3-none-any.whl", hash = "sha256:a577c4d60a7fb7e21b436a73207a66f6ba50329d578b347934c5d99d4d612901"},
+    {file = "types_awscrt-0.19.19.tar.gz", hash = "sha256:850d5ad95d8f337b15fb154790f39af077faf5c08d43758fd750f379a87d5f73"},
+]
+
+[[package]]
+name = "types-s3transfer"
+version = "0.8.2"
+requires_python = ">=3.7,<4.0"
+summary = "Type annotations and code completion for s3transfer"
+files = [
+    {file = "types_s3transfer-0.8.2-py3-none-any.whl", hash = "sha256:5e084ebcf2704281c71b19d5da6e1544b50859367d034b50080d5316a76a9418"},
+    {file = "types_s3transfer-0.8.2.tar.gz", hash = "sha256:2e41756fcf94775a9949afa856489ac4570308609b0493dfbd7b4d333eb423e6"},
 ]
 
 [[package]]
