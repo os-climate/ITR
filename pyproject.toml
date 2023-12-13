@@ -39,7 +39,7 @@ dependencies = [
   "osc-ingest-tools>=0.5.2",
   "pandas>=2.1.0",
   "pip>=23.3.1",
-  "Pint>=0.22",
+  "Pint>=0.23",
   "Pint-Pandas>=0.5",
   "psutil==5.9.5",
   "pydantic>=2.3.0",
