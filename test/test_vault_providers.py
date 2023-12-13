@@ -9,7 +9,7 @@ import osc_ingest_trino as osc
 import pandas as pd
 import pytest
 import trino
-from ITR_examples import data_dir as xlsx_data_dir
+
 from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import ProgrammingError
 
@@ -42,6 +42,8 @@ from ITR.interfaces import (
 )
 from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
+
+xlsx_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inputs")
 
 # If there's no credientials file, this fails silently without raising
 osc.load_credentials_dotenv()
