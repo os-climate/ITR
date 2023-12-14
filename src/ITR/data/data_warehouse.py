@@ -51,7 +51,6 @@ class DataWarehouse(ABC):
         benchmark_projected_production: Optional[ProductionBenchmarkDataProvider],
         benchmarks_projected_ei: Optional[IntensityBenchmarkDataProvider],
         estimate_missing_data: Optional[Callable[["DataWarehouse", ICompanyData], None]] = None,
-        column_config: Type[ColumnsConfig] = ColumnsConfig,
     ):
         """
         Create a new data warehouse instance.
@@ -65,7 +64,6 @@ class DataWarehouse(ABC):
         # benchmarks_projected_ei._EI_df_t is the (transposed) EI dataframe for the benchmark
         # benchmark_projected_production.get_company_projected_production(company_sector_region_scope) gives production data per company (per year)
         # multiplying these two gives aligned emissions data for the company, in case we want to add missing data based on sector averages
-        self.column_config = column_config
         self.company_data = company_data
         self.estimate_missing_data = estimate_missing_data
         # Place to stash historic data before doing PC-conversion so it can be retreived when switching to non-PC benchmarks
@@ -76,8 +74,17 @@ class DataWarehouse(ABC):
         # Trajectories + Emissions Intensities benchmark data are needed to estimate missing S3 data
         # Target projections rely both on Production benchmark data and S3 estimated data
         # Production-centric manipulations must happen after targets have been projected
-        if benchmark_projected_production is not None or benchmarks_projected_ei is not None:
+        if (benchmark_projected_production is not None and benchmark_projected_production.own_data) or (
+            benchmarks_projected_ei is not None and benchmarks_projected_ei.own_data
+        ):
             self.update_benchmarks(benchmark_projected_production, benchmarks_projected_ei)
+            self._own_data = True
+        else:
+            self._own_data = False
+
+    @property
+    def own_data(self) -> bool:
+        return self._own_data
 
     def _preserve_historic_data(self):
         for c in self.company_data._companies:
@@ -137,19 +144,31 @@ class DataWarehouse(ABC):
         Update the benchmark data used in this instance of the DataWarehouse.  If there is no change, do nothing.
         """
         new_production_bm = new_ei_bm = new_prod_centric = False
-        if self.benchmark_projected_production is None or self.benchmark_projected_production.benchmark_changed(
-            benchmark_projected_production
+        if benchmark_projected_production is None:
+            pass
+        if self.benchmark_projected_production is None or (
+            self.benchmark_projected_production.own_data
+            and self.benchmark_projected_production.benchmark_changed(benchmark_projected_production)
         ):
             self.benchmark_projected_production = benchmark_projected_production  # type: ignore
             new_production_bm = True
 
-        if self.benchmarks_projected_ei is None:
+        if benchmarks_projected_ei is None:
+            pass
+        elif self.benchmarks_projected_ei is None:
             self.benchmarks_projected_ei = benchmarks_projected_ei  # type: ignore
-            new_ei_bm = True
-        elif self.benchmarks_projected_ei.benchmarks_changed(benchmarks_projected_ei):
-            new_prod_centric = self.benchmarks_projected_ei.prod_centric_changed(benchmarks_projected_ei)
+            if benchmarks_projected_ei.own_data:
+                new_ei_bm = True
+        elif self.benchmarks_projected_ei.own_data:
+            if benchmarks_projected_ei.own_data:
+                if self.benchmarks_projected_ei.benchmarks_changed(benchmarks_projected_ei):
+                    new_prod_centric = self.benchmarks_projected_ei.prod_centric_changed(benchmarks_projected_ei)
+                    new_ei_bm = True
             self.benchmarks_projected_ei = benchmarks_projected_ei
-            new_ei_bm = True
+
+        if not new_production_bm and not new_ei_bm:
+            return
+
         assert self.benchmarks_projected_ei is not None
 
         # Production benchmark data is needed to project trajectories
@@ -174,7 +193,7 @@ class DataWarehouse(ABC):
 
         # If we are missing S3 (or other) data, fill in before projecting targets
         if new_ei_bm and self.estimate_missing_data is not None:
-            logger.info(f"estimating missing data")
+            logger.info("estimating missing data")
             for c in self.company_data.get_company_data():
                 self.estimate_missing_data(self, c)
 
@@ -190,7 +209,7 @@ class DataWarehouse(ABC):
         # If our benchmark is production-centric, migrate S3 data (including estimated S3 data) into S1S2
         # If we shift before we project, then S3 targets will not be projected correctly.
         if new_ei_bm and benchmarks_projected_ei.is_production_centric():
-            logger.info(f"Shifting S3 emissions data into S1 according to Production-Centric benchmark rules")
+            logger.info("Shifting S3 emissions data into S1 according to Production-Centric benchmark rules")
             if self.orig_historic_data != {}:
                 self._restore_historic_data()
             else:
@@ -201,7 +220,7 @@ class DataWarehouse(ABC):
                     if not ITR.isna(c.ghg_s3):
                         c.ghg_s1s2 = c.ghg_s1s2 + c.ghg_s3
                     c.ghg_s3 = None  # Q_(0.0, c.ghg_s3.u)
-                if not c.historic_data.empty():
+                if not c.historic_data.empty:
 
                     def _adjust_historic_data(data, primary_scope_attr, data_adder):
                         if data[primary_scope_attr]:
@@ -365,7 +384,9 @@ class DataWarehouse(ABC):
         # We cannot only update trajectories without regard for all that depend on those trajectories
         # For example, different benchmarks may have different scopes defined, units for benchmarks, etc.
         logger.info(
-            f"re-calculating trajectories for {len(self.company_data._companies)} companies\n    (times {len(EScope.get_scopes())} scopes times {self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)"
+            f"re-calculating trajectories for {len(self.company_data._companies)} companies"
+            f"\n    (times {len(EScope.get_scopes())} scopes times "
+            f"{self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)"
         )
         for company in self.company_data._companies:
             company.projected_intensities = None
@@ -526,9 +547,12 @@ class DataWarehouse(ABC):
         df_budget = DataWarehouse._get_cumulative_emissions(
             projected_ei=budgeted_ei, projected_production=projected_production
         )
-        base_year_scale = df_trajectory.loc[df_budget.index][base_year].mul(
-            df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m == 0.0 else 1 / x)
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            base_year_scale = df_trajectory.loc[df_budget.index][base_year].mul(
+                df_budget[base_year].map(lambda x: Q_(0.0, f"1/({x.u})") if x.m == 0.0 else 1 / x)
+            )
         df_scaled_budget = df_budget.mul(base_year_scale, axis=0)
         # FIXME: we calculate exceedance only against df_budget, not also df_scaled_budget
         # df_trajectory_exceedance = self._get_exceedance_year(df_trajectory, df_budget, self.company_data.projection_controls.TARGET_YEAR, None)
@@ -577,7 +601,7 @@ class DataWarehouse(ABC):
 
         company_data = self.company_data.get_company_data(company_ids)
         df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data]).set_index(
-            self.column_config.COMPANY_ID, drop=False
+            self.company_data.column_config.COMPANY_ID, drop=False
         )
         valid_company_ids = df_company_data.index.to_list()
 
@@ -649,7 +673,7 @@ class DataWarehouse(ABC):
             except ValidationError:
                 logger.warning(
                     "(one of) the input(s) of company %s is invalid and will be skipped"
-                    % company_data[self.column_config.COMPANY_NAME]
+                    % company_data[self.company_data.column_config.COMPANY_NAME]
                 )
                 pass
         return model_companies
@@ -671,31 +695,34 @@ class DataWarehouse(ABC):
 
         # Ensure that projected_production is ordered the same as projected_ei, preserving order of projected_ei
         # projected_production is constructed to be limited to the years we want to analyze
-        proj_prod_t = asPintDataFrame(projected_production.loc[projected_ei.index].T)
-        # Limit projected_ei to the year range of projected_production
-        proj_ei_t = asPintDataFrame(projected_ei[proj_prod_t.index].T)
-        units_CO2e = "t CO2e"
-        # We use pd.concat because pd.combine reverts our PintArrays into object arrays :-/
-        proj_CO2e_m_t = pd.concat(
-            [
-                ITR.data.osc_units.align_production_to_bm(proj_prod_t[col], proj_ei_t[col])
-                .mul(proj_ei_t[col])
-                .pint.m_as(units_CO2e)
-                for col in proj_ei_t.columns
-            ],
-            axis=1,
-        )
-        # pd.concat names parameter refers to index.names; there's no way to set columns.names
-        proj_CO2e_m_t.columns.names = proj_ei_t.columns.names
-        if ITR.HAS_UNCERTAINTIES:
-            # Sum both the nominal and std_dev values, because these series are completely correlated
-            # Note that NaNs in this dataframe will be nan+/-nan, showing up in both nom and err
-            nom_CO2e_m_t = proj_CO2e_m_t.apply(ITR.nominal_values).cumsum()
-            err_CO2e_m_t = proj_CO2e_m_t.apply(ITR.std_devs).cumsum()
-            cumulative_emissions_m_t = nom_CO2e_m_t.combine(err_CO2e_m_t, ITR.recombine_nom_and_std)
-        else:
-            cumulative_emissions_m_t = proj_CO2e_m_t.cumsum()
-        return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}]")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            proj_prod_t = asPintDataFrame(projected_production.loc[projected_ei.index].T)
+            # Limit projected_ei to the year range of projected_production
+            proj_ei_t = asPintDataFrame(projected_ei[proj_prod_t.index].T)
+            units_CO2e = "t CO2e"
+            # We use pd.concat because pd.combine reverts our PintArrays into object arrays :-/
+            proj_CO2e_m_t = pd.concat(
+                [
+                    ITR.data.osc_units.align_production_to_bm(proj_prod_t[col], proj_ei_t[col])
+                    .mul(proj_ei_t[col])
+                    .pint.m_as(units_CO2e)
+                    for col in proj_ei_t.columns
+                ],
+                axis=1,
+            )
+            # pd.concat names parameter refers to index.names; there's no way to set columns.names
+            proj_CO2e_m_t.columns.names = proj_ei_t.columns.names
+            if ITR.HAS_UNCERTAINTIES:
+                # Sum both the nominal and std_dev values, because these series are completely correlated
+                # Note that NaNs in this dataframe will be nan+/-nan, showing up in both nom and err
+                nom_CO2e_m_t = proj_CO2e_m_t.apply(ITR.nominal_values).cumsum()
+                err_CO2e_m_t = proj_CO2e_m_t.apply(ITR.std_devs).cumsum()
+                cumulative_emissions_m_t = nom_CO2e_m_t.combine(err_CO2e_m_t, ITR.recombine_nom_and_std)
+            else:
+                cumulative_emissions_m_t = proj_CO2e_m_t.cumsum()
+            return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}]")
 
     @classmethod
     def _get_exceedance_year(

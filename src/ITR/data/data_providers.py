@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Type
 
 import pandas as pd
 
@@ -36,6 +36,22 @@ class CompanyDataProvider(ABC):
         :param config: A dictionary containing the configuration parameters for this data provider.
         """
         pass
+
+    @property
+    @abstractmethod
+    def column_config(self) -> Type[ColumnsConfig]:
+        """
+        Return the ColumnsConfig associated with this Data Provider
+        """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def own_data(self) -> bool:
+        """
+        Return True if this object contains its own data; false if data housed elsewhere
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def get_projection_controls(self) -> ProjectionControls:
@@ -150,7 +166,14 @@ class ProductionBenchmarkDataProvider(ABC):
 
         :param config: A dictionary containing the configuration parameters for this data provider.
         """
-        pass
+        self._own_data = False
+
+    @property
+    def own_data(self) -> bool:
+        """
+        :return: True if this object contains its own data; false if data housed elsewhere
+        """
+        return self._own_data
 
     @abstractmethod
     def benchmark_changed(self, production_benchmark: ProductionBenchmarkDataProvider) -> bool:
@@ -163,17 +186,6 @@ class ProductionBenchmarkDataProvider(ABC):
         :param ghg_scope12: DataFrame with at least the following columns :
         ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.SECTOR and ColumnsConfig.REGION
         :return: Dataframe of projected productions for [base_year - base_year + 50]
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_benchmark_projections(self, company_secor_region_info: pd.DataFrame) -> pd.DataFrame:
-        """
-        get the sector emissions for a list of companies.
-        If there is no data for the sector, then it will be replaced by the global value
-        :param company_secor_region_info: DataFrame with at least the following columns :
-        ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-        :return: A DataFrame with company and intensity benchmarks per calendar year per row
         """
         raise NotImplementedError
 
@@ -203,6 +215,14 @@ class IntensityBenchmarkDataProvider(ABC):
         self._benchmark_temperature = benchmark_temperature
         self._is_AFOLU_included = is_AFOLU_included
         self._benchmark_global_budget = benchmark_global_budget
+        self._own_data = False
+
+    @property
+    def own_data(self) -> bool:
+        """
+        :return: True if this object contains its own data; false if data housed elsewhere
+        """
+        return self._own_data
 
     @abstractmethod
     def get_scopes(self) -> List[EScope]:

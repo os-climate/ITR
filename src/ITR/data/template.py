@@ -253,10 +253,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         self.template_v2_start_year = None
         self.projection_controls = projection_controls
         # The initial population of companies' data
-        self._companies = self._init_from_template_company_data(excel_path)
-        super().__init__(self._companies, column_config, projection_controls)
-        # The perfection of historic ESG data (adding synthethic company sectors, dropping those with missing data)
-        self._companies = self._convert_from_template_company_data()
+        if excel_path:
+            self._own_data = True
+            self._companies = self._init_from_template_company_data(excel_path)
+            super().__init__(self._companies, column_config, projection_controls)
+            # The perfection of historic ESG data (adding synthethic company sectors, dropping those with missing data)
+            self._companies = self._convert_from_template_company_data()
+        else:
+            self._own_data = False
+            self._companies = []
 
     # When rows of data are expressed in terms of scope intensities, solve for the implied production
     # This function is called before we've decided on "best" production, and indeed generates candidates for "best" emissions
@@ -411,13 +416,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ],
                 axis=1,
             )
-            if ITR.HAS_UNCERTAINTIES:
-                df4 = df3_t.astype(
-                    "pint[t CO2e]"
-                ).T  # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
-                # Also https://github.com/pandas-dev/pandas/issues/12693
-            else:
-                df4 = df3_t.astype("pint[t CO2e]").T.drop_duplicates()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                if ITR.HAS_UNCERTAINTIES:
+                    df4 = df3_t.astype(
+                        "pint[t CO2e]"
+                    ).T  # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
+                    # Also https://github.com/pandas-dev/pandas/issues/12693
+                else:
+                    df4 = df3_t.astype("pint[t CO2e]").T.drop_duplicates()
             df5 = df4.droplevel(
                 [ColumnsConfig.COMPANY_ID, ColumnsConfig.TEMPLATE_REPORT_DATE]
             ).swaplevel()  # .sort_index()
@@ -514,7 +521,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 ].ffill()
 
         # NA in exposure is how we drop rows we want to ignore
-        df = df[df.exposure.notna()]
+        df = df[df.exposure.notna()].copy()
 
         # TODO: Fix market_cap column naming inconsistency
         df.rename(
@@ -569,7 +576,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     )
                 )
             ):
-                error_message = f"All data should be in the same currency."
+                error_message = "All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
             elif fx_quote.any():
@@ -633,7 +640,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     )
         else:
             if len(df_fundamentals[ColumnsConfig.COMPANY_CURRENCY].unique()) != 1:
-                error_message = f"All data should be in the same currency."
+                error_message = "All data should be in the same currency."
                 logger.error(error_message)
                 raise ValueError(error_message)
             for col in fundamental_metrics:
@@ -736,9 +743,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Disable rows we do not yet handle
             df_esg = df_esg[~df_esg.metric.isin(["generation", "consumption"])]
             if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg.base_year.map(lambda x: isinstance(x, str) or x.lower() != "x")]
+                df_esg = df_esg[
+                    df_esg[ColumnsConfig.BASE_YEAR].map(lambda x: not isinstance(x, str) or x.lower() != "x")
+                ]
             if "submetric" in df_esg.columns:
-                df_esg = df_esg[df_esg.submetric.map(lambda x: isinstance(x, str) or x.lower() != "ignore")]
+                df_esg = df_esg[df_esg.submetric.map(lambda x: not isinstance(x, str) or x.lower() != "ignore")]
             # FIXME: Should we move more df_esg work up here?
             self.df_esg = df_esg
         self.df_fundamentals = df_fundamentals
@@ -862,7 +871,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         f"Company {company_id} uses multiple units describing scopes "
                         f"{[s for s in em_unit_ambig.loc[[company_id]]['metric']]}"
                     )
-                logger.warning(f"The ITR Tool will choose one and covert all to that")
+                logger.warning("The ITR Tool will choose one and covert all to that")
 
             em_units = em_metrics.groupby(by=["company_id"], group_keys=True).first()
             # We update the metrics we were told with the metrics we are given
@@ -1244,14 +1253,21 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 logger.warning(f"Dropping NULL-valued production data for these indexes\n{df3_null_idx}")
                 df3_num_t = df3_num_t[~df3_null_idx]
                 df3_denom_t = df3_denom_t[~df3_null_idx]
-            df4 = (
-                df3_num_t
-                * df3_denom_t.rdiv(1.0).apply(
-                    lambda x: x.map(
-                        lambda y: x.dtype.na_value if ITR.isna(y) else Q_(0, x.dtype.units) if y.m == np.inf else y
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+                df4 = (
+                    df3_num_t
+                    * df3_denom_t.rdiv(1.0).apply(
+                        lambda x: x.map(
+                            lambda y: x.dtype.na_value
+                            if ITR.isna(y)
+                            else Q_(0, x.dtype.units)
+                            if np.isinf(ITR.nominal_values(y.m))
+                            else y
+                        )
                     )
-                )
-            ).T
+                ).T
             df4["variable"] = VariablesConfig.EMISSIONS_INTENSITIES
             df4 = df4.reset_index().set_index(["company_id", "variable", "scope"])
             # Build df5 from PintArrays, not object types
@@ -1260,7 +1276,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df3_denom_t = pd.concat({VariablesConfig.PRODUCTIONS: df3_denom_t}, names=["variable"], axis=1)
             df3_denom_t = pd.concat({"production": df3_denom_t}, names=["scope"], axis=1)
             df3_denom_t.columns = df3_denom_t.columns.reorder_levels(["company_id", "variable", "scope"])
-            df5 = pd.concat([df3_num_t.T, df3_denom_t.T, df4])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+                df5 = pd.concat([df3_num_t.T, df3_denom_t.T, df4])
 
             df_historic_data = df5
 
@@ -1380,7 +1399,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         )
         if c_ids_with_nonnumeric_target:
             error_message = (
-                f"Non-numeric target reduction ambition is invalid; please fix companies with ID: "
+                "Non-numeric target reduction ambition is invalid; please fix companies with ID: "
                 f"{c_ids_with_nonnumeric_target}"
             )
             logger.error(error_message)
@@ -1388,7 +1407,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         c_ids_with_increase_target = list(target_data[target_data["target_reduction_ambition"] < 0].index)
         if c_ids_with_increase_target:
             error_message = (
-                f"Negative target reduction ambition is invalid and entered for companies with ID: "
+                "Negative target reduction ambition is invalid and entered for companies with ID: "
                 f"{c_ids_with_increase_target}"
             )
             logger.error(error_message)
