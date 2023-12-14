@@ -69,16 +69,6 @@ Attributes
       :return: DataFrame of projected productions for [base_year through 2050]
 
 
-   .. py:method:: get_benchmark_projections(company_sector_region_scope: pandas.DataFrame, scope: ITR.interfaces.EScope = EScope.AnyScope) -> pandas.DataFrame
-
-      Overrides subclass method
-      returns a Dataframe with production benchmarks per company_id given a region and sector.
-      :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
-      with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
-      :param scope: a scope
-      :return: A pint[dimensionless] DataFrame with partial production benchmark data per calendar year per row, indexed by company.
-
-
 
 .. py:class:: BaseProviderIntensityBenchmark(EI_benchmarks: ITR.interfaces.IEIBenchmarkScopes, column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig, projection_controls: ITR.configs.ProjectionControls = ProjectionControls())
 
@@ -157,6 +147,18 @@ Attributes
    :param companies: A list of ICompanyData objects that each contain fundamental company data
    :param column_config: An optional ColumnsConfig object containing relevant variable names
    :param projection_controls: An optional ProjectionControls object containing projection settings
+
+   .. py:property:: column_config
+      :type: Type[ITR.configs.ColumnsConfig]
+
+      :return: ColumnsConfig values for this Data Provider
+
+
+   .. py:property:: own_data
+      :type: bool
+
+      Return True if this object contains its own data; false if data housed elsewhere
+
 
    .. py:method:: get_projection_controls() -> ITR.configs.ProjectionControls
 
@@ -270,7 +272,7 @@ Attributes
 
 
 
-.. py:class:: EITrajectoryProjector(projection_controls: ITR.configs.ProjectionControls = ProjectionControls(), ei_bm_df_t=None, *args, **kwargs)
+.. py:class:: EITrajectoryProjector(projection_controls: ITR.configs.ProjectionControls = ProjectionControls(), ei_df_t=None, *args, **kwargs)
 
 
    Bases: :py:obj:`EIProjector`

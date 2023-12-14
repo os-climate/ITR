@@ -29,12 +29,16 @@ Attributes
 
    
 
-.. py:class:: DataWarehouse(company_data: ITR.data.data_providers.CompanyDataProvider, benchmark_projected_production: Optional[ITR.data.data_providers.ProductionBenchmarkDataProvider], benchmarks_projected_ei: Optional[ITR.data.data_providers.IntensityBenchmarkDataProvider], estimate_missing_data: Optional[Callable[[DataWarehouse, ITR.interfaces.ICompanyData], None]] = None, column_config: Type[ITR.configs.ColumnsConfig] = ColumnsConfig)
+.. py:class:: DataWarehouse(company_data: ITR.data.data_providers.CompanyDataProvider, benchmark_projected_production: Optional[ITR.data.data_providers.ProductionBenchmarkDataProvider], benchmarks_projected_ei: Optional[ITR.data.data_providers.IntensityBenchmarkDataProvider], estimate_missing_data: Optional[Callable[[DataWarehouse, ITR.interfaces.ICompanyData], None]] = None)
 
 
    Bases: :py:obj:`abc.ABC`
 
    General data provider super class.
+
+   .. py:property:: own_data
+      :type: bool
+
 
    .. py:method:: _preserve_historic_data()
 

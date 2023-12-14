@@ -18,6 +18,7 @@ Functions
    ITR.utils._make_isin_map
    ITR.utils.dataframe_to_portfolio
    ITR.utils.get_data
+   ITR.utils.get_benchmark_projections
    ITR.utils.calculate
    ITR.utils.umean
    ITR.utils.uround
@@ -71,6 +72,15 @@ Attributes
    :param data_warehouse: DataWarehouse instances
    :param portfolio: A list of PortfolioCompany models
    :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
+
+
+.. py:function:: get_benchmark_projections(prod_df: pandas.DataFrame, company_sector_region_scope: Optional[pandas.DataFrame] = None, scope: ITR.interfaces.EScope = EScope.AnyScope) -> pandas.DataFrame
+
+   :param prod_df: DataFrame of production statistics by sector, region, scope (and year)
+   :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
+   with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
+   :param scope: a scope
+   :return: A pint[dimensionless] DataFrame with partial production benchmark data per calendar year per row, indexed by company.
 
 
 .. py:function:: calculate(portfolio_data: pandas.DataFrame, fallback_score: ITR.data.osc_units.delta_degC_Quantity, aggregation_method: ITR.portfolio_aggregation.PortfolioAggregationMethod, grouping: Optional[List[str]], time_frames: List[ITR.interfaces.ETimeFrames], scopes: List[ITR.interfaces.EScope], anonymize: bool, aggregate: bool = True, controls: Optional[ITR.configs.TemperatureScoreControls] = None) -> Tuple[pandas.DataFrame, Optional[ITR.interfaces.ScoreAggregations]]

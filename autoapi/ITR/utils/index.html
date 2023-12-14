@@ -131,16 +131,24 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#ITR.utils.get_data" title="ITR.utils.get_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_data</span></code></a>(→ pandas.DataFrame)</p></td>
 <td><p>Get the required data from the data provider(s) and return a 9-box grid for each company.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ITR.utils.calculate" title="ITR.utils.calculate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate</span></code></a>(→ Tuple[pandas.DataFrame, ...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.utils.get_benchmark_projections" title="ITR.utils.get_benchmark_projections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_benchmark_projections</span></code></a>(→ pandas.DataFrame)</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">param prod_df<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame of production statistics by sector, region, scope (and year)</p>
+</dd>
+</dl>
+</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.utils.calculate" title="ITR.utils.calculate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate</span></code></a>(→ Tuple[pandas.DataFrame, ...)</p></td>
 <td><p>Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.utils.umean" title="ITR.utils.umean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">umean</span></code></a>(unquantified_data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.utils.umean" title="ITR.utils.umean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">umean</span></code></a>(unquantified_data)</p></td>
 <td><p>Assuming Gaussian statistics, uncertainties stem from Gaussian parent distributions. In such a case,</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ITR.utils.uround" title="ITR.utils.uround"><code class="xref py py-obj docutils literal notranslate"><span class="pre">uround</span></code></a>(u, ndigits)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.utils.uround" title="ITR.utils.uround"><code class="xref py py-obj docutils literal notranslate"><span class="pre">uround</span></code></a>(u, ndigits)</p></td>
 <td><p>Round an uncertainty to ndigits.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.utils.get_size" title="ITR.utils.get_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_size</span></code></a>(obj[, seen])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.utils.get_size" title="ITR.utils.get_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_size</span></code></a>(obj[, seen])</p></td>
 <td><p>Recursively finds size of objects</p></td>
 </tr>
 </tbody>
@@ -222,6 +230,22 @@
 <dd class="field-even"><p>A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.utils.get_benchmark_projections">
+<span class="sig-prename descclassname"><span class="pre">ITR.utils.</span></span><span class="sig-name descname"><span class="pre">get_benchmark_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prod_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_sector_region_scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">EScope.AnyScope</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.utils.get_benchmark_projections" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prod_df</strong> – DataFrame of production statistics by sector, region, scope (and year)</p></li>
+<li><p><strong>company_sector_region_scope</strong> – DataFrame indexed by ColumnsConfig.COMPANY_ID</p></li>
+</ul>
+</dd>
+</dl>
+<p>with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
+:param scope: a scope
+:return: A pint[dimensionless] DataFrame with partial production benchmark data per calendar year per row, indexed by company.</p>
 </dd></dl>
 
 <dl class="py function">

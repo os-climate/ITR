@@ -195,31 +195,6 @@ Functions
 
       
 
-   .. py:attribute:: TEMPLATE_SCOPE1
-      :value: 'em_s1'
-
-      
-
-   .. py:attribute:: TEMPLATE_SCOPE2
-      :value: 'em_s2'
-
-      
-
-   .. py:attribute:: TEMPLATE_SCOPE12
-      :value: 'em_s1s2'
-
-      
-
-   .. py:attribute:: TEMPLATE_SCOPE3
-      :value: 'em_s3'
-
-      
-
-   .. py:attribute:: TEMPLATE_SCOPE123
-      :value: 'em_s1s2s3'
-
-      
-
    .. py:attribute:: HISTORIC_DATA
       :value: 'historic_data'
 

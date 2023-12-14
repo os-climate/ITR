@@ -489,6 +489,9 @@ Attributes
        __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
        __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
 
+   .. py:property:: empty
+
+
    .. py:attribute:: model_config
 
       
@@ -510,9 +513,6 @@ Attributes
       
 
    .. py:method:: __getitem__(item)
-
-
-   .. py:method:: empty()
 
 
 
@@ -552,6 +552,9 @@ Attributes
        __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
        __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
 
+   .. py:property:: empty
+
+
    .. py:attribute:: model_config
 
       
@@ -572,9 +575,6 @@ Attributes
       
 
    .. py:method:: __getitem__(item)
-
-
-   .. py:method:: empty()
 
 
 
@@ -1287,6 +1287,9 @@ Attributes
        __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
        __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
 
+   .. py:property:: empty
+
+
    .. py:attribute:: S1
       :type: Optional[DF_ICompanyEIProjections]
 
@@ -1324,9 +1327,6 @@ Attributes
 
 
    .. py:method:: _align_and_sum_projected_targets(primary_scope_attr)
-
-
-   .. py:method:: empty()
 
 
 
@@ -1471,6 +1471,9 @@ Attributes
        __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
        __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
 
+   .. py:property:: empty
+
+
    .. py:attribute:: S1
       :type: Optional[List[IEmissionRealization]]
       :value: []
@@ -1507,9 +1510,6 @@ Attributes
    .. py:method:: __str__()
 
       Return str(self).
-
-
-   .. py:method:: empty()
 
 
 
@@ -1607,6 +1607,9 @@ Attributes
        __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
        __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
 
+   .. py:property:: empty
+
+
    .. py:attribute:: S1
       :type: Optional[List[IEIRealization]]
       :value: []
@@ -1643,9 +1646,6 @@ Attributes
    .. py:method:: __str__()
 
       Return str(self).
-
-
-   .. py:method:: empty()
 
 
 
@@ -1685,6 +1685,10 @@ Attributes
        __pydantic_fields_set__: An instance attribute with the names of fields explicitly set.
        __pydantic_private__: Instance attribute with the values of private attributes set on the model instance.
 
+   .. py:property:: empty
+      :type: bool
+
+
    .. py:attribute:: productions
       :type: List[IProductionRealization]
 
@@ -1701,9 +1705,6 @@ Attributes
       
 
    .. py:method:: _normalize(production_metric: ITR.data.osc_units.ProductionMetric, emissions_metric: ITR.data.osc_units.EmissionsMetric) -> None
-
-
-   .. py:method:: empty() -> bool
 
 
 

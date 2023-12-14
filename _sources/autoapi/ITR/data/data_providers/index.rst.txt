@@ -30,6 +30,20 @@ Classes
 
    Initialized CompanyDataProvider is required when setting up a data warehouse instance.
 
+   .. py:property:: column_config
+      :type: Type[ITR.configs.ColumnsConfig]
+      :abstractmethod:
+
+      Return the ColumnsConfig associated with this Data Provider
+
+
+   .. py:property:: own_data
+      :type: bool
+      :abstractmethod:
+
+      Return True if this object contains its own data; false if data housed elsewhere
+
+
    .. py:method:: get_projection_controls() -> ITR.configs.ProjectionControls
       :abstractmethod:
 
@@ -122,6 +136,12 @@ Classes
    This Data Container contains Production data on benchmark level. Data has a regions and sector indices.
    Initialized ProductionBenchmarkDataProvider is required when setting up a data warehouse instance.
 
+   .. py:property:: own_data
+      :type: bool
+
+      :return: True if this object contains its own data; false if data housed elsewhere
+
+
    .. py:method:: benchmark_changed(production_benchmark: ProductionBenchmarkDataProvider) -> bool
       :abstractmethod:
 
@@ -135,16 +155,6 @@ Classes
       :return: Dataframe of projected productions for [base_year - base_year + 50]
 
 
-   .. py:method:: get_benchmark_projections(company_secor_region_info: pandas.DataFrame) -> pandas.DataFrame
-      :abstractmethod:
-
-      get the sector emissions for a list of companies.
-      If there is no data for the sector, then it will be replaced by the global value
-      :param company_secor_region_info: DataFrame with at least the following columns :
-      ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-      :return: A DataFrame with company and intensity benchmarks per calendar year per row
-
-
 
 .. py:class:: IntensityBenchmarkDataProvider(benchmark_temperature: ITR.data.osc_units.delta_degC_Quantity, benchmark_global_budget: ITR.data.osc_units.EmissionsQuantity, is_AFOLU_included: bool, **kwargs)
 
@@ -154,6 +164,12 @@ Classes
    Production intensity data provider super class.
    This Data Container contains emission intensity data on benchmark level. Data has a regions and sector indices.
    Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.
+
+   .. py:property:: own_data
+      :type: bool
+
+      :return: True if this object contains its own data; false if data housed elsewhere
+
 
    .. py:property:: is_AFOLU_included
       :type: bool

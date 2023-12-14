@@ -23,9 +23,19 @@ Attributes
 .. autoapisummary::
 
    ITR.temperature_score.logger
+   ITR.temperature_score.nan_delta_degC
+   ITR.temperature_score.nan_dimensionless
 
 
 .. py:data:: logger
+
+   
+
+.. py:data:: nan_delta_degC
+
+   
+
+.. py:data:: nan_dimensionless
 
    
 

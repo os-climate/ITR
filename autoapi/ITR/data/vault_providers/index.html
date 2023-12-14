@@ -114,8 +114,8 @@
 <h3>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="ITR.data.vault_providers.VaultCompanyDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VaultCompanyDataProvider</span></code></a></p></td>
-<td><p>This class serves primarily for connecting to the ITR tool to the Data Vault via Trino.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.VaultInstance" title="ITR.data.vault_providers.VaultInstance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VaultInstance</span></code></a></p></td>
+<td><p>Helper class that provides a standard way to create an ABC using</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark" title="ITR.data.vault_providers.VaultProviderProductionBenchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VaultProviderProductionBenchmark</span></code></a></p></td>
 <td><p>Production projecton data provider super class.</p></td>
@@ -123,7 +123,10 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark" title="ITR.data.vault_providers.VaultProviderIntensityBenchmark"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VaultProviderIntensityBenchmark</span></code></a></p></td>
 <td><p>Production intensity data provider super class.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.DataVaultWarehouse" title="ITR.data.vault_providers.DataVaultWarehouse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DataVaultWarehouse</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="ITR.data.vault_providers.VaultCompanyDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VaultCompanyDataProvider</span></code></a></p></td>
+<td><p>Data provider skeleton for JSON files parsed by the fastAPI json encoder. This class serves primarily for connecting</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.DataVaultWarehouse" title="ITR.data.vault_providers.DataVaultWarehouse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DataVaultWarehouse</span></code></a></p></td>
 <td><p>General data provider super class.</p></td>
 </tr>
 </tbody>
@@ -142,8 +145,8 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.requantify_df" title="ITR.data.vault_providers.requantify_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">requantify_df</span></code></a>(→ pandas.DataFrame)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.create_table_from_df" title="ITR.data.vault_providers.create_table_from_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_table_from_df</span></code></a>(df, schemaname, tablename, engine)</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.create_vault_table_from_df" title="ITR.data.vault_providers.create_vault_table_from_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_vault_table_from_df</span></code></a>(df, tablename, vault[, verbose])</p></td>
+<td><p>Create a table in the Data Vault</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.read_quantified_sql" title="ITR.data.vault_providers.read_quantified_sql"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_quantified_sql</span></code></a>(→ pandas.DataFrame)</p></td>
 <td><p></p></td>
@@ -155,62 +158,30 @@
 <h3>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.re_simplify_units_both" title="ITR.data.vault_providers.re_simplify_units_both"><code class="xref py py-obj docutils literal notranslate"><span class="pre">re_simplify_units_both</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.re_simplify_units_one" title="ITR.data.vault_providers.re_simplify_units_one"><code class="xref py py-obj docutils literal notranslate"><span class="pre">re_simplify_units_one</span></code></a></p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.logger" title="ITR.data.vault_providers.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.dotenv_dir" title="ITR.data.vault_providers.dotenv_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dotenv_dir</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.dotenv_path" title="ITR.data.vault_providers.dotenv_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dotenv_path</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.ingest_catalog" title="ITR.data.vault_providers.ingest_catalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ingest_catalog</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.ingest_schema" title="ITR.data.vault_providers.ingest_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ingest_schema</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#ITR.data.vault_providers.demo_schema" title="ITR.data.vault_providers.demo_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demo_schema</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#ITR.data.vault_providers.engine" title="ITR.data.vault_providers.engine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">engine</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
 </table>
 <dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.re_simplify_units_both">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">re_simplify_units_both</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'</span> <span class="pre">\\/</span> <span class="pre">(\\w+)</span> <span class="pre">\\/</span> <span class="pre">(\\w+)</span> <span class="pre">\\*</span> <span class="pre">\\1</span> <span class="pre">\\*</span> <span class="pre">\\2'</span></em><a class="headerlink" href="#ITR.data.vault_providers.re_simplify_units_both" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.re_simplify_units_one">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">re_simplify_units_one</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'</span> <span class="pre">\\/</span> <span class="pre">(\\w+)</span> <span class="pre">\\*</span> <span class="pre">\\1'</span></em><a class="headerlink" href="#ITR.data.vault_providers.re_simplify_units_one" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
 <dt class="sig sig-object py" id="ITR.data.vault_providers.logger">
 <span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#ITR.data.vault_providers.logger" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.dotenv_dir">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">dotenv_dir</span></span><a class="headerlink" href="#ITR.data.vault_providers.dotenv_dir" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.dotenv_path">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">dotenv_path</span></span><a class="headerlink" href="#ITR.data.vault_providers.dotenv_path" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.ingest_catalog">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">ingest_catalog</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'osc_datacommons_dev'</span></em><a class="headerlink" href="#ITR.data.vault_providers.ingest_catalog" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.ingest_schema">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">ingest_schema</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'demo_dv'</span></em><a class="headerlink" href="#ITR.data.vault_providers.ingest_schema" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.demo_schema">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">demo_schema</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'demo_dv'</span></em><a class="headerlink" href="#ITR.data.vault_providers.demo_schema" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py data">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.engine">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">engine</span></span><a class="headerlink" href="#ITR.data.vault_providers.engine" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -228,51 +199,170 @@
 <span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">requantify_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typemap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.requantify_df" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.create_table_from_df">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">create_table_from_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schemaname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tablename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.engine.base.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.create_table_from_df" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.read_quantified_sql">
-<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">read_quantified_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tablename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schemaname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.engine.base.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.read_quantified_sql" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py class">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">VaultCompanyDataProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.engine.base.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trajectory_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.CompanyDataProvider" title="ITR.data.data_providers.CompanyDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.data_providers.CompanyDataProvider</span></code></a></p>
-<p>This class serves primarily for connecting to the ITR tool to the Data Vault via Trino.</p>
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultInstance">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">VaultInstance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hive_bucket</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">mypy_boto3_s3.service_resource.Bucket</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hive_catalog</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hive_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultInstance" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Helper class that provides a standard way to create an ABC using
+inheritance.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.create_vault_table_from_df">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">create_vault_table_from_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tablename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vault</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultInstance" title="ITR.data.vault_providers.VaultInstance"><span class="pre">VaultInstance</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.create_vault_table_from_df" title="Link to this definition"></a></dt>
+<dd><p>Create a table in the Data Vault</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>company_table</strong> – the name of the Trino table that contains fundamental data for companies</p></li>
-<li><p><strong>target_table</strong> – the name of the Trino table that contains company (emissions intensity) target data (and possibly historical data)</p></li>
-<li><p><strong>trajectory_table</strong> – the name of the Trino table that contains company (emissions intensity) historical data (and possibly trajectory data)</p></li>
-<li><p><strong>company_schema</strong> – the name of the schema where the company_table is found</p></li>
+<li><p><strong>df</strong> – The DataFrame to be written as a table in the Data Vault</p></li>
+<li><p><strong>schemaname</strong> – The schema where the table should be written</p></li>
+<li><p><strong>tablename</strong> – The name of the table in the Data Vault</p></li>
+<li><p><strong>engine</strong> – The SqlAlchemy connection to the Data Vault</p></li>
+<li><p><strong>hive_bucket</strong> – <dl class="field-list simple">
+<dt class="field-odd">param hive_catalog<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="field-list simple">
+<dt class="field-odd">param hive_schema<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional paramters.  If given we attempt to use a fast Hive ingestion process.  Otherwise use default (and slow) Trino ingestion.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</p></li>
+<li><p><strong>verbose</strong> – If True, log information about actions of the Data Vault as they happen</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.read_quantified_sql">
+<span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">read_quantified_sql</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tablename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schemaname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.read_quantified_sql" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">VaultProviderProductionBenchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vault</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultInstance" title="ITR.data.vault_providers.VaultInstance"><span class="pre">VaultInstance</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prod_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">pd.DataFrame()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.data_providers.ProductionBenchmarkDataProvider</span></code></a></p>
+<p>Production projecton data provider super class.</p>
+<p>This Data Container contains Production data on benchmark level. Data has a regions and sector indices.
+Initialized ProductionBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark.benchmark_changed">
+<span class="sig-name descname"><span class="pre">benchmark_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_projected_production</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.ProductionBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark.benchmark_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark._get_projected_production">
+<span class="sig-name descname"><span class="pre">_get_projected_production</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">EScope.AnyScope</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark._get_projected_production" title="Link to this definition"></a></dt>
+<dd><p>Converts IProductionBenchmarkScopes into dataframe for a scope
+:param scope: a scope
+:return: a pint[dimensionless] pd.DataFrame</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark.get_company_projected_production">
+<span class="sig-name descname"><span class="pre">get_company_projected_production</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_sector_region_scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark.get_company_projected_production" title="Link to this definition"></a></dt>
+<dd><p>get the projected productions for list of companies
+:param company_sector_region_scope: DataFrame with at least the following columns :
+ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE
+:return: DataFrame of projected productions for [base_year through 2050]</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">VaultProviderIntensityBenchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vault</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultInstance" title="ITR.data.vault_providers.VaultInstance"><span class="pre">VaultInstance</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ei_df_t</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">pd.DataFrame()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ITR.data.osc_units.delta_degC_Quantity</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Q_(1.5,</span> <span class="pre">'delta_degC')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_global_budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ITR.data.osc_units.EmissionsQuantity</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Q_(396,</span> <span class="pre">'Gt</span> <span class="pre">CO2e')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_AFOLU_included</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_centric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_controls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ProjectionControls()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></code></a></p>
+<p>Production intensity data provider super class.
+This Data Container contains emission intensity data on benchmark level. Data has a regions and sector indices.
+Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_scopes">
+<span class="sig-name descname"><span class="pre">get_scopes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_scopes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.benchmarks_changed">
+<span class="sig-name descname"><span class="pre">benchmarks_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_projected_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.benchmarks_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.prod_centric_changed">
+<span class="sig-name descname"><span class="pre">prod_centric_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_projected_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.prod_centric_changed" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.is_production_centric">
+<span class="sig-name descname"><span class="pre">is_production_centric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.is_production_centric" title="Link to this definition"></a></dt>
+<dd><p>returns True if benchmark is “production_centric” (as defined by OECM)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_intensity_benchmarks">
+<span class="sig-name descname"><span class="pre">_get_intensity_benchmarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_sector_region_scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope_to_calc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_intensity_benchmarks" title="Link to this definition"></a></dt>
+<dd><p>Overrides subclass method
+returns dataframe of all EI benchmarks if COMPANY_SECTOR_REGION_SCOPE is None.  Otherwise
+returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+:param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
+with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
+:return: A DataFrame with company and intensity benchmarks; rows are calendar years, columns are company data</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_SDA_intensity_benchmarks">
+<span class="sig-name descname"><span class="pre">get_SDA_intensity_benchmarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_info_at_base_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope_to_calc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_SDA_intensity_benchmarks" title="Link to this definition"></a></dt>
+<dd><p>Overrides subclass method
+returns a Dataframe with intensity benchmarks per company_id given a region and sector.
+:param company_info_at_base_year: DataFrame with at least the following columns :
+ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE
+:return: A DataFrame with company and SDA intensity benchmarks per calendar year per row</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">VaultCompanyDataProvider</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vault</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultInstance" title="ITR.data.vault_providers.VaultInstance"><span class="pre">VaultInstance</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template_company_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../template/index.html#ITR.data.template.TemplateProviderCompany" title="ITR.data.template.TemplateProviderCompany"><span class="pre">ITR.data.template.TemplateProviderCompany</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_controls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ProjectionControls()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../base_providers/index.html#ITR.data.base_providers.BaseCompanyDataProvider" title="ITR.data.base_providers.BaseCompanyDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.base_providers.BaseCompanyDataProvider</span></code></a></p>
+<p>Data provider skeleton for JSON files parsed by the fastAPI json encoder. This class serves primarily for connecting
+to the ITR tool via API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>companies</strong> – A list of ICompanyData objects that each contain fundamental company data</p></li>
 <li><p><strong>column_config</strong> – An optional ColumnsConfig object containing relevant variable names</p></li>
+<li><p><strong>projection_controls</strong> – An optional ProjectionControls object containing projection settings</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_projection_controls">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_projection_controls</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_projection_controls" title="Link to this definition"></a></dt>
-<dd><p>Return the ProjectionControls associated with this CompanyDataProvider.</p>
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_fundamentals">
+<span class="sig-name descname"><span class="pre">get_company_fundamentals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_fundamentals" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>company_ids</strong> – A list of company IDs</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pandas DataFrame with company fundamental info per company (company_id is a column)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_ids">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_ids</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_ids" title="Link to this definition"></a></dt>
-<dd><p>Return the list of Company IDs of this CompanyDataProvider</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider._validate_projected_trajectories">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_validate_projected_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">companies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ei_benchmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider._validate_projected_trajectories" title="Link to this definition"></a></dt>
-<dd><p>Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
-COMPANIES are a list of companies with historic data that need to be projected.
-EI_BENCHMARKS are the benchmarks for all sectors, regions, and scopes
-In previous incarnations of this function, no benchmark data was needed for any reason.</p>
+<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_projected_trajectories">
+<span class="sig-name descname"><span class="pre">get_company_projected_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_projected_trajectories" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>company_ids</strong> – A list of company IDs</p></li>
+<li><p><strong>year</strong> – values for a specific year, or all years if None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pandas DataFrame with projected intensity trajectories per company, indexed by company_id and scope</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -294,232 +384,16 @@ In previous incarnations of this function, no benchmark data was needed for any 
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_data">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_data" title="Link to this definition"></a></dt>
-<dd><p>Get all relevant data for a list of company ids. This method should return a list of ICompanyData
-instances.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>company_ids</strong> – A list of company IDs (ISINs)</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list containing the company data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_value">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variable_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_value" title="Link to this definition"></a></dt>
-<dd><p>Gets the value of a variable for a list of companies ids
-:param company_ids: list of company ids
-:param variable_name: variable name of the projected feature
-:return: series of values</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider._calculate_target_projections">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_calculate_target_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">production_bm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.ProductionBenchmarkDataProvider</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ei_bm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider._calculate_target_projections" title="Link to this definition"></a></dt>
-<dd><p>We cannot calculate target projections until after we have loaded benchmark data.
-We do so when companies are associated with benchmarks, in the DataWarehouse construction</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>production_bm</strong> – A Production Benchmark (multi-sector, single-scope, 2020-2050)</p></li>
-<li><p><strong>ei_bm</strong> – Intensity Benchmarks for all sectors and scopes defined by the benchmark, 2020-2050</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_intensity_and_production_at_base_year">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_intensity_and_production_at_base_year</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_intensity_and_production_at_base_year" title="Link to this definition"></a></dt>
-<dd><p>overrides subclass method
-:param: company_ids: list of company ids
-:return: DataFrame the following columns :
-ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.BASE_EI, ColumnsConfig.SECTOR and
-ColumnsConfig.REGION</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_fundamentals">
-<span class="sig-name descname"><span class="pre">get_company_fundamentals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_fundamentals" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>company_ids</strong> – A list of company IDs</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A pandas DataFrame with company fundamental info per company</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_projected_trajectories">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_projected_trajectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_projected_trajectories" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>company_ids</strong> – A list of company IDs</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A pandas DataFrame with projected intensities per company</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider.get_company_projected_targets">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_company_projected_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider.get_company_projected_targets" title="Link to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>company_ids</strong> – A list of company IDs</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A pandas DataFrame with projected targets per company</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultCompanyDataProvider._allocate_emissions">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_allocate_emissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_companies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmarks_projected_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_controls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultCompanyDataProvider._allocate_emissions" title="Link to this definition"></a></dt>
-<dd><p>Use benchmark data from <cite>ei_benchmarks</cite> to allocate sector-level emissions from aggregated emissions.
-For example, a Utility may supply both Electricity and Gas to customers, reported separately.
-When we split the company into Electricity and Gas lines of business, we can allocate Scope emissions
-to the respective lines of business using benchmark averages to guide the allocation.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">VaultProviderProductionBenchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.engine.base.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_benchmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IProductionBenchmarkScopes" title="ITR.interfaces.IProductionBenchmarkScopes"><span class="pre">ITR.interfaces.IProductionBenchmarkScopes</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ingest_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.data_providers.ProductionBenchmarkDataProvider</span></code></a></p>
-<p>Production projecton data provider super class.</p>
-<p>This Data Container contains Production data on benchmark level. Data has a regions and sector indices.
-Initialized ProductionBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark.benchmark_changed">
-<span class="sig-name descname"><span class="pre">benchmark_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_projected_production</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.ProductionBenchmarkDataProvider" title="ITR.data.data_providers.ProductionBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.ProductionBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark.benchmark_changed" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark.get_company_projected_production">
-<span class="sig-name descname"><span class="pre">get_company_projected_production</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark.get_company_projected_production" title="Link to this definition"></a></dt>
-<dd><p>get the projected productions for all companies in ghg_scope12
-:param ghg_scope12: DataFrame with at least the following columns :
-ColumnsConfig.COMPANY_ID, ColumnsConfig.GHG_S1S2, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-:return: Dataframe of projected productions for [base_year - base_year + 50]</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderProductionBenchmark.get_benchmark_projections">
-<span class="sig-name descname"><span class="pre">get_benchmark_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark.get_benchmark_projections" title="Link to this definition"></a></dt>
-<dd><p>get the sector emissions for a list of companies.
-If there is no data for the sector, then it will be replaced by the global value
-:param company_secor_region_info: DataFrame with at least the following columns :
-ColumnsConfig.COMPANY_ID, ColumnsConfig.SECTOR and ColumnsConfig.REGION
-:return: A DataFrame with company and intensity benchmarks per calendar year per row</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">VaultProviderIntensityBenchmark</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.engine.base.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">EI_benchmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IEIBenchmarkScopes" title="ITR.interfaces.IEIBenchmarkScopes"><span class="pre">ITR.interfaces.IEIBenchmarkScopes</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ingest_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_controls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../configs/index.html#ITR.configs.ProjectionControls" title="ITR.configs.ProjectionControls"><span class="pre">ITR.configs.ProjectionControls</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ProjectionControls()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark" title="Link to this definition"></a></dt>
-<dd><p>Bases: <a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></code></a></p>
-<p>Production intensity data provider super class.
-This Data Container contains emission intensity data on benchmark level. Data has a regions and sector indices.
-Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_scopes">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_scopes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_scopes" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.benchmarks_changed">
-<span class="sig-name descname"><span class="pre">benchmarks_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_projected_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.benchmarks_changed" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.prod_centric_changed">
-<span class="sig-name descname"><span class="pre">prod_centric_changed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_projected_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../data_providers/index.html#ITR.data.data_providers.IntensityBenchmarkDataProvider" title="ITR.data.data_providers.IntensityBenchmarkDataProvider"><span class="pre">ITR.data.data_providers.IntensityBenchmarkDataProvider</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.prod_centric_changed" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.is_production_centric">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_production_centric</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.is_production_centric" title="Link to this definition"></a></dt>
-<dd><p>returns True if benchmark is “production_centric” (as defined by OECM)</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_SDA_intensity_benchmarks">
-<span class="sig-name descname"><span class="pre">get_SDA_intensity_benchmarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_info_at_base_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark.get_SDA_intensity_benchmarks" title="Link to this definition"></a></dt>
-<dd><p>Overrides subclass method
-returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-:param company_info_at_base_year: DataFrame with at least the following columns :
-ColumnsConfig.COMPANY_ID, ColumnsConfig.BASE_EI ColumnsConfig.SECTOR and ColumnsConfig.REGION
-:return: A DataFrame with company and SDA intensity benchmarks per calendar year per row</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_decarbonizations_paths">
-<span class="sig-name descname"><span class="pre">_get_decarbonizations_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intensity_benchmarks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_decarbonizations_paths" title="Link to this definition"></a></dt>
-<dd><p>Overrides subclass method
-Returns a DataFrame with the projected decarbonization paths for the supplied companies in intensity_benchmarks.
-:param: A DataFrame with company and intensity benchmarks per calendar year per row
-:return: A pd.DataFrame with company and decarbonisation path s per calendar year per row</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_decarbonization">
-<span class="sig-name descname"><span class="pre">_get_decarbonization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intensity_benchmark_row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.Series</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_decarbonization" title="Link to this definition"></a></dt>
-<dd><p>Overrides subclass method
-returns a Series with the decarbonization path for a benchmark.
-:param: A Series with company and intensity benchmarks per calendar year per row
-:return: A pd.Series with company and decarbonisation path s per calendar year per row</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark._convert_benchmark_to_series">
-<span class="sig-name descname"><span class="pre">_convert_benchmark_to_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">benchmark</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.IBenchmark" title="ITR.interfaces.IBenchmark"><span class="pre">ITR.interfaces.IBenchmark</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark._convert_benchmark_to_series" title="Link to this definition"></a></dt>
-<dd><p>extracts the company projected intensities or targets for a given scope
-:param feature: PROJECTED_EI or PROJECTED_TARGETS
-:param scope: a scope
-:return: pd.Series</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_projected_intensities">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_get_projected_intensities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">EScope.S1S2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_projected_intensities" title="Link to this definition"></a></dt>
-<dd><p>Converts IBenchmarkScopes into dataframe for a scope
-:param scope: a scope
-:return: pd.Series</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_intensity_benchmarks">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_get_intensity_benchmarks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">company_sector_region_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope_to_calc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.DataFrame</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark._get_intensity_benchmarks" title="Link to this definition"></a></dt>
-<dd><p>Overrides subclass method
-returns dataframe of all EI benchmarks if COMPANY_SECTOR_REGION_SCOPE is None.  Otherwise
-returns a Dataframe with intensity benchmarks per company_id given a region and sector.
-:param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
-with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
-:return: A DataFrame with company and intensity benchmarks; rows are calendar years, columns are company data</p>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="ITR.data.vault_providers.DataVaultWarehouse">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">DataVaultWarehouse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.engine.base.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="ITR.data.vault_providers.VaultCompanyDataProvider"><span class="pre">VaultCompanyDataProvider</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_projected_production</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark" title="ITR.data.vault_providers.VaultProviderProductionBenchmark"><span class="pre">VaultProviderProductionBenchmark</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmarks_projected_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark" title="ITR.data.vault_providers.VaultProviderIntensityBenchmark"><span class="pre">VaultProviderIntensityBenchmark</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ingest_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itr_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../../configs/index.html#ITR.configs.ColumnsConfig" title="ITR.configs.ColumnsConfig"><span class="pre">ITR.configs.ColumnsConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">ColumnsConfig</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.DataVaultWarehouse" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ITR.data.vault_providers.</span></span><span class="sig-name descname"><span class="pre">DataVaultWarehouse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vault</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultInstance" title="ITR.data.vault_providers.VaultInstance"><span class="pre">VaultInstance</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="ITR.data.vault_providers.VaultCompanyDataProvider"><span class="pre">VaultCompanyDataProvider</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_projected_production</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultProviderProductionBenchmark" title="ITR.data.vault_providers.VaultProviderProductionBenchmark"><span class="pre">VaultProviderProductionBenchmark</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmarks_projected_ei</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultProviderIntensityBenchmark" title="ITR.data.vault_providers.VaultProviderIntensityBenchmark"><span class="pre">VaultProviderIntensityBenchmark</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimate_missing_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../data_warehouse/index.html#ITR.data.data_warehouse.DataWarehouse" title="ITR.data.data_warehouse.DataWarehouse"><span class="pre">ITR.data.data_warehouse.DataWarehouse</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.ICompanyData" title="ITR.interfaces.ICompanyData"><span class="pre">ITR.interfaces.ICompanyData</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itr_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.DataVaultWarehouse" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="../data_warehouse/index.html#ITR.data.data_warehouse.DataWarehouse" title="ITR.data.data_warehouse.DataWarehouse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ITR.data.data_warehouse.DataWarehouse</span></code></a></p>
 <p>General data provider super class.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="ITR.data.vault_providers.DataVaultWarehouse.quant_init">
-<span class="sig-name descname"><span class="pre">quant_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">engine</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">sqlalchemy.engine.base.Engine</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="ITR.data.vault_providers.VaultCompanyDataProvider"><span class="pre">VaultCompanyDataProvider</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">ingest_schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itr_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.DataVaultWarehouse.quant_init" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">quant_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vault</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultInstance" title="ITR.data.vault_providers.VaultInstance"><span class="pre">VaultInstance</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#ITR.data.vault_providers.VaultCompanyDataProvider" title="ITR.data.vault_providers.VaultCompanyDataProvider"><span class="pre">VaultCompanyDataProvider</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">itr_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ITR.data.vault_providers.DataVaultWarehouse.quant_init" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -539,7 +413,7 @@ instances.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ITR.data.vault_providers.DataVaultWarehouse.get_pa_temp_scores">
-<span class="sig-name descname"><span class="pre">get_pa_temp_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.DataVaultWarehouse.get_pa_temp_scores" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_pa_temp_scores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">company_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../interfaces/index.html#ITR.interfaces.EScope" title="ITR.interfaces.EScope"><span class="pre">ITR.interfaces.EScope</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">EScope.S1S2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2050</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pandas.Series</span></span></span><a class="headerlink" href="#ITR.data.vault_providers.DataVaultWarehouse.get_pa_temp_scores" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
