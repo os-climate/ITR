@@ -1,3 +1,4 @@
+import concurrent.futures
 import logging
 import os
 import pathlib
@@ -599,28 +600,51 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
 
         company_ids_sql = ",".join([f"'{cid}'" for cid in company_ids])
         # FIXME: doesn't work with heterogeneous currencies as written
-        df_fundamentals = read_quantified_sql(
-            f"select * from {self._company_table} where company_id in ({company_ids_sql})",
-            None,
-            self._v.engine,
-            index_col=self.column_config.COMPANY_ID,
-        )
+
+        df_dict = {}
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
-            df_prod = pd.read_sql(
-                f"select company_id, production_by_year, production_by_year_units from {self._production_table}"
-                f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
-                self._v.engine,
-                index_col=self.column_config.COMPANY_ID,
-            ).apply(lambda x: Q_(x.production_by_year, x.production_by_year_units), axis=1)
+
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future_to_df_var = {
+                    executor.submit(
+                        lambda: read_quantified_sql(
+                            f"select * from {self._company_table} where company_id in ({company_ids_sql})",
+                            None,
+                            self._v.engine,
+                            index_col=self.column_config.COMPANY_ID,
+                        )
+                    ): "df_fundamentals",
+                    executor.submit(
+                        lambda: pd.read_sql(
+                            f"select company_id, production_by_year, production_by_year_units from {self._production_table}"
+                            f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
+                            self._v.engine,
+                            index_col=self.column_config.COMPANY_ID,
+                        )
+                    ): "df_prod",
+                    executor.submit(
+                        lambda: pd.read_sql(
+                            f"select company_id, ei_s1s2_by_year, ei_s1s2_by_year_units, ei_s3_by_year, ei_s3_by_year_units from {self._trajectory_table}"
+                            f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
+                            self._v.engine,
+                            index_col=self.column_config.COMPANY_ID,
+                        )
+                    ): "df_ei",
+                }
+                for future in concurrent.futures.as_completed(future_to_df_var):
+                    df_var = future_to_df_var[future]
+                    try:
+                        df_dict[df_var] = future.result()
+                    except Exception as exc:
+                        print("%r generated an exception: %s" % (df_var, exc))
+
+            df_prod = df_dict["df_prod"]
+            df_prod = df_prod.apply(lambda x: Q_(x.production_by_year, x.production_by_year_units), axis=1)
             df_prod.name = self.column_config.BASE_YEAR_PRODUCTION
-            df_ei = pd.read_sql(
-                f"select company_id, ei_s1s2_by_year, ei_s1s2_by_year_units, ei_s3_by_year, ei_s3_by_year_units from {self._trajectory_table}"
-                f" where year={self.projection_controls.BASE_YEAR} and company_id in ({company_ids_sql})",
-                self._v.engine,
-                index_col=self.column_config.COMPANY_ID,
-            ).apply(
+            df_ei = df_dict["df_ei"]
+            df_ei = df_ei.apply(
                 lambda x: [Q_(x.ei_s1s2_by_year, x.ei_s1s2_by_year_units), Q_(x.ei_s3_by_year, x.ei_s3_by_year_units)],
                 axis=1,
                 result_type="expand",
@@ -628,7 +652,7 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
         df_em = df_ei.mul(df_prod, axis=0).rename(
             columns={0: self.column_config.GHG_SCOPE12, 1: self.column_config.GHG_SCOPE3}
         )
-        df = pd.concat([df_fundamentals, df_prod, df_em], axis=1)
+        df = pd.concat([df_dict["df_fundamentals"], df_prod, df_em], axis=1)
         return df
 
     # The factors one would want to sum over companies for weighting purposes are:
@@ -876,28 +900,46 @@ class DataVaultWarehouse(DataWarehouse):
         self.company_data._production_table = self._production_table
 
         # Drop cumulative emissions tables so they get recalculated
-        for cumulative_attr in ["_emissions_table", "_budgets_table"]:
-            drop_sql = f"drop table if exists {self._v.schema}.{getattr(self, cumulative_attr)}"
-            osc._do_sql(drop_sql, self._v.engine, verbose=False)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_to_dropped_table = {
+                executor.submit(
+                    lambda: osc._do_sql(
+                        f"drop table if exists {self._v.schema}.{self._emissions_table}",
+                        self._v.engine,
+                        verbose=False,
+                    )
+                ): "emissions table",
+                executor.submit(
+                    lambda: osc._do_sql(
+                        f"drop table if exists {self._v.schema}.{self._budgets_table}",
+                        self._v.engine,
+                        verbose=False,
+                    )
+                ): "budgets table",
+            }
+            for future in concurrent.futures.as_completed(future_to_dropped_table):
+                table = future_to_dropped_table[future]
+                try:
+                    future.result()
+                except Exception as exc:
+                    print("%r generated an exception: %s" % (table, exc))
 
         # The DataVaultWarehouse provides three calculations per company (using SQL code rather than Python):
         #    * Cumulative trajectory of emissions
         #    * Cumulative target of emissions
         #    * Cumulative budget of emissions (separately for each benchmark)
 
-        qres = osc._do_sql(f"show tables like '{self._emissions_table}'", self._v.engine, verbose=False)
-        if len(qres) == 0:
-            emissions_from_tables = f"""
+        emissions_from_tables = f"""
     {self._v.schema}.{self._company_table} C
          join {self._v.schema}.{self._production_table} P on P.company_id=C.company_id
          left join {self._v.schema}.{self._trajectory_table} EI on EI.company_id=C.company_id and EI.year=P.year and EI.ei_SCOPE_by_year is not NULL
          left join {self._v.schema}.{self._target_table} ET on ET.company_id=C.company_id and ET.year=P.year and ET.ei_SCOPE_by_year is not NULL
 """
 
-            create_emissions_sql = f"create table {self._v.schema}.{self._emissions_table} with (format = 'ORC', partitioning = array['scope']) as"
-            emissions_scope_sql = "UNION ALL".join(
-                [
-                    f"""
+        create_emissions_sql = f"create table {self._v.schema}.{self._emissions_table} with (format = 'ORC', partitioning = array['scope']) as"
+        emissions_scope_sql = "UNION ALL".join(
+            [
+                f"""
 select C.company_name, C.company_id, '{self._v.schema}' as source, P.year,
        sum(EI.ei_{scope}_by_year * P.production_by_year) over (partition by C.company_id order by P.year) as cumulative_trajectory,
        if (EI.ei_{scope}_by_year_units is NULL, 't CO2e',
@@ -910,18 +952,16 @@ select C.company_name, C.company_id, '{self._v.schema}' as source, P.year,
        '{scope.upper()}' as scope
 from {emissions_from_tables.replace('SCOPE', scope)}
 """
-                    for scope in map(str.lower, EScope.get_scopes())
-                ]
-            )
-            qres = osc._do_sql(f"{create_emissions_sql} {emissions_scope_sql}", self._v.engine, verbose=True)
-            assert len(qres) and len(qres[0]) and qres[0][0] > 0
+                for scope in map(str.lower, EScope.get_scopes())
+            ]
+        )
+        qres = osc._do_sql(f"{create_emissions_sql} {emissions_scope_sql}", self._v.engine, verbose=True)
+        assert len(qres) and len(qres[0]) and qres[0][0] > 0
 
-        qres = osc._do_sql(f"show tables like '{self._budgets_table}'", self._v.engine, verbose=False)
-        if len(qres) == 0:
-            # base_year_scale = trajectory / budget at base year (a scalar)
-            # scaled cumulative budget = base_year_scale * cumulative budget (a time series)
+        # base_year_scale = trajectory / budget at base year (a scalar)
+        # scaled cumulative budget = base_year_scale * cumulative budget (a time series)
 
-            budgets_from_productions = f"""
+        budgets_from_productions = f"""
 create table {self._v.schema}.{self._budgets_table} with (
     format = 'ORC',
     partitioning = array['scope']
@@ -948,12 +988,8 @@ from {self._v.schema}.{self._company_table} C
      join {self._v.schema}.{self._benchmarks_ei_name} B_BY on B.scope=B_BY.scope and B.region=B_BY.region and B.sector=B_BY.sector and B_BY.year=P_BY.base_year
 """
 
-            qres = osc._do_sql(
-                budgets_from_productions,
-                self._v.engine,
-                verbose=True,
-            )
-            assert len(qres) and len(qres[0]) and qres[0][0] > 0
+        qres = osc._do_sql(budgets_from_productions, self._v.engine, verbose=True)
+        assert len(qres) and len(qres[0]) and qres[0][0] > 0
 
     def quant_init(
         self,
