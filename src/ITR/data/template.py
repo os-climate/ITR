@@ -737,9 +737,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Disable rows we do not yet handle
             df_esg = df_esg[~df_esg.metric.isin(["generation", "consumption"])]
             if ColumnsConfig.BASE_YEAR in df_esg.columns:
-                df_esg = df_esg[df_esg.base_year.map(lambda x: isinstance(x, str) or x.lower() != "x")]
+                df_esg = df_esg[df_esg.base_year.map(lambda x: not isinstance(x, str) or x.lower() != "x")]
             if "submetric" in df_esg.columns:
-                df_esg = df_esg[df_esg.submetric.map(lambda x: isinstance(x, str) or x.lower() != "ignore")]
+                df_esg = df_esg[df_esg.submetric.map(lambda x: not isinstance(x, str) or x.lower() != "ignore")]
             # FIXME: Should we move more df_esg work up here?
             self.df_esg = df_esg
         self.df_fundamentals = df_fundamentals
@@ -842,6 +842,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_esg = df_esg[df_esg_hasunits]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
+                # Quantify columns where units are specified (incl `base_year` if specified)
                 u_col = df_esg["unit"]
                 for col in esg_year_columns:
                     # Convert ints to float as Work-around for Pandas GH#55824
@@ -851,6 +852,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     df_esg[col] = df_esg[col].combine(
                         u_col,
                         lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
+                    )
+                if "base_year" in df_esg.columns:
+                    df_esg.loc[pd.notna(u_col), "base_year"] = (
+                        df_esg.loc[pd.notna(u_col), "base_year"].astype("float64").combine(
+                            u_col,
+                            lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
+                        )
                     )
             # All emissions metrics across multiple sectors should all resolve to some form of [mass] CO2
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
@@ -888,9 +896,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 )
                 df_esg = df_esg.loc[df_esg.index.difference(em_invalid_idx)]
                 em_metrics = em_metrics.loc[em_metrics.index.difference(em_invalid_idx)]
-
-            # We don't need units here anymore--they've been translated/transported everywhere we need them
-            df_esg = df_esg.drop(columns="unit")
 
             submetric_sector_map = {
                 "cement": "Cement",
@@ -1312,6 +1317,42 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 pd.DataFrame(),
             )
         )
+
+        if self.template_version > 1:
+            # Now we ensure that we convert production metrics to ones that benchmarks can handle
+            # Each different company may have its own way of converting from "widgets" to canonical
+            # production units with their own factors of conversion (for example Renault Group
+            # treats a "vehicle" as having a useful life of 150,000 km; OECM and TPI both us
+            # passenger km (pkm) as the unit of production for Automobiles
+            prod_rows = df_esg[df_esg.metric.eq("production")]
+            for idx, row in df_esg[df_esg.metric.eq("equivalence")].iterrows():
+                prod_row = prod_rows[prod_rows.company_id.eq(row.company_id)]
+                prod_unit = prod_row.unit.item()
+                prod_dim = f"[{prod_unit}]"
+                result_unit = str(ureg(f"({prod_unit}) * ({row.unit})").u)
+                # Now all rows that match this company_id must be renormalized
+                for idx2, row2 in df_historic_data.loc[row.company_id].iterrows():
+                    if row2.name[0] == "Emissions":
+                        continue
+                    if prod_dim in row2.iloc[0].dimensionality.keys():
+                        if row2.name[0] == "Productions":
+                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = row[esg_year_columns] * row2[esg_year_columns]
+                        elif row2.name[0] == "Emissions Intensities":
+                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = row2[esg_year_columns] / row[esg_year_columns]
+                        else:
+                            raise ValueError
+                # And target data as well
+                for idx2, row2 in df_target_data.loc[row.company_id].iterrows():
+                    if prod_dim in ureg(row2.target_base_year_unit).dimensionality.keys():
+                        normalized_qty = Q_(row2["target_base_year_qty"], row2["target_base_year_unit"]) / row['base_year']
+                        df_target_data.loc[idx2, "target_base_year_qty"] = normalized_qty.m
+                        df_target_data.loc[idx2, "target_base_year_unit"] = str(normalized_qty.u)
+                # And fundamental data as well
+                df_fundamentals.loc[row.company_id, ColumnsConfig.PRODUCTION_METRIC] = result_unit
+
+            # We don't need units here anymore--they've been translated/transported everywhere we need them
+            df_esg = df_esg.drop(columns="unit")
+
         for company in self._companies:
             row = df_fundamentals.loc[company.company_id]
             company.emissions_metric = EmissionsMetric(row[ColumnsConfig.EMISSIONS_METRIC])
