@@ -1,10 +1,10 @@
 import json
 import os
 from typing import List
+from unittest import TestCase
 
 import pandas as pd
 import pytest
-from unittest import TestCase
 from utils import assert_pint_frame_equal, assert_pint_series_equal
 
 import ITR
@@ -33,7 +33,7 @@ pd.options.display.min_rows = 30
 
 
 class TemplateV2:
-    def __init__(self, ei_filename:str, company_ids: List[str]) -> None:
+    def __init__(self, ei_filename: str, company_ids: List[str]) -> None:
         root = os.path.dirname(os.path.abspath(__file__))
         self.company_data_path = os.path.join(root, "inputs", "20220927 ITR V2 Sample Data.xlsx")
         # self.company_data_path = os.path.join(root, "inputs", "20230106 ITR V2 Sample Data.xlsx")
@@ -63,11 +63,14 @@ class TemplateV2:
 def template_V2_PC() -> TemplateV2:
     return TemplateV2("benchmark_EI_OECM_PC.json", ["US00130H1059", "US26441C2044", "KR7005490008"])
 
+
 @pytest.fixture(scope="session")
 def template_V2_S3() -> TemplateV2:
-    return TemplateV2("benchmark_EI_OECM_S3.json", ["US0921131092+Electricity Utilities","US0921131092+Gas Utilities"])
+    return TemplateV2("benchmark_EI_OECM_S3.json", ["US0921131092+Electricity Utilities", "US0921131092+Gas Utilities"])
+
 
 tc = TestCase()
+
 
 def test_target_projections(template_V2_PC: TemplateV2):
     comids = [
@@ -250,9 +253,9 @@ def test_target_projections(template_V2_PC: TemplateV2):
                 # c_proj_targets is a list of nasty BaseModel types so we cannot use Pandas asserters
                 c_proj_targets = c_proj_targets[1:]
                 assert [
-                    ITR.nominal_values(round(x.value.m_as(expected_projection.dtype.units), 4))
-                    for x in c_proj_targets
+                    ITR.nominal_values(round(x.value.m_as(expected_projection.dtype.units), 4)) for x in c_proj_targets
                 ] == expected_projection.pint.m.tolist()
+
 
 def test_temp_score(template_V2_PC: TemplateV2):
     df_portfolio = pd.read_excel(template_V2_PC.company_data_path, sheet_name="Portfolio")
@@ -275,6 +278,7 @@ def test_temp_score(template_V2_PC: TemplateV2):
         data_warehouse=template_V2_PC.data_warehouse, data=portfolio_data, portfolio=portfolio
     )
     print(amended_portfolio[["company_name", "time_frame", "scope", "temperature_score"]])
+
 
 def test_get_projected_value(template_V2_PC: TemplateV2):
     company_ids = ["US00130H1059", "KR7005490008"]
@@ -365,6 +369,7 @@ def test_get_projected_value(template_V2_PC: TemplateV2):
     )
     trajectories = template_V2_PC.template_company_data.get_company_projected_trajectories(company_ids)
     assert_pint_frame_equal(tc, trajectories.loc[:, EScope.S1S2, :], expected_data, places=4)
+
 
 def test_get_benchmark(template_V2_PC: TemplateV2):
     # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific
@@ -499,6 +504,7 @@ def test_get_benchmark(template_V2_PC: TemplateV2):
     benchmarks = template_V2_PC.base_EI_bm.get_SDA_intensity_benchmarks(template_V2_PC.company_info_at_base_year)
     assert_pint_frame_equal(tc, benchmarks.loc[:, EScope.S1S2, :], expected_data)
 
+
 def test_get_projected_production(template_V2_PC: TemplateV2):
     expected_data_2025 = pd.Series(
         [
@@ -521,6 +527,7 @@ def test_get_projected_production(template_V2_PC: TemplateV2):
         places=4,
     )
 
+
 def test_get_cumulative_value(template_V2_PC: TemplateV2):
     projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype="pint[t CO2/GJ]")
     projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]], dtype="pint[GJ]")
@@ -529,6 +536,7 @@ def test_get_cumulative_value(template_V2_PC: TemplateV2):
         projected_ei=projected_emission, projected_production=projected_production
     )
     assert_pint_series_equal(tc, emissions.iloc[:, -1], expected_data)
+
 
 def test_get_company_data(template_V2_PC: TemplateV2):
     # "US0079031078" and "US00724F1012" are both Electricity Utilities
@@ -580,6 +588,7 @@ def test_get_company_data(template_V2_PC: TemplateV2):
         places=7,
     )
 
+
 def test_get_value(template_V2_PC: TemplateV2):
     expected_data = pd.Series(
         [10189000000.0, 25079000000.0, 55955872344.1009],
@@ -598,13 +607,15 @@ def test_get_value(template_V2_PC: TemplateV2):
 
 
 def test_ch4_gwp(template_V2_S3: TemplateV2):
-    companies = template_V2_S3.data_warehouse.get_preprocessed_company_data(["US0921131092+Electricity Utilities","US0921131092+Gas Utilities"])
+    companies = template_V2_S3.data_warehouse.get_preprocessed_company_data(
+        ["US0921131092+Electricity Utilities", "US0921131092+Gas Utilities"]
+    )
     company_1 = companies[0]
     company_2 = companies[5]
     tc.assertEqual(company_1.company_id, "US0921131092+Electricity Utilities")
     tc.assertEqual(company_2.company_id, "US0921131092+Gas Utilities")
-    assert company_1.scope==EScope.S1
-    assert company_2.scope==EScope.S1
+    assert company_1.scope == EScope.S1
+    assert company_2.scope == EScope.S1
     tc.assertAlmostEqual(
         ITR.nominal_values(company_1.ghg_s1s2.m_as("Mt CO2")),
         3.96312832,
