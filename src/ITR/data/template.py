@@ -4,12 +4,11 @@ import re
 import warnings  # needed until apply behaves better with Pint quantities in arrays
 from typing import Dict, List, Optional, Type
 
+import globalwarmingpotentials as gwp
 import numpy as np
 import pandas as pd
 import pint
 from pydantic import ValidationError
-
-import globalwarmingpotentials as gwp
 
 import ITR
 
@@ -890,12 +889,10 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Convert CH4 to the GWP of CO2e
             ch4_idx = df_esg.loc[em_metrics.index].unit.str.contains("CH4")
             ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
-            ch4_to_co2e = df_esg.loc[em_metrics.index].loc[ch4_idx].unit.map(
-                lambda x: x.replace("CH4", "CO2e")
-            )
+            ch4_to_co2e = df_esg.loc[em_metrics.index].loc[ch4_idx].unit.map(lambda x: x.replace("CH4", "CO2e"))
             df_esg.loc[ch4_to_co2e.index, "unit"] = ch4_to_co2e
-            df_esg.loc[ch4_to_co2e.index, esg_year_columns] = (
-                df_esg.loc[ch4_to_co2e.index, esg_year_columns].apply(lambda x: asPintSeries(x).mul(ch4_gwp), axis=1)
+            df_esg.loc[ch4_to_co2e.index, esg_year_columns] = df_esg.loc[ch4_to_co2e.index, esg_year_columns].apply(
+                lambda x: asPintSeries(x).mul(ch4_gwp), axis=1
             )
 
             # Validate that all our em_metrics are, in fact, some kind of emissions quantity
@@ -997,7 +994,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg.loc[em_metrics.index]
                 .assign(metric=df_esg.loc[em_metrics.index].metric.str.upper())
                 .assign(
-                    submetric=df_esg.loc[em_metrics.index].submetric.map(lambda x: "" if ITR.isna(x) else str(x).lower())
+                    submetric=df_esg.loc[em_metrics.index].submetric.map(
+                        lambda x: "" if ITR.isna(x) else str(x).lower()
+                    )
                 )
                 # special submetrics define our sector (such as electricity -> Electricity Utilities)
                 .assign(
@@ -1373,9 +1372,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     target_data.loc[mask, f"target_{attr}"] = 2021
                     logger.warning(f"Missing target_{attr} set to 2021 for companies with ID: {c_ids_without[attr]}")
 
-                    setattr(target_data, f"target_{attr}", getattr(target_data, f"target_{attr}").map(
-                        lambda x: int(x.year) if isinstance(x, datetime.datetime) else x
-                    ))
+                    setattr(
+                        target_data,
+                        f"target_{attr}",
+                        getattr(target_data, f"target_{attr}").map(
+                            lambda x: int(x.year) if isinstance(x, datetime.datetime) else x
+                        ),
+                    )
                 else:
                     logger.warning(f"Missing target_{attr} for companies with ID: {c_ids_without[attr]}")
                     target_data = target_data[~mask]
@@ -1383,13 +1386,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # Convert CH4 to the GWP of CO2e
         ch4_idx = target_data.target_base_year_unit.str.contains("CH4")
         ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
-        ch4_to_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(
-            lambda x: x.replace("CH4", "CO2e")
-        )
+        ch4_to_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(lambda x: x.replace("CH4", "CO2e"))
         target_data.loc[ch4_to_co2e.index, "target_base_year_unit"] = ch4_to_co2e
-        target_data.loc[ch4_to_co2e.index, "target_base_year_qty"] = (
-            target_data.loc[ch4_to_co2e.index, "target_base_year_qty"].map(lambda x: x * ch4_gwp.m)
-        )
+        target_data.loc[ch4_to_co2e.index, "target_base_year_qty"] = target_data.loc[
+            ch4_to_co2e.index, "target_base_year_qty"
+        ].map(lambda x: x * ch4_gwp.m)
 
         target_data.loc[target_data.target_type.str.lower().str.contains("absolute"), "target_type"] = "absolute"
         target_data.loc[target_data.target_type.str.lower().str.contains("intensity"), "target_type"] = "intensity"
@@ -1412,9 +1413,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             warning_message = f"Companies without netzero targets: {c_ids_without_netzero_year}"
             # target_data.loc[mask, 'netzero_year'] = ProjectionControls.TARGET_YEAR
 
-        c_ids_with_nonnumeric_target = (
-            target_data[target_data["target_reduction_ambition"].map(lambda x: isinstance(x, str))].index.tolist()
-        )
+        c_ids_with_nonnumeric_target = target_data[
+            target_data["target_reduction_ambition"].map(lambda x: isinstance(x, str))
+        ].index.tolist()
         if c_ids_with_nonnumeric_target:
             error_message = (
                 "Non-numeric target reduction ambition is invalid; please fix companies with ID: "
@@ -1494,7 +1495,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         company_id, "Productions", "production"
                     ][base_year]
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S1S2"].loc[base_year]
+                        company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                            company_id, "Emissions", "S1S2"
+                        ].loc[base_year]
                     except KeyError:
                         if (
                             company_id,
@@ -1503,7 +1506,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         ) not in df_historic_data.index:
                             logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
                             try:
-                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S1"].loc[base_year]
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                    company_id, "Emissions", "S1"
+                                ].loc[base_year]
                                 df_historic_data.loc[company_id, "Emissions", "S2"] = 0
                                 df_historic_data.loc[company_id, "Emissions Intensities", "S2"] = 0
                                 df_historic_data.loc[(company_id, "Emissions", "S2"), :] = (
@@ -1515,7 +1520,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                 df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                             except KeyError:
                                 try:
-                                    company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S1S2S3"].loc[base_year]
+                                    company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                        company_id, "Emissions", "S1S2S3"
+                                    ].loc[base_year]
                                     logger.warning(
                                         f"Using S1+S2+S3 as GHG_SCOPE12 because no Scope 1 or Scope 2 available for company with ID {company_id}"
                                     )
@@ -1569,7 +1576,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                 logger.error(
                                     f"Scope 1 data missing from Company with ID {company_id}; treating as zero"
                                 )
-                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S2"].loc[base_year]
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[
+                                    company_id, "Emissions", "S2"
+                                ].loc[base_year]
                                 df_historic_data.loc[company_id, "Emissions", "S1"] = 0
                                 df_historic_data.loc[company_id, "Emissions Intensities", "S1"] = 0
                                 df_historic_data.loc[(company_id, "Emissions", "S1"), :] = (
@@ -1580,7 +1589,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                 )
                                 df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[company_id, "Emissions", "S3"].loc[base_year]
+                        company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[
+                            company_id, "Emissions", "S3"
+                        ].loc[base_year]
                     except KeyError:
                         # If there was no relevant historic S3 data, don't try to use it
                         pass
