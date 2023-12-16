@@ -33,7 +33,7 @@ pd.options.display.min_rows = 30
 class TemplateV2:
     def __init__(self) -> None:
         root = os.path.dirname(os.path.abspath(__file__))
-        self.company_data_path = os.path.join(root, "inputs", "20231031 ITR V2 SBTi Data.xlsx")
+        self.company_data_path = os.path.join(root, "inputs", "20231031 ITR V2 Sample Data.xlsx")
         self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
         # load production benchmarks
         benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
