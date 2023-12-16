@@ -9,6 +9,8 @@ import pandas as pd
 import pint
 from pydantic import ValidationError
 
+import globalwarmingpotentials as gwp
+
 import ITR
 
 from ..configs import (
@@ -225,7 +227,7 @@ s3_category_dict = {v.lower(): k for k, v in s3_category_rdict.items()}
 
 
 def maybe_other_s3_mappings(x: str):
-    if pd.isna(x):
+    if ITR.isna(x):
         return ""
     if isinstance(x, int):
         return str(x)
@@ -885,6 +887,17 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Recalculate if any of the above dropped rows from df_esg
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
 
+            # Convert CH4 to the GWP of CO2e
+            ch4_idx = df_esg.loc[em_metrics.index].unit.str.contains("CH4")
+            ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
+            ch4_to_co2e = df_esg.loc[em_metrics.index].loc[ch4_idx].unit.map(
+                lambda x: x.replace("CH4", "CO2e")
+            )
+            df_esg.loc[ch4_to_co2e.index, "unit"] = ch4_to_co2e
+            df_esg.loc[ch4_to_co2e.index, esg_year_columns] = (
+                df_esg.loc[ch4_to_co2e.index, esg_year_columns].apply(lambda x: asPintSeries(x).mul(ch4_gwp), axis=1)
+            )
+
             # Validate that all our em_metrics are, in fact, some kind of emissions quantity
             em_invalid = df_esg.loc[em_metrics.index].unit.map(
                 lambda x: not isinstance(x, str) or not ureg(x).is_compatible_with("t CO2")
@@ -984,7 +997,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 df_esg.loc[em_metrics.index]
                 .assign(metric=df_esg.loc[em_metrics.index].metric.str.upper())
                 .assign(
-                    submetric=df_esg.loc[em_metrics.index].submetric.map(lambda x: "" if pd.isna(x) else str(x).lower())
+                    submetric=df_esg.loc[em_metrics.index].submetric.map(lambda x: "" if ITR.isna(x) else str(x).lower())
                 )
                 # special submetrics define our sector (such as electricity -> Electricity Utilities)
                 .assign(
@@ -1351,27 +1364,32 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             return target_data[mask].index.unique().tolist()
 
         # TODO: need to fix Pydantic definition or data to allow optional int.  In the mean time...
-        mask = target_data["target_start_year"].isna()
-        if mask.any():
-            c_ids_without_start_year = unique_ids(mask)
-            target_data.loc[mask, "target_start_year"] = 2021
-            logger.warning(f"Missing target start year set to 2021 for companies with ID: {c_ids_without_start_year}")
+        c_ids_without = {}
+        for attr in ["start_year", "base_year", "base_year_qty"]:
+            mask = target_data[f"target_{attr}"].isna()
+            if mask.any():
+                c_ids_without[attr] = unique_ids(mask)
+                if attr == "start_year":
+                    target_data.loc[mask, f"target_{attr}"] = 2021
+                    logger.warning(f"Missing target_{attr} set to 2021 for companies with ID: {c_ids_without[attr]}")
 
-        target_data.target_start_year = target_data.target_start_year.map(
-            lambda x: int(x.year) if isinstance(x, datetime.datetime) else x
+                    setattr(target_data, f"target_{attr}", getattr(target_data, f"target_{attr}").map(
+                        lambda x: int(x.year) if isinstance(x, datetime.datetime) else x
+                    ))
+                else:
+                    logger.warning(f"Missing target_{attr} for companies with ID: {c_ids_without[attr]}")
+                    target_data = target_data[~mask]
+
+        # Convert CH4 to the GWP of CO2e
+        ch4_idx = target_data.target_base_year_unit.str.contains("CH4")
+        ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
+        ch4_to_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(
+            lambda x: x.replace("CH4", "CO2e")
         )
-
-        mask = target_data["target_base_year"].isna()
-        if mask.any():
-            c_ids_without_base_year = unique_ids(mask)
-            logger.warning(f"Missing target base year for companies with ID: {c_ids_without_base_year}")
-            target_data = target_data[~mask]
-
-        mask = target_data["target_base_year_qty"].isna()
-        if mask.any():
-            c_ids_without_base_year_qty = unique_ids(mask)
-            logger.warning(f"Missing target base year qty for companies with ID: {c_ids_without_base_year_qty}")
-            target_data = target_data[~mask]
+        target_data.loc[ch4_to_co2e.index, "target_base_year_unit"] = ch4_to_co2e
+        target_data.loc[ch4_to_co2e.index, "target_base_year_qty"] = (
+            target_data.loc[ch4_to_co2e.index, "target_base_year_qty"].map(lambda x: x * ch4_gwp.m)
+        )
 
         target_data.loc[target_data.target_type.str.lower().str.contains("absolute"), "target_type"] = "absolute"
         target_data.loc[target_data.target_type.str.lower().str.contains("intensity"), "target_type"] = "intensity"
@@ -1394,8 +1412,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             warning_message = f"Companies without netzero targets: {c_ids_without_netzero_year}"
             # target_data.loc[mask, 'netzero_year'] = ProjectionControls.TARGET_YEAR
 
-        c_ids_with_nonnumeric_target = list(
-            target_data[target_data["target_reduction_ambition"].map(lambda x: isinstance(x, str))].index
+        c_ids_with_nonnumeric_target = (
+            target_data[target_data["target_reduction_ambition"].map(lambda x: isinstance(x, str))].index.tolist()
         )
         if c_ids_with_nonnumeric_target:
             error_message = (
@@ -1476,9 +1494,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         company_id, "Productions", "production"
                     ][base_year]
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(
-                            df_historic_data.loc[company_id, "Emissions", "S1S2"]
-                        )[base_year]
+                        company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S1S2"].loc[base_year]
                     except KeyError:
                         if (
                             company_id,
@@ -1487,24 +1503,19 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         ) not in df_historic_data.index:
                             logger.warning(f"Scope 2 data missing from company with ID {company_id}; treating as zero")
                             try:
-                                company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(
-                                    df_historic_data.loc[company_id, "Emissions", "S1"]
-                                )[base_year]
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S1"].loc[base_year]
                                 df_historic_data.loc[company_id, "Emissions", "S2"] = 0
-                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                                 df_historic_data.loc[company_id, "Emissions Intensities", "S2"] = 0
-                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                                 df_historic_data.loc[(company_id, "Emissions", "S2"), :] = (
                                     df_historic_data.loc[company_id, "Emissions", "S1"] * 0
                                 )
                                 df_historic_data.loc[(company_id, "Emissions Intensities", "S2"), :] = (
                                     df_historic_data.loc[company_id, "Emissions Intensities", "S1"] * 0
                                 )
+                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                             except KeyError:
                                 try:
-                                    company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(
-                                        df_historic_data.loc[company_id, "Emissions", "S1S2S3"]
-                                    )[base_year]
+                                    company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S1S2S3"].loc[base_year]
                                     logger.warning(
                                         f"Using S1+S2+S3 as GHG_SCOPE12 because no Scope 1 or Scope 2 available for company with ID {company_id}"
                                     )
@@ -1540,8 +1551,8 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                             # S1S2 as an emissions total upstream from S1+S2.  While normally done upstream, not done for newly created company_ids.
                             try:
                                 company_data[ColumnsConfig.GHG_SCOPE12] = (
-                                    asPintSeries(df_historic_data.loc[company_id, "Emissions", "S1"])[base_year]
-                                    + asPintSeries(df_historic_data.loc[company_id, "Emissions", "S2"])[base_year]
+                                    df_historic_data.loc[company_id, "Emissions", "S1"].loc[base_year]
+                                    + df_historic_data.loc[company_id, "Emissions", "S2"].loc[base_year]
                                 )
                                 df_historic_data.loc[company_id, "Emissions", "S1S2"] = df_historic_data.loc[
                                     company_id, "Emissions Intensities", "S1S2"
@@ -1558,23 +1569,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                                 logger.error(
                                     f"Scope 1 data missing from Company with ID {company_id}; treating as zero"
                                 )
-                                company_data[ColumnsConfig.GHG_SCOPE12] = asPintSeries(
-                                    df_historic_data.loc[company_id, "Emissions", "S2"]
-                                )[base_year]
+                                company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[company_id, "Emissions", "S2"].loc[base_year]
                                 df_historic_data.loc[company_id, "Emissions", "S1"] = 0
-                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                                 df_historic_data.loc[company_id, "Emissions Intensities", "S1"] = 0
-                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                                 df_historic_data.loc[(company_id, "Emissions", "S1"), :] = (
                                     df_historic_data.loc[company_id, "Emissions", "S2"] * 0
                                 )
                                 df_historic_data.loc[(company_id, "Emissions Intensities", "S1"), :] = (
                                     df_historic_data.loc[company_id, "Emissions Intensities", "S2"] * 0
                                 )
+                                df_historic_data = df_historic_data.sort_index(level=df_historic_data.index.names)
                     try:
-                        company_data[ColumnsConfig.GHG_SCOPE3] = asPintSeries(
-                            df_historic_data.loc[company_id, "Emissions", "S3"]
-                        )[base_year]
+                        company_data[ColumnsConfig.GHG_SCOPE3] = df_historic_data.loc[company_id, "Emissions", "S3"].loc[base_year]
                     except KeyError:
                         # If there was no relevant historic S3 data, don't try to use it
                         pass
@@ -1672,8 +1678,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         x = ser
         if isinstance(x, pd.Series):
             x = x.squeeze()
-        if x.m is pd.NA:
-            return PintType(x.u).na_value
+        if isinstance(x, pint.Quantity):
+            if x.m is pd.NA:
+                return PintType(x.u).na_value
         return x
 
     # Note that for the three following functions, we pd.Series.squeeze() the results because it's just one year / one company

@@ -89,7 +89,7 @@ except KeyError:
 company_data_path = os.path.join(xlsx_data_dir, "20230106 ITR V2 Sample Data.xlsx")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]:
     # load production benchmarks
     with open(os.path.join(json_data_dir, "benchmark_production_OECM.json")) as json_file:
@@ -109,13 +109,13 @@ def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderInte
     return (base_production_bm, base_EI_bm)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_company_data() -> TemplateProviderCompany:
     company_data = TemplateProviderCompany(company_data_path, projection_controls=ProjectionControls())
     return company_data
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_warehouse(base_company_data, base_benchmarks) -> DataWarehouse:
     prod_bm, EI_bm = base_benchmarks
     warehouse = DataWarehouse(
@@ -127,7 +127,7 @@ def base_warehouse(base_company_data, base_benchmarks) -> DataWarehouse:
     return warehouse
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault() -> VaultInstance:
     instance = VaultInstance(
         engine=engine_init,
@@ -139,7 +139,7 @@ def vault() -> VaultInstance:
     return instance
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_benchmarks_from_base(
     vault, base_benchmarks
 ) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
@@ -164,7 +164,7 @@ def vault_benchmarks_from_base(
     return (vault_prod_bm, vault_EI_bm)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_warehouse_from_base(vault, vault_benchmarks_from_base, base_warehouse) -> DataVaultWarehouse:
     vault_company_data = VaultCompanyDataProvider(
         vault,
@@ -184,7 +184,7 @@ def vault_warehouse_from_base(vault, vault_benchmarks_from_base, base_warehouse)
     return vault_warehouse
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_benchmarks(vault, request) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
     try:
         vault_prod_bm = VaultProviderProductionBenchmark(
@@ -215,7 +215,7 @@ def vault_benchmarks(vault, request) -> Tuple[VaultProviderProductionBenchmark, 
     return (vault_prod_bm, vault_EI_bm)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
     # This creates a wrapper around what should be an existing data in the Data Vault.
     # If no such data exists, it will fail
