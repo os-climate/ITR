@@ -1,3 +1,4 @@
+import concurrent.futures
 import json
 import os
 import pathlib
@@ -89,24 +90,37 @@ except KeyError:
 company_data_path = os.path.join(xlsx_data_dir, "20230106 ITR V2 Sample Data.xlsx")
 
 
-@pytest.fixture(scope="session")
-def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]:
+def _get_base_prod(filename: str) -> BaseProviderProductionBenchmark:
     # load production benchmarks
-    with open(os.path.join(json_data_dir, "benchmark_production_OECM.json")) as json_file:
+    with open(os.path.join(json_data_dir, filename)) as json_file:
         parsed_json = json.load(json_file)
     prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
-    base_production_bm = BaseProviderProductionBenchmark(
-        production_benchmarks=prod_bms,
-    )
+    return BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
 
+
+def _get_base_ei(filename: str) -> BaseProviderIntensityBenchmark:
     # load intensity benchmarks
-    with open(os.path.join(json_data_dir, "benchmark_EI_OECM_S3.json")) as json_file:
+    with open(os.path.join(json_data_dir, filename)) as json_file:
         parsed_json = json.load(json_file)
     ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
-    base_EI_bm = BaseProviderIntensityBenchmark(
-        EI_benchmarks=ei_bms,
-    )
-    return (base_production_bm, base_EI_bm)
+    return BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
+
+
+@pytest.fixture(scope="session")
+def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]:
+    benchmark_dict = {}
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_benchmark = {
+            executor.submit(_get_base_prod, filename="benchmark_production_OECM.json"): "base_production_bm",
+            executor.submit(_get_base_ei, filename="benchmark_EI_OECM_S3.json"): "base_EI_bm",
+        }
+        for future in concurrent.futures.as_completed(future_to_benchmark):
+            benchmark_name = future_to_benchmark[future]
+            try:
+                benchmark_dict[benchmark_name] = future.result()
+            except Exception as exc:
+                print("%r generated an exception: %s" % (benchmark_name, exc))
+    return (benchmark_dict["base_production_bm"], benchmark_dict["base_EI_bm"])
 
 
 @pytest.fixture(scope="session")
@@ -144,24 +158,37 @@ def vault_benchmarks_from_base(
     vault, base_benchmarks
 ) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
     base_prod_bm, base_EI_bm = base_benchmarks
-    vault_prod_bm = VaultProviderProductionBenchmark(
-        vault=vault,
-        benchmark_name=f"{itr_prefix}benchmark_prod",
-        prod_df=base_prod_bm._prod_df,
-    )
-    assert vault_prod_bm.own_data
 
-    vault_EI_bm = VaultProviderIntensityBenchmark(
-        vault,
-        benchmark_name=f"{itr_prefix}benchmark_ei",
-        ei_df_t=base_EI_bm._EI_df_t,
-        benchmark_temperature=base_EI_bm.benchmark_temperature,
-        benchmark_global_budget=base_EI_bm.benchmark_global_budget,
-        is_AFOLU_included=base_EI_bm.is_AFOLU_included,
-        production_centric=base_EI_bm.is_production_centric(),
-    )
-    assert vault_EI_bm.own_data
-    return (vault_prod_bm, vault_EI_bm)
+    vault_dict = {}
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future_to_vault = {
+            executor.submit(
+                VaultProviderProductionBenchmark,
+                vault=vault,
+                benchmark_name=f"{itr_prefix}benchmark_prod",
+                prod_df=base_prod_bm._prod_df,
+            ): "vault_prod_bm",
+            executor.submit(
+                VaultProviderIntensityBenchmark,
+                vault=vault,
+                benchmark_name=f"{itr_prefix}benchmark_ei",
+                ei_df_t=base_EI_bm._EI_df_t,
+                benchmark_temperature=base_EI_bm.benchmark_temperature,
+                benchmark_global_budget=base_EI_bm.benchmark_global_budget,
+                is_AFOLU_included=base_EI_bm.is_AFOLU_included,
+                production_centric=base_EI_bm.is_production_centric(),
+            ): "vault_EI_bm",
+        }
+        for future in concurrent.futures.as_completed(future_to_vault):
+            vault_name = future_to_vault[future]
+            try:
+                vault_dict[vault_name] = future.result()
+            except Exception as exc:
+                print("%r generated an exception: %s" % (vault_name, exc))
+
+    assert vault_dict["vault_prod_bm"].own_data
+    assert vault_dict["vault_EI_bm"].own_data
+    return (vault_dict["vault_prod_bm"], vault_dict["vault_EI_bm"])
 
 
 @pytest.fixture(scope="session")
