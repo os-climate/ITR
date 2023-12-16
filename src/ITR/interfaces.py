@@ -433,6 +433,8 @@ class DF_ICompanyEIProjections(BaseModel):
                 index=pd.Index(years, name="year"),
                 name="value",
             )
+        else:
+            projections = projections.astype(f"pint[{str(ei_metric)}]")
         super().__init__(ei_metric=str(ei_metric), projections=projections)
 
 
