@@ -48,12 +48,6 @@ xlsx_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inputs
 # If there's no credientials file, this fails silently without raising
 osc.load_credentials_dotenv()
 
-# bucket must be configured with credentials for trino, and accessible to the hive catalog
-# You may need to use a different prefix here depending on how you name your credentials.env variables
-hive_bucket = osc.attach_s3_bucket("S3_OSCCL2")
-hive_catalog = "osc_datacommons_hive_ingest"
-hive_schema = "ingest"
-
 ingest_catalog = "osc_datacommons_dev"
 ingest_schema = "demo_dv"
 itr_prefix = "itr_"
@@ -82,6 +76,16 @@ except KeyError:
         pytestmark = pytest.mark.skip
         pytest.skip("skipping vault because Trino auth breaks CI/CD", allow_module_level=True)
 
+# bucket must be configured with credentials for trino, and accessible to the hive catalog
+# You may need to use a different prefix here depending on how you name your credentials.env variables
+try:
+    hive_bucket = osc.attach_s3_bucket("S3_OSCCL2")
+    hive_catalog = "osc_datacommons_hive_ingest"
+    hive_schema = "ingest"
+except KeyError:
+    hive_bucket = None
+    hive_catalog = None
+    hive_schema = None
 
 company_data_path = os.path.join(xlsx_data_dir, "20230106 ITR V2 Sample Data.xlsx")
 
@@ -102,7 +106,7 @@ def _get_base_ei(filename: str) -> BaseProviderIntensityBenchmark:
     return BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]:
     benchmark_dict = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -119,13 +123,13 @@ def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderInte
     return (benchmark_dict["base_production_bm"], benchmark_dict["base_EI_bm"])
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_company_data() -> TemplateProviderCompany:
     company_data = TemplateProviderCompany(company_data_path, projection_controls=ProjectionControls())
     return company_data
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_warehouse(base_company_data, base_benchmarks) -> DataWarehouse:
     prod_bm, EI_bm = base_benchmarks
     warehouse = DataWarehouse(
@@ -137,7 +141,7 @@ def base_warehouse(base_company_data, base_benchmarks) -> DataWarehouse:
     return warehouse
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault() -> VaultInstance:
     instance = VaultInstance(
         engine=engine_init,
@@ -149,7 +153,7 @@ def vault() -> VaultInstance:
     return instance
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_benchmarks_from_base(
     vault, base_benchmarks
 ) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
@@ -187,7 +191,7 @@ def vault_benchmarks_from_base(
     return (vault_dict["vault_prod_bm"], vault_dict["vault_EI_bm"])
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_warehouse_from_base(vault, vault_benchmarks_from_base, base_warehouse) -> DataVaultWarehouse:
     vault_company_data = VaultCompanyDataProvider(
         vault,
@@ -207,7 +211,7 @@ def vault_warehouse_from_base(vault, vault_benchmarks_from_base, base_warehouse)
     return vault_warehouse
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_benchmarks(vault, request) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
     try:
         vault_prod_bm = VaultProviderProductionBenchmark(
@@ -238,7 +242,7 @@ def vault_benchmarks(vault, request) -> Tuple[VaultProviderProductionBenchmark, 
     return (vault_prod_bm, vault_EI_bm)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
     # This creates a wrapper around what should be an existing data in the Data Vault.
     # If no such data exists, it will fail

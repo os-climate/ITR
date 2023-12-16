@@ -852,13 +852,12 @@ class DataVaultWarehouse(DataWarehouse):
             company_info_at_base_year
         ).droplevel("scope")
         projected_production.columns.name = "year"
-        # Ingest production projections into Data Vault
-        create_vault_table_from_df(
-            projected_production.stack(level="year").to_frame(name="production_by_year").reset_index(),
-            self._production_table,
-            self._v,
-            verbose=True,
-        )
+
+        productions_and_projections = {
+            self._production_table: projected_production.stack(level="year")
+            .to_frame(name="production_by_year")
+            .reset_index()
+        }
 
         # If we have company data, we need to compute trajectories and targets
         projection_slots = ["_target_table", "_trajectory_table"]
@@ -888,41 +887,45 @@ class DataVaultWarehouse(DataWarehouse):
                 warnings.simplefilter("ignore")
                 # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
                 df2 = pd.concat(projection_dfs).reset_index(drop=True)
-            create_vault_table_from_df(
-                df2,
-                getattr(self, projection_slots[i]),
-                self._v,
-                verbose=True,
-            )
+            productions_and_projections[getattr(self, projection_slots[i])] = df2
             # Inject projection tablename into company data (needed for `get_company_projected_trajectories`
             setattr(self.company_data, projection_slots[i], getattr(self, projection_slots[i]))
-        assert isinstance(self.company_data, VaultCompanyDataProvider)
-        self.company_data._production_table = self._production_table
 
-        # Drop cumulative emissions tables so they get recalculated
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_to_dropped_table = {
+            # Ingest productions, trajectories, and targets
+            future_to_drop_or_ingest = {
+                executor.submit(
+                    create_vault_table_from_df, df=df, tablename=tablename, vault=self._v, verbose=True
+                ): tablename
+                for tablename, df in productions_and_projections.items()
+            }
+            # Drop cumulative emissions tables so they get recalculated
+            future_to_drop_or_ingest[
                 executor.submit(
                     lambda: osc._do_sql(
                         f"drop table if exists {self._v.schema}.{self._emissions_table}",
                         self._v.engine,
                         verbose=False,
                     )
-                ): "emissions table",
+                )
+            ] = "emissions table"
+            future_to_drop_or_ingest[
                 executor.submit(
                     lambda: osc._do_sql(
                         f"drop table if exists {self._v.schema}.{self._budgets_table}",
                         self._v.engine,
                         verbose=False,
                     )
-                ): "budgets table",
-            }
-            for future in concurrent.futures.as_completed(future_to_dropped_table):
-                table = future_to_dropped_table[future]
+                )
+            ] = "budgets table"
+            for future in concurrent.futures.as_completed(future_to_drop_or_ingest):
+                tablename = future_to_drop_or_ingest[future]
                 try:
-                    future.result()
+                    _ = future.result()
                 except Exception as exc:
-                    print("%r generated an exception: %s" % (table, exc))
+                    print("%r generated an exception: %s" % (tablename, exc))
+        assert isinstance(self.company_data, VaultCompanyDataProvider)
+        self.company_data._production_table = self._production_table
 
         # The DataVaultWarehouse provides three calculations per company (using SQL code rather than Python):
         #    * Cumulative trajectory of emissions
