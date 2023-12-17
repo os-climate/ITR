@@ -20,8 +20,6 @@ from ..data.data_providers import (
 from ..data.osc_units import (
     Quantity,
     align_production_to_bm,
-    asPintDataFrame,
-    asPintSeries,
 )
 from ..interfaces import (
     DF_ICompanyEIProjections,
@@ -42,6 +40,7 @@ from ..interfaces import (
     IProductionRealization,
     ITargetData,
 )
+from ..utils import asPintDataFrame, asPintSeries
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)

@@ -5,7 +5,7 @@ import unittest
 import pandas as pd
 
 import ITR
-from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
+from ITR.data.osc_units import EI_Metric, EI_Quantity
 from ITR.interfaces import (
     EScope,
     ICompanyData,
@@ -13,6 +13,7 @@ from ITR.interfaces import (
     ICompanyEIProjections,
     ICompanyEIProjectionsScopes,
 )
+from ITR.utils import asPintSeries
 
 # isort: split
 

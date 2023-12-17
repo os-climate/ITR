@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 import ITR
 
+from .. import asPintDataFrame, asPintSeries
 from ..configs import (
     ColumnsConfig,
     LoggingConfig,
@@ -25,8 +26,6 @@ from ..data.base_providers import BaseCompanyDataProvider
 from ..data.osc_units import (
     EmissionsMetric,
     ProductionMetric,
-    asPintDataFrame,
-    asPintSeries,
     fx_ctx,
 )
 from ..interfaces import (
@@ -238,9 +237,6 @@ def maybe_other_s3_mappings(x: str):
 # FIXME: Should we change this to derive from ExcelProviderCompany?
 class TemplateProviderCompany(BaseCompanyDataProvider):
     """
-    Data provider skeleton for CSV files. This class serves primarily for testing purposes only!
-    As of Feb 2022, we are testing!!
-
     :param excel_path: A path to the Excel file with the company data
     :param column_config: An optional ColumnsConfig object containing relevant variable names
     """

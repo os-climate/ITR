@@ -17,10 +17,12 @@ from .configs import (
     TemperatureScoreControls,
 )
 from .data.data_warehouse import DataWarehouse
-from .data.osc_units import Q_, asPintSeries, delta_degC_Quantity
+from .data.osc_units import Q_, delta_degC_Quantity, ureg
 from .interfaces import EScope, ETimeFrames, PortfolioCompany, ScoreAggregations
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
+
+from pint_pandas import PintArray, PintType
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
@@ -29,6 +31,174 @@ LoggingConfig.add_config_to_logger(logger)
 # If this file is moved, the computation of get_project_root may also need to change
 def get_project_root() -> Path:
     return Path(__file__).parent
+
+
+# If DF_COL contains Pint quantities (because it is a PintArray or an array of Pint Quantities),
+# return a two-column dataframe of magnitudes and units.
+# If DF_COL contains no Pint quanities, return it unchanged.
+def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
+    if isinstance(df_col.values, PintArray):
+        return pd.DataFrame(
+            {
+                df_col.name: df_col.values.quantity.m,
+                df_col.name + "_units": str(df_col.values.dtype.units),
+            },
+            index=df_col.index,
+        )
+    elif df_col.size == 0:
+        return df_col
+    elif isinstance(df_col.iloc[0], Quantity):  # type: ignore
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
+            m, u = list(zip(*df_col.map(lambda x: (np.nan, "dimensionless") if pd.isna(x) else (x.m, str(x.u)))))
+            return pd.DataFrame({df_col.name: m, df_col.name + "_units": u}, index=df_col.index).convert_dtypes()
+    else:
+        return df_col
+
+
+# Rewrite dataframe DF so that columns containing Pint quantities are represented by a column for the Magnitude and column for the Units.
+# The magnitude column retains the original column name and the units column is renamed with a _units suffix.
+def dequantify_df(df: pd.DataFrame) -> pd.DataFrame:
+    return pd.concat([dequantify_column(df[col]) for col in df.columns], axis=1)
+
+
+# Because this DF comes from reading a Trino table, and because columns must be unqiue, we don't have to enumerate to ensure we properly handle columns with duplicated names
+def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
+    units_col = None
+    columns_not_found = [k for k in typemap.keys() if k not in df.columns]
+    if columns_not_found:
+        logger.error(f"columns {columns_not_found} not found in DataFrame")
+        raise ValueError
+    columns_reversed = reversed(df.columns)
+    for col in columns_reversed:
+        if col.endswith("units") and col[-6] in "_ ":
+            if units_col:
+                logger.error(f"Column {units_col} follows {col} without intervening value column")
+                # We expect _units column to follow a non-units column
+                raise ValueError
+            units_col = col
+            continue
+        if units_col:
+            if [col, "units"] != [units_col[:-6], units_col[-5:]]:
+                logger.error(f"Excpecting column name {col}_units but saw {units_col} instead")
+                raise ValueError
+            if (df[units_col] == df[units_col].iloc[0]).all():
+                # We can make a PintArray since column is of homogeneous type
+                # ...and if the first valid index matches all, we can take first row as good
+                new_col = PintArray(df[col], dtype=f"pint[{ureg(df[units_col].iloc[0]).u}]")
+            else:
+                # Make a pd.Series of Quantity in a way that does not throw UnitStrippedWarning
+                if df[col].map(lambda x: x is None).any():
+                    # breakpoint()
+                    raise
+                new_col = pd.Series(data=df[col], name=col) * pd.Series(
+                    data=df[units_col].map(
+                        lambda x: typemap.get(col, ureg("dimensionless").u) if pd.isna(x) else ureg(x).u
+                    ),
+                    name=col,
+                )
+            if col in typemap.keys():
+                new_col = new_col.astype(f"pint[{typemap[col]}]")
+            df = df.drop(columns=units_col)
+            df[col] = new_col
+            units_col = None
+        elif col in typemap.keys():
+            df[col] = df[col].astype(f"pint[{typemap[col]}]")
+    return df
+
+
+def asPintSeries(series: pd.Series, name=None, errors="ignore", inplace=False) -> pd.Series:
+    """
+    :param series : pd.Series possibly containing Quantity values, not already in a PintArray.
+    :param name : the name to give to the resulting series
+    :param errors : { 'raise', 'ignore' }, default 'ignore'
+    :param inplace : bool, default False.  If True, perform operation in-place.
+
+    :return: If there is only one type of unit in the series, a PintArray version of the series, replacing NULL values with Quantity (np.nan, unit_type).
+
+    Raises ValueError if there are more than one type of units in the series.
+    Silently returns series if no conversion needed to be done.
+    """
+
+    # FIXME: Errors in the imput template can trigger this assertion
+    if isinstance(series, pd.DataFrame):
+        assert len(series) == 1
+        series = series.iloc[0]
+
+    if series.dtype != "O":
+        if errors == "ignore":
+            return series
+        if name:
+            raise ValueError(f"'{name}' not dtype('O')")
+        elif series.name:
+            raise ValueError(f"Series '{series.name}' not dtype('O')")
+        else:
+            raise ValueError("Series not dtype('O')")
+    # NA_VALUEs are true NaNs, missing units
+    na_values = ITR.isna(series)
+    units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)  # type: ignore
+    unit_first_idx = units.first_valid_index()
+    if unit_first_idx is None:
+        if errors != "ignore":
+            raise ValueError(f"No value units in series: {series}")
+        return series
+    # Arbitrarily pick first of the most popular units, as promised
+    unit = units.mode()[0]
+    if inplace:
+        new_series = series
+    else:
+        new_series = series.copy()
+    if name:
+        new_series.name = name
+    na_index = na_values[na_values].index
+    if len(na_index) > 0:
+        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: PintType(unit).na_value)
+    return new_series.astype(f"pint[{unit}]")
+
+
+def asPintDataFrame(df: pd.DataFrame, errors="ignore", inplace=False) -> pd.DataFrame:
+    """
+    :param df : pd.DataFrame with columns to be converted into PintArrays where possible.
+    :param errors : { 'raise', 'ignore' }, default 'ignore'
+    :param inplace : bool, default False.  If True, perform operation in-place.
+
+    :return: A pd.DataFrame with columns converted to PintArrays where possible.
+
+    Raises ValueError if there are more than one type of units in any of the columns.
+    """
+    if inplace:
+        new_df = df
+    else:
+        new_df = pd.DataFrame()
+    for col in df.columns:
+        new_df[col] = asPintSeries(df[col], name=col, errors=errors, inplace=inplace)
+    new_df.index = df.index
+    # When DF.COLUMNS is a MultiIndex, the naive column-by-column construction replaces MultiIndex values
+    # with the anonymous tuple of the MultiIndex and DF.COLUMNS becomes just an Index of tuples.
+    # We need to restore the MultiIndex or lose information.
+    new_df.columns = df.columns
+    return new_df
+
+
+def requantify_df_from_columns(df: pd.DataFrame, inplace=False) -> pd.DataFrame:
+    """
+    :param df: pd.DataFrame
+    :param inplace: bool, default False.  If True, perform operation in-place.
+
+    :return: A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka 'pint[UNITS]')
+    """
+    p = re.compile(r"^(.*)\s*\[(.*)\]\s*$")
+    if not inplace:
+        df = df.copy()
+    for column in df.columns:
+        m = p.match(column)
+        if m:
+            col = m.group(1).strip()
+            unit = m.group(2).strip()
+            df.rename(columns={column: col}, inplace=True)
+            df[col] = pd.Series(PA_(df[col], unit))
+    return df
 
 
 def _flatten_user_fields(record: PortfolioCompany):
@@ -45,22 +215,6 @@ def _flatten_user_fields(record: PortfolioCompany):
         del record_dict["user_fields"]
 
     return record_dict
-
-
-def _make_isin_map(df_portfolio: pd.DataFrame) -> dict:
-    """
-    Create a mapping from company_id to ISIN
-
-    :param df_portfolio: The complete portfolio
-    :return: A mapping from company_id to ISIN
-    """
-    return {
-        company_id: company[ColumnsConfig.COMPANY_ISIN]
-        for company_id, company in df_portfolio[[ColumnsConfig.COMPANY_ID, ColumnsConfig.COMPANY_ISIN]]
-        .set_index(ColumnsConfig.COMPANY_ID)
-        .to_dict(orient="index")
-        .items()
-    }
 
 
 def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]:
@@ -167,18 +321,18 @@ def get_benchmark_projections(
 
     # We drop the meaningless S1S2/AnyScope from the production benchmark and replace it with the company's scope.
     # This is needed to make indexes align when we go to multiply production times intensity for a scope.
-    prod_df_anyscope = prod_df.droplevel("scope")
+    prod_df_anyscope = prod_df.droplevel(ColumnsConfig.SCOPE)
     df = (
-        company_sector_region_scope[["sector", "region", "scope"]]
+        company_sector_region_scope[[ColumnsConfig.SECTOR, ColumnsConfig.REGION, ColumnsConfig.SCOPE]]
         .reset_index()
         .drop_duplicates()
-        .set_index(["company_id", "scope"])
+        .set_index(["company_id", ColumnsConfig.SCOPE])
     )
     # We drop the meaningless S1S2/AnyScope from the production benchmark and replace it with the company's scope.
     # This is needed to make indexes align when we go to multiply production times intensity for a scope.
     company_benchmark_projections = df.merge(
         prod_df_anyscope,
-        left_on=["sector", "region"],
+        left_on=[ColumnsConfig.SECTOR, ColumnsConfig.REGION],
         right_index=True,
         how="left",
     )
@@ -188,22 +342,22 @@ def get_benchmark_projections(
         # Patch up unknown regions as "Global"
         global_benchmark_projections = (
             df[mask]
-            .drop(columns="region")
+            .drop(columns=ColumnsConfig.REGION)
             .merge(
-                prod_df_anyscope.loc[(slice(None), "Global"), :].droplevel(["region"]),
-                left_on=["sector"],
+                prod_df_anyscope.loc[(slice(None), "Global"), :].droplevel([ColumnsConfig.REGION]),
+                left_on=[ColumnsConfig.SECTOR],
                 right_index=True,
                 how="left",
             )
         )
         combined_benchmark_projections = pd.concat(
             [
-                company_benchmark_projections[~mask].drop(columns="region"),
+                company_benchmark_projections[~mask].drop(columns=ColumnsConfig.REGION),
                 global_benchmark_projections,
             ]
         )
-        return combined_benchmark_projections.drop(columns="sector")
-    return company_benchmark_projections.drop(columns=["sector", "region"])
+        return combined_benchmark_projections.drop(columns=ColumnsConfig.SECTOR)
+    return company_benchmark_projections.drop(columns=[ColumnsConfig.SECTOR, ColumnsConfig.REGION])
 
 
 def calculate(

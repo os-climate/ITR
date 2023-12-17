@@ -10,6 +10,7 @@ import pint
 
 from . import utils  # noqa F401
 from .interfaces import EScope
+from .utils import dequantify_df, requantify_df
 
 data_dir = os.path.join(__path__[0], "data", "json")
 

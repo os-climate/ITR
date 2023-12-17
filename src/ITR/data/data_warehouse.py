@@ -20,7 +20,6 @@ from ..data.data_providers import (
 from ..data.osc_units import (
     EmissionsQuantity,
     Quantity_type,
-    asPintDataFrame,
     delta_degC_Quantity,
 )
 from ..interfaces import (
@@ -688,8 +687,8 @@ class DataWarehouse(ABC):
         """
 
         # The old and slow way:
-        # projected_ei_t = asPintDataFrame(projected_ei.T)
-        # projected_prod_t = asPintDataFrame(projected_production.T)
+        # projected_ei_t = ITR.asPintDataFrame(projected_ei.T)
+        # projected_prod_t = ITR.asPintDataFrame(projected_production.T)
         # projected_emissions_t = projected_ei_t.mul(projected_prod_t.loc[projected_ei_t.index, projected_ei.T.columns])
         # cumulative_emissions = projected_emissions_t.T.cumsum(axis=1).astype('pint[Mt CO2]')
 
@@ -698,9 +697,9 @@ class DataWarehouse(ABC):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
-            proj_prod_t = asPintDataFrame(projected_production.loc[projected_ei.index].T)
+            proj_prod_t = ITR.asPintDataFrame(projected_production.loc[projected_ei.index].T)
             # Limit projected_ei to the year range of projected_production
-            proj_ei_t = asPintDataFrame(projected_ei[proj_prod_t.index].T)
+            proj_ei_t = ITR.asPintDataFrame(projected_ei[proj_prod_t.index].T)
             units_CO2e = "t CO2e"
             # We use pd.concat because pd.combine reverts our PintArrays into object arrays :-/
             proj_CO2e_m_t = pd.concat(

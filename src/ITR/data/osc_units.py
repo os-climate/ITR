@@ -271,7 +271,7 @@ def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Serie
                 dim2=ei_unit_bottom,
                 extra_msg="cannot align units",
             )
-    return asPintSeries(prod_series).pint.to(ei_unit_bottom)
+    return ITR.asPintSeries(prod_series).pint.to(ei_unit_bottom)
 
 
 oil = Context("oil")
@@ -586,94 +586,3 @@ def Quantity_type(units: str) -> type:
     )
 
 
-def asPintSeries(series: pd.Series, name=None, errors="ignore", inplace=False) -> pd.Series:
-    """
-    :param series : pd.Series possibly containing Quantity values, not already in a PintArray.
-    :param name : the name to give to the resulting series
-    :param errors : { 'raise', 'ignore' }, default 'ignore'
-    :param inplace : bool, default False.  If True, perform operation in-place.
-
-    :return: If there is only one type of unit in the series, a PintArray version of the series, replacing NULL values with Quantity (np.nan, unit_type).
-
-    Raises ValueError if there are more than one type of units in the series.
-    Silently returns series if no conversion needed to be done.
-    """
-
-    # FIXME: Errors in the imput template can trigger this assertion
-    if isinstance(series, pd.DataFrame):
-        assert len(series) == 1
-        series = series.iloc[0]
-
-    if series.dtype != "O":
-        if errors == "ignore":
-            return series
-        if name:
-            raise ValueError(f"'{name}' not dtype('O')")
-        elif series.name:
-            raise ValueError(f"Series '{series.name}' not dtype('O')")
-        else:
-            raise ValueError("Series not dtype('O')")
-    # NA_VALUEs are true NaNs, missing units
-    na_values = ITR.isna(series)
-    units = series[~na_values].map(lambda x: x.u if isinstance(x, Quantity) else None)  # type: ignore
-    unit_first_idx = units.first_valid_index()
-    if unit_first_idx is None:
-        if errors != "ignore":
-            raise ValueError(f"No value units in series: {series}")
-        return series
-    # Arbitrarily pick first of the most popular units, as promised
-    unit = units.mode()[0]
-    if inplace:
-        new_series = series
-    else:
-        new_series = series.copy()
-    if name:
-        new_series.name = name
-    na_index = na_values[na_values].index
-    if len(na_index) > 0:
-        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: PintType(unit).na_value)
-    return new_series.astype(f"pint[{unit}]")
-
-
-def asPintDataFrame(df: pd.DataFrame, errors="ignore", inplace=False) -> pd.DataFrame:
-    """
-    :param df : pd.DataFrame with columns to be converted into PintArrays where possible.
-    :param errors : { 'raise', 'ignore' }, default 'ignore'
-    :param inplace : bool, default False.  If True, perform operation in-place.
-
-    :return: A pd.DataFrame with columns converted to PintArrays where possible.
-
-    Raises ValueError if there are more than one type of units in any of the columns.
-    """
-    if inplace:
-        new_df = df
-    else:
-        new_df = pd.DataFrame()
-    for col in df.columns:
-        new_df[col] = asPintSeries(df[col], name=col, errors=errors, inplace=inplace)
-    new_df.index = df.index
-    # When DF.COLUMNS is a MultiIndex, the naive column-by-column construction replaces MultiIndex values
-    # with the anonymous tuple of the MultiIndex and DF.COLUMNS becomes just an Index of tuples.
-    # We need to restore the MultiIndex or lose information.
-    new_df.columns = df.columns
-    return new_df
-
-
-def requantify_df_from_columns(df: pd.DataFrame, inplace=False) -> pd.DataFrame:
-    """
-    :param df: pd.DataFrame
-    :param inplace: bool, default False.  If True, perform operation in-place.
-
-    :return: A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka 'pint[UNITS]')
-    """
-    p = re.compile(r"^(.*)\s*\[(.*)\]\s*$")
-    if not inplace:
-        df = df.copy()
-    for column in df.columns:
-        m = p.match(column)
-        if m:
-            col = m.group(1).strip()
-            unit = m.group(2).strip()
-            df.rename(columns={column: col}, inplace=True)
-            df[col] = pd.Series(PA_(df[col], unit))
-    return df

@@ -11,7 +11,7 @@ import ITR
 
 from .configs import ColumnsConfig, LoggingConfig, PortfolioAggregationConfig
 from .data import PintType
-from .data.osc_units import PA_, asPintSeries
+from .data.osc_units import PA_
 from .interfaces import EScope
 
 logger = logging.getLogger(__name__)
@@ -142,8 +142,8 @@ class PortfolioAggregation(ABC):
                     # Calculate the total emissions of all companies.
                     # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
                     emissions = (
-                        asPintSeries(data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12]).fillna(0).sum()
-                        + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).fillna(0).sum()
+                        ITR.asPintSeries(data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12]).fillna(0).sum()
+                        + ITR.asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).fillna(0).sum()
                     )
                     # See https://github.com/hgrecco/pint-pandas/issues/130
                     weights_dtype = f"pint[{emissions.u}]"
@@ -201,7 +201,7 @@ class PortfolioAggregation(ABC):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     assert isinstance(data[self.c.COLS.OWNED_EMISSIONS].dtype, PintType)
-                    owned_emissions = asPintSeries(data[self.c.COLS.OWNED_EMISSIONS])
+                    owned_emissions = ITR.asPintSeries(data[self.c.COLS.OWNED_EMISSIONS])
                     # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
                     total_emissions = owned_emissions.fillna(0).sum()
                     result = data[input_column] * owned_emissions / total_emissions
