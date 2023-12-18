@@ -896,10 +896,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Recalculate if any of the above dropped rows from df_esg
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
 
-            # Convert CH4 to the GWP of CO2e
-            ch4_idx = df_esg.loc[em_metrics.index].unit.str.contains("CH4")
+            # Convert CH4 to the GWP of CO2e; because we do this only for em_metrics, intensity metrics don't confuse us
+            df = df_esg.loc[em_metrics.index]
+            ch4_idx = df.unit.str.contains("CH4")
             ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
-            ch4_to_co2e = df_esg.loc[em_metrics.index].loc[ch4_idx].unit.map(lambda x: x.replace("CH4", "CO2e"))
+            ch4_to_co2e = df.loc[ch4_idx].unit.map(lambda x: x.replace("CH4", "CO2e"))
             df_esg.loc[ch4_to_co2e.index, "unit"] = ch4_to_co2e
             df_esg.loc[ch4_to_co2e.index, esg_year_columns] = df_esg.loc[ch4_to_co2e.index, esg_year_columns].apply(
                 lambda x: asPintSeries(x).mul(ch4_gwp), axis=1
@@ -1432,14 +1433,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     logger.warning(f"Missing target_{attr} for companies with ID: {c_ids_without[attr]}")
                     target_data = target_data[~mask]
 
-        # Convert CH4 to the GWP of CO2e
+        # Convert CH4 to the GWP of CO2e; don't convert CH4->CO2e in intensity targets
+        target_data.reset_index(inplace=True)
         ch4_idx = target_data.target_base_year_unit.str.contains("CH4")
         ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
-        ch4_to_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(lambda x: x.replace("CH4", "CO2e"))
-        target_data.loc[ch4_to_co2e.index, "target_base_year_unit"] = ch4_to_co2e
-        target_data.loc[ch4_to_co2e.index, "target_base_year_qty"] = target_data.loc[
-            ch4_to_co2e.index, "target_base_year_qty"
-        ].map(lambda x: x * ch4_gwp.m)
+        ch4_maybe_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(
+            lambda x: x.replace("CH4", "CO2e") if len(dims := ureg.parse_units(x).dimensionality)==2 and "[mass]" in dims else x
+        )
+        ch4_is_co2e = target_data.loc[ch4_idx].target_base_year_unit != ch4_maybe_co2e
+        ch4_to_co2e = ch4_is_co2e[ch4_is_co2e]
+        target_data.loc[ch4_to_co2e.index, "target_base_year_unit"] = ch4_maybe_co2e.loc[ch4_to_co2e.index]
+        target_data.loc[ch4_to_co2e.index, "target_base_year_qty"] *= ch4_gwp.m
+        target_data.set_index("company_id", inplace=True)
 
         target_data.loc[target_data.target_type.str.lower().str.contains("absolute"), "target_type"] = "absolute"
         target_data.loc[target_data.target_type.str.lower().str.contains("intensity"), "target_type"] = "intensity"
