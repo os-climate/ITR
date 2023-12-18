@@ -166,7 +166,7 @@ class TestTemplateProviderV2(unittest.TestCase):
                         1.6940658945086007e-14,
                     ],
                     dtype="g CO2e/pkm",
-                )
+                ),
             }
         )
 

@@ -855,7 +855,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     )
                 if "base_year" in df_esg.columns:
                     df_esg.loc[pd.notna(u_col), "base_year"] = (
-                        df_esg.loc[pd.notna(u_col), "base_year"].astype("float64").combine(
+                        df_esg.loc[pd.notna(u_col), "base_year"]
+                        .astype("float64")
+                        .combine(
                             u_col,
                             lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
                         )
@@ -1336,15 +1338,21 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         continue
                     if prod_dim in row2.iloc[0].dimensionality.keys():
                         if row2.name[0] == "Productions":
-                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = row[esg_year_columns] * row2[esg_year_columns]
+                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = (
+                                row[esg_year_columns] * row2[esg_year_columns]
+                            )
                         elif row2.name[0] == "Emissions Intensities":
-                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = row2[esg_year_columns] / row[esg_year_columns]
+                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = (
+                                row2[esg_year_columns] / row[esg_year_columns]
+                            )
                         else:
                             raise ValueError
                 # And target data as well
                 for idx2, row2 in df_target_data.loc[row.company_id].iterrows():
                     if prod_dim in ureg(row2.target_base_year_unit).dimensionality.keys():
-                        normalized_qty = Q_(row2["target_base_year_qty"], row2["target_base_year_unit"]) / row['base_year']
+                        normalized_qty = (
+                            Q_(row2["target_base_year_qty"], row2["target_base_year_unit"]) / row["base_year"]
+                        )
                         df_target_data.loc[idx2, "target_base_year_qty"] = normalized_qty.m
                         df_target_data.loc[idx2, "target_base_year_unit"] = str(normalized_qty.u)
                 # And fundamental data as well
