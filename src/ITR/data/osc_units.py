@@ -568,7 +568,7 @@ def Quantity_type(units: str) -> type:
         return quantity
 
     def __get_pydantic_core_schema__(source_type: Any) -> CoreSchema:
-        return core_schema.general_plain_validator_function(lambda value, info: validate(value, units, info))
+        return core_schema.with_info_plain_validator_function(lambda value, info: validate(value, units, info))
 
     def __get_pydantic_json_schema__(cls, core_schema: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
         json_schema = handler(core_schema)

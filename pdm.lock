@@ -4,8 +4,8 @@
 [metadata]
 groups = ["default", "dev", "doc", "test", "tox"]
 strategy = ["cross_platform"]
-lock_version = "4.4.1"
-content_hash = "sha256:77a6ce5373d71ad88844c627629edab640a35d5de9bc5fc79e43ccd23cadabb2"
+lock_version = "4.4"
+content_hash = "sha256:640d64b63bcde7f297558fcade0691a450162fe4aa62588bb0ea61fe2bbc0e78"
 
 [[package]]
 name = "alabaster"
@@ -42,6 +42,9 @@ name = "astroid"
 version = "3.0.2"
 requires_python = ">=3.8.0"
 summary = "An abstract syntax tree for Python with inference support."
+dependencies = [
+    "typing-extensions>=4.0.0; python_version < \"3.11\"",
+]
 files = [
     {file = "astroid-3.0.2-py3-none-any.whl", hash = "sha256:d6e62862355f60e716164082d6b4b041d38e2a8cf1c7cd953ded5108bac8ff5c"},
     {file = "astroid-3.0.2.tar.gz", hash = "sha256:4a61cf0a59097c7bb52689b0fd63717cd2a8a14dc9f1eee97b82d814881c8c91"},
@@ -682,11 +685,11 @@ files = [
 
 [[package]]
 name = "globalwarmingpotentials"
-version = "0.9.3"
+version = "0.9.4"
 summary = "Global warming potentials of greenhouse gases from various IPCC reports"
 files = [
-    {file = "globalwarmingpotentials-0.9.3-py2.py3-none-any.whl", hash = "sha256:e06839334b34933a3f6fd365aef74f9c7d2c385af9f0908c121f4bfbd85ce246"},
-    {file = "globalwarmingpotentials-0.9.3.tar.gz", hash = "sha256:e81eb717ff81d894e43fcdbee1de7a6f2d83e3e6b63789fada8fb24861a2952a"},
+    {file = "globalwarmingpotentials-0.9.4-py2.py3-none-any.whl", hash = "sha256:3a64a5f49a9cd4b0d6a2be916871863de16a671daa152e0cd89adadbe2ab57c9"},
+    {file = "globalwarmingpotentials-0.9.4.tar.gz", hash = "sha256:55738ff5fcda4bd506002e4c7bca46f94af03ec03544e9bfd64c369061fe72b2"},
 ]
 
 [[package]]
@@ -1861,7 +1864,7 @@ version = "2.0.23"
 requires_python = ">=3.7"
 summary = "Database Abstraction Library"
 dependencies = [
-    "greenlet!=0.4.17; platform_machine == \"win32\" or platform_machine == \"WIN32\" or platform_machine == \"AMD64\" or platform_machine == \"amd64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"aarch64\"",
+    "greenlet!=0.4.17; platform_machine == \"aarch64\" or (platform_machine == \"ppc64le\" or (platform_machine == \"x86_64\" or (platform_machine == \"amd64\" or (platform_machine == \"AMD64\" or (platform_machine == \"win32\" or platform_machine == \"WIN32\")))))",
     "typing-extensions>=4.2.0",
 ]
 files = [

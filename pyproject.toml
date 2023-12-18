@@ -58,6 +58,7 @@ dependencies = [
     "xlrd==2.0.1",
     "mypy-boto3-s3>=1.33.2",
     "boto3-stubs-lite>=1.33.13",
+    "globalwarmingpotentials>=0.9.4",
 ]
 
 [project.urls]
