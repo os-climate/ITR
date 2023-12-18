@@ -1438,7 +1438,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         ch4_idx = target_data.target_base_year_unit.str.contains("CH4")
         ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
         ch4_maybe_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(
-            lambda x: x.replace("CH4", "CO2e") if len(dims := ureg.parse_units(x).dimensionality)==2 and "[mass]" in dims else x
+            lambda x: x.replace("CH4", "CO2e")
+            if len(dims := ureg.parse_units(x).dimensionality) == 2 and "[mass]" in dims
+            else x
         )
         ch4_is_co2e = target_data.loc[ch4_idx].target_base_year_unit != ch4_maybe_co2e
         ch4_to_co2e = ch4_is_co2e[ch4_is_co2e]
