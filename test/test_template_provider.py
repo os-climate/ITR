@@ -227,7 +227,7 @@ class TestTemplateProvider(unittest.TestCase):
             [
                 2.306933854610998,
                 2.1493519311051412,
-                1.92594402,
+                2.63016981,  # Previously computed 1.92594402 with bad interpolation
                 2.6668124335887886,
                 2.4920219  # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
                 # When we estimate an S2 target based on benchmark-aligned targets, we get a valid S1S2 target
@@ -244,7 +244,7 @@ class TestTemplateProvider(unittest.TestCase):
             places=2,
         )
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.30821283, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.44905799, ureg.delta_degC), places=2)
 
         # Calculate Temp Scores
         temp_score_s1 = TemperatureScore(
@@ -258,7 +258,7 @@ class TestTemplateProvider(unittest.TestCase):
 
         # verify company scores; ALLETE, Inc. (US0185223007) and Ameren Corp. (US0236081024) have no S1 data
         expected_s1 = pd.Series(
-            [2.3001523322883024, 1.981747725145536, 2.1509743549550446],
+            [2.3001523322883024, 2.0503599814753115, 2.1509743549550446],
             dtype="pint[delta_degC]",
         )
         assert_pint_series_equal(
@@ -273,7 +273,7 @@ class TestTemplateProvider(unittest.TestCase):
         # verify that results exist
 
         # If we treat missing S1 as default 3.2C, we get 2.56339852˚C
-        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.14429147, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.16716222, ureg.delta_degC), places=2)
 
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]

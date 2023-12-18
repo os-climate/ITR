@@ -851,6 +851,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_esg = df_esg[df_esg_hasunits]
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
+                # Quantify columns where units are specified (incl `base_year` if specified)
                 u_col = df_esg["unit"]
                 for col in esg_year_columns:
                     # Convert ints to float as Work-around for Pandas GH#55824
@@ -860,6 +861,15 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     df_esg[col] = df_esg[col].combine(
                         u_col,
                         lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
+                    )
+                if "base_year" in df_esg.columns:
+                    df_esg.loc[pd.notna(u_col), "base_year"] = (
+                        df_esg.loc[pd.notna(u_col), "base_year"]
+                        .astype("float64")
+                        .combine(
+                            u_col,
+                            lambda m, u: PintType(u).na_value if ITR.isna(m) else Q_(m, u),
+                        )
                     )
             # All emissions metrics across multiple sectors should all resolve to some form of [mass] CO2
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
@@ -886,10 +896,11 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             # Recalculate if any of the above dropped rows from df_esg
             em_metrics = df_esg[df_esg.metric.str.upper().isin(["S1", "S2", "S3", "S1S2", "S1S3", "S1S2S3"])]
 
-            # Convert CH4 to the GWP of CO2e
-            ch4_idx = df_esg.loc[em_metrics.index].unit.str.contains("CH4")
+            # Convert CH4 to the GWP of CO2e; because we do this only for em_metrics, intensity metrics don't confuse us
+            df = df_esg.loc[em_metrics.index]
+            ch4_idx = df.unit.str.contains("CH4")
             ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
-            ch4_to_co2e = df_esg.loc[em_metrics.index].loc[ch4_idx].unit.map(lambda x: x.replace("CH4", "CO2e"))
+            ch4_to_co2e = df.loc[ch4_idx].unit.map(lambda x: x.replace("CH4", "CO2e"))
             df_esg.loc[ch4_to_co2e.index, "unit"] = ch4_to_co2e
             df_esg.loc[ch4_to_co2e.index, esg_year_columns] = df_esg.loc[ch4_to_co2e.index, esg_year_columns].apply(
                 lambda x: asPintSeries(x).mul(ch4_gwp), axis=1
@@ -906,9 +917,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 )
                 df_esg = df_esg.loc[df_esg.index.difference(em_invalid_idx)]
                 em_metrics = em_metrics.loc[em_metrics.index.difference(em_invalid_idx)]
-
-            # We don't need units here anymore--they've been translated/transported everywhere we need them
-            df_esg = df_esg.drop(columns="unit")
 
             submetric_sector_map = {
                 "cement": "Cement",
@@ -1342,6 +1350,48 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 pd.DataFrame(),
             )
         )
+
+        if self.template_version > 1:
+            # Now we ensure that we convert production metrics to ones that benchmarks can handle
+            # Each different company may have its own way of converting from "widgets" to canonical
+            # production units with their own factors of conversion (for example Renault Group
+            # treats a "vehicle" as having a useful life of 150,000 km; OECM and TPI both us
+            # passenger km (pkm) as the unit of production for Automobiles
+            prod_rows = df_esg[df_esg.metric.eq("production")]
+            for idx, row in df_esg[df_esg.metric.eq("equivalence")].iterrows():
+                prod_row = prod_rows[prod_rows.company_id.eq(row.company_id)]
+                prod_unit = prod_row.unit.item()
+                prod_dim = f"[{prod_unit}]"
+                result_unit = str(ureg(f"({prod_unit}) * ({row.unit})").u)
+                # Now all rows that match this company_id must be renormalized
+                for idx2, row2 in df_historic_data.loc[row.company_id].iterrows():
+                    if row2.name[0] == "Emissions":
+                        continue
+                    if prod_dim in row2.iloc[0].dimensionality.keys():
+                        if row2.name[0] == "Productions":
+                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = (
+                                row[esg_year_columns] * row2[esg_year_columns]
+                            )
+                        elif row2.name[0] == "Emissions Intensities":
+                            df_historic_data.loc[(row.company_id, *idx2), esg_year_columns] = (
+                                row2[esg_year_columns] / row[esg_year_columns]
+                            )
+                        else:
+                            raise ValueError
+                # And target data as well
+                for idx2, row2 in df_target_data.loc[row.company_id].iterrows():
+                    if prod_dim in ureg(row2.target_base_year_unit).dimensionality.keys():
+                        normalized_qty = (
+                            Q_(row2["target_base_year_qty"], row2["target_base_year_unit"]) / row["base_year"]
+                        )
+                        df_target_data.loc[idx2, "target_base_year_qty"] = normalized_qty.m
+                        df_target_data.loc[idx2, "target_base_year_unit"] = str(normalized_qty.u)
+                # And fundamental data as well
+                df_fundamentals.loc[row.company_id, ColumnsConfig.PRODUCTION_METRIC] = result_unit
+
+            # We don't need units here anymore--they've been translated/transported everywhere we need them
+            df_esg = df_esg.drop(columns="unit")
+
         for company in self._companies:
             row = df_fundamentals.loc[company.company_id]
             company.emissions_metric = EmissionsMetric(row[ColumnsConfig.EMISSIONS_METRIC])
@@ -1383,14 +1433,20 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     logger.warning(f"Missing target_{attr} for companies with ID: {c_ids_without[attr]}")
                     target_data = target_data[~mask]
 
-        # Convert CH4 to the GWP of CO2e
+        # Convert CH4 to the GWP of CO2e; don't convert CH4->CO2e in intensity targets
+        target_data.reset_index(inplace=True)
         ch4_idx = target_data.target_base_year_unit.str.contains("CH4")
         ch4_gwp = Q_(gwp.data["AR5GWP100"]["CH4"], "CO2e/CH4")
-        ch4_to_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(lambda x: x.replace("CH4", "CO2e"))
-        target_data.loc[ch4_to_co2e.index, "target_base_year_unit"] = ch4_to_co2e
-        target_data.loc[ch4_to_co2e.index, "target_base_year_qty"] = target_data.loc[
-            ch4_to_co2e.index, "target_base_year_qty"
-        ].map(lambda x: x * ch4_gwp.m)
+        ch4_maybe_co2e = target_data.loc[ch4_idx].target_base_year_unit.map(
+            lambda x: x.replace("CH4", "CO2e")
+            if len(dims := ureg.parse_units(x).dimensionality) == 2 and "[mass]" in dims
+            else x
+        )
+        ch4_is_co2e = target_data.loc[ch4_idx].target_base_year_unit != ch4_maybe_co2e
+        ch4_to_co2e = ch4_is_co2e[ch4_is_co2e]
+        target_data.loc[ch4_to_co2e.index, "target_base_year_unit"] = ch4_maybe_co2e.loc[ch4_to_co2e.index]
+        target_data.loc[ch4_to_co2e.index, "target_base_year_qty"] *= ch4_gwp.m
+        target_data.set_index("company_id", inplace=True)
 
         target_data.loc[target_data.target_type.str.lower().str.contains("absolute"), "target_type"] = "absolute"
         target_data.loc[target_data.target_type.str.lower().str.contains("intensity"), "target_type"] = "intensity"

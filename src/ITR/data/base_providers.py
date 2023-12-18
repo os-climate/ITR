@@ -1145,15 +1145,8 @@ class EITrajectoryProjector(EIProjector):
         if backfill_needed:
             # Fill in gaps between BASE_YEAR and the first data we have
             if ITR.HAS_UNCERTAINTIES:
-                backfilled_t = historic_ei_t.apply(
-                    lambda col: (
-                        lambda fvi: col
-                        if fvi is None
-                        else col.where(col.index.get_level_values("year") >= fvi, col[fvi])
-                    )(col.map(lambda x: x.n if isinstance(x, ITR.UFloat) else x).first_valid_index())
-                )
-            else:
-                backfilled_t = historic_ei_t.bfill(axis=0)
+                historic_ei_t = historic_ei_t.map(lambda x: np.nan if ITR.isna(x) else x)
+            backfilled_t = historic_ei_t.bfill(axis=0)
             # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases
             # while also working on real-world use cases.  But we need to formalize this decision.
             backfilled_t = backfilled_t.reset_index()
@@ -1171,40 +1164,25 @@ class EITrajectoryProjector(EIProjector):
                     if ITR.isna(company.base_year_production):
                         # If we have no valid production data, we cannot use EI data to compute emissions
                         continue
-                    if ITR.isna(company.ghg_s3):
-                        try:
-                            idx = (
-                                company.company_id,
-                                "Emissions Intensities",
-                                EScope.S3,
-                            )
-                            company.ghg_s3 = (
-                                Q_(
-                                    historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
-                                    historic_ei_t[idx].columns[0],
+                    for ghg_attr, ghg_scope in [
+                        (ColumnsConfig.GHG_SCOPE3, EScope.S3),
+                        (ColumnsConfig.GHG_SCOPE12, EScope.S1S2),
+                    ]:
+                        if ITR.isna(getattr(company, ghg_attr)):
+                            try:
+                                idx = (company.company_id, "Emissions Intensities", ghg_scope)
+                                setattr(
+                                    company,
+                                    ghg_attr,
+                                    Q_(
+                                        historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
+                                        historic_ei_t[idx].columns[0],
+                                    )
+                                    * company.base_year_production,
                                 )
-                                * company.base_year_production
-                            )
-                        except KeyError:
-                            # If it's not there, we'll complain later
-                            pass
-                    if ITR.isna(company.ghg_s1s2):
-                        try:
-                            idx = (
-                                company.company_id,
-                                "Emissions Intensities",
-                                EScope.S1S2,
-                            )
-                            company.ghg_s1s2 = (
-                                Q_(
-                                    historic_ei_t[idx].loc[self.projection_controls.BASE_YEAR].squeeze(),
-                                    historic_ei_t[idx].columns[0],
-                                )
-                                * company.base_year_production
-                            )
-                        except KeyError:
-                            # If it's not there, we'll complain later
-                            pass
+                            except KeyError:
+                                # If it's not there, we'll complain later
+                                pass
         standardized_ei_t = self._standardize(historic_ei_t)
         intensity_trends_t = self._get_trends(standardized_ei_t)
         extrapolated_t = self._extrapolate(intensity_trends_t, projection_years, historic_ei_t)
@@ -1436,60 +1414,70 @@ class EITrajectoryProjector(EIProjector):
         # It is very convenient to integrate interpolation (which only works on numeric datatypes, not
         # quantities and not uncertainties) with the winsorization process.  So there's no separate
         # _interpolate method.
-        winsorized_intensities_t: pd.DataFrame = self._winsorize(intensities_t)
-        return winsorized_intensities_t
+        winsorized_ei_t: pd.DataFrame = self._winsorize(intensities_t)
+        return winsorized_ei_t
 
-    def _winsorize(self, historic_intensities: pd.DataFrame) -> pd.DataFrame:
+    def _winsorize(self, historic_ei_t: pd.DataFrame) -> pd.DataFrame:
         # quantile doesn't handle pd.NA inside Quantity; FIXME: we can use np.nan because not expecting UFloat in input data
 
         # Turns out we have to dequantify here: https://github.com/pandas-dev/pandas/issues/45968
         # Can try again when ExtensionArrays are supported by `quantile`, `clip`, and friends
         if ITR.HAS_UNCERTAINTIES:
             try:
-                nominal_intensities = historic_intensities.apply(
-                    lambda col: col.map(ITR.nominal_values, na_action="ignore")
+                nominal_ei_t = historic_ei_t.apply(
+                    lambda col: pd.Series(ITR.nominal_values(col.values), index=col.index, name=col.name)
+                    if col.dtype.kind == "O"
+                    else col.astype("float64")
                 )
-                uncertain_intensities = historic_intensities.apply(
-                    lambda col: col.map(ITR.std_devs, na_action="ignore")
+                err_ei_t = historic_ei_t.apply(
+                    lambda col: pd.Series(ITR.std_devs(col.values), index=col.index, name=col.name)
                 )
             except ValueError:
                 logger.error("ValueError in _winsorize")
                 raise
         else:
             # pint.dequantify did all the hard work for us
-            nominal_intensities = historic_intensities
+            nominal_ei_t = historic_ei_t
         # See https://github.com/hgrecco/pint-pandas/issues/114
-        lower = nominal_intensities.quantile(
+        lower = nominal_ei_t.quantile(
             q=self.projection_controls.LOWER_PERCENTILE,
             axis="index",
             numeric_only=False,
         )
-        upper = nominal_intensities.quantile(
+        upper = nominal_ei_t.quantile(
             q=self.projection_controls.UPPER_PERCENTILE,
             axis="index",
             numeric_only=False,
         )
-        winsorized: pd.DataFrame = nominal_intensities.clip(lower=lower, upper=upper, axis="columns")
-
+        # FIXME: the clipping process can properly introduce uncertainties.  The low and high values that are clipped could be
+        # replaced by the clipped values +/- the lower and upper percentile values respectively.
+        winsorized_t: pd.DataFrame = nominal_ei_t.clip(lower=lower, upper=upper, axis="columns")
+        wnom_t = winsorized_t.astype("float64").apply(
+            lambda col: col.interpolate(
+                method="linear",
+                inplace=False,
+                limit_direction="forward",
+                limit_area="inside",
+            )
+        )
         if ITR.HAS_UNCERTAINTIES:
-            # FIXME: the clipping process can properly introduce uncertainties.  The low and high values that are clipped could be
-            # replaced by the clipped values +/- the lower and upper percentile values respectively.
-            wnominal_values = winsorized.apply(
-                lambda col: col.interpolate(
-                    method="linear",
-                    inplace=False,
-                    limit_direction="forward",
-                    limit_area="inside",
+            werr_t = err_ei_t.apply(
+                lambda col: col.where(
+                    winsorized_t[col.name].notna(),
+                    abs(
+                        (wnom_col := wnom_t[col.name]).shift(1, fill_value=wnom_col.iloc[0])
+                        - wnom_col.shift(-1, fill_value=wnom_col.iloc[-1])
+                    ),
                 )
             )
-            uwinsorized = wnominal_values.combine(uncertain_intensities, ITR.recombine_nom_and_std)
-            return uwinsorized
+            uwinsorized_t = wnom_t.combine(werr_t, ITR.recombine_nom_and_std)
+            return uwinsorized_t
 
         # FIXME: If we have S1, S2, and S1S2 intensities, should we treat winsorized(S1)+winsorized(S2) as winsorized(S1S2)?
         # FIXME: If we have S1S2 (or S1 and S2) and S3 and S1S23 intensities, should we treat winsorized(S1S2)+winsorized(S3) as winsorized(S1S2S3)?
-        return winsorized
+        return wnom_t
 
-    def _interpolate(self, historic_intensities_t: pd.DataFrame) -> pd.DataFrame:
+    def _interpolate(self, historic_ei_t: pd.DataFrame) -> pd.DataFrame:
         # Interpolate NaNs surrounded by values, but don't extrapolate NaNs with last known value
         raise NotImplementedError
 
@@ -1531,9 +1519,9 @@ class EITrajectoryProjector(EIProjector):
         self,
         trends_t: pd.Series,
         projection_years: range,
-        historic_intensities_t: pd.DataFrame,
+        historic_ei_t: pd.DataFrame,
     ) -> pd.DataFrame:
-        historic_intensities_t = historic_intensities_t[historic_intensities_t.columns.intersection(trends_t.index)]
+        historic_ei_t = historic_ei_t[historic_ei_t.columns.intersection(trends_t.index)]
         # We need to do a mini-extrapolation if we don't have complete historic data
 
         def _extrapolate_mini(col, trend):
@@ -1554,20 +1542,20 @@ class EITrajectoryProjector(EIProjector):
                 return col.astype(np.float64)
             return col
 
-        historic_intensities_t = historic_intensities_t.apply(lambda col: _extrapolate_mini(col, trends_t[col.name]))
+        historic_ei_t = historic_ei_t.apply(lambda col: _extrapolate_mini(col, trends_t[col.name]))
 
         # Now the big extrapolation
-        projected_intensities_t = (
+        projected_ei_t = (
             pd.concat([trends_t.add(1.0)] * len(projection_years[1:]), axis=1)
             .T.cumprod()
             .rename(index=dict(zip(range(0, len(projection_years[1:])), projection_years[1:])))
-            .mul(historic_intensities_t.iloc[-1], axis=1)
+            .mul(historic_ei_t.iloc[-1], axis=1)
         )
 
         # Clean up rows by converting NaN/None into Quantity(np.nan, unit_type)
-        columnwise_intensities_t = pd.concat([historic_intensities_t, projected_intensities_t])
-        columnwise_intensities_t.index.name = "year"
-        return columnwise_intensities_t
+        columnwise_ei_t = pd.concat([historic_ei_t, projected_ei_t])
+        columnwise_ei_t.index.name = "year"
+        return columnwise_ei_t
 
     # Might return a float, might return a ufloat
     def _year_on_year_ratio(self, arr: np.ndarray):
