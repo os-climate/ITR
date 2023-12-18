@@ -1464,8 +1464,10 @@ class EITrajectoryProjector(EIProjector):
             werr_t = err_ei_t.apply(
                 lambda col: col.where(
                     winsorized_t[col.name].notna(),
-                    abs((wnom_col := wnom_t[col.name]).shift(1, fill_value=wnom_col.iloc[0])
-                        - wnom_col.shift(-1, fill_value=wnom_col.iloc[-1])),
+                    abs(
+                        (wnom_col := wnom_t[col.name]).shift(1, fill_value=wnom_col.iloc[0])
+                        - wnom_col.shift(-1, fill_value=wnom_col.iloc[-1])
+                    ),
                 )
             )
             uwinsorized_t = wnom_t.combine(werr_t, ITR.recombine_nom_and_std)
