@@ -315,17 +315,17 @@ Attributes
    .. py:method:: _standardize(intensities_t: pandas.DataFrame) -> pandas.DataFrame
 
 
-   .. py:method:: _winsorize(historic_intensities: pandas.DataFrame) -> pandas.DataFrame
+   .. py:method:: _winsorize(historic_ei_t: pandas.DataFrame) -> pandas.DataFrame
 
 
-   .. py:method:: _interpolate(historic_intensities_t: pandas.DataFrame) -> pandas.DataFrame
+   .. py:method:: _interpolate(historic_ei_t: pandas.DataFrame) -> pandas.DataFrame
       :abstractmethod:
 
 
    .. py:method:: _get_trends(intensities_t: pandas.DataFrame)
 
 
-   .. py:method:: _extrapolate(trends_t: pandas.Series, projection_years: range, historic_intensities_t: pandas.DataFrame) -> pandas.DataFrame
+   .. py:method:: _extrapolate(trends_t: pandas.Series, projection_years: range, historic_ei_t: pandas.DataFrame) -> pandas.DataFrame
 
 
    .. py:method:: _year_on_year_ratio(arr: numpy.ndarray)
