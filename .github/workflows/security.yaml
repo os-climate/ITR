@@ -11,6 +11,9 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, reopened, edited, synchronize]
+    branches:
+      - "*"
+      - "!update-devops-tooling"
 
 jobs:
   build:
@@ -41,9 +44,14 @@ jobs:
           pdm export -o requirements.txt
           python -m pip install -r requirements.txt
           python -m pip install .
+          pdm list --graph
 
       - name: "Run: pip-audit"
         uses: pypa/gh-action-pip-audit@v1.0.8
         with:
           ignore-vulns: |
             PYSEC-2023-163
+
+# Name | Version | ID |
+# --- | --- | --- | --- | ---
+# numexpr | 2.8.7 | PYSEC-2023-163 |

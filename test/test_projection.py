@@ -239,7 +239,7 @@ class TestProjector(unittest.TestCase):
                     )
                 assert_pint_series_equal(self, test_projection, expected[i], places=3)
             else:
-                assert c.projected_targets is None
+                assert c.projected_targets.empty
 
     def test_extrapolate(self):
         with open(os.path.join(self.root, "inputs", "json", "test_fillna_companies.json"), "r") as file:
@@ -294,4 +294,5 @@ if __name__ == "__main__":
     s.interpolate(method="linear")
     test = TestProjector()
     test.setUp()
-    test.test_project()
+    test.test_trajectories()
+    test.test_targets()

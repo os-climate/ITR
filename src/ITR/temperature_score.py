@@ -10,7 +10,7 @@ import ITR
 
 from .configs import ColumnsConfig, LoggingConfig, TemperatureScoreConfig
 from .data.data_warehouse import DataWarehouse
-from .data.osc_units import Q_, Quantity_type, ureg
+from .data.osc_units import Q_, delta_degC_Quantity, ureg
 from .interfaces import (
     Aggregation,
     AggregationContribution,
@@ -26,6 +26,9 @@ from .portfolio_aggregation import PortfolioAggregation, PortfolioAggregationMet
 
 logger = logging.getLogger(__name__)
 LoggingConfig.add_config_to_logger(logger)
+
+nan_delta_degC = Q_(pd.NA, "delta_degC")
+nan_dimensionless = Q_(pd.NA, "dimensionless")
 
 
 class TemperatureScore(PortfolioAggregation):
@@ -63,14 +66,7 @@ class TemperatureScore(PortfolioAggregation):
 
     def get_score(
         self, scorable_row: pd.Series
-    ) -> Tuple[
-        Quantity_type("delta_degC"),
-        Quantity_type("delta_degC"),
-        float,
-        Quantity_type("delta_degC"),
-        float,
-        EScoreResultType,
-    ]:
+    ) -> Tuple[delta_degC_Quantity, delta_degC_Quantity, float, delta_degC_Quantity, float, EScoreResultType,]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 
@@ -85,17 +81,17 @@ class TemperatureScore(PortfolioAggregation):
         ) or scorable_row[self.budget_column].m <= 0:
             return (
                 self.get_default_score(scorable_row),
-                np.nan,
-                np.nan,
-                np.nan,
-                np.nan,
+                nan_delta_degC,
+                nan_dimensionless,
+                nan_delta_degC,
+                nan_dimensionless,
                 EScoreResultType.DEFAULT,
             )
 
         # If only target data missing assign only trajectory_score to final score
         elif ITR.isna(scorable_row[self.c.COLS.CUMULATIVE_TARGET]) or scorable_row[self.c.COLS.CUMULATIVE_TARGET] == 0:
-            target_overshoot_ratio = np.nan
-            target_temperature_score = np.nan
+            target_overshoot_ratio = nan_dimensionless
+            target_temperature_score = nan_delta_degC
             trajectory_overshoot_ratio = (
                 scorable_row[self.c.COLS.CUMULATIVE_TRAJECTORY] / scorable_row[self.budget_column]
             )
@@ -149,7 +145,7 @@ class TemperatureScore(PortfolioAggregation):
                 score_result_type,
             )
 
-    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> Quantity_type("delta_degC"):
+    def get_ghc_temperature_score(self, row: pd.Series, company_data: pd.DataFrame) -> delta_degC_Quantity:
         """
         Get the aggregated temperature score. S1+S2+S3 is an emissions weighted sum of S1+S2 and S3.
 
@@ -178,7 +174,8 @@ class TemperatureScore(PortfolioAggregation):
         try:
             # If the s3 emissions are less than 40 percent, we'll ignore them altogether, if not, we'll weigh them
             # FIXME: These should use cumulative emissions, not the anachronistic ghg_s1s2 and ghg_s33!
-            if (s3[self.c.COLS.GHG_SCOPE3] / (s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]) < 0.4).all():
+            company_emissions = s1s2[self.c.COLS.GHG_SCOPE12] + s3[self.c.COLS.GHG_SCOPE3]
+            if (s3[self.c.COLS.GHG_SCOPE3] / company_emissions < 0.4).all():
                 return s1s2[self.c.COLS.TEMPERATURE_SCORE]
             else:
                 return (
@@ -189,7 +186,7 @@ class TemperatureScore(PortfolioAggregation):
         except ZeroDivisionError:
             raise ValueError("The mean of the S1+S2 plus the S3 emissions is zero")
 
-    def get_default_score(self, target: pd.Series) -> Quantity_type("delta_degC"):
+    def get_default_score(self, target: pd.Series) -> delta_degC_Quantity:
         """
         :param target: The target as a row of a dataframe
         :return: The temperature score
@@ -206,7 +203,7 @@ class TemperatureScore(PortfolioAggregation):
         company_id_and_scope = [self.c.COLS.COMPANY_ID, self.c.COLS.SCOPE]
         companies = data.index.get_level_values(self.c.COLS.COMPANY_ID).unique()
 
-        # If taregt score not provided, use non-specific probability
+        # If target score not provided, use non-specific probability
         data = data.fillna({self.c.COLS.TARGET_PROBABILITY: target_probability})
 
         # If scope S1S2S3 is in the list of scopes to calculate, we need to calculate the other two as well
@@ -293,7 +290,7 @@ class TemperatureScore(PortfolioAggregation):
                     ]
                 ]
                 .groupby([self.c.COLS.TIME_FRAME])[self.c.SCORE_RESULT_TYPE]
-                .transform(max)
+                .transform("max")
                 == data[self.c.SCORE_RESULT_TYPE]
             )
 

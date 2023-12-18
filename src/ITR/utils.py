@@ -17,7 +17,7 @@ from .configs import (
     TemperatureScoreControls,
 )
 from .data.data_warehouse import DataWarehouse
-from .data.osc_units import Q_, Quantity, asPintSeries
+from .data.osc_units import Q_, asPintSeries, delta_degC_Quantity
 from .interfaces import EScope, ETimeFrames, PortfolioCompany, ScoreAggregations
 from .portfolio_aggregation import PortfolioAggregationMethod
 from .temperature_score import TemperatureScore
@@ -72,15 +72,15 @@ def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]
     """
     # Adding some non-empty checks for portfolio upload
     if df_portfolio[ColumnsConfig.INVESTMENT_VALUE].isnull().any():
-        error_message = f"Investment values are missing for one or more companies in the input file."
+        error_message = "Investment values are missing for one or more companies in the input file."
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ISIN].isnull().any():
-        error_message = f"Company ISINs are missing for one or more companies in the input file."
+        error_message = "Company ISINs are missing for one or more companies in the input file."
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ID].isnull().any():
-        error_message = f"Company IDs are missing for one or more companies in the input file."
+        error_message = "Company IDs are missing for one or more companies in the input file."
         logger.error(error_message)
         raise ValueError(error_message)
 
@@ -95,13 +95,14 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     :param portfolio: A list of PortfolioCompany models
     :return: A data frame containing the relevant company data indexed by (COMPANY_ID, SCOPE)
     """
+    company_ids = set(data_warehouse.company_data.get_company_ids())
     df_portfolio = pd.DataFrame.from_records(
-        [_flatten_user_fields(c) for c in portfolio if c.company_id not in data_warehouse.company_data.missing_ids]
+        [_flatten_user_fields(c) for c in portfolio if c.company_id in company_ids]
     )
     df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(df_portfolio[ColumnsConfig.INVESTMENT_VALUE])
 
     if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
-        raise ValueError(f"Portfolio contains no company_id data")
+        raise ValueError("Portfolio contains no company_id data")
 
     # This transforms a dataframe of portfolio data into model data just so we can transform that back into a dataframe?!
     # It does this for all scopes, not only the scopes of interest
@@ -150,9 +151,64 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     return portfolio_data
 
 
+def get_benchmark_projections(
+    prod_df: pd.DataFrame, company_sector_region_scope: Optional[pd.DataFrame] = None, scope: EScope = EScope.AnyScope
+) -> pd.DataFrame:
+    """
+    :param prod_df: DataFrame of production statistics by sector, region, scope (and year)
+    :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
+    with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
+    :param scope: a scope
+    :return: A pint[dimensionless] DataFrame with partial production benchmark data per calendar year per row, indexed by company.
+    """
+
+    if company_sector_region_scope is None:
+        return prod_df
+
+    # We drop the meaningless S1S2/AnyScope from the production benchmark and replace it with the company's scope.
+    # This is needed to make indexes align when we go to multiply production times intensity for a scope.
+    prod_df_anyscope = prod_df.droplevel("scope")
+    df = (
+        company_sector_region_scope[["sector", "region", "scope"]]
+        .reset_index()
+        .drop_duplicates()
+        .set_index(["company_id", "scope"])
+    )
+    # We drop the meaningless S1S2/AnyScope from the production benchmark and replace it with the company's scope.
+    # This is needed to make indexes align when we go to multiply production times intensity for a scope.
+    company_benchmark_projections = df.merge(
+        prod_df_anyscope,
+        left_on=["sector", "region"],
+        right_index=True,
+        how="left",
+    )
+    # If we don't get a match, then the projections will be `nan`.  Look at the last year's column to find them.
+    mask = company_benchmark_projections.iloc[:, -1].isna()
+    if mask.any():
+        # Patch up unknown regions as "Global"
+        global_benchmark_projections = (
+            df[mask]
+            .drop(columns="region")
+            .merge(
+                prod_df_anyscope.loc[(slice(None), "Global"), :].droplevel(["region"]),
+                left_on=["sector"],
+                right_index=True,
+                how="left",
+            )
+        )
+        combined_benchmark_projections = pd.concat(
+            [
+                company_benchmark_projections[~mask].drop(columns="region"),
+                global_benchmark_projections,
+            ]
+        )
+        return combined_benchmark_projections.drop(columns="sector")
+    return company_benchmark_projections.drop(columns=["sector", "region"])
+
+
 def calculate(
     portfolio_data: pd.DataFrame,
-    fallback_score: Quantity["delta_degC"],
+    fallback_score: delta_degC_Quantity,
     aggregation_method: PortfolioAggregationMethod,
     grouping: Optional[List[str]],
     time_frames: List[ETimeFrames],
