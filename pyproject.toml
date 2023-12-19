@@ -103,3 +103,6 @@ max-line-length = "120"
 extend-ignore = [
   "E501",
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
