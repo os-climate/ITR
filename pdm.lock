@@ -4,8 +4,8 @@
 [metadata]
 groups = ["default", "dev", "test", "tox"]
 strategy = ["cross_platform"]
-lock_version = "4.4"
-content_hash = "sha256:640d64b63bcde7f297558fcade0691a450162fe4aa62588bb0ea61fe2bbc0e78"
+lock_version = "4.4.1"
+content_hash = "sha256:5e09dcbcffb3db76ac8dda679af28de68895dc1ef78c99f9ce402f4fa5f1099e"
 
 [[package]]
 name = "alabaster"
@@ -42,6 +42,9 @@ name = "astroid"
 version = "3.0.2"
 requires_python = ">=3.8.0"
 summary = "An abstract syntax tree for Python with inference support."
+dependencies = [
+    "typing-extensions>=4.0.0; python_version < \"3.11\"",
+]
 files = [
     {file = "astroid-3.0.2-py3-none-any.whl", hash = "sha256:d6e62862355f60e716164082d6b4b041d38e2a8cf1c7cd953ded5108bac8ff5c"},
     {file = "astroid-3.0.2.tar.gz", hash = "sha256:4a61cf0a59097c7bb52689b0fd63717cd2a8a14dc9f1eee97b82d814881c8c91"},
@@ -1861,7 +1864,7 @@ version = "2.0.23"
 requires_python = ">=3.7"
 summary = "Database Abstraction Library"
 dependencies = [
-    "greenlet!=0.4.17; platform_machine == \"aarch64\" or (platform_machine == \"ppc64le\" or (platform_machine == \"x86_64\" or (platform_machine == \"amd64\" or (platform_machine == \"AMD64\" or (platform_machine == \"win32\" or platform_machine == \"WIN32\")))))",
+    "greenlet!=0.4.17; platform_machine == \"win32\" or platform_machine == \"WIN32\" or platform_machine == \"AMD64\" or platform_machine == \"amd64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"aarch64\"",
     "typing-extensions>=4.2.0",
 ]
 files = [
