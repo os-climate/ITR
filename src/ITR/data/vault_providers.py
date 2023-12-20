@@ -3,7 +3,8 @@ import logging
 import os
 import warnings
 from abc import ABC
-from typing import Callable, List, Optional, Type, Union
+from concurrent.futures import Future
+from typing import Callable, Dict, List, Optional, Type, Union, cast
 
 import numpy as np  # noqa F401
 import osc_ingest_trino as osc
@@ -591,7 +592,7 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
         company_ids_sql = ",".join([f"'{cid}'" for cid in company_ids])
         # FIXME: doesn't work with heterogeneous currencies as written
 
-        df_dict = {}
+        df_dict: Dict[str, Future] = {}
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
@@ -630,10 +631,10 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
                     except Exception as exc:
                         print("%r generated an exception: %s" % (df_var, exc))
 
-            df_prod = df_dict["df_prod"]
+            df_prod = cast(pd.DataFrame, df_dict["df_prod"])
             df_prod = df_prod.apply(lambda x: Q_(x.production_by_year, x.production_by_year_units), axis=1)
             df_prod.name = self.column_config.BASE_YEAR_PRODUCTION
-            df_ei = df_dict["df_ei"]
+            df_ei = cast(pd.DataFrame, df_dict["df_ei"])
             df_ei = df_ei.apply(
                 lambda x: [Q_(x.ei_s1s2_by_year, x.ei_s1s2_by_year_units), Q_(x.ei_s3_by_year, x.ei_s3_by_year_units)],
                 axis=1,

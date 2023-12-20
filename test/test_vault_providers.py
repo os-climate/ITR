@@ -3,7 +3,12 @@ import json
 import os
 import re
 from concurrent.futures import Future
-from typing import Dict, Iterable, Never, Tuple, Union, cast
+from typing import Dict, Iterable, Tuple, Union, cast
+
+try:
+    from typing import Never
+except ImportError:
+    from typing import NoReturn as Never
 
 import osc_ingest_trino as osc
 import pandas as pd
