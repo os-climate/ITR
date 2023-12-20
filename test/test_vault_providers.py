@@ -1,27 +1,25 @@
 import concurrent.futures
 import json
 import os
-import pathlib
 import re
-from typing import Tuple
+from concurrent.futures import Future
+from typing import Dict, Iterable, Never, Tuple, Union, cast
 
-import numpy as np
 import osc_ingest_trino as osc
 import pandas as pd
 import pytest
-import trino
-from sqlalchemy.engine import create_engine
+import trino # noqa F401
+from sqlalchemy.engine import create_engine # noqa F401
 from sqlalchemy.exc import ProgrammingError
 
 import ITR  # noqa F401
 from ITR import data_dir as json_data_dir
-from ITR.configs import ColumnsConfig, ProjectionControls, TemperatureScoreConfig
+from ITR.configs import ProjectionControls
 from ITR.data.base_providers import (
     BaseProviderIntensityBenchmark,
     BaseProviderProductionBenchmark,
 )
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.osc_units import Q_, requantify_df_from_columns
 from ITR.data.template import TemplateProviderCompany
 from ITR.data.vault_providers import (
     DataVaultWarehouse,
@@ -30,17 +28,13 @@ from ITR.data.vault_providers import (
     VaultProviderIntensityBenchmark,
     VaultProviderProductionBenchmark,
     read_quantified_sql,
-    requantify_df,
 )
 from ITR.interfaces import (
     EScope,
     ETimeFrames,
-    ICompanyData,
     IEIBenchmarkScopes,
     IProductionBenchmarkScopes,
-    PortfolioCompany,
 )
-from ITR.portfolio_aggregation import PortfolioAggregationMethod
 from ITR.temperature_score import TemperatureScore
 
 xlsx_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inputs")
@@ -49,8 +43,8 @@ xlsx_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inputs
 osc.load_credentials_dotenv()
 
 ingest_catalog = "osc_datacommons_dev"
-ingest_schema = "demo_dv"
-itr_prefix = "itr_"
+ingest_schema = os.environ.get("ITR_SCHEMA", "demo_dv")
+itr_prefix = os.environ.get("ITR_PREFIX", "itr_")
 
 try:
     # sqlstring = "trino://{user}@{host}:{port}/".format(
@@ -78,14 +72,15 @@ except KeyError:
 
 # bucket must be configured with credentials for trino, and accessible to the hive catalog
 # You may need to use a different prefix here depending on how you name your credentials.env variables
+hive_bucket = None
+hive_catalog: Union[str, None] = None
+hive_schema: Union[str, None] = None
 try:
     hive_bucket = osc.attach_s3_bucket("S3_OSCCL2")
     hive_catalog = "osc_datacommons_hive_ingest"
     hive_schema = "ingest"
 except KeyError:
-    hive_bucket = None
-    hive_catalog = None
-    hive_schema = None
+    pass
 
 company_data_path = os.path.join(xlsx_data_dir, "20230106 ITR V2 Sample Data.xlsx")
 
@@ -108,19 +103,19 @@ def _get_base_ei(filename: str) -> BaseProviderIntensityBenchmark:
 
 @pytest.fixture(scope="session")
 def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]:
-    benchmark_dict = {}
+    benchmark_dict: Dict[str, Future] = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_benchmark = {
             executor.submit(_get_base_prod, filename="benchmark_production_OECM.json"): "base_production_bm",
             executor.submit(_get_base_ei, filename="benchmark_EI_OECM_S3.json"): "base_EI_bm",
         }
-        for future in concurrent.futures.as_completed(future_to_benchmark):
+        for future in concurrent.futures.as_completed(cast(Iterable[Future[Never]], future_to_benchmark)):
             benchmark_name = future_to_benchmark[future]
             try:
                 benchmark_dict[benchmark_name] = future.result()
             except Exception as exc:
                 print("%r generated an exception: %s" % (benchmark_name, exc))
-    return (benchmark_dict["base_production_bm"], benchmark_dict["base_EI_bm"])
+    return (benchmark_dict["base_production_bm"], benchmark_dict["base_EI_bm"])  # type: ignore
 
 
 @pytest.fixture(scope="session")
@@ -159,7 +154,7 @@ def vault_benchmarks_from_base(
 ) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
     base_prod_bm, base_EI_bm = base_benchmarks
 
-    vault_dict = {}
+    vault_dict: Dict[str, Future] = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_vault = {
             executor.submit(
@@ -179,16 +174,16 @@ def vault_benchmarks_from_base(
                 production_centric=base_EI_bm.is_production_centric(),
             ): "vault_EI_bm",
         }
-        for future in concurrent.futures.as_completed(future_to_vault):
+        for future in concurrent.futures.as_completed(cast(Iterable[Future[Never]], future_to_vault)):
             vault_name = future_to_vault[future]
             try:
                 vault_dict[vault_name] = future.result()
             except Exception as exc:
                 print("%r generated an exception: %s" % (vault_name, exc))
 
-    assert vault_dict["vault_prod_bm"].own_data
-    assert vault_dict["vault_EI_bm"].own_data
-    return (vault_dict["vault_prod_bm"], vault_dict["vault_EI_bm"])
+    assert vault_dict["vault_prod_bm"].own_data  # type: ignore
+    assert vault_dict["vault_EI_bm"].own_data  # type: ignore
+    return (vault_dict["vault_prod_bm"], vault_dict["vault_EI_bm"])  # type: ignore
 
 
 @pytest.fixture(scope="session")
@@ -272,7 +267,7 @@ def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
     sql_sums = "+".join([f"{tablename}_cnt.cnt" for tablename in tablenames])
     sql_joins = ",".join([f"{tablename}_cnt" for tablename in tablenames])
     # One N-clause statement executes about N times faster than N individual checks
-    qres = osc._do_sql(f"with {sql_counts} select {sql_sums} from {sql_joins}", engine=vault.engine, verbose=True)
+    qres = osc._do_sql(f"with {sql_counts} select {sql_sums} from {sql_joins}", engine=vault.engine, verbose=True)  # noqa F841
     warehouse = DataVaultWarehouse(
         vault,
         company_data=vault_company_data,
