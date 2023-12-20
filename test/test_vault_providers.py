@@ -8,8 +8,8 @@ from typing import Dict, Iterable, Never, Tuple, Union, cast
 import osc_ingest_trino as osc
 import pandas as pd
 import pytest
-import trino # noqa F401
-from sqlalchemy.engine import create_engine # noqa F401
+import trino  # noqa F401
+from sqlalchemy.engine import create_engine  # noqa F401
 from sqlalchemy.exc import ProgrammingError
 
 import ITR  # noqa F401
@@ -267,7 +267,9 @@ def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
     sql_sums = "+".join([f"{tablename}_cnt.cnt" for tablename in tablenames])
     sql_joins = ",".join([f"{tablename}_cnt" for tablename in tablenames])
     # One N-clause statement executes about N times faster than N individual checks
-    qres = osc._do_sql(f"with {sql_counts} select {sql_sums} from {sql_joins}", engine=vault.engine, verbose=True)  # noqa F841
+    qres = osc._do_sql(
+        f"with {sql_counts} select {sql_sums} from {sql_joins}", engine=vault.engine, verbose=True
+    )  # noqa F841
     warehouse = DataVaultWarehouse(
         vault,
         company_data=vault_company_data,

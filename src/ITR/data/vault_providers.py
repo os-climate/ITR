@@ -25,11 +25,7 @@ from ..data.data_providers import (
 from ..data.data_warehouse import DataWarehouse
 from ..data.osc_units import Q_, EmissionsQuantity, Quantity, delta_degC_Quantity
 from ..data.template import TemplateProviderCompany
-from ..interfaces import (
-    EScope,
-    ICompanyAggregates,
-    ICompanyData,
-)
+from ..interfaces import EScope, ICompanyAggregates, ICompanyData
 
 # re_simplify_units = r" \/ (\w+)( \/ (\w+))? \* \1(?(3) \* \3|)"
 re_simplify_units_both = r" \/ (\w+) \/ (\w+) \* \1 \* \2"
