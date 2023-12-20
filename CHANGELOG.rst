@@ -5,6 +5,7 @@ Changelog
 Version 1.1.2 (unreleased)
 =============
 
+- Env vars ITR_SCHEMA and/or ITR_PREFIX can override code defaults (demo_dv, itr_) to prevent collisions between users and CI/CD
 - Implement support for CH4 emissions disclosures (i.e., fugitive S1 emissions)
 - Use concurrent Data Vault operations to optimize queries when possible
 - Support automobile and other production equivalences (e.g., veh=150k kpm), with new sample data file `20231031 ITR V2 Sample Data.xlsx`
