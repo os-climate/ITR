@@ -59,6 +59,7 @@ dependencies = [
     "mypy-boto3-s3>=1.33.2",
     "boto3-stubs-lite>=1.33.13",
     "globalwarmingpotentials>=0.9.4",
+    "pdm==2.10.0",
 ]
 
 [project.urls]
