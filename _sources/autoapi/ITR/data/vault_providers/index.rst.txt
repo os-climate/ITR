@@ -66,7 +66,7 @@ Attributes
 .. py:function:: requantify_df(df: pandas.DataFrame, typemap={}) -> pandas.DataFrame
 
 
-.. py:class:: VaultInstance(engine: sqlalchemy.Engine, schema: Optional[str] = '', hive_bucket: Optional[mypy_boto3_s3.service_resource.Bucket] = None, hive_catalog: Optional[str] = None, hive_schema: Optional[str] = None)
+.. py:class:: VaultInstance(engine: sqlalchemy.Engine, catalog: Optional[str] = '', schema: Optional[str] = '', hive_bucket: Optional[mypy_boto3_s3.service_resource.Bucket] = None, hive_catalog: Optional[str] = None, hive_schema: Optional[str] = None)
 
 
    Bases: :py:obj:`abc.ABC`
@@ -199,14 +199,14 @@ Attributes
 
 
 
-.. py:class:: DataVaultWarehouse(vault: VaultInstance, company_data: VaultCompanyDataProvider, benchmark_projected_production: VaultProviderProductionBenchmark, benchmarks_projected_ei: VaultProviderIntensityBenchmark, estimate_missing_data: Optional[Callable[[ITR.data.data_warehouse.DataWarehouse, ITR.interfaces.ICompanyData], None]] = None, itr_prefix: Optional[str] = '')
+.. py:class:: DataVaultWarehouse(vault: VaultInstance, company_data: VaultCompanyDataProvider, benchmark_projected_production: VaultProviderProductionBenchmark, benchmarks_projected_ei: VaultProviderIntensityBenchmark, estimate_missing_data: Optional[Callable[[ITR.data.data_warehouse.DataWarehouse, ITR.interfaces.ICompanyData], None]] = None, itr_prefix: Optional[str] = os.environ.get('ITR_PREFIX', ''))
 
 
    Bases: :py:obj:`ITR.data.data_warehouse.DataWarehouse`
 
    General data provider super class.
 
-   .. py:method:: quant_init(vault: VaultInstance, company_data: Union[VaultCompanyDataProvider, None], itr_prefix: str = '')
+   .. py:method:: quant_init(vault: VaultInstance, company_data: Union[VaultCompanyDataProvider, None], itr_prefix: str = os.environ.get('ITR_PREFIX', ''))
 
 
    .. py:method:: get_preprocessed_company_data(company_ids: List[str]) -> List[ITR.interfaces.ICompanyAggregates]
