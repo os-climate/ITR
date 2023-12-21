@@ -198,7 +198,7 @@ def prioritize_submetric(x: pd.DataFrame) -> pd.Series:
 # Appendix C covers Intensity Metrics
 # Appendix D contains Summary Tables
 # Appendix documentation for `letter` can be found at f"https://ghgprotocol.org/sites/default/files/standards_supporting/Appendix{letter}.pdf"
-s3_category_rdict_primary = {
+s3_category_rdict = {
     "1": "Purchased goods and services",
     "2": "Capital goods",
     "3": "Fuel- and energy-related activities",
@@ -216,7 +216,7 @@ s3_category_rdict_primary = {
     "15": "Investments",
     "4,9": "Transportation",
 }
-s3_category_rdict_secondary = {
+s3_category_rdict_alt1 = {
     "3": "Fuel and energy-related activities",
     "4": "Upstream transportation",
     "8": "Leased assets (upstream)",
@@ -224,8 +224,8 @@ s3_category_rdict_secondary = {
     "12": "End of life treatment",
     "13": "Leased assets (downstream)",
 }
-s3_category_dict = {v.lower(): k for k, v in s3_category_rdict_primary.items()}
-for k, v in s3_category_rdict_secondary.items():
+s3_category_dict = {v.lower(): k for k, v in s3_category_rdict.items()}
+for k, v in s3_category_rdict_alt1.items():
     s3_category_dict[v.lower()] = k
 
 
