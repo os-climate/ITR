@@ -966,12 +966,13 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     bm_ei_df_t.loc[:, (sector, region, scope)][base_year],
                 )
                 for scope in EScope.get_result_scopes()
-                # This only saves us from having data about sectorized alignments we might not need.  It doesn't affect the emissions being allocated (or not).
-                if (c.company_id, scope.name) in self._bm_allocation_index
                 for sector in sectors
                 if (sector, region, scope) in bm_ei_df_t.columns
-                and historic_dict["+".join([orig_id, sector])].emissions[scope.name]
+                and ((new_id := "+".join([orig_id, sector])), scope.name) in self._bm_allocation_index
+                and historic_dict[new_id].emissions[scope.name]
             ]
+            if sector_ei == []:
+                continue
             sector_ei_df = pd.DataFrame(sector_ei, columns=["sector", "scope", "ei"]).set_index(["sector"])
             sector_prod_df = pd.DataFrame(
                 [
