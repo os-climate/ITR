@@ -123,7 +123,9 @@ def test_target_projections(template_V2_PC: TemplateV2):
     company_dict[ColumnsConfig.SCOPE] = [EScope.AnyScope] * len(company_data)
     company_index = [c.company_id for c in company_data]
     company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-    bm_production_data = template_V2_PC.base_production_bm.get_company_projected_production(company_sector_region_info)
+    bm_production_data = template_V2_PC.base_production_bm.get_company_projected_production(  # noqa: F841
+        company_sector_region_info
+    )
     # FIXME: We should pre-compute some of these target projections and make them reference data
 
     # AES won't converge because S1S2 is netzero in 2040 and S3 data netzero in 2050, then merged together.
@@ -368,6 +370,7 @@ def test_get_projected_value(template_V2_PC: TemplateV2):
         TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
     )
     trajectories = template_V2_PC.template_company_data.get_company_projected_trajectories(company_ids)
+    breakpoint()
     assert_pint_frame_equal(tc, trajectories.loc[:, EScope.S1S2, :], expected_data, places=4)
 
 
@@ -547,6 +550,7 @@ def test_get_company_data(template_V2_PC: TemplateV2):
     tc.assertEqual(company_2.company_name, "POSCO")
     tc.assertEqual(company_1.company_id, "US00130H1059")
     tc.assertEqual(company_2.company_id, "KR7005490008")
+    breakpoint()
     tc.assertAlmostEqual(
         ITR.nominal_values(company_1.ghg_s1s2.m_as("Mt CO2")),  # type: ignore
         57.666199999999996,

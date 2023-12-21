@@ -2,21 +2,17 @@ from __future__ import annotations
 
 import logging
 from enum import Enum
-from operator import add
-from typing import TYPE_CHECKING, Callable, Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import (
     BaseModel,
     ConfigDict,
-    GetJsonSchemaHandler,
     ValidationError,
     field_validator,
     model_validator,
 )
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import CoreSchema
 
 import ITR
 
@@ -350,7 +346,7 @@ class ICompanyEIProjection(BaseModel):
             return True
         return self.value == o.value
 
-    def add(self, o):
+    def add(self, o):  # noqa: F811
         if self.year != o.year:
             # breakpoint()
             raise ValueError(f"EI Projection years not aligned for add(): {self.year} vs. {o.year}")
@@ -571,7 +567,7 @@ class IEmissionRealization(BaseModel):
             return True
         return self.value == o.value
 
-    def add(self, o):
+    def add(self, o):  # noqa: F811
         assert self.year == o.year
         return IEmissionRealization(
             year=self.year,
@@ -627,7 +623,7 @@ class IEIRealization(BaseModel):
             return True
         return self.value == o.value
 
-    def add(self, o):
+    def add(self, o):  # noqa: F811
         assert self.year == o.year
         return IEIRealization(
             year=self.year,

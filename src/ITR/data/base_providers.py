@@ -1,7 +1,6 @@
 import logging
 import warnings  # needed until quantile behaves better with Pint quantities in arrays
 from functools import partial, reduce
-from operator import add
 from typing import Any, Callable, Dict, List, Optional, Type, cast
 
 import numpy as np
@@ -1807,7 +1806,6 @@ class EITargetProjector(EIProjector):
                     scope_targets = scope_targets_intensity
 
                 target = scope_targets.pop(0)
-                base_year = target.target_base_year
                 # Work-around for https://github.com/hgrecco/pint/issues/1687
                 target_base_year_unit = ureg.parse_units(target.target_base_year_unit)
 
@@ -1958,7 +1956,7 @@ class EITargetProjector(EIProjector):
                         continue
                     CAGR = self._compute_CAGR(last_ei_year, last_em_value, target_year, target_em_value)
 
-                    model_emissions_projections = CAGR.loc[(last_ei_year + skip_first_year) : target_year]
+                    model_emissions_projections = CAGR.loc[(last_ei_year + skip_first_year) : target_year]  # noqa: E203
                     emissions_projections = model_emissions_projections.astype(f"pint[{target_base_year_unit}]")
                     idx = production_proj.index.intersection(emissions_projections.index)
                     ei_projections = emissions_projections.loc[idx] / production_proj.loc[idx]

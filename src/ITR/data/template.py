@@ -198,31 +198,35 @@ def prioritize_submetric(x: pd.DataFrame) -> pd.Series:
 # Appendix C covers Intensity Metrics
 # Appendix D contains Summary Tables
 # Appendix documentation for `letter` can be found at f"https://ghgprotocol.org/sites/default/files/standards_supporting/Appendix{letter}.pdf"
-s3_category_rdict = {
+s3_category_rdict_primary = {
     "1": "Purchased goods and services",
     "2": "Capital goods",
     "3": "Fuel- and energy-related activities",
-    "3": "Fuel and energy-related activities",
     "4": "Upstream transportation and distribution",
-    "4": "Upstream transportation",
     "5": "Waste generated in operations",
     "6": "Business travel",
     "7": "Employee commuting",
     "8": "Upstream leased assets",
-    "8": "Leased assets (upstream)",
     "9": "Downstream transportation and distribution",
-    "9": "Downstream transportation",
     "10": "Processing of sold products",
     "11": "Use of sold products",
     "12": "End-of-life treatment of sold products",
-    "12": "End of life treatment",
     "13": "Downstream leased assets",
-    "13": "Leased assets (downstream)",
     "14": "Franchises",
     "15": "Investments",
     "4,9": "Transportation",
 }
-s3_category_dict = {v.lower(): k for k, v in s3_category_rdict.items()}
+s3_category_rdict_secondary = {
+    "3": "Fuel and energy-related activities",
+    "4": "Upstream transportation",
+    "8": "Leased assets (upstream)",
+    "9": "Downstream transportation",
+    "12": "End of life treatment",
+    "13": "Leased assets (downstream)",
+}
+s3_category_dict = {v.lower(): k for k, v in s3_category_rdict_primary.items()}
+for k, v in s3_category_rdict_secondary.items():
+    s3_category_dict[v.lower()] = k
 
 
 def maybe_other_s3_mappings(x: str):
@@ -283,7 +287,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         df_esg_missing_production = df_esg[~has_reported_production_mask.values]
         start_year_loc = df_esg.columns.get_loc(self.template_v2_start_year)
         esg_year_columns = df_esg.columns[start_year_loc:]
-        end_year_loc = len(df_esg.columns)
+
         if len(df_esg_missing_production):
             # Generate production metrics from Emissions / EI, index by COMPANY_ID, REPORT_DATE, and SUBMETRIC
             df_intensities = df_esg_has_intensity.rename(columns={"metric": "intensity_metric", "scope": "metric"})
@@ -462,18 +466,18 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             input_data_sheet = TabsConfig.TEMPLATE_INPUT_DATA
         try:
             df = df_company_data[input_data_sheet]
-        except KeyError as e:
+        except KeyError as exc:
             logger.error(f"Tab {input_data_sheet} is required in input Excel file.")
-            raise KeyError
+            raise exc
         if self.template_version == 2:
             esg_data_sheet = TabsConfig.TEMPLATE_ESG_DATA_V2
             try:
                 df_esg = (
                     df_company_data[esg_data_sheet].drop(columns="company_lei").copy()
                 )  # .iloc[246:291]  # .iloc[1265:1381]  # .iloc[0:45]
-            except KeyError as e:
+            except KeyError as exc:
                 logger.error(f"Tab {esg_data_sheet} is required in input Excel file.")
-                raise KeyError
+                raise exc
             # Change year column names to integers if they come in as strings
             df_esg.rename(
                 columns=lambda x: int(x) if isinstance(x, str) and x >= "1000" and x <= "2999" else x,
@@ -559,7 +563,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         ]
         col_num = df_fundamentals.columns.get_loc("report_date")
         missing_fundamental_metrics = [
-            fm for fm in fundamental_metrics if fm not in df_fundamentals.columns[col_num + 1 :]
+            fm for fm in fundamental_metrics if fm not in df_fundamentals.columns[col_num + 1 :]  # noqa: E203
         ]
         if len(missing_fundamental_metrics) > 0:
             raise KeyError(f"Expected fundamental metrics {missing_fundamental_metrics}")
@@ -839,7 +843,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_historic_data = df5
         else:
             # We are already much tidier, so don't need the wide_to_long conversion.
-            esg_year_columns = df_esg.columns[df_esg.columns.get_loc(self.template_v2_start_year) :]
+            esg_year_columns = df_esg.columns[df_esg.columns.get_loc(self.template_v2_start_year) :]  # noqa: E203
             df_esg_hasunits = df_esg.unit.notna()
             df_esg_badunits = df_esg[df_esg_hasunits].unit.map(lambda x: x not in ureg)
             badunits_idx = df_esg_badunits[df_esg_badunits].index
@@ -1103,11 +1107,6 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 best_prod = best_prod.droplevel("sector").drop(columns="submetric")
                 best_esg_em = best_esg_em.droplevel("sector").drop(columns="submetric")
             else:
-                company_em_sector = pd.MultiIndex.from_tuples(
-                    [idx for idx in company_sector_idx if idx in best_esg_em.index],
-                    names=["sector", "company_id"],
-                )
-
                 # Add new multi-sector companies, giving us choice of company_id, sector, company_id+sector (aka new_company_id)
                 new_company_ids = company_sector_idx.to_frame(index=False).assign(
                     new_company_id=lambda x: x.company_id + "+" + x.sector
@@ -1453,7 +1452,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         mask = ~target_data.target_type.isin(["absolute", "intensity"])
         if mask.any():
             c_ids_with_invalid_target_type = unique_ids(mask)
-            logger.warning(f"Invalid target types: {target_data[mask].target_type}")
+            logger.warning(
+                f"Invalid target types {target_data[mask].target_type} among companies with ID: {c_ids_with_invalid_target_type}"
+            )
             target_data = target_data[~mask]
 
         mask = target_data["netzero_year"] > ProjectionControls.TARGET_YEAR

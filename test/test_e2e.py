@@ -273,7 +273,7 @@ class EndToEndTest(unittest.TestCase):
 
         portfolio_data = ITR.utils.get_data(data_warehouse, pf_companies)
         scores = temp_score.calculate(portfolio_data)
-        agg_scores = temp_score.aggregate_scores(scores)
+        agg_scores = temp_score.aggregate_scores(scores)  # noqa: F841
 
         # add verification
 

@@ -85,7 +85,7 @@ class TestEIBenchmarks(unittest.TestCase):
             bm_ei_t = EI_df_t.loc[year_list, (sector, region, slice(None))]
 
             if len(bm_ei_t.columns) == 1:
-                adjusted_bm_ei = bm_ei_t * ei_multiplier + ei_offset
+                adjusted_bm_ei_t = bm_ei_t * ei_multiplier + ei_offset
             else:
                 adjusted_bm_ei_t = bm_ei_t.copy()
                 adjusted_idx = adjusted_bm_ei_t.columns.get_level_values("scope").isin(

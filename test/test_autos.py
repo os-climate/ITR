@@ -14,7 +14,7 @@ from ITR.data.base_providers import (
     BaseProviderProductionBenchmark,
 )
 from ITR.data.data_warehouse import DataWarehouse
-from ITR.data.osc_units import Q_, asPintSeries, requantify_df_from_columns, ureg
+from ITR.data.osc_units import Q_, asPintSeries, requantify_df_from_columns
 from ITR.data.template import TemplateProviderCompany
 from ITR.interfaces import (
     EScope,
@@ -92,7 +92,9 @@ class TestTemplateProviderV2(unittest.TestCase):
         company_dict[ColumnsConfig.SCOPE] = [EScope.AnyScope] * len(company_data)
         company_index = [c.company_id for c in company_data]
         company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
+        bm_production_data = self.base_production_bm.get_company_projected_production(  # noqa: F841
+            company_sector_region_info
+        )
         # FIXME: We should pre-compute some of these target projections and make them reference data
 
         selected_company_ids = ["JP3672400003", "FR0000131906"]
