@@ -37,6 +37,7 @@ Attributes
    ITR.data.template.pkg_root
    ITR.data.template.df_country_regions
    ITR.data.template.s3_category_rdict
+   ITR.data.template.s3_category_rdict_alt1
    ITR.data.template.s3_category_dict
 
 
@@ -72,6 +73,10 @@ Attributes
 
 
 .. py:data:: s3_category_rdict
+
+   
+
+.. py:data:: s3_category_rdict_alt1
 
    
 
