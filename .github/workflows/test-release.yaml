@@ -35,7 +35,7 @@ jobs:
         uses: pdm-project/setup-pdm@v3
         with:
           python-version: ${{ env.python-version }}
-          version: 2.10.0
+          version: 2.10.4
 
       - name: "Populate environment variables"
         id: setenv
