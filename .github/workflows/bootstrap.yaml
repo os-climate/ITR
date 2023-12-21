@@ -1,15 +1,15 @@
 ---
-name: "♻️ Update shared DevOps tooling"
+name: '♻️ Update shared DevOps tooling'
 
 # yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 8 * * MON"
+    - cron: '0 8 * * MON'
 
 jobs:
   update-actions:
-    name: "Update DevOps tooling"
+    name: 'Update DevOps tooling'
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory to update content/actions/PRs
@@ -18,19 +18,19 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: "Checkout primary repository"
+      - name: 'Checkout primary repository'
         uses: actions/checkout@v4
         with:
           # Note: Requires a specific/defined Personal Access Token
           token: ${{ secrets.ACTIONS_WORKFLOW }}
 
-      - name: "Pull workflows from central repository"
+      - name: 'Pull workflows from central repository'
         uses: actions/checkout@v4
         with:
-          repository: "os-climate/devops-toolkit"
-          path: "devops"
+          repository: 'os-climate/devops-toolkit'
+          path: 'devops'
 
-      - name: "Update repository workflows and create PR"
+      - name: 'Update repository workflows and create PR'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

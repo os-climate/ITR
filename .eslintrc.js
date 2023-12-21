@@ -5,34 +5,34 @@ module.exports = {
   },
   extends: [
     // add generic rulesets here, such as:
-    "eslint:recommended",
-    "plugin:toml/standard",
+    'eslint:recommended',
+    'plugin:toml/standard',
   ],
   overrides: [
     {
       env: {
         node: true,
       },
-      files: [".eslintrc.{js,cjs}"],
+      files: ['.eslintrc.{js,cjs}'],
       parserOptions: {
-        sourceType: "script",
+        sourceType: 'script',
       },
     },
   ],
-  parser: "@babel/eslint-parser",
+  parser: '@babel/eslint-parser',
   parserOptions: {
-    ecmaVersion: "latest",
+    ecmaVersion: 'latest',
   },
   overrides: [
     {
-      files: ["*.toml"],
-      parser: "toml-eslint-parser",
+      files: ['*.toml'],
+      parser: 'toml-eslint-parser',
     },
   ],
   rules: {
-    "comma-spacing": "error",
-    "no-multi-spaces": ["error", { exceptions: { TOMLKeyValue: true } }],
-    "no-multiple-empty-lines": "error",
-    "no-trailing-spaces": "error",
+    'comma-spacing': 'error',
+    'no-multi-spaces': ['error', { exceptions: { TOMLKeyValue: true } }],
+    'no-multiple-empty-lines': 'error',
+    'no-trailing-spaces': 'error',
   },
 };
