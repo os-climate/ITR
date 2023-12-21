@@ -132,7 +132,9 @@ class VaultInstance(ABC):
         """
         super().__init__()
         self.engine = engine
-        self.catalog = catalog or os.environ.get("ITR_CATALOG", "osc_datacommons_dev")  # FIXME: needed for osc-ingest-tools < 0.5.3
+        self.catalog = catalog or os.environ.get(
+            "ITR_CATALOG", "osc_datacommons_dev"
+        )  # FIXME: needed for osc-ingest-tools < 0.5.3
         self.schema = schema or engine.dialect.default_schema_name or os.environ.get("ITR_SCHEMA", "demo_dv")
         self.hive_bucket = hive_bucket
         self.hive_catalog = hive_catalog
