@@ -68,7 +68,7 @@ def translate_currency_symbols_1(text):
     pairs = zip(split_text[::2], split_text[1::2])
     retval = "".join(
         map(
-            lambda x: f"{x[0]}{'USD' if x[1]=='$' or x[1]=='US$' else currency_dict.get(x[1], '')}",
+            lambda x: f"{x[0]}{'USD' if x[1] == '$' or x[1] == 'US$' else currency_dict.get(x[1], '')}",
             pairs,
         )
     )

@@ -5,8 +5,8 @@ import unittest
 import pandas as pd
 
 import ITR
-from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries
-from ITR.interfaces import (
+from ITR.data.osc_units import EI_Metric, EI_Quantity, asPintSeries  # noqa: F401
+from ITR.interfaces import (  # noqa: F401
     EScope,
     ICompanyData,
     ICompanyEIProjection,
@@ -17,7 +17,7 @@ from ITR.interfaces import (
 # isort: split
 
 from pint import Quantity
-from pint_pandas import PintType
+from pint_pandas import PintType  # noqa: F401
 
 
 class ITR_Encoder(json.JSONEncoder):

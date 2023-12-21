@@ -75,7 +75,7 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                             f"computed {k}:\n{json.dumps(v, cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref, cls=ITR_Encoder)}\n\n"
                         )
                         is_equal = False
-                except KeyError as e:
+                except KeyError as exc:  # noqa: F841
                     print(f"missing in reference: {k}: {json.dumps(v)}\n\n")
                     is_equal = False
 

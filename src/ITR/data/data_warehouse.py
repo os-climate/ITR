@@ -1,7 +1,7 @@
 import logging
 import warnings  # needed until apply behaves better with Pint quantities in arrays
 from abc import ABC
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -17,12 +17,7 @@ from ..data.data_providers import (
     IntensityBenchmarkDataProvider,
     ProductionBenchmarkDataProvider,
 )
-from ..data.osc_units import (
-    EmissionsQuantity,
-    Quantity_type,
-    asPintDataFrame,
-    delta_degC_Quantity,
-)
+from ..data.osc_units import EmissionsQuantity, asPintDataFrame, delta_degC_Quantity
 from ..interfaces import (
     DF_ICompanyEIProjections,
     EScope,
@@ -353,11 +348,11 @@ class DataWarehouse(ABC):
         for c in self.company_data.get_company_data():
             region = c.region
             try:
-                bm_company_sector_region = ei_df_t[(c.sector, region)]
+                _ = ei_df_t[(c.sector, region)]
             except KeyError:
                 try:
                     region = "Global"
-                    bm_company_sector_region = ei_df_t[(c.sector, region)]
+                    _ = ei_df_t[(c.sector, region)]
                 except KeyError:
                     missing_company_scopes.append(c.company_id)
                     continue
@@ -619,7 +614,7 @@ class DataWarehouse(ABC):
                 company_info_at_base_year
             )
             target_year_loc = projected_production.columns.get_loc(cd_pc.TARGET_YEAR)
-            projected_production = projected_production.iloc[:, 0 : target_year_loc + 1]
+            projected_production = projected_production.iloc[:, 0 : target_year_loc + 1]  # noqa: E203
 
         assert self.benchmarks_projected_ei is not None
         df_company_data = self._process_company_data(
@@ -634,7 +629,6 @@ class DataWarehouse(ABC):
             global_budget=self.benchmarks_projected_ei.benchmark_global_budget,
         )
 
-        companies = df_company_data.to_dict(orient="records")
         # This was WICKED SLOW: aggregate_company_data = [ICompanyAggregates.parse_obj(company) for company in companies]
         aggregate_company_data = [
             ICompanyAggregates.from_ICompanyData(company, scope_company_data)

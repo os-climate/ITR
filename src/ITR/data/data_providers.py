@@ -6,7 +6,7 @@ from typing import List, Optional, Type
 import pandas as pd
 
 from ..configs import ColumnsConfig, ProjectionControls  # noqa F401
-from ..data.osc_units import EmissionsQuantity, Quantity_type, delta_degC_Quantity
+from ..data.osc_units import EmissionsQuantity, delta_degC_Quantity
 from ..interfaces import (  # noqa F401
     EScope,
     ICompanyData,

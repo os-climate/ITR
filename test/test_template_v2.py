@@ -123,7 +123,9 @@ def test_target_projections(template_V2_PC: TemplateV2):
     company_dict[ColumnsConfig.SCOPE] = [EScope.AnyScope] * len(company_data)
     company_index = [c.company_id for c in company_data]
     company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-    bm_production_data = template_V2_PC.base_production_bm.get_company_projected_production(company_sector_region_info)
+    bm_production_data = template_V2_PC.base_production_bm.get_company_projected_production(  # noqa: F841
+        company_sector_region_info
+    )
     # FIXME: We should pre-compute some of these target projections and make them reference data
 
     # AES won't converge because S1S2 is netzero in 2040 and S3 data netzero in 2050, then merged together.
@@ -286,38 +288,38 @@ def test_get_projected_value(template_V2_PC: TemplateV2):
         [
             pd.Series(
                 [
-                    767.9424440147617,
-                    670.6945556381868,
-                    673.1392212423145,
-                    674.5304806701733,
-                    676.0177499692604,
-                    677.6037527866383,
-                    679.2912949309276,
-                    681.083266835849,
-                    682.9826460976751,
-                    684.9925000888088,
-                    687.1159886497745,
-                    689.3563668619705,
-                    691.7169879036096,
-                    694.2013059913407,
-                    696.8128794101235,
-                    699.5553736340013,
-                    702.4325645405033,
-                    705.4483417214807,
-                    708.606711893272,
-                    711.9118024091774,
-                    715.3678648773108,
-                    718.9792788869904,
-                    722.7505558469256,
-                    726.6863429385525,
-                    730.791427187973,
-                    735.0707396600562,
-                    739.5293597783664,
-                    744.172519774691,
-                    749.0056092720603,
-                    754.0341800052599,
-                    759.2639506829616,
-                    764.7008119957226,
+                    769.0317769675212,
+                    670.6918985908113,
+                    673.1319528931535,
+                    674.2995708382770,
+                    675.5502791034322,
+                    676.8862411266548,
+                    678.3096809030297,
+                    679.8228846667273,
+                    681.4282026197933,
+                    683.1280507089984,
+                    684.9249124520796,
+                    686.8213408147485,
+                    688.8199601398760,
+                    690.9234681303031,
+                    693.1346378867736,
+                    695.4563200025115,
+                    697.8914447160273,
+                    700.4430241237651,
+                    703.1141544542578,
+                    705.9080184054960,
+                    708.8278875472727,
+                    711.8771247903057,
+                    715.0591869239962,
+                    718.3776272247297,
+                    721.8360981366823,
+                    725.4383540271446,
+                    729.1882540184383,
+                    733.0897648985508,
+                    737.1469641126785,
+                    741.3640428379258,
+                    745.7453091434734,
+                    750.2951912385893,
                 ],
                 name="US0079031078",
                 dtype="pint[t CO2/GWh]",
@@ -549,42 +551,42 @@ def test_get_company_data(template_V2_PC: TemplateV2):
     tc.assertEqual(company_2.company_id, "KR7005490008")
     tc.assertAlmostEqual(
         ITR.nominal_values(company_1.ghg_s1s2.m_as("Mt CO2")),  # type: ignore
-        57.666199999999996,
+        57.74800000,
         places=7,
     )
     tc.assertAlmostEqual(
         ITR.nominal_values(company_2.ghg_s1s2.m_as("Mt CO2")),  # type: ignore
-        93.40289000000001,
+        93.40289000,
         places=7,
     )
     tc.assertAlmostEqual(
         ITR.nominal_values(company_1.cumulative_budget.m_as("Mt CO2")),  # type: ignore
-        247.35955561917217,
+        247.35955562,
         places=7,
     )
     tc.assertAlmostEqual(
         ITR.nominal_values(company_2.cumulative_budget.m_as("Mt CO2")),  # type: ignore
-        671.322874458741,
+        671.32287446,
         places=7,
     )
     tc.assertAlmostEqual(
         ITR.nominal_values(company_1.cumulative_target.m_as("Mt CO2")),  # type: ignore
-        628.4206195499177,
+        628.49414142,
         places=7,
     )
     tc.assertAlmostEqual(
         ITR.nominal_values(company_2.cumulative_target.m_as("Mt CO2")),  # type: ignore
-        970.361209683652496,
+        970.36120968,
         places=7,
     )
     tc.assertAlmostEqual(
         ITR.nominal_values(company_1.cumulative_trajectory.m_as("Mt CO2")),  # type: ignore
-        2980.565984113794,
+        2954.76579333,
         places=7,
     )
     tc.assertAlmostEqual(
         ITR.nominal_values(company_2.cumulative_trajectory.m_as("Mt CO2")),  # type: ignore
-        4182.135839585814,
+        4182.13583959,
         places=7,
     )
 

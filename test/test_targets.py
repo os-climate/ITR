@@ -27,7 +27,6 @@ from ITR.interfaces import (
 
 
 def print_expected(target_df, company_data):
-    target_indexes = target_df.index.to_list()
     for c in company_data:
         key = f"{c.company_id} - {c.company_name}"
         suffix = c.company_name.split(" ")[-1].lower()
@@ -1627,7 +1626,7 @@ class TestTargets(unittest.TestCase):
             )
         )
         self.data_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_S3_bm)
-        companies = self.data_warehouse.get_preprocessed_company_data(company_index)
+        companies = self.data_warehouse.get_preprocessed_company_data(company_index)  # noqa: F841
 
         print_expected(
             target_df.filter(regex="Target:").rename(columns=lambda x: re.sub("Target: ", "", x)),
