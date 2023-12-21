@@ -272,9 +272,9 @@ def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
     sql_sums = "+".join([f"{tablename}_cnt.cnt" for tablename in tablenames])
     sql_joins = ",".join([f"{tablename}_cnt" for tablename in tablenames])
     # One N-clause statement executes about N times faster than N individual checks
-    qres = osc._do_sql(
+    qres = osc._do_sql(  # noqa F841
         f"with {sql_counts} select {sql_sums} from {sql_joins}", engine=vault.engine, verbose=True
-    )  # noqa F841
+    )
     warehouse = DataVaultWarehouse(
         vault,
         company_data=vault_company_data,

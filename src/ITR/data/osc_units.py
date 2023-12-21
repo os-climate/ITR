@@ -3,20 +3,12 @@ This module handles initialization of pint functionality
 """
 
 import re
-from dataclasses import dataclass
-from typing import Annotated, Any, Dict, List, Union
+from typing import Annotated, Any, List, Union
 
 import pandas as pd
 import pint
 from pint import Context, DimensionalityError
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    GetCoreSchemaHandler,
-    GetJsonSchemaHandler,
-    TypeAdapter,
-    ValidationError,
-)
+from pydantic import GetJsonSchemaHandler
 from pydantic.functional_validators import AfterValidator, BeforeValidator
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import CoreSchema, core_schema
@@ -552,7 +544,7 @@ def check_percent_Quantity(quantity: Quantity) -> Quantity:
         "percent",
         dim1="",
         dim2="",
-        extra_msg=f"Quantity must be dimensionless",
+        extra_msg=f"Quantity `{quantity}` must be dimensionless",
     )
 
 

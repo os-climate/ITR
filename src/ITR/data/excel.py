@@ -23,7 +23,6 @@ from ..data.osc_units import (
     BenchmarkMetric,
     EI_Quantity,
     EmissionsQuantity,
-    Quantity_type,
     delta_degC_Quantity,
 )
 from ..interfaces import (

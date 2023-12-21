@@ -3,7 +3,6 @@ import logging
 import warnings  # needed until apply behaves better with Pint quantities in arrays
 from typing import List, Optional, Tuple, Type
 
-import numpy as np
 import pandas as pd
 
 import ITR
@@ -294,7 +293,7 @@ class TemperatureScore(PortfolioAggregation):
                 == data[self.c.SCORE_RESULT_TYPE]
             )
 
-            company_timeframe_data = data[idx]
+            company_timeframe_data = data[idx]  # noqa: F841
 
         # FIXME: from here to the end of the function, why not replace `data` with `company_timeframe_data`?
         with warnings.catch_warnings():

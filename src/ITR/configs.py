@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Protocol
+from typing import Callable, List, Optional
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict
