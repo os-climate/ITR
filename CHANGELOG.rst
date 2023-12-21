@@ -2,9 +2,11 @@
 Changelog
 =========
 
-Version 1.1.2 (unreleased)
+Version 1.1.2
 =============
 
+- Fix construction of s3 categories dictionary, and adjust unit test vectors to align with more accurate emissions allocations.
+- Fix linting errors reported by `flake8` and `mypy`.
 - Env vars ITR_SCHEMA and/or ITR_PREFIX can override code defaults (demo_dv, itr_) to prevent collisions between users and CI/CD
 - Implement support for CH4 emissions disclosures (i.e., fugitive S1 emissions)
 - Use concurrent Data Vault operations to optimize queries when possible
