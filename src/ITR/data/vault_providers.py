@@ -1,16 +1,15 @@
 import concurrent.futures
 import logging
 import os
-import pathlib
 import warnings
 from abc import ABC
-from typing import Callable, List, Optional, Type, Union
+from concurrent.futures import Future
+from typing import Callable, Dict, List, Optional, Type, Union, cast
 
-import numpy as np
+import numpy as np  # noqa F401
 import osc_ingest_trino as osc
 import pandas as pd
 import sqlalchemy
-from dotenv import load_dotenv
 from mypy_boto3_s3.service_resource import Bucket
 
 import ITR
@@ -21,21 +20,13 @@ from ..data import PintArray, PintType, ureg
 # Rather than duplicating a few methods from BaseCompanyDataProvider, we just call them to delegate to them
 from ..data.base_providers import BaseCompanyDataProvider
 from ..data.data_providers import (
-    CompanyDataProvider,
     IntensityBenchmarkDataProvider,
     ProductionBenchmarkDataProvider,
 )
 from ..data.data_warehouse import DataWarehouse
 from ..data.osc_units import Q_, EmissionsQuantity, Quantity, delta_degC_Quantity
 from ..data.template import TemplateProviderCompany
-from ..interfaces import (
-    EScope,
-    IBenchmark,
-    ICompanyAggregates,
-    ICompanyData,
-    IEIBenchmarkScopes,
-    IProductionBenchmarkScopes,
-)
+from ..interfaces import EScope, ICompanyAggregates, ICompanyData
 
 # re_simplify_units = r" \/ (\w+)( \/ (\w+))? \* \1(?(3) \* \3|)"
 re_simplify_units_both = r" \/ (\w+) \/ (\w+) \* \1 \* \2"
@@ -127,6 +118,7 @@ class VaultInstance(ABC):
     def __init__(
         self,
         engine: sqlalchemy.Engine,
+        catalog: Optional[str] = "",  # FIXME: this should go away when osc-ingest-tools 0.5.3 is released
         schema: Optional[str] = "",
         hive_bucket: Optional[Bucket] = None,
         hive_catalog: Optional[str] = None,
@@ -140,7 +132,10 @@ class VaultInstance(ABC):
         """
         super().__init__()
         self.engine = engine
-        self.schema = schema or engine.dialect.default_schema_name or "demo_dv"
+        self.catalog = catalog or os.environ.get(
+            "ITR_CATALOG", "osc_datacommons_dev"
+        )  # FIXME: needed for osc-ingest-tools < 0.5.3
+        self.schema = schema or engine.dialect.default_schema_name or os.environ.get("ITR_SCHEMA", "demo_dv")
         self.hive_bucket = hive_bucket
         self.hive_catalog = hive_catalog
         self.hive_schema = hive_schema
@@ -163,7 +158,7 @@ def create_vault_table_from_df(
     :param verbose: If True, log information about actions of the Data Vault as they happen
     """
     drop_table = f"drop table if exists {vault.schema}.{tablename}"
-    qres = osc._do_sql(drop_table, vault.engine, verbose)
+    qres = osc._do_sql(drop_table, vault.engine, verbose)  # noqa F841
     logger.debug("dtypes, columns, and index of create_vault_table_from_df(df...)")
     logger.debug(df.dtypes)
     logger.debug(df.columns)
@@ -173,7 +168,7 @@ def create_vault_table_from_df(
         osc.fast_pandas_ingest_via_hive(
             new_df,
             vault.engine,
-            None,
+            vault.catalog,  # FIXME: this can be `None` when osc-ingest-tools 0.5.3 is released
             vault.schema,
             tablename,
             vault.hive_bucket,
@@ -601,7 +596,7 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
         company_ids_sql = ",".join([f"'{cid}'" for cid in company_ids])
         # FIXME: doesn't work with heterogeneous currencies as written
 
-        df_dict = {}
+        df_dict: Dict[str, Future] = {}
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # Quieting warnings due to https://github.com/hgrecco/pint/issues/1897
@@ -640,10 +635,10 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
                     except Exception as exc:
                         print("%r generated an exception: %s" % (df_var, exc))
 
-            df_prod = df_dict["df_prod"]
+            df_prod = cast(pd.DataFrame, df_dict["df_prod"])
             df_prod = df_prod.apply(lambda x: Q_(x.production_by_year, x.production_by_year_units), axis=1)
             df_prod.name = self.column_config.BASE_YEAR_PRODUCTION
-            df_ei = df_dict["df_ei"]
+            df_ei = cast(pd.DataFrame, df_dict["df_ei"])
             df_ei = df_ei.apply(
                 lambda x: [Q_(x.ei_s1s2_by_year, x.ei_s1s2_by_year_units), Q_(x.ei_s3_by_year, x.ei_s3_by_year_units)],
                 axis=1,
@@ -751,7 +746,7 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
             else:
                 raise ValueError(f"scope {scope} not supported")
         else:
-            sql = f"select company_id, sum({factor})"
+            factor_sql = f"select company_id, sum({factor})"
         qres = osc._do_sql(
             f"{factor_sql} as {factor} {from_sql} {where_sql} {group_sql}", self._v.engine, verbose=False
         )
@@ -782,7 +777,7 @@ class DataVaultWarehouse(DataWarehouse):
         benchmark_projected_production: VaultProviderProductionBenchmark,
         benchmarks_projected_ei: VaultProviderIntensityBenchmark,
         estimate_missing_data: Optional[Callable[["DataWarehouse", ICompanyData], None]] = None,
-        itr_prefix: Optional[str] = "",
+        itr_prefix: Optional[str] = os.environ.get("ITR_PREFIX", ""),
     ):
         """
         Construct Data Vault tables for cumulative emissions budgets, trajectories, and targets,
@@ -861,9 +856,6 @@ class DataVaultWarehouse(DataWarehouse):
 
         # If we have company data, we need to compute trajectories and targets
         projection_slots = ["_target_table", "_trajectory_table"]
-
-        target_dfs: List[pd.DataFrame] = []
-        trajectory_dfs: List[pd.DataFrame] = []
 
         # Ingest target and trajectory projections into the Data Vault
         for i, projection in enumerate(["projected_targets", "projected_intensities"]):
@@ -998,7 +990,7 @@ from {self._v.schema}.{self._company_table} C
         self,
         vault: VaultInstance,
         company_data: Union[VaultCompanyDataProvider, None],
-        itr_prefix: str = "",
+        itr_prefix: str = os.environ.get("ITR_PREFIX", ""),
     ):
         # The Quant users of the DataVaultWarehouse produces two calculations per company:
         #    * Target and Trajectory overshoot ratios
@@ -1037,12 +1029,12 @@ from {self._v.schema}.{self._emissions_table} E
             verbose=True,
         )
 
-        qres = osc._do_sql(
+        qres = osc._do_sql(  # noqa F841
             f"drop table if exists {self._v.schema}.{self._tempscore_table}",
             self._v.engine,
             verbose=False,
         )
-        qres = osc._do_sql(
+        qres = osc._do_sql(  # noqa F841
             f"""
 create table {self._v.schema}.{self._tempscore_table} with (
     format = 'ORC',

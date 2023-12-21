@@ -548,42 +548,42 @@ def test_get_company_data(template_V2_PC: TemplateV2):
     tc.assertEqual(company_1.company_id, "US00130H1059")
     tc.assertEqual(company_2.company_id, "KR7005490008")
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.ghg_s1s2.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.ghg_s1s2.m_as("Mt CO2")),  # type: ignore
         57.666199999999996,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.ghg_s1s2.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.ghg_s1s2.m_as("Mt CO2")),  # type: ignore
         93.40289000000001,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.cumulative_budget.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.cumulative_budget.m_as("Mt CO2")),  # type: ignore
         247.35955561917217,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.cumulative_budget.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.cumulative_budget.m_as("Mt CO2")),  # type: ignore
         671.322874458741,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.cumulative_target.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.cumulative_target.m_as("Mt CO2")),  # type: ignore
         628.4206195499177,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.cumulative_target.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.cumulative_target.m_as("Mt CO2")),  # type: ignore
         970.361209683652496,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.cumulative_trajectory.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.cumulative_trajectory.m_as("Mt CO2")),  # type: ignore
         2980.565984113794,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.cumulative_trajectory.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.cumulative_trajectory.m_as("Mt CO2")),  # type: ignore
         4182.135839585814,
         places=7,
     )
@@ -617,53 +617,53 @@ def test_ch4_gwp(template_V2_S3: TemplateV2):
     assert company_1.scope == EScope.S1
     assert company_2.scope == EScope.S1
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.ghg_s1s2.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.ghg_s1s2.m_as("Mt CO2")),  # type: ignore
         3.96312832,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.ghg_s1s2.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.ghg_s1s2.m_as("Mt CO2")),  # type: ignore
         0.31052000,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.cumulative_budget.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.cumulative_budget.m_as("Mt CO2")),  # type: ignore
         23.31338069,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.cumulative_budget.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.cumulative_budget.m_as("Mt CO2")),  # type: ignore
         19.0985528351,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.cumulative_target.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.cumulative_target.m_as("Mt CO2")),  # type: ignore
         121.501827609,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.cumulative_target.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.cumulative_target.m_as("Mt CO2")),  # type: ignore
         2.571914277,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_1.cumulative_trajectory.m_as("Mt CO2")),
+        ITR.nominal_values(company_1.cumulative_trajectory.m_as("Mt CO2")),  # type: ignore
         98.12387798,
         places=7,
     )
     tc.assertAlmostEqual(
-        ITR.nominal_values(company_2.cumulative_trajectory.m_as("Mt CO2")),
+        ITR.nominal_values(company_2.cumulative_trajectory.m_as("Mt CO2")),  # type: ignore
         6.4184578157,
         places=7,
     )
 
 
 if __name__ == "__main__":
-    test_PC = TestTemplateProviderV2_PC()
+    test_PC = template_V2_PC()
     test_PC.setUp()
     test_PC.test_temp_score()
     test_PC.test_target_projections()
     test_PC.test_get_company_data()
 
-    test_S3 = TestTemplateProviderV2_S3()
+    test_S3 = template_V2_S3()
     test_S3.setUp()
