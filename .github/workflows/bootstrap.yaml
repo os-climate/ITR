@@ -35,8 +35,8 @@ jobs:
         continue-on-error: true
         # Remove update-devops-tooling branch, if it exists
         run: |
-          git branch -d update-devops-tooling
-          git push origin --delete update-devops-tooling
+          git branch -d update-devops-tooling || :
+          git push origin --delete update-devops-tooling || :
 
       - name: "Update repository workflows and create PR"
         env:

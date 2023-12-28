@@ -38,7 +38,7 @@ check_file() {
     local exit_code=$?
     if [ $exit_code -ne 0 ]; then
         status_code=$exit_code
-        echo "::error file={$file_path},line={line},col={col}::{TOML file not formatted}"
+        echo "::error file={$file_path},line={line},col={col}::{TOML unformatted}"
     elif [ -f "$file_path.original" ]; then
         rm "$file_path.original"
     fi
@@ -79,7 +79,7 @@ check_wget() {
     WGET_BIN=$(which wget)
     if [ ! -x "${WGET_BIN}" ]; then
         echo "WGET command not found"
-        sudo apt update; sudo apt-get install -y wget | true
+        sudo apt update; sudo apt-get install -y wget
     fi
     WGET_BIN=$(which wget)
     if [ ! -x "${WGET_BIN}" ]; then
