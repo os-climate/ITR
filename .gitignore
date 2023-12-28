@@ -1,3 +1,14 @@
+# Temporary devops repo
+.devops
+
+# Output files from co2budget.ipynb (ITR-Examples)
+OECM-images
+TPI-images
+
+
+# Local node cache
+node_modules
+
 # Credentials / Secrets
 credentials.env
 config.toml
@@ -38,6 +49,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+poetry.lock
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -62,6 +74,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+cover/
 
 # Translations
 *.mo
@@ -87,6 +100,7 @@ instance/
 docs/_build/
 
 # PyBuilder
+.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -97,6 +111,8 @@ profile_default/
 ipython_config.py
 
 # pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
 .python-version
 
 # pipenv
@@ -158,3 +174,9 @@ docker-compose_aws.yml
 .noseids
 test/.DS_Store
 .DS_Store
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
