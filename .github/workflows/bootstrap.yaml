@@ -60,6 +60,11 @@ jobs:
           for FILE in ${FILES}; do
               cp .devops/"$FILE" "$FILE"
           done
+          # If no changes required, do not throw an error
+          git status
+          if [ $? -eq 0 ]; then
+            echo "No updates/changes to commit"; exit 0
+          fi
           git add .
           git commit -m "Chore: Update DevOps tooling from central repository"
           git push --set-upstream origin update-devops-tooling
