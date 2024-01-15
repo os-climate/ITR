@@ -1,7 +1,7 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
-source = osc_data_extractor
+source = ITR
 # omit = bad_file.py
 
 [paths]
