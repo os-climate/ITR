@@ -39,7 +39,7 @@ Attributes
 
    
 
-.. py:class:: TemperatureScore(time_frames: List[ITR.interfaces.ETimeFrames], scopes: List[ITR.interfaces.EScope], fallback_score: float = Q_(3.2, ureg.delta_degC), aggregation_method: ITR.portfolio_aggregation.PortfolioAggregationMethod = PortfolioAggregationMethod.WATS, budget_column: str = ColumnsConfig.CUMULATIVE_BUDGET, grouping: Optional[List] = None, config: Type[ITR.configs.TemperatureScoreConfig] = TemperatureScoreConfig)
+.. py:class:: TemperatureScore(time_frames: List[ITR.interfaces.ETimeFrames], scopes: Optional[List[ITR.interfaces.EScope]] = None, fallback_score: float = Q_(3.2, ureg.delta_degC), aggregation_method: ITR.portfolio_aggregation.PortfolioAggregationMethod = PortfolioAggregationMethod.WATS, budget_column: str = ColumnsConfig.CUMULATIVE_BUDGET, grouping: Optional[List] = None, config: Type[ITR.configs.TemperatureScoreConfig] = TemperatureScoreConfig)
 
 
    Bases: :py:obj:`ITR.portfolio_aggregation.PortfolioAggregation`
