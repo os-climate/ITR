@@ -43,7 +43,7 @@ class TemperatureScore(PortfolioAggregation):
     def __init__(
         self,
         time_frames: List[ETimeFrames],
-        scopes: List[EScope],
+        scopes: Optional[List[EScope]] = None,
         fallback_score: float = Q_(3.2, ureg.delta_degC),
         aggregation_method: PortfolioAggregationMethod = PortfolioAggregationMethod.WATS,
         budget_column: str = ColumnsConfig.CUMULATIVE_BUDGET,
