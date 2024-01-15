@@ -61,6 +61,11 @@ dependencies = [
     "globalwarmingpotentials>=0.9.4",
 ]
 
+[tool.setuptools.package-data]
+itr = [
+      "py.typed"
+      ]
+
 [project.urls]
 Homepage = "https://github.com/os-climate/ITR"
 Repository = "https://github.com/os-climate/ITR"
