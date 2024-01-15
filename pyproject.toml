@@ -95,7 +95,10 @@ dev = ["tox>=4.11.3", "tox-pdm>=0.7.0"]
 lint = ["pre-commit", "pyproject-flake8"]
 
 [tool.pytest.ini_options]
-testpaths = ["test/"]
+testpaths = [
+    "test/",
+]
+addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95"
 
 [tool.black]
 line-length = 120
@@ -111,3 +114,8 @@ extend-ignore = [
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["test/*"]
+# relative_files = true
