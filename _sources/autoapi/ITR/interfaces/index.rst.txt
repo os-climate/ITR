@@ -392,12 +392,12 @@ Attributes
 
 
 
-.. py:class:: AggregationContribution(**data: Any)
+.. py:class:: AggregationContribution(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -457,12 +457,12 @@ Attributes
 
 
 
-.. py:class:: Aggregation(**data: Any)
+.. py:class:: Aggregation(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -520,12 +520,12 @@ Attributes
 
    
 
-.. py:class:: ScoreAggregation(**data: Any)
+.. py:class:: ScoreAggregation(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -582,12 +582,12 @@ Attributes
 
    
 
-.. py:class:: ScoreAggregationScopes(**data: Any)
+.. py:class:: ScoreAggregationScopes(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -647,12 +647,12 @@ Attributes
 
    
 
-.. py:class:: ScoreAggregations(**data: Any)
+.. py:class:: ScoreAggregations(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -698,12 +698,12 @@ Attributes
 
 
 
-.. py:class:: PortfolioCompany(**data: Any)
+.. py:class:: PortfolioCompany(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -761,12 +761,12 @@ Attributes
       
 
 
-.. py:class:: UProjection(**data: Any)
+.. py:class:: UProjection(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -804,12 +804,12 @@ Attributes
       
 
 
-.. py:class:: IProjection(**data: Any)
+.. py:class:: IProjection(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -856,7 +856,7 @@ Attributes
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -921,12 +921,12 @@ Attributes
 
 
 
-.. py:class:: IBenchmarks(**data: Any)
+.. py:class:: IBenchmarks(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -972,12 +972,12 @@ Attributes
 
    
 
-.. py:class:: IProductionBenchmarkScopes(**data: Any)
+.. py:class:: IProductionBenchmarkScopes(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1013,12 +1013,12 @@ Attributes
 
 
 
-.. py:class:: IEIBenchmarkScopes(**data: Any)
+.. py:class:: IEIBenchmarkScopes(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1093,12 +1093,12 @@ Attributes
 
 
 
-.. py:class:: ICompanyEIProjection(**data: Any)
+.. py:class:: ICompanyEIProjection(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1154,12 +1154,12 @@ Attributes
 
 
 
-.. py:class:: ICompanyEIProjections(**data: Any)
+.. py:class:: ICompanyEIProjections(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1210,7 +1210,7 @@ Attributes
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1260,7 +1260,7 @@ Attributes
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1334,12 +1334,12 @@ Attributes
 
    
 
-.. py:class:: IProductionRealization(**data: Any)
+.. py:class:: IProductionRealization(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1381,12 +1381,12 @@ Attributes
       
 
 
-.. py:class:: IEmissionRealization(**data: Any)
+.. py:class:: IEmissionRealization(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1439,12 +1439,12 @@ Attributes
 
 
 
-.. py:class:: IHistoricEmissionsScopes(**data: Any)
+.. py:class:: IHistoricEmissionsScopes(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1517,12 +1517,12 @@ Attributes
 
    
 
-.. py:class:: IEIRealization(**data: Any)
+.. py:class:: IEIRealization(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1575,12 +1575,12 @@ Attributes
 
 
 
-.. py:class:: IHistoricEIScopes(**data: Any)
+.. py:class:: IHistoricEIScopes(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1658,7 +1658,7 @@ Attributes
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1708,12 +1708,12 @@ Attributes
 
 
 
-.. py:class:: ITargetData(**data: Any)
+.. py:class:: ITargetData(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1799,7 +1799,7 @@ Attributes
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
@@ -1968,7 +1968,7 @@ Attributes
 
    Bases: :py:obj:`ICompanyData`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 

@@ -705,12 +705,12 @@ Functions
       
 
 
-.. py:class:: TemperatureScoreControls(**data: Any)
+.. py:class:: TemperatureScoreControls(/, **data: Any)
 
 
    Bases: :py:obj:`pydantic.BaseModel`
 
-   Usage docs: https://docs.pydantic.dev/2.5/concepts/models/
+   Usage docs: https://docs.pydantic.dev/2.6/concepts/models/
 
    A base class for creating Pydantic models.
 
