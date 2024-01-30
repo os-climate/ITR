@@ -87,7 +87,7 @@ files = [
 
 [[package]]
 name = "blosc2"
-version = "2.4.0"
+version = "2.5.1"
 requires_python = "<4,>=3.8"
 summary = "Python wrapper for the C-Blosc2 library"
 groups = ["default"]
@@ -98,58 +98,58 @@ dependencies = [
     "py-cpuinfo",
 ]
 files = [
-    {file = "blosc2-2.4.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:8ee3fb14f83e894ef4491b11b1d12b3b374e4d8b1c632d9d0c62c66be5c2c263"},
-    {file = "blosc2-2.4.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:12c1f4dd9eae6e1f6a95cabd92e0a18063697c2f32329b4dfa8af5d5b075c86c"},
-    {file = "blosc2-2.4.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b777159fc9ef5ee45da8a64755f9ac965b642774dab86d89ad12207e9b0fc894"},
-    {file = "blosc2-2.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d220110b9d3b95667879999a60cb56c3706bee93e5e64b6177c04f84e5a4a49b"},
-    {file = "blosc2-2.4.0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:fdf1c12e29045807ca86e590a1b3f018277fde4af9ac80a7bab7036c52e68169"},
-    {file = "blosc2-2.4.0-cp310-cp310-win32.whl", hash = "sha256:497717691e3e3c4253ad574b0405494c68f537056a510cd5f9c419c49a976533"},
-    {file = "blosc2-2.4.0-cp310-cp310-win_amd64.whl", hash = "sha256:92a25def994313098934bc44ada2d7ab8611e2ff0fc2923e3c417cb47ffb97fc"},
-    {file = "blosc2-2.4.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:5e4529c05a0772bebcf58678b2b0d0465cb836d43c2882c2d82b0b0a6c3b1173"},
-    {file = "blosc2-2.4.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:cf8b64a7506ba4d834988eb863410bec4ee62c8e523c2ff73b0ee636efd39b3a"},
-    {file = "blosc2-2.4.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5334e9a48f1cab2246fe08c535182b61f1786cd7d50164551f0115e6cdf45457"},
-    {file = "blosc2-2.4.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:43170e534d9e2d2822dabcde0a993b978999f9c68080292b74eac9502257c7dd"},
-    {file = "blosc2-2.4.0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:e3e4e64317255bf56b6349e817d6eaa4f25c520f40996d1dd604f1337e5b8e80"},
-    {file = "blosc2-2.4.0-cp311-cp311-win32.whl", hash = "sha256:0958f899238507485d2a260b6bb21e06e20e0841acfe73caf04697dc758d5cc3"},
-    {file = "blosc2-2.4.0-cp311-cp311-win_amd64.whl", hash = "sha256:09e4ada928d54ebcac77d66265db030d235466b2e5a43001859bd97730658528"},
-    {file = "blosc2-2.4.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:a9cefd054da030d86b318c9b0d6383ba831e7ea0a11bad7bd413ae42e1ef755f"},
-    {file = "blosc2-2.4.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:7a180ce8c49b8897eac60e51f990c93783dc4a8f5e3dc0dcc29ed4f60ddfe291"},
-    {file = "blosc2-2.4.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bfd17a8b533d64320e636f67d68a4361febc6c18957d84022f0cc2cf6c0da77b"},
-    {file = "blosc2-2.4.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2292affdf9a0056e1e60e949c3de1a3c47603b2b5e3b7d9ebf96deca468aacdb"},
-    {file = "blosc2-2.4.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:1c05c6748d71be867b5e66fb0915c97e3852e1cf9bcb4af8eb9cf1d2a6c517a1"},
-    {file = "blosc2-2.4.0-cp312-cp312-win32.whl", hash = "sha256:1249a39b2d5ca7ec755f396108efb209d153130afe6783d04aeb2f9a828a4b67"},
-    {file = "blosc2-2.4.0-cp312-cp312-win_amd64.whl", hash = "sha256:5fef27217fac665eed97e30b39c7ca1f810637ea16637ae155d80df4fb5017cd"},
-    {file = "blosc2-2.4.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:36c1edd3e31d446fb1e0dddc6b0cb27b58c79145cb4df74314a502a9cddf92fc"},
-    {file = "blosc2-2.4.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:10eda33ae55f5ced9d99fb551728f519ddd028dafc8abd5ae24f40626d6c4f0e"},
-    {file = "blosc2-2.4.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:32fd1d796b8c4692bf57fd2f9ea9159420087e090561e92ab61d429a21a3d5cd"},
-    {file = "blosc2-2.4.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2141dd8a04a775f374d12ca6c485208d242c67b12aeb91b025946da1c3cfa5ee"},
-    {file = "blosc2-2.4.0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:5fbd40e36def428aca963a5aeaaa1874e21ddd80b9c788d753a1f1d182cdb4a5"},
-    {file = "blosc2-2.4.0-cp39-cp39-win32.whl", hash = "sha256:60aaf2988516b0ef8dbc71b73b1a5aa4af18bdb4874fee52d725e81c78d5a562"},
-    {file = "blosc2-2.4.0-cp39-cp39-win_amd64.whl", hash = "sha256:e7400095856808b2b5016755a7a771a65d698812459f1d87906598ae53c130b3"},
-    {file = "blosc2-2.4.0.tar.gz", hash = "sha256:43687a9ebdd8befba962885fb991ab54d2710513696263f79d383aa22a7b1833"},
+    {file = "blosc2-2.5.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:c861262b7fe317c1614a9b59b6c9edf409532b4a6aaf5b2f4ad0d79c6f800b57"},
+    {file = "blosc2-2.5.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8f35b5d69a7a41e9d5054297d2540c25f8af5ea3c62e4a80ca7359292d783c04"},
+    {file = "blosc2-2.5.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:546fa39f397dd54b13d7c42a4f890afaf16c70fe478712070942d464c440ce03"},
+    {file = "blosc2-2.5.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5455af77e7e94159bb4966cae554f232ca2d52bb80cd3f878ecef39cf569da2a"},
+    {file = "blosc2-2.5.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:b4dc4f595bf95c350c50bb77a8749cdd08a5dc2bdf3bdb18983d49a52d60b595"},
+    {file = "blosc2-2.5.1-cp310-cp310-win32.whl", hash = "sha256:873483bd5c6afb8d139039180ee57b74373232e87b032cb80389fd8bb883ea8e"},
+    {file = "blosc2-2.5.1-cp310-cp310-win_amd64.whl", hash = "sha256:d5a7ef00b82fbca069e949335f9c92ce7cbe2039a9fa2e2bd4f5f418043d6262"},
+    {file = "blosc2-2.5.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:da826d42d616f8a939f27e1501b40e764fded66bc80177eeaefcebdbf3b3afb8"},
+    {file = "blosc2-2.5.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ae2e0c5dc8561a6b17842ee4320b49621434c20e622c9e9f5c67c9c6eb3b06a3"},
+    {file = "blosc2-2.5.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:af3cab9c12a4364c643266ee7d9583b526c0f484a291d72ec6efb09ea7ffbbf9"},
+    {file = "blosc2-2.5.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:22f03a723130cf07e4309fe34b1360c868f4376e862f8ff664eb40d019fdd3f6"},
+    {file = "blosc2-2.5.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:0fd109eef815ea1e50fde4f676388aa2f3bb5543502d125fb63f16ec7a014464"},
+    {file = "blosc2-2.5.1-cp311-cp311-win32.whl", hash = "sha256:1a3edc3256bad04d3db30c9de7eac3a820f96e741fc754cdabb6a9991e5c37e8"},
+    {file = "blosc2-2.5.1-cp311-cp311-win_amd64.whl", hash = "sha256:e7499e277c13334d54f84e74f429f32341f99f7b978deaf9a7c2e963904cb48c"},
+    {file = "blosc2-2.5.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:ab849d3adaeb035f2f16cf495cff1792b28d58dfb3de21b9459ee355c6bb8df3"},
+    {file = "blosc2-2.5.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:dd66e60dafcc93d4c1f815d726d76f9fb067ecc9106a6c661010e709135c79ce"},
+    {file = "blosc2-2.5.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:eb5fcd1775b3884d9825aa51fb45253f45cfa21c77f4135fad5dc5db710c2a34"},
+    {file = "blosc2-2.5.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:19f79071a336fcf1eda01cd0171291a4ab82b16cf9a15d2b4d26c010146f13b5"},
+    {file = "blosc2-2.5.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:956a63231f1b448803e9b4bc3e704ea424c89fc14418d99093472c74f19c19e1"},
+    {file = "blosc2-2.5.1-cp312-cp312-win32.whl", hash = "sha256:5856e57e0e81f9018f1a12e803b9f768fa5533175092d72d165ac60069c7d2ab"},
+    {file = "blosc2-2.5.1-cp312-cp312-win_amd64.whl", hash = "sha256:585d780c5e85f251dec72b75a47666e4a261dbfe1d228769bca545e9fe07f480"},
+    {file = "blosc2-2.5.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:0cb9a6ac1abc466c12bdc90052f17545512de8f854e672a1ea4d2b40292323f5"},
+    {file = "blosc2-2.5.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:3def4650faa1db43143d821228ef58797108cc95d6698c4b1581909cc2b149ca"},
+    {file = "blosc2-2.5.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cf6efecc1a22da26c73ff5c60d0dc086db1e7edcceb6b360dd193cda893bef28"},
+    {file = "blosc2-2.5.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b473472b977b770aab3bf20d0feeee84ecd5bb8b15a675287e090ce818c1cd40"},
+    {file = "blosc2-2.5.1-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:7afe59d35d93bf8da7db8de43f4d8aef277514de43953c1e5e416ca839b9023a"},
+    {file = "blosc2-2.5.1-cp39-cp39-win32.whl", hash = "sha256:4315ae8d467fe91efa0dbe22004e967008f5fe021ebb3945518f5213d7c4511f"},
+    {file = "blosc2-2.5.1-cp39-cp39-win_amd64.whl", hash = "sha256:73eb5e569a91fbe67f7dd78efe6a1ca9a54afff2c847db5dfa675bfd6a424f60"},
+    {file = "blosc2-2.5.1.tar.gz", hash = "sha256:47d5df50e7286edf81e629ece35f87f13f55c13c5e8545832188c420c75d1659"},
 ]
 
 [[package]]
 name = "boto3"
-version = "1.34.24"
+version = "1.34.28"
 requires_python = ">= 3.8"
 summary = "The AWS SDK for Python"
 groups = ["default"]
 dependencies = [
-    "botocore<1.35.0,>=1.34.24",
+    "botocore<1.35.0,>=1.34.28",
     "jmespath<2.0.0,>=0.7.1",
     "s3transfer<0.11.0,>=0.10.0",
 ]
 files = [
-    {file = "boto3-1.34.24-py3-none-any.whl", hash = "sha256:795803812b78260cfe019ef65021ec9e8049bfb6a027564e1a3b59c1a4a11106"},
-    {file = "boto3-1.34.24.tar.gz", hash = "sha256:791523f41b5e731c8ac0d2f65b978348fb6c92f02e0dbc9a7bc0b3760195cc60"},
+    {file = "boto3-1.34.28-py3-none-any.whl", hash = "sha256:fb56622ce195c06ae0d15ae9472d44529362a869ad52862a5a28b891530969f9"},
+    {file = "boto3-1.34.28.tar.gz", hash = "sha256:9e0dcca7bb0567f7b4b84d1d26c19b217abfe149d19106af7f120f09142688cf"},
 ]
 
 [[package]]
 name = "boto3-stubs-lite"
-version = "1.34.24"
+version = "1.34.28"
 requires_python = ">=3.8"
-summary = "Type annotations for boto3 1.34.24 generated with mypy-boto3-builder 7.23.1"
+summary = "Type annotations for boto3 1.34.28 generated with mypy-boto3-builder 7.23.1"
 groups = ["default"]
 dependencies = [
     "botocore-stubs",
@@ -157,13 +157,13 @@ dependencies = [
     "typing-extensions>=4.1.0; python_version < \"3.12\"",
 ]
 files = [
-    {file = "boto3-stubs-lite-1.34.24.tar.gz", hash = "sha256:0547e04ff3edaef17246fbe3abf637051e20de42173dc6e9de1a888600105062"},
-    {file = "boto3_stubs_lite-1.34.24-py3-none-any.whl", hash = "sha256:87dec12ae174c6e174d0ea72edf79b1a548033794ab5a2b6ddc9aa15960022b0"},
+    {file = "boto3-stubs-lite-1.34.28.tar.gz", hash = "sha256:12dce28100028ee5c87a8fa8f000d253e1d7ea2ff5fe37f570f0c437c1e1a63a"},
+    {file = "boto3_stubs_lite-1.34.28-py3-none-any.whl", hash = "sha256:c7c8df34e82ce89ffaca13702a5b08ad56e01f74af50792ce708e09ec2528b88"},
 ]
 
 [[package]]
 name = "botocore"
-version = "1.34.24"
+version = "1.34.28"
 requires_python = ">= 3.8"
 summary = "Low-level, data-driven core of boto 3."
 groups = ["default"]
@@ -174,13 +174,13 @@ dependencies = [
     "urllib3<2.1,>=1.25.4; python_version >= \"3.10\"",
 ]
 files = [
-    {file = "botocore-1.34.24-py3-none-any.whl", hash = "sha256:c92f810b5faec5126f3faf7dc7d77346e407ab3b89bb613290c86ff2fd5405b9"},
-    {file = "botocore-1.34.24.tar.gz", hash = "sha256:4a48c15b87c6a72719a6c2d8688f4e52fe52c18ac9dfcaa25c7e62c5df475ee2"},
+    {file = "botocore-1.34.28-py3-none-any.whl", hash = "sha256:03be8209257ab65f3c8be7377cf8d38bff6a6afbe3d36c72924e48959bb694dc"},
+    {file = "botocore-1.34.28.tar.gz", hash = "sha256:45c99ccc6389ab1a87e996a7cc8797c7e41d5ecd9a5757d567ba3a57cb7655e7"},
 ]
 
 [[package]]
 name = "botocore-stubs"
-version = "1.34.24"
+version = "1.34.28"
 requires_python = ">=3.8,<4.0"
 summary = "Type annotations and code completion for botocore"
 groups = ["default"]
@@ -188,8 +188,8 @@ dependencies = [
     "types-awscrt",
 ]
 files = [
-    {file = "botocore_stubs-1.34.24-py3-none-any.whl", hash = "sha256:f7ee7be80c4d2b8733e79adb99d039a46458da722c221b9179bc921fe0dd9b46"},
-    {file = "botocore_stubs-1.34.24.tar.gz", hash = "sha256:d301090d1825cb53e2c8e110f6d700cd7a07f751d1bce4d312f91bb78eaa41c9"},
+    {file = "botocore_stubs-1.34.28-py3-none-any.whl", hash = "sha256:e367bba957b020ee939a088a6886f843330dc58946c424bfd3e4d9fcde794c6f"},
+    {file = "botocore_stubs-1.34.28.tar.gz", hash = "sha256:6710db05b72352901029691873cd26644944107f5eccaa713666dc072df5bdc7"},
 ]
 
 [[package]]
@@ -1389,13 +1389,13 @@ files = [
 
 [[package]]
 name = "pluggy"
-version = "1.3.0"
+version = "1.4.0"
 requires_python = ">=3.8"
 summary = "plugin and hook calling mechanisms for python"
 groups = ["default", "dev", "test", "tox"]
 files = [
-    {file = "pluggy-1.3.0-py3-none-any.whl", hash = "sha256:d89c696a773f8bd377d18e5ecda92b7a3793cbe66c87060a6fb58c7b6e1061f7"},
-    {file = "pluggy-1.3.0.tar.gz", hash = "sha256:cf61ae8f126ac6f7c451172cf30e3e43d3ca77615509771b3a984a0730651e12"},
+    {file = "pluggy-1.4.0-py3-none-any.whl", hash = "sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981"},
+    {file = "pluggy-1.4.0.tar.gz", hash = "sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be"},
 ]
 
 [[package]]
@@ -2204,13 +2204,13 @@ files = [
 
 [[package]]
 name = "toolz"
-version = "0.12.0"
-requires_python = ">=3.5"
+version = "0.12.1"
+requires_python = ">=3.7"
 summary = "List processing tools and functional utilities"
 groups = ["default"]
 files = [
-    {file = "toolz-0.12.0-py3-none-any.whl", hash = "sha256:2059bd4148deb1884bb0eb770a3cde70e7f954cfbbdc2285f1f2de01fd21eb6f"},
-    {file = "toolz-0.12.0.tar.gz", hash = "sha256:88c570861c440ee3f2f6037c4654613228ff40c93a6c25e0eba70d17282c6194"},
+    {file = "toolz-0.12.1-py3-none-any.whl", hash = "sha256:d22731364c07d72eea0a0ad45bafb2c2937ab6fd38a3507bf55eae8744aa7d85"},
+    {file = "toolz-0.12.1.tar.gz", hash = "sha256:ecca342664893f177a13dac0e6b41cbd8ac25a358e5f215316d43e2100224f4d"},
 ]
 
 [[package]]
