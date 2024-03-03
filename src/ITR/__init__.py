@@ -2,6 +2,7 @@
 This package helps companies and financial institutions to assess the temperature alignment of investment and lending
 portfolios.
 """
+
 import os
 
 import numpy as np

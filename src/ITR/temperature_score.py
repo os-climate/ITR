@@ -63,9 +63,14 @@ class TemperatureScore(PortfolioAggregation):
         if grouping is not None:
             self.grouping = grouping
 
-    def get_score(
-        self, scorable_row: pd.Series
-    ) -> Tuple[delta_degC_Quantity, delta_degC_Quantity, float, delta_degC_Quantity, float, EScoreResultType,]:
+    def get_score(self, scorable_row: pd.Series) -> Tuple[
+        delta_degC_Quantity,
+        delta_degC_Quantity,
+        float,
+        delta_degC_Quantity,
+        float,
+        EScoreResultType,
+    ]:
         """
         Get the temperature score for a certain target based on the annual reduction rate and the regression parameters.
 

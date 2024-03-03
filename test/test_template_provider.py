@@ -229,7 +229,7 @@ class TestTemplateProvider(unittest.TestCase):
                 2.1493519311051412,
                 2.63016981,  # Previously computed 1.92594402 with bad interpolation
                 2.6668124335887886,
-                2.4920219  # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
+                2.4920219,  # AEP (American Electric Power, US0255371017 only has S1 target data, but gives TRAJECTORY_ONLY S1S2 result)
                 # When we estimate an S2 target based on benchmark-aligned targets, we get a valid S1S2 target
             ],
             dtype="pint[delta_degC]",

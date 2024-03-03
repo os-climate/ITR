@@ -458,18 +458,22 @@ class VaultProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         # This piece of work essentially does a column-based join (to avoid extra transpositions)
         result = pd.concat(
             [
-                bm_proj_t[tuple(ser)].rename((idx, ser.iloc[2]))
-                if tuple(ser) in bm_proj_t
-                else bm_proj_t[ser_global].rename((idx, ser.iloc[2]))
-                if (
-                    ser_global := (
-                        ser.iloc[0],
-                        "Global",
-                        ser.iloc[2],
+                (
+                    bm_proj_t[tuple(ser)].rename((idx, ser.iloc[2]))
+                    if tuple(ser) in bm_proj_t
+                    else (
+                        bm_proj_t[ser_global].rename((idx, ser.iloc[2]))
+                        if (
+                            ser_global := (
+                                ser.iloc[0],
+                                "Global",
+                                ser.iloc[2],
+                            )
+                        )
+                        in bm_proj_t
+                        else pd.Series()
                     )
                 )
-                in bm_proj_t
-                else pd.Series()
                 for idx, ser in sec_reg_scopes.iterrows()
             ],
             axis=1,
@@ -1081,9 +1085,8 @@ from {self._v.schema}.{itr_prefix}overshoot_ratios R
             name="temp_score",
             dtype="pint[delta_degC]",
         )
-        retval.loc[
-            retval.index.intersection(temp_scores.index)
-        ] = temp_scores.target_temperature_score * probability + temp_scores.trajectory_temperature_score * (
-            1 - probability
+        retval.loc[retval.index.intersection(temp_scores.index)] = (
+            temp_scores.target_temperature_score * probability
+            + temp_scores.trajectory_temperature_score * (1 - probability)
         )
         return retval
