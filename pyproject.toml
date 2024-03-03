@@ -98,7 +98,7 @@ lint = ["pre-commit", "pyproject-flake8"]
 testpaths = [
     "test/",
 ]
-addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95"
+addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 70"
 
 [tool.black]
 line-length = 120

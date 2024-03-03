@@ -2,6 +2,7 @@
 This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
 the module, extend the respective config class and pass it to the class as the "constants" parameter.
 """
+
 from __future__ import annotations
 
 import logging

@@ -373,18 +373,22 @@ class BaseProviderIntensityBenchmark(IntensityBenchmarkDataProvider):
         # This piece of work essentially does a column-based join (to avoid extra transpositions)
         result = pd.concat(
             [
-                bm_proj_t[tuple(ser)].rename((idx, ser.iloc[2]))
-                if tuple(ser) in bm_proj_t
-                else bm_proj_t[ser_global].rename((idx, ser.iloc[2]))
-                if (
-                    ser_global := (
-                        ser.iloc[0],
-                        "Global",
-                        ser.iloc[2],
+                (
+                    bm_proj_t[tuple(ser)].rename((idx, ser.iloc[2]))
+                    if tuple(ser) in bm_proj_t
+                    else (
+                        bm_proj_t[ser_global].rename((idx, ser.iloc[2]))
+                        if (
+                            ser_global := (
+                                ser.iloc[0],
+                                "Global",
+                                ser.iloc[2],
+                            )
+                        )
+                        in bm_proj_t
+                        else pd.Series()
                     )
                 )
-                in bm_proj_t
-                else pd.Series()
                 for idx, ser in sec_reg_scopes.iterrows()
             ],
             axis=1,
@@ -493,14 +497,16 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                             if eir.year == base_year
                         ]
                 scope_em = {
-                    scope: [
-                        IEmissionRealization(
-                            year=base_year,
-                            value=ei[0].value * company.base_year_production,  # type: ignore
-                        )
-                    ]
-                    if ei
-                    else []
+                    scope: (
+                        [
+                            IEmissionRealization(
+                                year=base_year,
+                                value=ei[0].value * company.base_year_production,  # type: ignore
+                            )
+                        ]
+                        if ei
+                        else []
+                    )
                     for scope, ei in scope_ei.items()
                 }
             else:
@@ -513,14 +519,16 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                     else []
                 )
                 scope_ei = {
-                    scope: [
-                        IEIRealization(
-                            year=base_year,
-                            value=em[0].value / company.base_year_production,  # type: ignore
-                        )
-                    ]
-                    if em
-                    else []
+                    scope: (
+                        [
+                            IEIRealization(
+                                year=base_year,
+                                value=em[0].value / company.base_year_production,  # type: ignore
+                            )
+                        ]
+                        if em
+                        else []
+                    )
                     for scope, em in scope_em.items()
                 }
             company.historic_data = IHistoricData(
@@ -1061,12 +1069,14 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                         map(
                             lambda em_p: IEIRealization(
                                 year=em_p[0].year,
-                                value=Q_(
-                                    np.nan,
-                                    f"({em_p[0].value.u}) / ({em_p[1].value.u})",  # type: ignore
-                                )
-                                if em_p[1].value.m == 0.0  # type: ignore
-                                else em_p[0].value / em_p[1].value,
+                                value=(
+                                    Q_(
+                                        np.nan,
+                                        f"({em_p[0].value.u}) / ({em_p[1].value.u})",  # type: ignore
+                                    )
+                                    if em_p[1].value.m == 0.0  # type: ignore
+                                    else em_p[0].value / em_p[1].value
+                                ),
                             ),
                             zip(historic_sector.emissions[scope.name], prod_list),
                         )
@@ -1425,9 +1435,11 @@ class EITrajectoryProjector(EIProjector):
         if ITR.HAS_UNCERTAINTIES:
             try:
                 nominal_ei_t = historic_ei_t.apply(
-                    lambda col: pd.Series(ITR.nominal_values(col.values), index=col.index, name=col.name)
-                    if col.dtype.kind == "O"
-                    else col.astype("float64")
+                    lambda col: (
+                        pd.Series(ITR.nominal_values(col.values), index=col.index, name=col.name)
+                        if col.dtype.kind == "O"
+                        else col.astype("float64")
+                    )
                 )
                 err_ei_t = historic_ei_t.apply(
                     lambda col: pd.Series(ITR.std_devs(col.values), index=col.index, name=col.name)
@@ -1484,10 +1496,12 @@ class EITrajectoryProjector(EIProjector):
     def _get_trends(self, intensities_t: pd.DataFrame):
         # FIXME: rolling windows require conversion to float64.  Don't want to be a nuisance...
         intensities_t = intensities_t.apply(
-            lambda col: col
-            if col.dtype == np.float64
-            # Float64 NA needs to be converted to np.nan before we can apply nominal_values
-            else ITR.nominal_values(col.fillna(np.nan)).astype(np.float64)
+            lambda col: (
+                col
+                if col.dtype == np.float64
+                # Float64 NA needs to be converted to np.nan before we can apply nominal_values
+                else ITR.nominal_values(col.fillna(np.nan)).astype(np.float64)
+            )
         )
         # FIXME: Pandas 2.1
         # Treat NaN ratios as "unchnaged year on year"
@@ -2141,9 +2155,7 @@ class EITargetProjector(EIProjector):
             else:
                 # - If CAGR target <= 90% reduction, use CAGR model directly
                 cagr_factor = (last_value / first_value).m ** (1 / period)
-                cagr_data = [
-                    cagr_factor**y * first_value.m for y, year in enumerate(range(first_year, last_year + 1))
-                ]
+                cagr_data = [cagr_factor**y * first_value.m for y, year in enumerate(range(first_year, last_year + 1))]
         cagr_result = pd.Series(
             PA_(np.array(cagr_data), dtype=f"{last_value.u:~P}"),
             index=range(first_year, last_year + 1),
