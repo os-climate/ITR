@@ -551,7 +551,7 @@ class IProductionRealization(BaseModel):
     value: Optional[ProductionQuantity] = None
 
 
-class IEmissionRealization(BaseModel):
+class IEmissionsRealization(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     year: int
@@ -569,18 +569,18 @@ class IEmissionRealization(BaseModel):
 
     def add(self, o):  # noqa: F811
         assert self.year == o.year
-        return IEmissionRealization(
+        return IEmissionsRealization(
             year=self.year,
             value=self.value if ITR.isna(o.value.m) else self.value + o.value.to(self.value.units),
         )
 
 
 class IHistoricEmissionsScopes(BaseModel):
-    S1: Optional[List[IEmissionRealization]] = []
-    S2: Optional[List[IEmissionRealization]] = []
-    S1S2: Optional[List[IEmissionRealization]] = []
-    S3: Optional[List[IEmissionRealization]] = []
-    S1S2S3: Optional[List[IEmissionRealization]] = []
+    S1: Optional[List[IEmissionsRealization]] = []
+    S2: Optional[List[IEmissionsRealization]] = []
+    S1S2: Optional[List[IEmissionsRealization]] = []
+    S3: Optional[List[IEmissionsRealization]] = []
+    S1S2S3: Optional[List[IEmissionsRealization]] = []
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -710,7 +710,7 @@ class IHistoricData(BaseModel):
                 self.emissions,
                 scope_name,
                 [
-                    IEmissionRealization(year=p.year, value=_normalize_qty(p.value, emissions_metric))
+                    IEmissionsRealization(year=p.year, value=_normalize_qty(p.value, emissions_metric))
                     for p in self.emissions[scope_name]
                 ],
             )

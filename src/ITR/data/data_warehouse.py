@@ -26,7 +26,7 @@ from ..interfaces import (
     ICompanyEIProjection,
     ICompanyEIProjections,
     IEIRealization,
-    IEmissionRealization,
+    IEmissionsRealization,
     IHistoricData,
 )
 
@@ -247,8 +247,8 @@ class DataWarehouse(ABC):
                             setattr(data, primary_scope_attr, data.S3)
 
                     if c.historic_data.emissions.S3:
-                        _adjust_historic_data(c.historic_data.emissions, "S1", IEmissionRealization.add)
-                        _adjust_historic_data(c.historic_data.emissions, "S1S2", IEmissionRealization.add)
+                        _adjust_historic_data(c.historic_data.emissions, "S1", IEmissionsRealization.add)
+                        _adjust_historic_data(c.historic_data.emissions, "S1S2", IEmissionsRealization.add)
                         c.historic_data.emissions.S3 = []
                     if c.historic_data.emissions.S1S2S3:
                         # assert c.historic_data.emissions.S1S2 == c.historic_data.emissions.S1S2S3
