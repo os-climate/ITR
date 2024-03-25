@@ -30,44 +30,151 @@ jobs:
           repository: "os-climate/devops-toolkit"
           path: ".devops"
 
-      - name: "Purge this working branch, if necessary"
-        id: remove-branch
-        continue-on-error: true
-        # Remove update-devops-tooling branch, if it exists
-        run: |
-          git branch -d update-devops-tooling || :
-          git push origin --delete update-devops-tooling || :
-
       - name: "Update repository workflows and create PR"
+        id: update-repository
         env:
           GH_TOKEN: ${{ github.token }}
+        # yamllint disable rule:line-length
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email \
-           "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "update-devops-tooling"
+          ### SHELL CODE START ###
+
+          AUTOMATION_BRANCH="update-devops-tooling"
+          REPO_DIR=$(git rev-parse --show-toplevel)
+          # Ensure working from top-level of GIT repository
+          CURRENT_DIR=$(pwd)
+          if [ "$REPO_DIR" != "$CURRENT_DIR" ]; then
+              echo "Changing directory to: $REPO_DIR"
+              if ! (cd "$REPO_DIR"); then
+                  echo "Error: unable to change directory"; exit 1
+              fi
+          fi
+
+          # Define a function to allow selective opt-out of devops tooling
+          EXCLUDE_FILE=".devops-exclusions"
+          perform_operation() {
+            ELEMENT="$1"
+            if [ "$ELEMENT" = "$EXCLUDE_FILE" ]; then
+              echo "Never to be updated by automation: $EXCLUDE_FILE"
+              return 1
+            elif [ ! -f "$EXCLUDE_FILE" ]; then
+              echo "No configuration file found: $EXCLUDE_FILE"
+              echo "All devops tooling will be imported/updated"
+            else
+              if (grep -Fxq "$ELEMENT" "$EXCLUDE_FILE"); then
+                # Element is excluded from processing
+                return 1
+              else
+                # Element should be processed
+                return 0
+              fi
+            fi
+          }
+
+          # Determine if an existing automated PR is open
+          echo "Checking if an existing automation PR is open"
+          echo "Running: gh pr list --state open --author github-actions[bot]"
+          if ! (gh pr list --state open --author 'github-actions[bot]' | \
+            grep 'no pull requests match your search in'); then
+          # Capture the existing PR number
+          PR_NUM=$(gh pr list --state open -L 1 \
+            --author 'github-actions[bot]' --json number | \
+            grep "number" | sed "s/:/ /g" | awk '{print $2}' | \
+            sed "s/}//g" | sed "s/]//g")
+          # Checkout the existing pull request
+          echo "An existing PR was found: $PR_NUM"
+          echo "Running: gh pr checkout $PR_NUM"
+          else
+            echo "Removing remote branch if it exists: $AUTOMATION_BRANCH"
+            git push origin --delete $AUTOMATION_BRANCH || :
+            git checkout -b "$AUTOMATION_BRANCH"
+          fi
+
+          # Configure GIT environment only if NOT already configured
+          # i.e. when running in a GitHub Actions workflow
+          TEST=$(git config -l > /dev/null 2>&1)
+          if [ -n "$TEST" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email \
+              "41898282+github-actions[bot]@users.noreply.github.com"
+          fi
+
           FOLDERS=".github .github/workflows scripts"
-          FILES=".pre-commit-config.yaml .prettierignore .gitignore"
           for FOLDER in ${FOLDERS}; do
+            # Check to see if operation should be skipped
+            if (perform_operation "$FOLDER"); then
               # If necessary, create target folder
               if [ ! -d "$FOLDER" ]; then
-                  mkdir "$FOLDER"
+                echo "Creating target folder: $FOLDER"
+                mkdir "$FOLDER"
               fi
               # Update folder contents
-              cp -a .devops/"$FOLDER"/. "$FOLDER"
+              echo "Updating folder contents: $FOLDER"
+              FILE_LIST=$(find .devops/"$FOLDER" -maxdepth 0 -type f)
+              for FILE in $FILE_LIST; do
+                echo "Copying: $FOLDER/$FILE into $FOLDER"
+                cp .devops/"$FOLDER"/"$FILE" "$FOLDER"
+              done
+            else
+             echo "Opted out of folder: $FOLDER"
+            continue
+            fi
           done
+
           # Copy specified files into repository root
+          FILES=".pre-commit-config.yaml .prettierignore .gitignore .devops-exclusions"
           for FILE in ${FILES}; do
+            if (perform_operation "$FILE"); then
+              echo "Copying file: $FILE"
               cp .devops/"$FILE" "$FILE"
+            else
+              echo "Opted out of file: $FILE"
+            fi
           done
+
           # If no changes required, do not throw an error
-          git status
-          if [ $? -eq 0 ]; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "No updates/changes to commit"; exit 0
+          # Next step is only performed if running as GitHub Action
+          elif [ -n "$GITHUB_OUTPUT" ]; then
+            # Set outputs for potential use by the next actions/steps
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "branchname=$BRANCHNAME" >> "$GITHUB_OUTPUT"
+            # In the GitHub Actions workflow, the next step will raise the PR
+            exit 0
           fi
+
+          # The code below to create the PR is only called when running from a shell
+          echo "Changes require that a PR be raised"
+          git status
           git add .
-          git commit -m "Chore: Update DevOps tooling from central repository"
-          git push --set-upstream origin update-devops-tooling
-          gh pr create --title \
-            "Chore: Pull DevOps tooling from upstream repository" \
-            --body 'This process automated by a GitHub workflow: bootstrap.yaml'
+          git status
+          if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip-ci]" \
+            -m "This commit created by automation/scripting" --no-verify); then
+            echo "Commit failed; aborting"; exit 1
+          else
+            git push --set-upstream origin "$AUTOMATION_BRANCH"
+            # ToDo: need to verify if we are running in a GHA
+            gh pr create --head origin/"$AUTOMATION_BRANCH" --title \
+              "Chore: Pull DevOps tooling from upstream repository" \
+              --body 'Automated by a GitHub workflow: bootstrap.yaml'
+          fi
+          ### SHELL CODE END ###
+
+      - name: Create Pull Request
+        if: steps.update-repository.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          token: ${{ github.token }}
+          commit-message: "Chore: Update DevOps tooling from central repository [skip-ci]"
+          signoff: "true"
+          base: main
+          branch: ${{ steps.update-repository.outputs.branchname }}
+          delete-branch: true
+          title: "Chore: Update DevOps tooling from central repository [skip-ci]"
+          body: |
+            Update repository with content from upstream: os-climate/devops-toolkit
+          labels: |
+            automated pr
+          draft: false

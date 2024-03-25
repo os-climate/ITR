@@ -1,5 +1,5 @@
 ---
-name: "🗒️ Build documentation"
+name: "🗒️ Build documentation (Matrix)"
 
 # yamllint disable-line rule:truthy
 on:
@@ -48,6 +48,7 @@ jobs:
 
       - name: "Build documentation: (tox/sphinx)"
         run: |
+          pip install --upgrade tox
           tox -e docs
 
       - name: "Publish documentation"
