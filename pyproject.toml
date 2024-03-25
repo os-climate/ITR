@@ -92,7 +92,7 @@ test = ["pdm[pytest]", "pytest-cov"]
 tox = ["tox", "tox-pdm>=0.5"]
 docs = ["sphinx>=7.2.6", "sphinx-copybutton>=0.5.2"]
 dev = ["tox>=4.11.3", "tox-pdm>=0.7.0"]
-lint = ["pre-commit", "pyproject-flake8"]
+lint = ["pre-commit"]
 
 [tool.pytest.ini_options]
 testpaths = [
