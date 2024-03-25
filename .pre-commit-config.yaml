@@ -59,7 +59,7 @@ repos:
 
   # Autoformat: YAML, JSON, Markdown, etc.
   - repo: https://github.com/prettier/pre-commit
-    rev: v2.2.0
+    rev: 57f39166b5a5a504d6808b87ab98d41ebf095b46
     hooks:
       - id: prettier
         args:
@@ -79,12 +79,12 @@ repos:
   #       args: ['--py37-plus']
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.1.1
+    rev: 24.3.0
     hooks:
       - id: black
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.1.1
+    rev: 24.3.0
     hooks:
       - id: black-jupyter
 
@@ -100,7 +100,7 @@ repos:
         args: ["--ignore=E006"]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
       # Optionally only show errors and warnings
@@ -123,13 +123,13 @@ repos:
       - id: isort
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.33.0
+    rev: v1.35.1
     hooks:
       - id: yamllint
         args: [--strict]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: v1.6.26.11
+    rev: v1.6.27.12
     hooks:
       - id: actionlint
 
@@ -141,7 +141,7 @@ repos:
   #     additional_dependencies: [black]
 
   - repo: https://github.com/pycqa/flake8
-    rev: "6.1.0"
+    rev: "7.0.0"
     hooks:
       - id: flake8
         entry: pflake8
@@ -154,7 +154,7 @@ repos:
   #   - id: codespell
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.8.0"
+    rev: "v1.9.0"
     hooks:
       - id: mypy
         verbose: true
