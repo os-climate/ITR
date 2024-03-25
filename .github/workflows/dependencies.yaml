@@ -1,15 +1,15 @@
 ---
-name: "⛔️ Update dependencies"
+name: "♻️ Update dependencies"
 
 # yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 8 * * FRI"
+    - cron: "0 8 1 * *"
 
 jobs:
   update-dependencies:
-    name: "Update Python modules"
+    name: "Update dependencies"
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory to raise the PR
@@ -22,15 +22,27 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
 
-      - name: Update dependencies
-        uses: ModeSevenIndustrialSolutions/update-deps-action@v1
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+
+      - name: "Update Python dependencies"
+        uses: pdm-project/update-deps-action@v1
         with:
           sign-off-commit: "true"
           token: ${{ secrets.GH_TOKEN }}
-          commit-message: "Chore: Update dependencies and pdm.lock"
+          commit-message: "Chore: Update dependencies and pdm.lock [skip ci]"
           pr-title: "Update Python module dependencies"
           update-strategy: eager
           # Whether to install PDM plugins before update
           install-plugins: "false"
+
+      - name: "Export dependencies"
+        run: |
+          pdm export --without-hashes -o requirements.txt
+
+      # Ideally, we should export requirements.txt then amend the earlier PR
+      # update-deps-action could be modified to export PR number as as output
+      # Or we add the option to export the requirements.txt in that action

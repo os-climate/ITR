@@ -1,5 +1,5 @@
 ---
-name: "🧪 Test builds (matrix)"
+name: "🧪 Test builds (Matrix)"
 
 # yamllint disable-line rule:truthy
 on:
@@ -12,14 +12,15 @@ on:
 
 jobs:
   pre-release:
-    # Don't run if pull request is NOT merged
-    # if: github.event.pull_request.merged == true
     runs-on: "ubuntu-latest"
     continue-on-error: true
+    # Don't run when pull request is merged
+    if: github.event.pull_request.merged == false
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
+
     steps:
       - name: "Populate environment variables"
         id: setenv
