@@ -24,7 +24,7 @@ jobs:
 
       - name: "Run script: python-matrix-versions.sh"
         run: |
-          pyversions=$(scripts/python-matrix-versions.sh)
+          pyversions=$(scripts/python-matrix-versions.sh double brackets)
           pyversions="[ $pyversions ]"
           echo "Matrix versions extracted from pyproject.toml: $pyversions"
           echo "matrix_versions=${pyversions}" >> "$GITHUB_OUTPUT"
