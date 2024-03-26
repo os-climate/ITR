@@ -11,35 +11,41 @@ on:
       - "!update-devops-tooling"
 
 jobs:
-  get-matrix-versions:
+  parse-project-metadata:
+    name: "Extract build metadata"
+
     runs-on: "ubuntu-latest"
     # Don't run when pull request is merged
     if: github.event.pull_request.merged == false
     outputs:
-      pyversions: ${{ env.pyversions }}
+      matrix: ${{ steps.fetch-python-versions.outputs.matrix }}
 
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      - name: "Run script: python-matrix-versions.sh"
+      - id: fetch-python-versions
+        name: "Determine Python versions for matrix jobs"
         run: |
-          pyversions=$(scripts/python-matrix-versions.sh double brackets)
-          pyversions="[ $pyversions ]"
-          echo "Matrix versions extracted from pyproject.toml: $pyversions"
-          echo "matrix_versions=${pyversions}" >> "$GITHUB_OUTPUT"
+          data=$(scripts/python-matrix-versions.sh double brackets)
+          echo "Matrix versions extracted from pyproject.toml: $data"
+          matrix="{\"python-version\": $data}"
+          echo "Pretty formatted:"
+          if ! (echo "$matrix" | jq); then
+            echo "WARNING: expected output may not be valid JSON"
+          fi
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
-  pre-release:
-    needs: [get-matrix-versions]
+  test-builds:
+    name: "Perform build: Python"
+    needs: [parse-project-metadata]
     runs-on: "ubuntu-latest"
     continue-on-error: true
     # Don't run when pull request is merged
     if: github.event.pull_request.merged == false
     strategy:
       fail-fast: false
-      matrix:
-        # yamllint disable-line rule:line-length
-        python-version: ["${{ needs.get-matrix-versions.outputs.pyversions }}"]
+      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
 
     steps:
       - name: "Populate environment variables"
