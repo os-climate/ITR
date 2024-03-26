@@ -144,6 +144,7 @@ repos:
     rev: "7.0.0"
     hooks:
       - id: flake8
+        args: ["--extend-ignore=E203,E501", --max-line-length=160]
 
   # Check for misspells in documentation files:
   # - repo: https://github.com/codespell-project/codespell

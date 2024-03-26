@@ -305,7 +305,8 @@ def test_warehouse(base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVault
     )
 
     ser_from_vault = read_quantified_sql(
-        f"select year, ei_s1s2_by_year, ei_s1s2_by_year_units from {vault_warehouse_x._target_table} where company_id='{company_0_id}' order by year",
+        f"select year, ei_s1s2_by_year, ei_s1s2_by_year_units from \
+        {vault_warehouse_x._target_table} where company_id='{company_0_id}' order by year",
         vault_warehouse_x._target_table,
         vault.engine,
         vault.schema,
@@ -324,7 +325,8 @@ def test_warehouse(base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVault
     company_proj_production.index.set_names(["company_id", "year"], inplace=True)
     company_proj_production.name = "production_by_year"
     ser_from_vault = read_quantified_sql(
-        f"select company_id, year, production_by_year, production_by_year_units from {vault_warehouse_x._production_table} where company_id='{company_0_id}' order by year",
+        f"select company_id, year, production_by_year, production_by_year_units from \
+        {vault_warehouse_x._production_table} where company_id='{company_0_id}' order by year",
         vault_warehouse_x._production_table,
         vault.engine,
         vault.schema,
@@ -340,7 +342,8 @@ def test_warehouse(base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVault
     company_0_cumulative_em.name = "cumulative_target"
 
     df_from_vault = read_quantified_sql(
-        f"select company_id, scope, year, cumulative_target, cumulative_target_units from {vault_warehouse_x._emissions_table} where company_id='{company_0_id}' order by year",
+        f"select company_id, scope, year, cumulative_target, cumulative_target_units from \
+        {vault_warehouse_x._emissions_table} where company_id='{company_0_id}' order by year",
         f"{itr_prefix}cumulative_emissions",
         vault.engine,
         vault.schema,
