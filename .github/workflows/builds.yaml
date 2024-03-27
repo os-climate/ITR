@@ -12,32 +12,12 @@ on:
 
 jobs:
   parse-project-metadata:
-    name: "Extract build metadata"
-
-    runs-on: "ubuntu-latest"
-    # Don't run when pull request is merged
-    if: github.event.pull_request.merged == false
-    outputs:
-      matrix: ${{ steps.fetch-python-versions.outputs.matrix }}
-
-    steps:
-      - name: "Checkout repository"
-        uses: actions/checkout@v4
-
-      - id: fetch-python-versions
-        name: "Determine Python versions for matrix jobs"
-        run: |
-          data=$(scripts/python-matrix-versions.sh double brackets)
-          echo "Matrix versions extracted from pyproject.toml: $data"
-          matrix="{\"python-version\": $data}"
-          echo "Pretty formatted:"
-          if ! (echo "$matrix" | jq); then
-            echo "WARNING: expected output may not be valid JSON"
-          fi
-          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+    name: "Determine Python versions"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
 
   test-builds:
-    name: "Perform build: Python"
+    name: "Build: Python"
     needs: [parse-project-metadata]
     runs-on: "ubuntu-latest"
     continue-on-error: true
