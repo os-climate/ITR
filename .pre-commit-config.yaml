@@ -51,6 +51,7 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: name-tests-test
+        args: ["--pytest-test-first"]
       # Do not allow direct push to main/master branches
       - id: no-commit-to-branch
       # - id: pretty-format-json
@@ -63,7 +64,7 @@ repos:
     hooks:
       - id: prettier
         args:
-          ['--ignore-unknown', '--no-error-on-unmatched-pattern', '!chart/**']
+          ['--no-error-on-unmatched-pattern', '--ignore-unknown']
 
   # Lint: Markdown
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -97,7 +98,7 @@ repos:
     rev: 2.1.1
     hooks:
       - id: bashate
-        args: ["--ignore=E006"]
+        args: ["--ignore=E006,E011"]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.10.0.1
@@ -121,6 +122,7 @@ repos:
     rev: 5.13.2
     hooks:
       - id: isort
+        args: ["--profile", "black"]
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
@@ -144,7 +146,6 @@ repos:
     rev: "7.0.0"
     hooks:
       - id: flake8
-        args: ["--extend-ignore=E203,E501", --max-line-length=160]
 
   # Check for misspells in documentation files:
   # - repo: https://github.com/codespell-project/codespell
@@ -158,4 +159,4 @@ repos:
       - id: mypy
         verbose: true
         args: [--show-error-codes]
-        additional_dependencies: ["types-requests"]
+        additional_dependencies: ["pytest", "types-requests"]

@@ -16,15 +16,21 @@ on:
       - "!update-devops-tooling"
 
 jobs:
+
+  parse-project-metadata:
+    name: "Determine Python versions"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/devops-reusable-workflows/.github/workflows/pyproject-toml-fetch-matrix.yaml@main
+
   build:
     name: "Audit Python dependencies"
+    needs: [parse-project-metadata]
     runs-on: ubuntu-latest
     # Don't run when pull request is merged
     if: github.event.pull_request.merged == false
     strategy:
       fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+      matrix: ${{ fromJson(needs.parse-project-metadata.outputs.matrix) }}
 
     steps:
       - name: "Checkout repository"
