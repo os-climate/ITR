@@ -69,7 +69,8 @@ def dequantify_df(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([dequantify_column(df[col]) for col in df.columns], axis=1)
 
 
-# Because this DF comes from reading a Trino table, and because columns must be unqiue, we don't have to enumerate to ensure we properly handle columns with duplicated names
+# Because this DF comes from reading a Trino table, and because columns must be unique,
+# we don't have to enumerate to ensure we properly handle columns with duplicated names
 def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
     units_col = None
     columns_not_found = [k for k in typemap.keys() if k not in df.columns]
@@ -125,10 +126,11 @@ class VaultInstance(ABC):
         hive_schema: Optional[str] = None,
     ):
         """
-        As an alternative to using FastAPI interfaces, this creates an interface allowing access to Production benchmark data via the Data Vault.
-        :param engine: the Sqlalchemy connect to the Data Vault
+        As an alternative to using FastAPI interfaces, this creates an interface allowing access to Production
+        benchmark data via the Data Vault. :param engine: the Sqlalchemy connect to the Data Vault
         :param schema: The database schema where the Data Vault lives
-        :param hive_bucket, hive_catalog, hive_schema: Optional parameters to enable fast ingestion via Hive; otherwise uses Trino batch insertion (which is slow)
+        :param hive_bucket, hive_catalog, hive_schema: Optional parameters to enable fast ingestion via Hive;
+        otherwise uses Trino batch insertion (which is slow)
         """
         super().__init__()
         self.engine = engine
@@ -154,7 +156,9 @@ def create_vault_table_from_df(
     :param schemaname: The schema where the table should be written
     :param tablename: The name of the table in the Data Vault
     :param engine: The SqlAlchemy connection to the Data Vault
-    :param hive_bucket: :param hive_catalog: :param hive_schema: Optional paramters.  If given we attempt to use a fast Hive ingestion process.  Otherwise use default (and slow) Trino ingestion.
+    :param hive_bucket: :param hive_catalog: :param hive_schema: Optional paramters.
+    # If given we attempt to use a fast Hive ingestion process.
+    # Otherwise use default (and slow) Trino ingestion.
     :param verbose: If True, log information about actions of the Data Vault as they happen
     """
     drop_table = f"drop table if exists {vault.schema}.{tablename}"
@@ -197,7 +201,8 @@ def create_vault_table_from_df(
 # When reading SQL tables to import into DataFrames, it is up to the user to preserve {COL}, {COL}_units pairings so they can be reconstructed.
 # If the user does a naive "select * from ..." this happens naturally.
 # We can give a warning when we see a resulting dataframe that could have, but does not have, unit information properly integrated.  But
-# fixing the query on the fly becomes difficult when we consider the fully complexity of parsing and rewriting SQL queries to put the units columns in the correct locations.
+# fixing the query on the fly becomes difficult when we consider the fully complexity of parsing and
+# rewriting SQL queries to put the units columns in the correct locations.
 # (i.e., properly in the principal SELECT clause (which can have arbitrarily complex terms), not confused by FROM, WHERE, GROUP BY, ORDER BY, etc.)
 
 
@@ -226,7 +231,7 @@ def read_quantified_sql(
             ]
             for col_tuple in extra_unit_columns_positions:
                 logger.error(
-                    f"Missing units column '{col_tuple[2]}' after original column '{sql_df.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)"
+                    f"Missing units column '{col_tuple[2]}' after original column '{sql_df.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)"  # noqa: E501
                 )
             raise ValueError
     return requantify_df(sql_df).convert_dtypes()
@@ -241,7 +246,8 @@ def read_quantified_sql(
 
 # Basic Benchmark Data Assumptions
 #   EI for a given scope
-#   Production defined in terms of growth (or negative growth) on a rolling basis (so 0.05, -0.04) would mean 5% growth followed by 4% negative growth for a total of 0.8%
+#   Production defined in terms of growth (or negative growth) on a rolling basis
+# (so 0.05, -0.04) would mean 5% growth followed by 4% negative growth for a total of 0.8%
 #   Benchmarks are named (e.g., 'OECM')
 
 
@@ -746,7 +752,7 @@ class VaultCompanyDataProvider(BaseCompanyDataProvider):
             elif scope == EScope.S1S2:
                 factor_sql = "select company_id, sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year))"
             elif scope == EScope.S1S2:
-                factor_sql = "select company_id, sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)+if(is_nan(co2_s3_by_year),0.0,co2_s3_by_year))"
+                factor_sql = "select company_id, sum(co2_s1_by_year+if(is_nan(co2_s2_by_year),0.0,co2_s2_by_year)+if(is_nan(co2_s3_by_year),0.0,co2_s3_by_year))"  # noqa: E501
             else:
                 raise ValueError(f"scope {scope} not supported")
         else:
@@ -792,13 +798,15 @@ class DataVaultWarehouse(DataWarehouse):
             -> { cumulative_budgets, cumulative_emissions }
 
         :param engine: The Sqlalchemy connector to the Data Vault
-        :param company_data: as a VaultCompanyDataProvider, this provides both a reference to a fundamental company data table and data structures containing historic ESG data.  Trajectory and Target projections also get filled in here.
+        :param company_data: as a VaultCompanyDataProvider, this provides both a reference to a fundamental
+        company data table and data structures containing historic ESG data.  Trajectory and Target projections also get filled in here.
         :param benchmark_projected_production: A reference to the benchmark production table as well as data structures used by the Data Vault for projections
         :param benchmark_projected_ei: A reference to the benchmark emissions intensity table as well as data structures used by the Data Vault for projections
         :param estimate_missing_data: If provided, a function that can fill in missing S3 data (possibly by aligning to benchmark statistics)
         :param ingest_schema: The database schema where the Data Vault lives
         :param itr_prefix: A prefix for all tables so that different users can use the same schema without conflicts
-        :param hive_bucket: :param hive_catalog: :param hive_schema: Optional paramters.  If given we attempt to use a fast Hive ingestion process.  Otherwise use default (and slow) Trino ingestion.
+        :param hive_bucket: :param hive_catalog: :param hive_schema: Optional paramters.  If given we attempt to use a
+        fast Hive ingestion process.  Otherwise use default (and slow) Trino ingestion.
         """
         # This initialization step adds trajectory and target projections to `company_data`
         super().__init__(
@@ -981,7 +989,7 @@ select C.company_name, C.company_id, '{self._v.schema}' as source, P.year,  -- F
 from {self._v.schema}.{self._company_table} C
      join P_BY on P_BY.company_id=C.company_id
      join {self._v.schema}.{self._production_table} P on P.company_id=C.company_id
-     join {self._v.schema}.{self._benchmarks_ei_name} B on P.year=B.year and C.sector=B.sector and B.region=if(C.region in ('North America', 'Europe'), C.region, 'Global')
+     join {self._v.schema}.{self._benchmarks_ei_name} B on P.year=B.year and C.sector=B.sector and B.region=if(C.region in ('North America', 'Europe'), C.region, 'Global')  # noqa: E501
      join {self._v.schema}.{self._emissions_table} CE on CE.company_id=C.company_id and B.scope=CE.scope and CE.year=P.year
      join {self._v.schema}.{self._emissions_table} CE_BY on CE_BY.company_id=C.company_id and CE_BY.scope=B.scope and CE_BY.year=P_BY.base_year
      join {self._v.schema}.{self._benchmarks_ei_name} B_BY on B.scope=B_BY.scope and B.region=B_BY.region and B.sector=B_BY.sector and B_BY.year=P_BY.base_year
@@ -1069,7 +1077,7 @@ from {self._v.schema}.{itr_prefix}overshoot_ratios R
         if probability < 0 or probability > 1:
             raise ValueError(f"probability value {probability} outside range [0.0, 1.0]")
         temp_scores = read_quantified_sql(
-            "select company_id, scope, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units, year"
+            "select company_id, scope, target_temperature_score, target_temperature_score_units, trajectory_temperature_score, trajectory_temperature_score_units, year"  # noqa: E501
             f" from {self._tempscore_table}  where scope='{scope.name}' and year={year}",
             None,
             self._v.engine,

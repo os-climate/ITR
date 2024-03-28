@@ -61,7 +61,8 @@ def is_pint_dict_equal(result: List[dict], reference: List[dict]) -> bool:
                             ):
                                 print(f"{k} differ for scope {scope}")
                                 print(
-                                    f"computed {k}:\n{json.dumps(vproj, cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref[scope]['projections'], cls=ITR_Encoder)}\n\n"
+                                    #
+                                    f"computed {k}:\n{json.dumps(vproj, cls=ITR_Encoder)}\n\nreference {k}:\n{json.dumps(vref[scope]['projections'], cls=ITR_Encoder)}\n\n"  # noqa: E501
                                 )
                                 is_equal = False
                         elif v.get(scope):

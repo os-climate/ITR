@@ -913,9 +913,12 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         ]
         if target_list:
             with warnings.catch_warnings():
-                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores the beautiful dtype information adorning the pd.Series list elements we are providing.  Sad!
+                # pd.DataFrame.__init__ (in pandas/core/frame.py) ignores
+                # the beautiful dtype information adorning the pd.Series list
+                # elements we are providing.  Sad!
                 warnings.simplefilter("ignore")
-                # If target_list produces a ragged left edge, resort columns so that earliest year is leftmost
+                # If target_list produces a ragged left edge,
+                # resort columns so that earliest year is leftmost
                 df = pd.DataFrame(target_list).sort_index(axis=1)
                 df.index.set_names(["company_id", "scope"], inplace=True)
                 if year is not None:
@@ -1046,7 +1049,8 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 for sector in sectors
             ]
 
-            # Having done all scopes and sectors for this company above, replace historic Em and EI data below
+            # Having done all scopes and sectors for this company above,
+            # replace historic Em and EI data below
             for sector_aligned in aligned_em:
                 sector, scopes = sector_aligned
                 historic_sector = historic_dict["+".join([orig_id, sector])]
@@ -1157,7 +1161,8 @@ class EITrajectoryProjector(EIProjector):
             if ITR.HAS_UNCERTAINTIES:
                 historic_ei_t = historic_ei_t.map(lambda x: np.nan if ITR.isna(x) else x)
             backfilled_t = historic_ei_t.bfill(axis=0)
-            # FIXME: this hack causes backfilling only on dates on or after the first year of the benchmark, which keeps it from disrupting current test cases
+            # FIXME: this hack causes backfilling only on dates on or after the
+            # first year of the benchmark, which keeps it from disrupting current test cases
             # while also working on real-world use cases.  But we need to formalize this decision.
             backfilled_t = backfilled_t.reset_index()
             backfilled_t = backfilled_t.where(
@@ -1167,7 +1172,8 @@ class EITrajectoryProjector(EIProjector):
             backfilled_t.set_index("year", inplace=True)
             if not historic_ei_t.compare(backfilled_t).empty:
                 logger.warning(
-                    f"some data backfilled to {self.projection_controls.BASE_YEAR} for company_ids in list {historic_ei_t.compare(backfilled_t).columns.get_level_values('company_id').unique().tolist()}"
+                    f"some data backfilled to {self.projection_controls.BASE_YEAR} for company_ids in list \
+                    {historic_ei_t.compare(backfilled_t).columns.get_level_values('company_id').unique().tolist()}"
                 )
                 historic_ei_t = backfilled_t.sort_index(axis=1)
                 for company in companies:
@@ -1803,7 +1809,9 @@ class EITargetProjector(EIProjector):
                         if target_i.target_start_year >= target_a.target_start_year:
                             if target_i.target_start_year == target_a.target_start_year:
                                 warnings.warn(
-                                    f"intensity target overrides absolute target for target_start_year={target_i.target_start_year} and target_end_year={target_i.target_end_year}"
+                                    f"intensity target overrides absolute target for \
+                                    target_start_year={target_i.target_start_year} and \
+                                    target_end_year={target_i.target_end_year}"
                                 )
                             scope_targets_absolute.pop(0)
                             scope_targets = scope_targets_intensity
