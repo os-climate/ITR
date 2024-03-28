@@ -1,5 +1,5 @@
 ---
-name: "🗒️ Build documentation (Matrix)"
+name: "📘 Documentation build/publish"
 
 # yamllint disable-line rule:truthy
 on:
@@ -12,28 +12,27 @@ on:
 
 jobs:
   build_and_deploy:
-    # Don't run if pull request is NOT merged
+    # Only run when pull request is merged
     if: github.event.pull_request.merged == true
     name: "Rebuild documentation"
     runs-on: ubuntu-latest
     continue-on-error: true
-    strategy:
-      matrix:
-        python-version: ["3.11"]
+
     permissions:
       # IMPORTANT: mandatory for documentation updates; used in final step
       id-token: write
       pull-requests: write
       contents: write
       repository-projects: write
+
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      - name: "Set up Python ${{ matrix.python-version }}"
+      - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
 
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
