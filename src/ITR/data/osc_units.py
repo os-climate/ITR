@@ -656,7 +656,9 @@ def requantify_df_from_columns(df: pd.DataFrame, inplace=False) -> pd.DataFrame:
     :param df: pd.DataFrame
     :param inplace: bool, default False.  If True, perform operation in-place.
 
-    :return: A pd.DataFrame with columns originally matching the pattern COLUMN_NAME [UNITS] renamed to COLUMN_NAME and replaced with a PintArray with dtype=ureg(UNITS) (aka 'pint[UNITS]')
+    :return: A pd.DataFrame with columns originally matching the pattern
+    COLUMN_NAME [UNITS] renamed to COLUMN_NAME and replaced with a PintArray
+    with dtype=ureg(UNITS) (aka 'pint[UNITS]')
     """
     p = re.compile(r"^(.*)\s*\[(.*)\]\s*$")
     if not inplace:

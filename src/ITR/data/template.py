@@ -379,9 +379,12 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 )
                 .loc[:, esg_year_columns]
             )
-            # Now we have to reconcile the fact that production submetrics/boundaries may or may not align with emissions(intensity) submetrics/boundaries
-            # There are two cases we handle: (1) unique production rows match all intensity rows, and (2) production rows with submetrics match intensity rows with same submetrics
-            # There may be intensities for multiple scopes, which all multiply against the same production number but which produce per-scope emissions values
+            # Now we have to reconcile the fact that production submetrics/boundaries may
+            # or may not align with emissions(intensity) submetrics/boundaries
+            # There are two cases we handle: (1) unique production rows match all intensity rows,
+            # and (2) production rows with submetrics match intensity rows with same submetrics
+            # There may be intensities for multiple scopes, which all multiply against the same
+            # production number but which produce per-scope emissions values
             df1_case1 = (
                 df1[df1.sub_count == 1]
                 .droplevel("submetric")
@@ -545,11 +548,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
         if self.template_version == 2:
             # Ensure our df_esg rows connect back to fundamental data
-            # the one single advantage of template_version==1 is that fundamental data and esg data are all part of the same rows so no need to do this integrity check/correction
+            # the one single advantage of template_version==1 is that
+            # fundamental data and esg data are all part of the same rows
+            # so no need to do this integrity check/correction
             esg_missing_fundamentals = ~df_esg.company_id.isin(df_fundamentals.index)
             if esg_missing_fundamentals.any():
                 logger.error(
-                    f"The following companies have ESG data defined but no fundamental data and will be removed from further analysis:\n{df_esg[esg_missing_fundamentals].company_id.unique()}"
+                    f"The following companies have ESG data defined but no fundamental data and will be removed from further analysis:\n{df_esg[esg_missing_fundamentals].company_id.unique()}"  # noqa: E501
                 )
                 df_esg = df_esg[~esg_missing_fundamentals]
 
@@ -919,7 +924,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             em_invalid_idx = em_invalid[em_invalid].index
             if len(em_invalid_idx) > 0:
                 logger.error(
-                    f"The following rows of data do not have proper emissions data (can be converted to t CO2e) and will be dropped from the analysis\n{df_esg.loc[em_invalid_idx]}"
+                    f"The following rows of data do not have proper emissions data (can be converted to t CO2e) and will be dropped from the analysis\n{df_esg.loc[em_invalid_idx]}"  # noqa: E501
                 )
                 df_esg = df_esg.loc[df_esg.index.difference(em_invalid_idx)]
                 em_metrics = em_metrics.loc[em_metrics.index.difference(em_invalid_idx)]
@@ -1166,9 +1171,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     # Shift out of general (case_1) and leave in specific (case_2)
                     case_1 = case_1.loc[~case_1.index.isin(case_3.index)]
 
-                # Case 4: case_1 scopes containing case_2 scopes that need to be removed before remaining scopes can be allocated
-                # Example: We have S1 allocated to electricity and gas, but S2 and S3 are general.  To allocate S1S2S3 we need to subtract out S1, allocate remaining to S2 and S3 across Electricity and Gas sectors
-                # Eni's Plenitude and power is an example where S1S2S3 > S1+S2+S3 (due to lifecycle emissions concept).  FIXME: don't know how to deal with that!
+                # Case 4: case_1 scopes containing case_2 scopes that need to be removed before
+                # remaining scopes can be allocated
+                # Example: We have S1 allocated to electricity and gas, but S2 and S3 are general.
+                # To allocate S1S2S3 we need to subtract out S1, allocate remaining to S2 and S3
+                # across Electricity and Gas sectors
+                # Eni's Plenitude and power is an example where S1S2S3 > S1+S2+S3 (due to lifecycle emissions concept).
+                # FIXME: don't know how to deal with that!
                 case_4_df = case_1.reset_index("metric").merge(
                     case_2.reset_index("metric"),
                     on=["sector", "company_id"],
@@ -1179,7 +1188,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 )
                 if not case_4.empty:
                     logger.error(
-                        f"Dropping attempt to disentangle embedded submetrics found in sector/scope assignment dataframe:\n{best_esg_em.submetric[case_4.index]}"
+                        f"Dropping attempt to disentangle embedded submetrics found in sector/scope assignment dataframe:\n{best_esg_em.submetric[case_4.index]}"  # noqa: E501
                     )
                     case_1 = case_1.loc[~case_1.index.isin(case_4.index)]
 
@@ -1400,7 +1409,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # And keep df_fundamentals in sync
         self.df_fundamentals = df_fundamentals
 
-        # company_id, netzero_year, target_type, target_scope, target_start_year, target_base_year, target_base_year_qty, target_base_year_unit, target_year, target_reduction_ambition
+        # company_id, netzero_year, target_type, target_scope, target_start_year,
+        # target_base_year, target_base_year_qty, target_base_year_unit, target_year,
+        # target_reduction_ambition
         return self._company_df_to_model(None, df_target_data, df_historic_data)
 
     def _validate_target_data(self, target_data: pd.DataFrame) -> pd.DataFrame:
@@ -1464,7 +1475,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         mask = target_data["netzero_year"] > ProjectionControls.TARGET_YEAR
         if mask.any():
             c_ids_invalid_netzero_year = unique_ids(mask)
-            warning_message = f"Invalid net-zero target years (>{ProjectionControls.TARGET_YEAR}) are entered for companies with ID: {c_ids_invalid_netzero_year}"
+            warning_message = f"Invalid net-zero target years (>{ProjectionControls.TARGET_YEAR}) are entered for companies with ID: {c_ids_invalid_netzero_year}"  # noqa: E501
             logger.warning(warning_message)
             target_data = target_data[~mask]
 
