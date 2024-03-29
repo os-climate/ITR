@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from typing import List
 from unittest import TestCase
 
@@ -661,11 +662,4 @@ def test_ch4_gwp(template_V2_S3: TemplateV2):
 
 
 if __name__ == "__main__":
-    test_PC = template_V2_PC()
-    test_PC.setUp()
-    test_PC.test_temp_score()
-    test_PC.test_target_projections()
-    test_PC.test_get_company_data()
-
-    test_S3 = template_V2_S3()
-    test_S3.setUp()
+    sys.exit(pytest.main())
