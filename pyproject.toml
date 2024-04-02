@@ -1,6 +1,6 @@
 [project]
 name = "ITR"
-version = "v1.1.3"
+version = "v1.1.4"
 description = "Assess the temperature alignment of current targets, commitments, and investment and lending portfolios."
 authors = [
   { name = "Michael Tiemann", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" },
