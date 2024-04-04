@@ -12,7 +12,7 @@ jobs:
     name: "Update DevOps tooling"
     runs-on: ubuntu-latest
     permissions:
-      # IMPORTANT: mandatory to update content/actions/PRs
+      # IMPORTANT: mandatory to create or update content/actions/pr
       contents: write
       actions: write
       pull-requests: write
@@ -20,9 +20,6 @@ jobs:
     steps:
       - name: "Checkout primary repository"
         uses: actions/checkout@v4
-        with:
-          # Note: Requires a specific/defined Personal Access Token
-          token: ${{ secrets.ACTIONS_WORKFLOW }}
 
       - name: "Pull workflows from central repository"
         uses: actions/checkout@v4
@@ -38,7 +35,7 @@ jobs:
         run: |
           ### SHELL CODE START ###
 
-          # set -x
+          set -xeu -o pipefail
 
           # Define variables
 
@@ -275,7 +272,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          token: ${{ github.token }}
+          # Note: Requires a specific/defined Personal Access Token
+          token: ${{ secrets.ACTIONS_WORKFLOW }}
           commit-message: "Chore: Update DevOps tooling from central repository [skip-ci]"
           signoff: "true"
           base: main
