@@ -73,7 +73,7 @@ jobs:
             # Receives a single file path as argument
             if (perform_operation "$1"); then
               SHA_SRC=$(sha1sum $DEVOPS_DIR/"$1" | awk '{print $1}')
-              SHA_DST=$(sha1sum "$1" | awk '{print $1}')
+              SHA_DST=$(sha1sum "$1" 2>/dev/null | awk '{print $1}' 2>/dev/null)
               if [ "$SHA_SRC" != "$SHA_DST" ]; then
                 echo "Copying: $1"
                 cp "$DEVOPS_DIR/$1" "$1"
@@ -110,6 +110,10 @@ jobs:
             # Define users to check for pre-existing pull requests
             AUTOMATION_USER="github-actions[bot]"
             GITHUB_USERS=$(gh api user | jq -r '.login')
+            if [ "$GITHUB_USERS" = "$AUTOMATION_USER" ]; then
+              echo "Script is running in Github"
+              GITHUB_USERS="$AUTOMATION_USER"
+            fi
             # Check local user account first, if enumerated
             GITHUB_USERS+=" $AUTOMATION_USER"
 
