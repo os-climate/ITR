@@ -44,6 +44,7 @@ jobs:
 
           DEVOPS_DIR=".devops"
           AUTOMATION_BRANCH="update-devops-tooling"
+          echo "AUTOMATION_BRANCH=$AUTOMATION_BRANCH" >> "$GITHUB_OUTPUT"
           REPO_DIR=$(git rev-parse --show-toplevel)
           EXCLUDE_FILE=".devops-exclusions"
           DEVOPS_REPO='git@github.com:os-climate/devops-toolkit.git'
@@ -233,19 +234,20 @@ jobs:
           set +eu +o pipefail
 
           # Next step is only performed if running as GitHub Action
-          if [ -n "$GITHUB_OUTPUT" ]; then
-            # Set outputs for potential use by the next actions/steps
+          if [[ -n ${GH_TOKEN+x} ]]; then
+            # Script is running in a GitHub Acsions workflow
+            # Set outputs for use by the next actions/steps
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "branchname=$BRANCHNAME" >> "$GITHUB_OUTPUT"
-            # In the GitHub Actions workflow, the next step will raise the PR
+            # Move to the next workflow step to raise the PR
             exit 0
           fi
+
+          # If running shell code locally, continue to raise the PR
 
           # Reinstate exit on unbound variables
           set -eu -o pipefail
 
-          # The code below to create the PR is only called when running from a shell
-          echo "Changes require that a PR be raised:"
           git status
           if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip-ci]" \
             -m "This commit created by automation/scripting" --no-verify); then
