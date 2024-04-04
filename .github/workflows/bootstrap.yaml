@@ -44,7 +44,6 @@ jobs:
 
           DEVOPS_DIR=".devops"
           AUTOMATION_BRANCH="update-devops-tooling"
-          echo "AUTOMATION_BRANCH=$AUTOMATION_BRANCH" >> "$GITHUB_OUTPUT"
           REPO_DIR=$(git rev-parse --show-toplevel)
           EXCLUDE_FILE=".devops-exclusions"
           DEVOPS_REPO='git@github.com:os-climate/devops-toolkit.git'
@@ -110,13 +109,13 @@ jobs:
           check_authors() {
             # Define users to check for pre-existing pull requests
             AUTOMATION_USER="github-actions[bot]"
-            GITHUB_USERS=$(gh api user | jq -r '.login')
-            if [ "$GITHUB_USERS" = "$AUTOMATION_USER" ]; then
-              echo "Script is running in Github"
+            if [[ -n ${GH_TOKEN+x} ]]; then
               GITHUB_USERS="$AUTOMATION_USER"
+            else
+              GITHUB_USERS=$(gh api user | jq -r '.login')
+              # Check local user account first, if enumerated
+              GITHUB_USERS+=" $AUTOMATION_USER"
             fi
-            # Check local user account first, if enumerated
-            GITHUB_USERS+=" $AUTOMATION_USER"
 
             # Check for existing pull requests opened by this automation
             for USER in $GITHUB_USERS; do
@@ -238,7 +237,7 @@ jobs:
             # Script is running in a GitHub Acsions workflow
             # Set outputs for use by the next actions/steps
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "branchname=$BRANCHNAME" >> "$GITHUB_OUTPUT"
+            echo "branchname=$AUTOMATION_BRANCH" >> "$GITHUB_OUTPUT"
             # Move to the next workflow step to raise the PR
             exit 0
           fi
