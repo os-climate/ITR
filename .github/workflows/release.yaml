@@ -36,7 +36,7 @@ jobs:
           python-version: ${{ env.python-version }}
 
       - name: "Setup PDM for build commands"
-        uses: pdm-project/setup-pdm@v3
+        uses: pdm-project/setup-pdm@v4
 
       - name: "Update version from tags for production release"
         run: |
@@ -158,7 +158,7 @@ jobs:
           rm dist/*.sigstore
 
       - name: "Setup PDM for build commands"
-        uses: pdm-project/setup-pdm@v3
+        uses: pdm-project/setup-pdm@v4
 
       - name: "Publish release to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
