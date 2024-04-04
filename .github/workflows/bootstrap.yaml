@@ -245,7 +245,7 @@ jobs:
           set -eu -o pipefail
 
           git status
-          if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip-ci]" \
+          if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip ci]" \
             -m "This commit created by automation/scripting" --no-verify); then
             echo "Commit failed; aborting"; exit 1
           else
@@ -274,12 +274,12 @@ jobs:
         with:
           # Note: Requires a specific/defined Personal Access Token
           token: ${{ secrets.ACTIONS_WORKFLOW }}
-          commit-message: "Chore: Update DevOps tooling from central repository [skip-ci]"
+          commit-message: "Chore: Update DevOps tooling from central repository [skip ci]"
           signoff: "true"
           base: main
           branch: ${{ steps.update-repository.outputs.branchname }}
           delete-branch: true
-          title: "Chore: Update DevOps tooling from central repository [skip-ci]"
+          title: "Chore: Update DevOps tooling from central repository [skip ci]"
           body: |
             Update repository with content from upstream: os-climate/devops-toolkit
           labels: |
