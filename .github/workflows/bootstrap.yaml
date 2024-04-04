@@ -243,7 +243,7 @@ jobs:
           # The code below to create the PR is only called when running from a shell
           echo "Changes require that a PR be raised:"
           git status
-          if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip-ci]" \
+          if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip ci]" \
             -m "This commit created by automation/scripting" --no-verify); then
             echo "Commit failed; aborting"; exit 1
           else
@@ -270,13 +270,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          token: ${{ github.token }}
-          commit-message: "Chore: Update DevOps tooling from central repository [skip-ci]"
+          # Note: Requires a specific/defined Personal Access Token
+          token: ${{ secrets.ACTIONS_WORKFLOW }}
+          commit-message: "Chore: Update DevOps tooling from central repository [skip ci]"
           signoff: "true"
           base: main
           branch: ${{ steps.update-repository.outputs.branchname }}
           delete-branch: true
-          title: "Chore: Update DevOps tooling from central repository [skip-ci]"
+          title: "Chore: Update DevOps tooling from central repository [skip ci]"
           body: |
             Update repository with content from upstream: os-climate/devops-toolkit
           labels: |
