@@ -12,7 +12,7 @@ jobs:
     name: "Update DevOps tooling"
     runs-on: ubuntu-latest
     permissions:
-      # IMPORTANT: mandatory to create or update content/actions/pr
+      # IMPORTANT: mandatory to update content/actions/PRs
       contents: write
       actions: write
       pull-requests: write
@@ -20,6 +20,9 @@ jobs:
     steps:
       - name: "Checkout primary repository"
         uses: actions/checkout@v4
+        with:
+          # Note: Requires a specific/defined Personal Access Token
+          token: ${{ secrets.ACTIONS_WORKFLOW }}
 
       - name: "Pull workflows from central repository"
         uses: actions/checkout@v4
@@ -35,7 +38,7 @@ jobs:
         run: |
           ### SHELL CODE START ###
 
-          set -xeu -o pipefail
+          # set -x
 
           # Define variables
 
@@ -70,7 +73,7 @@ jobs:
             # Receives a single file path as argument
             if (perform_operation "$1"); then
               SHA_SRC=$(sha1sum $DEVOPS_DIR/"$1" | awk '{print $1}')
-              SHA_DST=$(sha1sum "$1" 2>/dev/null | awk '{print $1}' || :)
+              SHA_DST=$(sha1sum "$1" | awk '{print $1}')
               if [ "$SHA_SRC" != "$SHA_DST" ]; then
                 echo "Copying: $1"
                 cp "$DEVOPS_DIR/$1" "$1"
@@ -106,13 +109,9 @@ jobs:
           check_authors() {
             # Define users to check for pre-existing pull requests
             AUTOMATION_USER="github-actions[bot]"
-            if [[ -n ${GH_TOKEN+x} ]]; then
-              GITHUB_USERS="$AUTOMATION_USER"
-            else
-              GITHUB_USERS=$(gh api user | jq -r '.login')
-              # Check local user account first, if enumerated
-              GITHUB_USERS+=" $AUTOMATION_USER"
-            fi
+            GITHUB_USERS=$(gh api user | jq -r '.login')
+            # Check local user account first, if enumerated
+            GITHUB_USERS+=" $AUTOMATION_USER"
 
             # Check for existing pull requests opened by this automation
             for USER in $GITHUB_USERS; do
@@ -230,20 +229,19 @@ jobs:
           set +eu +o pipefail
 
           # Next step is only performed if running as GitHub Action
-          if [[ -n ${GH_TOKEN+x} ]]; then
-            # Script is running in a GitHub Acsions workflow
-            # Set outputs for use by the next actions/steps
+          if [ -n "$GITHUB_OUTPUT" ]; then
+            # Set outputs for potential use by the next actions/steps
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "branchname=$AUTOMATION_BRANCH" >> "$GITHUB_OUTPUT"
-            # Move to the next workflow step to raise the PR
+            echo "branchname=$BRANCHNAME" >> "$GITHUB_OUTPUT"
+            # In the GitHub Actions workflow, the next step will raise the PR
             exit 0
           fi
-
-          # If running shell code locally, continue to raise the PR
 
           # Reinstate exit on unbound variables
           set -eu -o pipefail
 
+          # The code below to create the PR is only called when running from a shell
+          echo "Changes require that a PR be raised:"
           git status
           if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip ci]" \
             -m "This commit created by automation/scripting" --no-verify); then
