@@ -70,7 +70,7 @@ jobs:
             # Receives a single file path as argument
             if (perform_operation "$1"); then
               SHA_SRC=$(sha1sum $DEVOPS_DIR/"$1" | awk '{print $1}')
-              SHA_DST=$(sha1sum "$1" 2>/dev/null | awk '{print $1}' 2>/dev/null)
+              SHA_DST=$(sha1sum "$1" 2>/dev/null | awk '{print $1}' || :)
               if [ "$SHA_SRC" != "$SHA_DST" ]; then
                 echo "Copying: $1"
                 cp "$DEVOPS_DIR/$1" "$1"
