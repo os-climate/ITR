@@ -173,14 +173,16 @@ jobs:
               "41898282+github-actions[bot]@users.noreply.github.com"
           fi
 
-          # Code path below only used when run from a shell outside GitHub Actions
-          if [ ! -d "$DEVOPS_DIR" ]; then
-            printf "Cloning DevOps repository into: %s" "$DEVOPS_DIR"
-            if (git clone "$DEVOPS_REPO" "$DEVOPS_DIR" > /dev/null 2>&1); then
-                echo " [success]"
-            else
-                echo " [failed]"; exit 1
-            fi
+          # Remove any stale copy of the upstream repository
+          if [ -d "$DEVOPS_DIR" ]; then
+            rm -Rf "$DEVOPS_DIR"
+          fi
+
+          printf "Cloning DevOps repository into: %s" "$DEVOPS_DIR"
+          if (git clone "$DEVOPS_REPO" "$DEVOPS_DIR" > /dev/null 2>&1); then
+              echo " [success]"
+          else
+              echo " [failed]"; exit 1
           fi
 
           # Process upstream DevOps repository content and update
@@ -217,7 +219,7 @@ jobs:
             if (perform_operation "$LOCATION"); then
               selective_file_copy "$LOCATION"
             else
-              echo "Opted out of file at: $LOCATION"
+              echo "Not updating: $LOCATION"
             fi
           done
 
