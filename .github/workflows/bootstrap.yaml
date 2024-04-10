@@ -36,6 +36,7 @@ jobs:
           ### SHELL CODE START ###
 
           set -eu -o pipefail
+          set -x
 
           # Define variables
 
@@ -139,6 +140,8 @@ jobs:
           }
 
           # Main script entry point
+
+          echo "HEAD branch detected as: $HEAD_BRANCH"
 
           # Ensure working from top-level of GIT repository
           CURRENT_DIR=$(pwd)
