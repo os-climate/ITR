@@ -21,7 +21,7 @@ jobs:
       - name: "Checkout primary repository"
         uses: actions/checkout@v4
 
-      - name: "Pull workflows from central repository"
+      - name: "Pull devops content from repository"
         uses: actions/checkout@v4
         with:
           repository: "os-climate/devops-toolkit"
@@ -35,7 +35,7 @@ jobs:
         run: |
           ### SHELL CODE START ###
 
-          set -xeu -o pipefail
+          set -eu -o pipefail
 
           # Define variables
 
@@ -44,19 +44,28 @@ jobs:
           REPO_DIR=$(git rev-parse --show-toplevel)
           EXCLUDE_FILE=".devops-exclusions"
           DEVOPS_REPO='git@github.com:os-climate/devops-toolkit.git'
+          HEAD_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+          # Content folder defines the files and folders to update
+          FILES="$DEVOPS_DIR/content/files.txt"
+          FOLDERS="$DEVOPS_DIR/content/folders.txt"
 
           # Define functions
 
           # Allows for selective opt-out components on a per-path basis
           perform_operation() {
-            FILEPATH="$1"
+            FS_PATH="$1"
+            if [ ! -f "$FS_PATH" ] && [ ! -d "$FS_PATH" ]; then
+              echo "Skipping missing upstream element at: $FS_PATH"
+              return 1
+            fi
             # Elements excluded from processing return exit status 1
             if [ ! -f "$EXCLUDE_FILE" ]; then
               return 0
-            elif [ "$FILEPATH" = "$EXCLUDE_FILE" ]; then
+            elif [ "$FS_PATH" = "$EXCLUDE_FILE" ]; then
               # The exclusion file itself is never updated by automation
               return 1
-            elif (grep -Fxq "$FILEPATH" "$EXCLUDE_FILE" > /dev/null); then
+            elif (grep -Fxq "$FS_PATH" "$EXCLUDE_FILE" > /dev/null); then
               # Element listed; exclude from processing
               return 1
             else
@@ -173,8 +182,14 @@ jobs:
               "41898282+github-actions[bot]@users.noreply.github.com"
           fi
 
-          # Code path below only used when run from a shell outside GitHub Actions
-          if [ ! -d "$DEVOPS_DIR" ]; then
+          # Only if NOT running in GitHub
+          # (checkout is otherwise performed by earlier steps)
+          if [ -z ${GITHUB_RUN_ID+x} ]; then
+            # Remove any stale local copy of the upstream repository
+            if [ -d "$DEVOPS_DIR" ]; then
+              rm -Rf "$DEVOPS_DIR"
+            fi
+
             printf "Cloning DevOps repository into: %s" "$DEVOPS_DIR"
             if (git clone "$DEVOPS_REPO" "$DEVOPS_DIR" > /dev/null 2>&1); then
                 echo " [success]"
@@ -185,39 +200,49 @@ jobs:
 
           # Process upstream DevOps repository content and update
 
-          # First add file LOCATIONS from the upstream repository root folder
-          LOCATIONS=".pre-commit-config.yaml .prettierignore .gitignore .devops-exclusions"
+          LOCATIONS=""
+          # Populate list of files to be updated/sourced
+          while read -ra LINE;
+          do
+            for FILE in "${LINE[@]}";
+            do
+              LOCATIONS+="$FILE "
+            done
+          done < "$FILES"
 
-          # Then process the contents of the following folders
-          FOLDERS=".github .github/workflows scripts scripts/git-bulk"
-          for FOLDER in ${FOLDERS}; do
-            # Check to see if this folder should be skipped
-            if (perform_operation "$FOLDER"); then
-              # If necessary, create target folder
-              if [ ! -d "$FOLDER" ]; then
-                echo "Creating target folder: $FOLDER"
-                mkdir "$FOLDER"
-              fi
-              # Add folder contents to list of file LOCATIONS
-              FILES=$(cd "$DEVOPS_DIR/$FOLDER"; find . -maxdepth 1 -type f -exec basename {} \;)
-              for LOCATION in $FILES; do
-                # Also check if individual files in the folder are excluded
-                if (perform_operation "$FOLDER/$LOCATION"); then
-                  LOCATIONS+=" $FOLDER/$LOCATION"
+          # Gather files from specified folders and append to locations list
+          while read -ra LINE;
+          do
+            for FOLDER in "${LINE[@]}";
+            do
+              # Check to see if this folder should be skipped
+              if (perform_operation "$FOLDER"); then
+                # If necessary, create target folder
+                if [ ! -d "$FOLDER" ]; then
+                  echo "Creating target folder: $FOLDER"
+                  mkdir "$FOLDER"
                 fi
-              done
-            else
-              echo "Opted out of folder: $FOLDER"
-              continue
-            fi
-          done
+                # Add folder contents to list of file LOCATIONS
+                FILES=$(cd "$DEVOPS_DIR/$FOLDER"; find . -maxdepth 1 -type f -exec basename {} \;)
+                for LOCATION in $FILES; do
+                  # Also check if individual files in the folder are excluded
+                  if (perform_operation "$FOLDER/$LOCATION"); then
+                    LOCATIONS+=" $FOLDER/$LOCATION"
+                  fi
+                done
+              else
+                echo "Opted out of folder: $FOLDER"
+                continue
+              fi
+            done;
+          done < "$FOLDERS"
 
           # Copy specified files into repository root
           for LOCATION in ${LOCATIONS}; do
             if (perform_operation "$LOCATION"); then
               selective_file_copy "$LOCATION"
             else
-              echo "Opted out of file at: $LOCATION"
+              echo "Not updating: $LOCATION"
             fi
           done
 
@@ -231,10 +256,12 @@ jobs:
 
           # Next step is only performed if running as GitHub Action
           if [[ -n ${GH_TOKEN+x} ]]; then
-            # Script is running in a GitHub Acsions workflow
+            # Script is running in a GitHub actions workflow
             # Set outputs for use by the next actions/steps
+            # shellcheck disable=SC2129
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "branchname=$AUTOMATION_BRANCH" >> "$GITHUB_OUTPUT"
+            echo "headbranch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
             # Move to the next workflow step to raise the PR
             exit 0
           fi
@@ -276,7 +303,7 @@ jobs:
           token: ${{ secrets.ACTIONS_WORKFLOW }}
           commit-message: "Chore: Update DevOps tooling from central repository [skip ci]"
           signoff: "true"
-          base: main
+          base: ${{ steps.update-repository.outputs.headbranch }}
           branch: ${{ steps.update-repository.outputs.branchname }}
           delete-branch: true
           title: "Chore: Update DevOps tooling from central repository [skip ci]"
