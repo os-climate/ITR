@@ -31,7 +31,7 @@ repos:
         entry: scripts/tomllint.sh .
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -131,7 +131,7 @@ repos:
         args: [--strict]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: v1.6.27.12
+    rev: v1.6.27.13
     hooks:
       - id: actionlint
 
