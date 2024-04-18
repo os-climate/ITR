@@ -55,11 +55,22 @@ jobs:
 
           # Define functions
 
+          perform_folder_operation() {
+            FS_PATH="$1"
+            if [ -d "$DEVOPS_DIR"/"$FS_PATH" ]; then
+              echo "Scanning target folder content at: $FS_PATH"
+              return 0
+            else
+              echo "Upstream folder NOT found: $FS_PATH [skipping]"
+              return 1
+            fi
+          }
+
           # Allows for selective opt-out components on a per-path basis
           perform_operation() {
             FS_PATH="$1"
-            if [ ! -f "$FS_PATH" ] && [ ! -d "$FS_PATH" ]; then
-              echo "Skipping missing upstream element at: $FS_PATH"
+            if [ ! -f "$DEVOPS_DIR"/"$FS_PATH" ]; then
+              echo "Skipping missing upstream file at: $FS_PATH"
               return 1
             fi
             # Elements excluded from processing return exit status 1
@@ -113,7 +124,7 @@ jobs:
             fi
           }
 
-          check_authors() {
+          check_prs() {
             # Define users to check for pre-existing pull requests
             AUTOMATION_USER="github-actions[bot]"
             if [[ -n ${GH_TOKEN+x} ]]; then
@@ -137,6 +148,29 @@ jobs:
                 echo "Failed to checkout pull request"; exit 1
               fi
             done
+            return 1
+          }
+
+          # Check if script is running in GHA workflow
+          in_github() {
+            if [ -z ${GITHUB_RUN_ID+x} ]; then
+              echo "Script is NOT running in GitHub"
+              return 1
+            else
+              echo "Script is running in GitHub"
+              return 0
+            fi
+          }
+
+          # Check if user is logged into GitHub
+          logged_in_github() {
+            if (gh auth status); then
+              echo "Logged in and authenticated to GitHb"
+              return 0
+            else
+              echo "Not logged into GitHub, some script operations unavailable"
+              return 1
+            fi
           }
 
           # Main script entry point
@@ -159,24 +193,6 @@ jobs:
           #   git stash -q
           # fi
 
-          # Verify user is logged into GitHub
-          if (gh auth status); then
-            GH_AUTH="true"
-          else
-            echo "Not logged into GitHub, some script operations unavailable"
-            GH_AUTH="false"
-          fi
-
-          if [ "$GH_AUTH" = "true" ] && ! (check_authors); then
-            # No existing open pull requests found for this repository
-            echo "Removing remote branch if it exists: $AUTOMATION_BRANCH"
-            git push origin --delete "$AUTOMATION_BRANCH" > /dev/null 2>&1 || :
-            git branch -D "$AUTOMATION_BRANCH" || :
-          fi
-
-          echo "Creating local branch for automated update"
-          git checkout -b "$AUTOMATION_BRANCH"
-
           # Configure GIT environment only if NOT already configured
           # i.e. when running in a GitHub Actions workflow
           TEST=$(git config -l > /dev/null 2>&1)
@@ -186,14 +202,26 @@ jobs:
               "41898282+github-actions[bot]@users.noreply.github.com"
           fi
 
+
+          if ! (check_prs); then
+            # No existing open pull requests found for this repository
+
+            # Remove remote branch if it exists
+            git push origin --delete "$AUTOMATION_BRANCH" > /dev/null 2>&1 || :
+            git branch -D "$AUTOMATION_BRANCH" || :
+            git checkout -b "$AUTOMATION_BRANCH"
+          else
+            # The -B flag swaps branch and creates it if NOT present
+            git checkout -B "$AUTOMATION_BRANCH"
+          fi
+
           # Only if NOT running in GitHub
           # (checkout is otherwise performed by earlier steps)
-          if [ -z ${GITHUB_RUN_ID+x} ]; then
+          if ! (in_github); then
             # Remove any stale local copy of the upstream repository
             if [ -d "$DEVOPS_DIR" ]; then
               rm -Rf "$DEVOPS_DIR"
             fi
-
             printf "Cloning DevOps repository into: %s" "$DEVOPS_DIR"
             if (git clone "$DEVOPS_REPO" "$DEVOPS_DIR" > /dev/null 2>&1); then
                 echo " [success]"
@@ -220,7 +248,7 @@ jobs:
             for FOLDER in "${LINE[@]}";
             do
               # Check to see if this folder should be skipped
-              if (perform_operation "$FOLDER"); then
+              if (perform_folder_operation "$FOLDER"); then
                 # If necessary, create target folder
                 if [ ! -d "$FOLDER" ]; then
                   echo "Creating target folder: $FOLDER"
@@ -273,7 +301,7 @@ jobs:
           # If running shell code locally, continue to raise the PR
 
           # Reinstate exit on unbound variables
-          set -euxo pipefail
+          set -euo pipefail
 
           git status
           if ! (git commit -as -S -m "Chore: Update DevOps tooling from central repository [skip ci]" \
