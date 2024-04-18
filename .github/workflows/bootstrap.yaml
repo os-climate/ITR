@@ -203,7 +203,7 @@ jobs:
           fi
 
 
-          if (logged_in_github) && ! (check_prs); then
+          if ! (check_prs); then
             # No existing open pull requests found for this repository
 
             # Remove remote branch if it exists
