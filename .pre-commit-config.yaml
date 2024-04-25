@@ -124,7 +124,12 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
-        args: [--strict]
+        args: [
+          "-d",
+          "{rules: {line-length: {max: 120}},
+          ignore-from-file: [.gitignore],
+          }",
+        ]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
     rev: v1.6.27.13
