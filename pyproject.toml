@@ -45,6 +45,7 @@ dependencies = [
     "psutil==5.9.5",
     "pydantic>=2.7.1",
     "pygithub==1.55",
+    "pyproject-hooks==1.1.0",
     "pytest==8.1.1",
     "python-dotenv==1.0.0",
     "setuptools>=65.7.0",
