@@ -65,11 +65,11 @@ repos:
       - id: markdownlint
         args: ["--fix"]
 
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.4.2
-    hooks:
-      - id: black
-      - id: black-jupyter
+  # - repo: https://github.com/psf/black-pre-commit-mirror
+  #   rev: 24.4.2
+  #   hooks:
+  #     - id: black
+  #     - id: black-jupyter
 
   # - repo: https://github.com/tomcatling/black-nb
   #   rev: '0.7'
@@ -113,6 +113,8 @@ repos:
     rev: "7.0.0"
     hooks:
       - id: flake8
+        additional_dependencies:
+        - pep8-naming
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
@@ -125,11 +127,11 @@ repos:
     hooks:
       - id: mypy
         verbose: true
-        args: [--show-error-codes]
+        args: ["--show-error-codes", "--install-types", "--non-interactive"]
         additional_dependencies: ["pytest", "types-requests"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.3
+    rev: v0.4.4
     hooks:
       - id: ruff
         files: ^(scripts|tests|custom_components)/.+\.py$
