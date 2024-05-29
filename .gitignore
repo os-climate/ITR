@@ -1,5 +1,5 @@
 # Temporary devops repo
-.devops
+/.devops
 
 # Twine temporary files
 package-lock.json
@@ -103,8 +103,8 @@ instance/
 docs/_build/
 
 # PyBuilder
-.pybuilder/
-target/
+/.pybuilder/
+/target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
