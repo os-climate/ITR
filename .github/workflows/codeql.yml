@@ -17,7 +17,7 @@ on:
   pull_request:
     branches: [ "main", "gh-pages", "master" ]
   schedule:
-    - cron: '26 8 * * 4'
+    - cron: '26 1 * * 2'
 
 jobs:
   analyze:
