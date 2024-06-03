@@ -140,25 +140,25 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.116"
+version = "1.34.117"
 requires_python = ">=3.8"
 summary = "The AWS SDK for Python"
 groups = ["default"]
 dependencies = [
-    "botocore<1.35.0,>=1.34.116",
+    "botocore<1.35.0,>=1.34.117",
     "jmespath<2.0.0,>=0.7.1",
     "s3transfer<0.11.0,>=0.10.0",
 ]
 files = [
-    {file = "boto3-1.34.116-py3-none-any.whl", hash = "sha256:e7f5ab2d1f1b90971a2b9369760c2c6bae49dae98c084a5c3f5c78e3968ace15"},
-    {file = "boto3-1.34.116.tar.gz", hash = "sha256:53cb8aeb405afa1cd2b25421e27a951aeb568026675dec020587861fac96ac87"},
+    {file = "boto3-1.34.117-py3-none-any.whl", hash = "sha256:1506589e30566bbb2f4997b60968ff7d4ef8a998836c31eedd36437ac3b7408a"},
+    {file = "boto3-1.34.117.tar.gz", hash = "sha256:c8a383b904d6faaf7eed0c06e31b423db128e4c09ce7bd2afc39d1cd07030a51"},
 ]
 
 [[package]]
 name = "boto3-stubs-lite"
-version = "1.34.116"
+version = "1.34.117"
 requires_python = ">=3.8"
-summary = "Type annotations for boto3 1.34.116 generated with mypy-boto3-builder 7.24.0"
+summary = "Type annotations for boto3 1.34.117 generated with mypy-boto3-builder 7.24.0"
 groups = ["default"]
 dependencies = [
     "botocore-stubs",
@@ -166,13 +166,13 @@ dependencies = [
     "typing-extensions>=4.1.0; python_version < \"3.12\"",
 ]
 files = [
-    {file = "boto3_stubs_lite-1.34.116-py3-none-any.whl", hash = "sha256:b022b7b4916f0873643806f431ee2dcfa3c44b50df2552dd4e665f7775feeedc"},
-    {file = "boto3_stubs_lite-1.34.116.tar.gz", hash = "sha256:5936a5626395fae395936d6a0293bbc48e8e85364e0c2409ff8b88c0eb716dff"},
+    {file = "boto3_stubs_lite-1.34.117-py3-none-any.whl", hash = "sha256:cad47efe3884fd6751c82b53268656787b713712f2d22068b3b102e14d396dce"},
+    {file = "boto3_stubs_lite-1.34.117.tar.gz", hash = "sha256:58b0c286497687cc68a2f2ea1a5d0bcfc04a2dd94061dbb1a7c4c8107586cad7"},
 ]
 
 [[package]]
 name = "botocore"
-version = "1.34.116"
+version = "1.34.117"
 requires_python = ">=3.8"
 summary = "Low-level, data-driven core of boto 3."
 groups = ["default"]
@@ -183,8 +183,8 @@ dependencies = [
     "urllib3<1.27,>=1.25.4; python_version < \"3.10\"",
 ]
 files = [
-    {file = "botocore-1.34.116-py3-none-any.whl", hash = "sha256:ec4d42c816e9b2d87a2439ad277e7dda16a4a614ef6839cf66f4c1a58afa547c"},
-    {file = "botocore-1.34.116.tar.gz", hash = "sha256:269cae7ba99081519a9f87d7298e238d9e68ba94eb4f8ddfa906224c34cb8b6c"},
+    {file = "botocore-1.34.117-py3-none-any.whl", hash = "sha256:26a431997f882bcdd1e835f44c24b2a1752b1c4e5183c2ce62999ce95d518d6c"},
+    {file = "botocore-1.34.117.tar.gz", hash = "sha256:4637ca42e6c51aebc4d9a2d92f97bf4bdb042e3f7985ff31a659a11e4c170e73"},
 ]
 
 [[package]]
@@ -799,7 +799,7 @@ files = [
 
 [[package]]
 name = "hishel"
-version = "0.0.26"
+version = "0.0.27"
 requires_python = ">=3.8"
 summary = "Persistent cache implementation for httpx and httpcore"
 groups = ["test"]
@@ -808,8 +808,8 @@ dependencies = [
     "typing-extensions>=4.8.0",
 ]
 files = [
-    {file = "hishel-0.0.26-py3-none-any.whl", hash = "sha256:63cd3fee495124e0ed3461b374c43eab3e9deb2f01ba72eafe36d7df5fcf8b46"},
-    {file = "hishel-0.0.26.tar.gz", hash = "sha256:f0ae2766214499cb0253a5ec7694f0d6e3835c9a35634356f8926fb7a1cf379e"},
+    {file = "hishel-0.0.27-py3-none-any.whl", hash = "sha256:93a371d57d9a92a6badba3ce8652ee1aa1e848fb290b81f5382dca4443473c4c"},
+    {file = "hishel-0.0.27.tar.gz", hash = "sha256:78efc3a4b1e8defcbbe50de75ed6d61494a0d0e19883fced3904bdf85e4fde18"},
 ]
 
 [[package]]
@@ -2490,12 +2490,12 @@ files = [
 
 [[package]]
 name = "zipp"
-version = "3.19.0"
+version = "3.19.1"
 requires_python = ">=3.8"
 summary = "Backport of pathlib-compatible object wrapper for zip files"
 groups = ["default", "docs", "test"]
 marker = "python_version < \"3.10\""
 files = [
-    {file = "zipp-3.19.0-py3-none-any.whl", hash = "sha256:96dc6ad62f1441bcaccef23b274ec471518daf4fbbc580341204936a5a3dddec"},
-    {file = "zipp-3.19.0.tar.gz", hash = "sha256:952df858fb3164426c976d9338d3961e8e8b3758e2e059e0f754b8c4262625ee"},
+    {file = "zipp-3.19.1-py3-none-any.whl", hash = "sha256:2828e64edb5386ea6a52e7ba7cdb17bb30a73a858f5eb6eb93d8d36f5ea26091"},
+    {file = "zipp-3.19.1.tar.gz", hash = "sha256:35427f6d5594f4acf82d25541438348c26736fa9b3afa2754bcd63cdb99d8e8f"},
 ]
