@@ -105,7 +105,7 @@ repos:
         args: ["--profile", "black"]
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: v1.7.0.14
+    rev: v1.7.1.15
     hooks:
       - id: actionlint
 
@@ -131,7 +131,7 @@ repos:
         additional_dependencies: ["pytest", "types-requests"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.5
+    rev: v0.4.7
     hooks:
       - id: ruff
         files: ^(scripts|tests|custom_components)/.+\.py$
