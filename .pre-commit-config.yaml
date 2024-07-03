@@ -104,7 +104,7 @@ repos:
         args: [ "-d", "{rules: {line-length: {max: 120}}, ignore-from-file: [.gitignore],}", ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.9
+    rev: v0.4.10
     hooks:
       - id: ruff
         files: ^(scripts|tests|custom_components)/.+\.py$
