@@ -67,13 +67,17 @@ try:
     # print("connecting with engine " + str(engine_init))
     # connection_init = engine_init.connect()
 
-    engine_init = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=ingest_schema)
+    engine_init = osc.attach_trino_engine(
+        verbose=True, catalog=ingest_catalog, schema=ingest_schema
+    )
 except KeyError:
     if pytest.__version__ < "3.0.0":
         pytest.skip()
     else:
         pytestmark = pytest.mark.skip
-        pytest.skip("skipping vault because Trino auth breaks CI/CD", allow_module_level=True)
+        pytest.skip(
+            "skipping vault because Trino auth breaks CI/CD", allow_module_level=True
+        )
 
 # bucket must be configured with credentials for trino, and accessible to the hive catalog
 # You may need to use a different prefix here depending on how you name your credentials.env variables
@@ -107,14 +111,22 @@ def _get_base_ei(filename: str) -> BaseProviderIntensityBenchmark:
 
 
 @pytest.fixture(scope="session")
-def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]:
+def base_benchmarks() -> (
+    Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]
+):
     benchmark_dict: Dict[str, Future] = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_benchmark = {
-            executor.submit(_get_base_prod, filename="benchmark_production_OECM.json"): "base_production_bm",
-            executor.submit(_get_base_ei, filename="benchmark_EI_OECM_S3.json"): "base_EI_bm",
+            executor.submit(
+                _get_base_prod, filename="benchmark_production_OECM.json"
+            ): "base_production_bm",
+            executor.submit(
+                _get_base_ei, filename="benchmark_EI_OECM_S3.json"
+            ): "base_EI_bm",
         }
-        for future in concurrent.futures.as_completed(cast(Iterable[Future[Never]], future_to_benchmark)):
+        for future in concurrent.futures.as_completed(
+            cast(Iterable[Future[Never]], future_to_benchmark)
+        ):
             benchmark_name = future_to_benchmark[future]
             try:
                 benchmark_dict[benchmark_name] = future.result()
@@ -125,7 +137,9 @@ def base_benchmarks() -> Tuple[BaseProviderProductionBenchmark, BaseProviderInte
 
 @pytest.fixture(scope="session")
 def base_company_data() -> TemplateProviderCompany:
-    company_data = TemplateProviderCompany(company_data_path, projection_controls=ProjectionControls())
+    company_data = TemplateProviderCompany(
+        company_data_path, projection_controls=ProjectionControls()
+    )
     return company_data
 
 
@@ -179,7 +193,9 @@ def vault_benchmarks_from_base(
                 production_centric=base_EI_bm.is_production_centric(),
             ): "vault_EI_bm",
         }
-        for future in concurrent.futures.as_completed(cast(Iterable[Future[Never]], future_to_vault)):
+        for future in concurrent.futures.as_completed(
+            cast(Iterable[Future[Never]], future_to_vault)
+        ):
             vault_name = future_to_vault[future]
             try:
                 vault_dict[vault_name] = future.result()
@@ -192,7 +208,9 @@ def vault_benchmarks_from_base(
 
 
 @pytest.fixture(scope="session")
-def vault_warehouse_from_base(vault, vault_benchmarks_from_base, base_warehouse) -> DataVaultWarehouse:
+def vault_warehouse_from_base(
+    vault, vault_benchmarks_from_base, base_warehouse
+) -> DataVaultWarehouse:
     vault_company_data = VaultCompanyDataProvider(
         vault,
         company_table=f"{itr_prefix}company_data",
@@ -212,7 +230,9 @@ def vault_warehouse_from_base(vault, vault_benchmarks_from_base, base_warehouse)
 
 
 @pytest.fixture(scope="session")
-def vault_benchmarks(vault, request) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
+def vault_benchmarks(
+    vault, request
+) -> Tuple[VaultProviderProductionBenchmark, VaultProviderIntensityBenchmark]:
     try:
         vault_prod_bm = VaultProviderProductionBenchmark(
             vault,
@@ -225,7 +245,9 @@ def vault_benchmarks(vault, request) -> Tuple[VaultProviderProductionBenchmark, 
             benchmark_name=f"{itr_prefix}benchmark_ei",
         )
     except ProgrammingError:
-        vault_prod_bm_from_base, vault_ei_bm_from_base = request.getfixturevalue("vault_benchmarks_from_base")
+        vault_prod_bm_from_base, vault_ei_bm_from_base = request.getfixturevalue(
+            "vault_benchmarks_from_base"
+        )
 
         vault_prod_bm = VaultProviderProductionBenchmark(
             vault,
@@ -267,13 +289,18 @@ def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
         "cumulative_budgets",
     ]
     sql_counts = ",".join(
-        [f"{tablename}_cnt as (select count (*) as cnt from {itr_prefix}{tablename})" for tablename in tablenames]
+        [
+            f"{tablename}_cnt as (select count (*) as cnt from {itr_prefix}{tablename})"
+            for tablename in tablenames
+        ]
     )
     sql_sums = "+".join([f"{tablename}_cnt.cnt" for tablename in tablenames])
     sql_joins = ",".join([f"{tablename}_cnt" for tablename in tablenames])
     # One N-clause statement executes about N times faster than N individual checks
     qres = osc._do_sql(  # noqa F841
-        f"with {sql_counts} select {sql_sums} from {sql_joins}", engine=vault.engine, verbose=True
+        f"with {sql_counts} select {sql_sums} from {sql_joins}",
+        engine=vault.engine,
+        verbose=True,
     )
     warehouse = DataVaultWarehouse(
         vault,
@@ -292,11 +319,15 @@ def vault_warehouse(vault, vault_benchmarks) -> DataVaultWarehouse:
         ("base_warehouse", "vault_warehouse"),
     ],
 )
-def test_warehouse(base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVaultWarehouse, request) -> None:
+def test_warehouse(
+    base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVaultWarehouse, request
+) -> None:
     base_warehouse_x = request.getfixturevalue(base_warehouse_x)
     vault_warehouse_x = request.getfixturevalue(vault_warehouse_x)
     vault = vault_warehouse_x._v
-    base_company = next(iter(base_warehouse_x.company_data.get_company_data(["US00130H1059"])))
+    base_company = next(
+        iter(base_warehouse_x.company_data.get_company_data(["US00130H1059"]))
+    )
     vault_company_data = vault_warehouse_x.company_data
     assert base_company.projected_targets.S1S2 is not None
     company_0_id, company_0_s1s2_ser = (
@@ -314,8 +345,10 @@ def test_warehouse(base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVault
     ).squeeze()
     assert company_0_s1s2_ser.compare(ser_from_vault).empty
 
-    company_info_at_base_year = vault_company_data.get_company_intensity_and_production_at_base_year(
-        [company_0_id],
+    company_info_at_base_year = (
+        vault_company_data.get_company_intensity_and_production_at_base_year(
+            [company_0_id],
+        )
     )
     assert base_warehouse_x.benchmark_projected_production is not None
     projected_production = base_warehouse_x.benchmark_projected_production.get_company_projected_production(
@@ -338,7 +371,9 @@ def test_warehouse(base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVault
         base_warehouse_x.company_data.get_company_projected_targets([company_0_id]),
         projected_production,
     ).stack(level=0)
-    company_0_cumulative_em.index.set_names(["company_id", "scope", "year"], inplace=True)
+    company_0_cumulative_em.index.set_names(
+        ["company_id", "scope", "year"], inplace=True
+    )
     company_0_cumulative_em.name = "cumulative_target"
 
     df_from_vault = read_quantified_sql(
@@ -359,11 +394,23 @@ def test_warehouse(base_warehouse_x: DataWarehouse, vault_warehouse_x: DataVault
 
     qres = osc._do_sql("show tables", engine=engine_init)
     assert len(qres) >= 8
-    qres = osc._do_sql(f"select count (*) from {itr_prefix}benchmark_prod", engine=engine_init, verbose=True)
+    qres = osc._do_sql(
+        f"select count (*) from {itr_prefix}benchmark_prod",
+        engine=engine_init,
+        verbose=True,
+    )
     assert len(qres) > 0 and qres[0] == (2208,)
-    qres = osc._do_sql(f"select count (*) from {itr_prefix}benchmark_ei", engine=engine_init, verbose=True)
+    qres = osc._do_sql(
+        f"select count (*) from {itr_prefix}benchmark_ei",
+        engine=engine_init,
+        verbose=True,
+    )
     assert len(qres) > 0 and qres[0] == (11040,)
-    qres = osc._do_sql(f"select count (*) from {itr_prefix}company_data", engine=engine_init, verbose=True)
+    qres = osc._do_sql(
+        f"select count (*) from {itr_prefix}company_data",
+        engine=engine_init,
+        verbose=True,
+    )
     assert len(qres) > 0 and len(qres[0]) > 0 and qres[0][0] > 0
 
 
@@ -374,9 +421,13 @@ def test_tempscore_from_base(base_warehouse) -> None:
         if col.startswith("investment_value"):
             if match := re.match(r".*\[([A-Z]{3})\]", col, re.I):
                 df_portfolio.rename(columns={col: "investment_value"}, inplace=True)
-                df_portfolio["investment_value"] = df_portfolio["investment_value"].astype(f"pint[{match.group(1)}]")
+                df_portfolio["investment_value"] = df_portfolio[
+                    "investment_value"
+                ].astype(f"pint[{match.group(1)}]")
     companies = ITR.utils.dataframe_to_portfolio(df_portfolio)
-    temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG], scopes=EScope.get_result_scopes())
+    temperature_score = TemperatureScore(
+        time_frames=[ETimeFrames.LONG], scopes=EScope.get_result_scopes()
+    )
     df = temperature_score.calculate(
         data_warehouse=base_warehouse,
         portfolio=companies,
@@ -386,7 +437,9 @@ def test_tempscore_from_base(base_warehouse) -> None:
 
 
 def test_temp_scores(vault_warehouse) -> None:
-    engine_quant = osc.attach_trino_engine(verbose=True, catalog=ingest_catalog, schema=ingest_schema)
+    engine_quant = osc.attach_trino_engine(
+        verbose=True, catalog=ingest_catalog, schema=ingest_schema
+    )
 
     quant_vault = VaultInstance(
         engine=engine_quant,
@@ -396,16 +449,23 @@ def test_temp_scores(vault_warehouse) -> None:
         hive_schema=hive_schema,
     )
     vault_warehouse.quant_init(quant_vault, company_data=None, itr_prefix=itr_prefix)
-    df_portfolio = pd.read_excel(company_data_path, sheet_name="Portfolio", index_col="company_id")
+    df_portfolio = pd.read_excel(
+        company_data_path, sheet_name="Portfolio", index_col="company_id"
+    )
 
     for i, col in enumerate(df_portfolio.columns):
         if col.startswith("investment_value"):
             if match := re.match(r".*\[([A-Z]{3})\]", col, re.I):
                 df_portfolio.rename(columns={col: "investment_value"}, inplace=True)
-                df_portfolio["investment_value"] = df_portfolio["investment_value"].astype(f"pint[{match.group(1)}]")
+                df_portfolio["investment_value"] = df_portfolio[
+                    "investment_value"
+                ].astype(f"pint[{match.group(1)}]")
     df_portfolio["pa_score"] = (
         vault_warehouse.get_pa_temp_scores(
-            probability=0.5, company_ids=df_portfolio.index.values, scope=EScope.S1S2, year=2050
+            probability=0.5,
+            company_ids=df_portfolio.index.values,
+            scope=EScope.S1S2,
+            year=2050,
         )
         .droplevel("scope")
         .astype("pint[delta_degC]")
