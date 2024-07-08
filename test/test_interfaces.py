@@ -60,13 +60,22 @@ class TestInterfaces(unittest.TestCase):
             region="North America",
             sector="Steel",
             benchmark_metric=BenchmarkMetric("dimensionless"),
-            projections_nounits=[UProjection(year=int(k), value=v) for k, v in row.items()],
+            projections_nounits=[
+                UProjection(year=int(k), value=v) for k, v in row.items()
+            ],
         )
 
     def test_ICompanyProjectionScopes(self):
         row = pd.Series([0.9, 0.8, 0.7], index=[2019, 2020, 2021], name="nl_steel")
-        p = [ICompanyEIProjection(year=int(k), value=EI_Quantity(Q_(v, "t CO2/(t Steel)"))) for k, v in row.items()]
-        S1S2 = ICompanyEIProjections(projections=p, ei_metric=EI_Metric("t CO2/(t Steel)"))
+        p = [
+            ICompanyEIProjection(
+                year=int(k), value=EI_Quantity(Q_(v, "t CO2/(t Steel)"))
+            )
+            for k, v in row.items()
+        ]
+        S1S2 = ICompanyEIProjections(
+            projections=p, ei_metric=EI_Metric("t CO2/(t Steel)")
+        )
         x = ICompanyEIProjectionsScopes(S1S2=S1S2)  # noqa: F841
 
     def test_ICompanyData(self):

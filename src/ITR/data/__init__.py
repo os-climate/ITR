@@ -53,7 +53,9 @@ def escape_currency_symbols(text):
     return escaped_text
 
 
-currency_keep_regexp = re.compile(rf"({'|'.join([cur_abbrev for cur_abbrev in currency_dict.values()])})")
+currency_keep_regexp = re.compile(
+    rf"({'|'.join([cur_abbrev for cur_abbrev in currency_dict.values()])})"
+)
 currency_split_regexp = re.compile(
     rf"(\$|\bUS\$|{'|'.join([escape_currency_symbols(currency_symbol) for currency_symbol in currency_dict])})"
 )
@@ -83,7 +85,13 @@ def translate_currency_symbols(text):
     if len(keep_text) & 1 and keep_text[-1] != "":
         keep_text.append("")
     pairs = zip(keep_text[::2], keep_text[1::2])
-    retval = "".join([inner for outer in pairs for inner in [translate_currency_symbols_1(outer[0]), outer[1]]])
+    retval = "".join(
+        [
+            inner
+            for outer in pairs
+            for inner in [translate_currency_symbols_1(outer[0]), outer[1]]
+        ]
+    )
     # print(f"{text} -> {keep_text} -> {retval}")
     return retval
 

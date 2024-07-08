@@ -68,7 +68,9 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_data(self, company_ids: Optional[List[str]] = None) -> List[ICompanyData]:
+    def get_company_data(
+        self, company_ids: Optional[List[str]] = None
+    ) -> List[ICompanyData]:
         """
         Get all relevant data for a list of company ids (ISIN), or all company data if `company_ids` is None.
         This method should return a list of ICompanyData instances.
@@ -89,7 +91,9 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_intensity_and_production_at_base_year(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_intensity_and_production_at_base_year(
+        self, company_ids: List[str]
+    ) -> pd.DataFrame:
         """
         Get the emission intensity and the production for a list of companies at the base year.
         :param: company_ids: list of company ids
@@ -100,7 +104,9 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_projected_trajectories(self, company_ids: List[str]) -> pd.DataFrame:
+    def get_company_projected_trajectories(
+        self, company_ids: List[str]
+    ) -> pd.DataFrame:
         """
         Gets the emission intensities for a list of companies
         :param company_ids: list of company ids
@@ -133,7 +139,9 @@ class CompanyDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _validate_projected_trajectories(self, companies: List[ICompanyData], ei_bm: IntensityBenchmarkDataProvider):
+    def _validate_projected_trajectories(
+        self, companies: List[ICompanyData], ei_bm: IntensityBenchmarkDataProvider
+    ):
         """
         Called when benchmark data is first known, or when projection control parameters or benchmark data changes.
         COMPANY_IDS are a list of companies with historic data that need to be projected.
@@ -144,7 +152,9 @@ class CompanyDataProvider(ABC):
 
     @abstractmethod
     def _calculate_target_projections(
-        self, production_bm: ProductionBenchmarkDataProvider, ei_bm: IntensityBenchmarkDataProvider
+        self,
+        production_bm: ProductionBenchmarkDataProvider,
+        ei_bm: IntensityBenchmarkDataProvider,
     ):
         """
         Use benchmark data to calculate target projections
@@ -176,11 +186,15 @@ class ProductionBenchmarkDataProvider(ABC):
         return self._own_data
 
     @abstractmethod
-    def benchmark_changed(self, production_benchmark: ProductionBenchmarkDataProvider) -> bool:
+    def benchmark_changed(
+        self, production_benchmark: ProductionBenchmarkDataProvider
+    ) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def get_company_projected_production(self, ghg_scope12: pd.DataFrame) -> pd.DataFrame:
+    def get_company_projected_production(
+        self, ghg_scope12: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         get the projected productions for all companies in ghg_scope12
         :param ghg_scope12: DataFrame with at least the following columns :
@@ -197,7 +211,9 @@ class IntensityBenchmarkDataProvider(ABC):
     Initialized IntensityBenchmarkDataProvider is required when setting up a data warehouse instance.
     """
 
-    AFOLU_CORRECTION_FACTOR = 0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
+    AFOLU_CORRECTION_FACTOR = (
+        0.76  # AFOLU -> Acronym of agriculture, forestry and other land use
+    )
 
     def __init__(
         self,
@@ -233,7 +249,9 @@ class IntensityBenchmarkDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def prod_centric_changed(self, ei_benchmarks: IntensityBenchmarkDataProvider) -> bool:
+    def prod_centric_changed(
+        self, ei_benchmarks: IntensityBenchmarkDataProvider
+    ) -> bool:
         raise NotImplementedError
 
     @property
@@ -270,7 +288,9 @@ class IntensityBenchmarkDataProvider(ABC):
         self._benchmark_global_budget = value
 
     @abstractmethod
-    def _get_intensity_benchmarks(self, company_sector_region_info: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    def _get_intensity_benchmarks(
+        self, company_sector_region_info: Optional[pd.DataFrame] = None
+    ) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_sector_region_info: DataFrame with at least the following columns :
@@ -280,7 +300,9 @@ class IntensityBenchmarkDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_SDA_intensity_benchmarks(self, company_sector_region_info: pd.DataFrame) -> pd.DataFrame:
+    def get_SDA_intensity_benchmarks(
+        self, company_sector_region_info: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         returns a Dataframe with intensity benchmarks per company_id given a region and sector.
         :param company_sector_region_info: DataFrame with at least the following columns :

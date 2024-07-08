@@ -33,14 +33,20 @@ pd.options.display.min_rows = 30
 class TemplateV2:
     def __init__(self) -> None:
         root = os.path.dirname(os.path.abspath(__file__))
-        self.company_data_path = os.path.join(root, "inputs", "20231031 ITR V2 Sample Data.xlsx")
-        self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
+        self.company_data_path = os.path.join(
+            root, "inputs", "20231031 ITR V2 Sample Data.xlsx"
+        )
+        self.template_company_data = TemplateProviderCompany(
+            excel_path=self.company_data_path
+        )
         # load production benchmarks
         benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
         with open(benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
-        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
+        self.base_production_bm = BaseProviderProductionBenchmark(
+            production_benchmarks=prod_bms
+        )
 
         # load intensity benchmarks
         benchmark_EI_json = os.path.join(data_dir, "benchmark_EI_OECM_S3.json")
@@ -49,7 +55,9 @@ class TemplateV2:
         ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
         self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
-        self.data_warehouse = DataWarehouse(self.template_company_data, self.base_production_bm, self.base_EI_bm)
+        self.data_warehouse = DataWarehouse(
+            self.template_company_data, self.base_production_bm, self.base_EI_bm
+        )
         self.company_ids = ["JP3672400003", "FR0000131906"]
         self.company_info_at_base_year = self.template_company_data.get_company_intensity_and_production_at_base_year(
             self.company_ids
@@ -91,7 +99,9 @@ class TestTemplateProviderV2(unittest.TestCase):
         }
         company_dict[ColumnsConfig.SCOPE] = [EScope.AnyScope] * len(company_data)
         company_index = [c.company_id for c in company_data]
-        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
+        company_sector_region_info = pd.DataFrame(
+            company_dict, pd.Index(company_index, name="company_id")
+        )
         bm_production_data = self.base_production_bm.get_company_projected_production(  # noqa: F841
             company_sector_region_info
         )
@@ -181,13 +191,17 @@ class TestTemplateProviderV2(unittest.TestCase):
             c_proj_targets = c.projected_targets[scope_name].projections
             if isinstance(c_proj_targets, pd.Series):
                 c_proj_targets = c_proj_targets[c_proj_targets.index >= 2022]
-                assert_pint_series_equal(self, c_proj_targets, expected_projection, places=2)
+                assert_pint_series_equal(
+                    self, c_proj_targets, expected_projection, places=2
+                )
             else:
                 while c_proj_targets[0].year < 2022:
                     # c_proj_targets is a list of nasty BaseModel types so we cannot use Pandas asserters
                     c_proj_targets = c_proj_targets[1:]
                     assert [
-                        ITR.nominal_values(round(x.value.m_as(expected_projection.dtype.units), 2))
+                        ITR.nominal_values(
+                            round(x.value.m_as(expected_projection.dtype.units), 2)
+                        )
                         for x in c_proj_targets
                     ] == expected_projection.pint.m.tolist()
 
@@ -211,7 +225,11 @@ class TestTemplateProviderV2(unittest.TestCase):
         amended_portfolio = temperature_score.calculate(
             data_warehouse=self.data_warehouse, data=portfolio_data, portfolio=portfolio
         )
-        print(amended_portfolio[["company_name", "time_frame", "scope", "temperature_score"]])
+        print(
+            amended_portfolio[
+                ["company_name", "time_frame", "scope", "temperature_score"]
+            ]
+        )
 
     def test_get_projected_value(self):
         company_ids = ["JP3672400003", "FR0000131906"]
@@ -300,8 +318,12 @@ class TestTemplateProviderV2(unittest.TestCase):
             TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
             TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
         )
-        trajectories = self.template_company_data.get_company_projected_trajectories(company_ids)
-        assert_pint_frame_equal(self, trajectories.loc[:, EScope.S1S2S3, :], expected_data, places=2)
+        trajectories = self.template_company_data.get_company_projected_trajectories(
+            company_ids
+        )
+        assert_pint_frame_equal(
+            self, trajectories.loc[:, EScope.S1S2S3, :], expected_data, places=2
+        )
 
     def test_get_benchmark(self):
         # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific
@@ -395,8 +417,12 @@ class TestTemplateProviderV2(unittest.TestCase):
                 TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
             )
         )
-        benchmarks = self.base_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
-        assert_pint_frame_equal(self, benchmarks.loc[:, EScope.S1S2S3, :], expected_data)
+        benchmarks = self.base_EI_bm.get_SDA_intensity_benchmarks(
+            self.company_info_at_base_year
+        )
+        assert_pint_frame_equal(
+            self, benchmarks.loc[:, EScope.S1S2S3, :], expected_data
+        )
 
     def test_get_projected_production(self):
         expected_data_2025 = pd.Series(
@@ -407,12 +433,16 @@ class TestTemplateProviderV2(unittest.TestCase):
             index=self.company_ids,
             name=2025,
         )
-        production = self.base_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        production = self.base_production_bm.get_company_projected_production(
+            self.company_info_at_base_year
+        )[2025]
         # FIXME: this test is broken until we fix data for POSCO
         # Tricky beacuse productions are all sorts of types, not a PintArray, and when filled with uncertainties...this is not technically a pint series array!
         assert_pint_series_equal(
             self,
-            production[:, EScope.S1S2S3].map(lambda x: Q_(ITR.nominal_values(x.m), x.u)),
+            production[:, EScope.S1S2S3].map(
+                lambda x: Q_(ITR.nominal_values(x.m), x.u)
+            ),
             expected_data_2025,
             places=2,
         )

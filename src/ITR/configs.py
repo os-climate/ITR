@@ -207,7 +207,9 @@ class ProjectionControls:
 
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050
-    TREND_CALC_METHOD: Callable[[pd.DataFrame, Optional[str], Optional[bool]], pd.DataFrame] = ITR_median
+    TREND_CALC_METHOD: Callable[
+        [pd.DataFrame, Optional[str], Optional[bool]], pd.DataFrame
+    ] = ITR_median
 
 
 class TemperatureScoreControls(BaseModel):

@@ -49,7 +49,9 @@ class PortfolioAggregationMethod(Enum):
         ]
 
     @staticmethod
-    def get_value_column(method: "PortfolioAggregationMethod", column_config: Type[ColumnsConfig]) -> str:
+    def get_value_column(
+        method: "PortfolioAggregationMethod", column_config: Type[ColumnsConfig]
+    ) -> str:
         map_value_column = {
             PortfolioAggregationMethod.MOTS: column_config.COMPANY_MARKET_CAP,
             PortfolioAggregationMethod.EOTS: column_config.COMPANY_ENTERPRISE_VALUE,
@@ -79,7 +81,9 @@ class PortfolioAggregation(ABC):
                     class and overwriting one of the parameters.
     """
 
-    def __init__(self, config: Type[PortfolioAggregationConfig] = PortfolioAggregationConfig):
+    def __init__(
+        self, config: Type[PortfolioAggregationConfig] = PortfolioAggregationConfig
+    ):
         self.c = config
 
     def _check_column(self, data: pd.DataFrame, column: str):
@@ -93,7 +97,9 @@ class PortfolioAggregation(ABC):
         """
         missing_data = data[ITR.isna(data[column])][self.c.COLS.COMPANY_NAME].unique()
         if len(missing_data):
-            logger.error(f"The value for {column} is missing for the following companies: {', '.join(missing_data)}")
+            logger.error(
+                f"The value for {column} is missing for the following companies: {', '.join(missing_data)}"
+            )
 
     def _calculate_aggregate_score(
         self,
@@ -119,14 +125,20 @@ class PortfolioAggregation(ABC):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     # See https://github.com/hgrecco/pint-pandas/issues/114
-                    weights_series = data[input_column] * data[self.c.COLS.INVESTMENT_VALUE] / total_investment_weight
+                    weights_series = (
+                        data[input_column]
+                        * data[self.c.COLS.INVESTMENT_VALUE]
+                        / total_investment_weight
+                    )
                     return weights_series
             except ZeroDivisionError:
                 raise ValueError("The portfolio weight is not allowed to be zero")
 
         # Total emissions weighted temperature score (TETS)
         elif portfolio_aggregation_method == PortfolioAggregationMethod.TETS:
-            use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1, EScope.S2, EScope.S1S2, EScope.S1S2S3])
+            use_S1S2 = data[self.c.COLS.SCOPE].isin(
+                [EScope.S1, EScope.S2, EScope.S1S2, EScope.S1S2S3]
+            )
             use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
             assert isinstance(data[self.c.COLS.GHG_SCOPE12].dtype, PintType)
             assert isinstance(data[self.c.COLS.GHG_SCOPE3].dtype, PintType)
@@ -142,8 +154,12 @@ class PortfolioAggregation(ABC):
                     # Calculate the total emissions of all companies.
                     # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(0) to make sum work
                     emissions = (
-                        asPintSeries(data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12]).fillna(0).sum()
-                        + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3]).fillna(0).sum()
+                        asPintSeries(data.loc[use_S1S2, self.c.COLS.GHG_SCOPE12])
+                        .fillna(0)
+                        .sum()
+                        + asPintSeries(data.loc[use_S3, self.c.COLS.GHG_SCOPE3])
+                        .fillna(0)
+                        .sum()
                     )
                     # See https://github.com/hgrecco/pint-pandas/issues/130
                     weights_dtype = f"pint[{emissions.u}]"
@@ -165,9 +181,13 @@ class PortfolioAggregation(ABC):
             except ZeroDivisionError:
                 raise ValueError("The total emissions should be higher than zero")
 
-        elif PortfolioAggregationMethod.is_emissions_based(portfolio_aggregation_method):
+        elif PortfolioAggregationMethod.is_emissions_based(
+            portfolio_aggregation_method
+        ):
             # These four methods only differ in the way the company is valued.
-            value_column = PortfolioAggregationMethod.get_value_column(portfolio_aggregation_method, self.c.COLS)
+            value_column = PortfolioAggregationMethod.get_value_column(
+                portfolio_aggregation_method, self.c.COLS
+            )
             # Used to check data[value_column].dtype.kind in ['f', 'i']
             assert isinstance(data[value_column].dtype, PintType)
 
@@ -175,7 +195,9 @@ class PortfolioAggregation(ABC):
             try:
                 self._check_column(data, self.c.COLS.INVESTMENT_VALUE)
                 self._check_column(data, value_column)
-                use_S1S2 = data[self.c.COLS.SCOPE].isin([EScope.S1, EScope.S2, EScope.S1S2, EScope.S1S2S3])
+                use_S1S2 = data[self.c.COLS.SCOPE].isin(
+                    [EScope.S1, EScope.S2, EScope.S1S2, EScope.S1S2S3]
+                )
                 use_S3 = data[self.c.COLS.SCOPE].isin([EScope.S3, EScope.S1S2S3])
                 if use_S1S2.any():
                     self._check_column(data, self.c.COLS.GHG_SCOPE12)
@@ -189,12 +211,18 @@ class PortfolioAggregation(ABC):
                         PA_(np.zeros(len(data.index)), dtype="Mt CO2e"),
                         index=data.index,
                     )
-                    data[self.c.COLS.OWNED_EMISSIONS] = (data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]) * (
+                    data[self.c.COLS.OWNED_EMISSIONS] = (
+                        data[self.c.COLS.INVESTMENT_VALUE] / data[value_column]
+                    ) * (
                         data[self.c.COLS.GHG_SCOPE12].where(use_S1S2, df_z)
                         + data[self.c.COLS.GHG_SCOPE3].where(use_S3, df_z)
                     ).astype("pint[Mt CO2e]")
             except ZeroDivisionError:
-                raise ValueError("To calculate the aggregation, the {} column may not be zero".format(value_column))
+                raise ValueError(
+                    "To calculate the aggregation, the {} column may not be zero".format(
+                        value_column
+                    )
+                )
 
             try:
                 # Calculate the MOTS value per company

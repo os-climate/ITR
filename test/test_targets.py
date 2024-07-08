@@ -52,7 +52,9 @@ class TestTargets(unittest.TestCase):
         self.projector = EITargetProjector()
         self.base_company_data = BaseCompanyDataProvider([])
         # All benchmarks use OECM Production for Production
-        self.benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
+        self.benchmark_prod_json = os.path.join(
+            data_dir, "benchmark_production_OECM.json"
+        )
         # Each EI benchmark is particular to its own construction
         # self.benchmark_EI_OECM_PC = os.path.join(data_dir, "benchmark_EI_OECM_PC.json")
         self.benchmark_EI_OECM_S3 = os.path.join(data_dir, "benchmark_EI_OECM_S3.json")
@@ -63,7 +65,9 @@ class TestTargets(unittest.TestCase):
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
-        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
+        self.base_production_bm = BaseProviderProductionBenchmark(
+            production_benchmarks=prod_bms
+        )
 
         # OECM (S3)
         with open(self.benchmark_EI_OECM_S3) as json_file:
@@ -102,7 +106,9 @@ class TestTargets(unittest.TestCase):
         # By default, gen_company_data sets targets, but we want to set intensities...
         company_data.projected_intensities = company_data.projected_targets
         # And we will test how targets expressed in target_data get interpreted/extrapolated
-        company_data.projected_targets = ITR.interfaces.empty_ICompanyEIProjectionsScopes
+        company_data.projected_targets = (
+            ITR.interfaces.empty_ICompanyEIProjectionsScopes
+        )
         return company_data
 
     def test_target_netzero(self):
@@ -172,11 +178,19 @@ class TestTargets(unittest.TestCase):
             ]
         }
         company_index = [c.company_id for c in company_data]
-        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-        company_sector_region_info[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(company_sector_region_info)
-        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
+        company_sector_region_info = pd.DataFrame(
+            company_dict, pd.Index(company_index, name="company_id")
+        )
+        company_sector_region_info[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(
+            company_sector_region_info
+        )
+        bm_production_data = self.base_production_bm.get_company_projected_production(
+            company_sector_region_info
+        )
 
-        intensity = (company_ag.ghg_s1s2 + company_ag.ghg_s3) / company_ag.base_year_production
+        intensity = (
+            company_ag.ghg_s1s2 + company_ag.ghg_s3
+        ) / company_ag.base_year_production
         absolute = company_ag.ghg_s1s2 + company_ag.ghg_s3
 
         ei_df_t = self.OECM_EI_S3_bm._EI_df_t
@@ -195,7 +209,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ag.target_data = [target_ag_0]
-        company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ag.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ag,
             bm_production_data.loc[(company_ag.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -215,7 +231,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ah.target_data = [target_ah_0]
-        company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ah.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ah,
             bm_production_data.loc[(company_ah.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -248,7 +266,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ai.target_data = [target_ai_0, target_ai_1]
-        company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ai.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ai,
             bm_production_data.loc[(company_ai.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -281,7 +301,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_aj.target_data = [target_aj_0, target_aj_1]
-        company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_aj.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_aj,
             bm_production_data.loc[(company_aj.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -450,25 +472,33 @@ class TestTargets(unittest.TestCase):
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ag, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ag, "projected_targets"
+            ),
             expected_ag,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ah, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ah, "projected_targets"
+            ),
             expected_ah,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ai, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ai, "projected_targets"
+            ),
             expected_ai,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_aj, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_aj, "projected_targets"
+            ),
             expected_aj,
             places=3,
         )
@@ -542,11 +572,19 @@ class TestTargets(unittest.TestCase):
             ]
         }
         company_index = [c.company_id for c in company_data]
-        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-        company_sector_region_info[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(company_sector_region_info)
-        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
+        company_sector_region_info = pd.DataFrame(
+            company_dict, pd.Index(company_index, name="company_id")
+        )
+        company_sector_region_info[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(
+            company_sector_region_info
+        )
+        bm_production_data = self.base_production_bm.get_company_projected_production(
+            company_sector_region_info
+        )
 
-        intensity = (company_ag.ghg_s1s2 + company_ag.ghg_s3) / company_ag.base_year_production
+        intensity = (
+            company_ag.ghg_s1s2 + company_ag.ghg_s3
+        ) / company_ag.base_year_production
         absolute = company_ag.ghg_s1s2 + company_ag.ghg_s3
 
         target_ag_0 = ITargetData(
@@ -576,7 +614,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ag.target_data = [target_ag_0, target_ag_1]
-        company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ag.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ag,
             bm_production_data.loc[(company_ag.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -609,7 +649,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ah.target_data = [target_ah_0, target_ah_1]
-        company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ah.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ah,
             bm_production_data.loc[(company_ah.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -642,7 +684,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ai.target_data = [target_ai_0, target_ai_1]
-        company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ai.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ai,
             bm_production_data.loc[(company_ai.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -675,7 +719,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_aj.target_data = [target_aj_0, target_aj_1]
-        company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_aj.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_aj,
             bm_production_data.loc[(company_aj.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -845,25 +891,33 @@ class TestTargets(unittest.TestCase):
 
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ag, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ag, "projected_targets"
+            ),
             expected_ag,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ah, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ah, "projected_targets"
+            ),
             expected_ah,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ai, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ai, "projected_targets"
+            ),
             expected_ai,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_aj, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_aj, "projected_targets"
+            ),
             expected_aj,
             places=3,
         )
@@ -937,11 +991,19 @@ class TestTargets(unittest.TestCase):
             ]
         }
         company_index = [c.company_id for c in company_data]
-        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-        company_sector_region_info[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(company_sector_region_info)
-        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region_info)
+        company_sector_region_info = pd.DataFrame(
+            company_dict, pd.Index(company_index, name="company_id")
+        )
+        company_sector_region_info[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(
+            company_sector_region_info
+        )
+        bm_production_data = self.base_production_bm.get_company_projected_production(
+            company_sector_region_info
+        )
 
-        intensity = (company_ag.ghg_s1s2 + company_ag.ghg_s3) / company_ag.base_year_production
+        intensity = (
+            company_ag.ghg_s1s2 + company_ag.ghg_s3
+        ) / company_ag.base_year_production
         absolute = company_ag.ghg_s1s2 + company_ag.ghg_s3
 
         target_ag_0 = ITargetData(
@@ -971,7 +1033,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ag.target_data = [target_ag_0, target_ag_1]
-        company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ag.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ag,
             bm_production_data.loc[(company_ag.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -1004,7 +1068,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ah.target_data = [target_ah_0, target_ah_1]
-        company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ah.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ah,
             bm_production_data.loc[(company_ah.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -1037,7 +1103,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ai.target_data = [target_ai_0, target_ai_1]
-        company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ai.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ai,
             bm_production_data.loc[(company_ai.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -1070,7 +1138,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_aj.target_data = [target_aj_0, target_aj_1]
-        company_aj.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_aj.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_aj,
             bm_production_data.loc[(company_aj.company_id, EScope.S1S2)],
             ei_df_t=ei_df_t,
@@ -1240,25 +1310,33 @@ class TestTargets(unittest.TestCase):
 
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ag, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ag, "projected_targets"
+            ),
             expected_ag,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ah, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ah, "projected_targets"
+            ),
             expected_ah,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_ai, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_ai, "projected_targets"
+            ),
             expected_ai,
             places=3,
         )
         assert_pint_series_equal(
             self,
-            self.base_company_data._convert_projections_to_series(company_aj, "projected_targets"),
+            self.base_company_data._convert_projections_to_series(
+                company_aj, "projected_targets"
+            ),
             expected_aj,
             places=3,
         )
@@ -1271,12 +1349,14 @@ class TestTargets(unittest.TestCase):
 
         def compute_scope_targets(c, projection_type, projection_years):
             result = (
-                self.base_company_data._convert_projections_to_series(c, projection_type, EScope.S1S2)
+                self.base_company_data._convert_projections_to_series(
+                    c, projection_type, EScope.S1S2
+                )
                 .loc[projection_years]
                 .add(
-                    self.base_company_data._convert_projections_to_series(c, projection_type, EScope.S3).loc[
-                        projection_years
-                    ]
+                    self.base_company_data._convert_projections_to_series(
+                        c, projection_type, EScope.S3
+                    ).loc[projection_years]
                 )
             )
             return result
@@ -1309,7 +1389,8 @@ class TestTargets(unittest.TestCase):
         }
 
         historic_productions_ag = [
-            {"year": year, "value": base_production + (year - 2015) * Q_("0 GWh")} for year in range(2015, 2021)
+            {"year": year, "value": base_production + (year - 2015) * Q_("0 GWh")}
+            for year in range(2015, 2021)
         ]
         historic_emissions_s1s2_ag = [
             {
@@ -1342,14 +1423,18 @@ class TestTargets(unittest.TestCase):
                         "year": em_dict["year"],
                         "value": em_dict["value"] / prod_dict["value"],
                     }
-                    for em_dict, prod_dict in zip(historic_emissions_s1s2_ag, historic_productions_ag)
+                    for em_dict, prod_dict in zip(
+                        historic_emissions_s1s2_ag, historic_productions_ag
+                    )
                 ],
                 "S3": [
                     {
                         "year": em_dict["year"],
                         "value": em_dict["value"] / prod_dict["value"],
                     }
-                    for em_dict, prod_dict in zip(historic_emissions_s3_ag, historic_productions_ag)
+                    for em_dict, prod_dict in zip(
+                        historic_emissions_s3_ag, historic_productions_ag
+                    )
                 ],
                 "S1S2S3": [],
             },
@@ -1360,7 +1445,8 @@ class TestTargets(unittest.TestCase):
         company_dict_ah["company_name"] = "Company AH"
         company_dict_ah["company_id"] = "US00724F1012"
         historic_productions_ah = [
-            {"year": year, "value": base_production + (year - 2015) * Q_("0 GWh")} for year in range(2015, 2025)
+            {"year": year, "value": base_production + (year - 2015) * Q_("0 GWh")}
+            for year in range(2015, 2025)
         ]
         historic_emissions_s1s2_ah = [
             {
@@ -1393,14 +1479,18 @@ class TestTargets(unittest.TestCase):
                         "year": em_dict["year"],
                         "value": em_dict["value"] / prod_dict["value"],
                     }
-                    for em_dict, prod_dict in zip(historic_emissions_s1s2_ah, historic_productions_ah)
+                    for em_dict, prod_dict in zip(
+                        historic_emissions_s1s2_ah, historic_productions_ah
+                    )
                 ],
                 "S3": [
                     {
                         "year": em_dict["year"],
                         "value": em_dict["value"] / prod_dict["value"],
                     }
-                    for em_dict, prod_dict in zip(historic_emissions_s3_ah, historic_productions_ah)
+                    for em_dict, prod_dict in zip(
+                        historic_emissions_s3_ah, historic_productions_ah
+                    )
                 ],
                 "S1S2S3": [],
             },
@@ -1411,7 +1501,8 @@ class TestTargets(unittest.TestCase):
         company_dict_ai["company_name"] = "Company AI"
         company_dict_ai["company_id"] = "US00130H1059"
         historic_productions_ai = [
-            {"year": year, "value": base_production + (year - 2015) * Q_("0 GWh")} for year in range(2015, 2025)
+            {"year": year, "value": base_production + (year - 2015) * Q_("0 GWh")}
+            for year in range(2015, 2025)
         ]
         historic_emissions_s1s2_ai = [
             {
@@ -1444,14 +1535,18 @@ class TestTargets(unittest.TestCase):
                         "year": em_dict["year"],
                         "value": em_dict["value"] / prod_dict["value"],
                     }
-                    for em_dict, prod_dict in zip(historic_emissions_s1s2_ai, historic_productions_ai)
+                    for em_dict, prod_dict in zip(
+                        historic_emissions_s1s2_ai, historic_productions_ai
+                    )
                 ],
                 "S3": [
                     {
                         "year": em_dict["year"],
                         "value": em_dict["value"] / prod_dict["value"],
                     }
-                    for em_dict, prod_dict in zip(historic_emissions_s3_ai, historic_productions_ai)
+                    for em_dict, prod_dict in zip(
+                        historic_emissions_s3_ai, historic_productions_ai
+                    )
                 ],
                 "S1S2S3": [],
             },
@@ -1470,9 +1565,15 @@ class TestTargets(unittest.TestCase):
             ]
         }
         company_index = [c.company_id for c in company_data]
-        company_sector_region = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-        company_sector_region[ColumnsConfig.SCOPE] = [EScope.AnyScope] * len(company_sector_region)
-        bm_production_data = self.base_production_bm.get_company_projected_production(company_sector_region)
+        company_sector_region = pd.DataFrame(
+            company_dict, pd.Index(company_index, name="company_id")
+        )
+        company_sector_region[ColumnsConfig.SCOPE] = [EScope.AnyScope] * len(
+            company_sector_region
+        )
+        bm_production_data = self.base_production_bm.get_company_projected_production(
+            company_sector_region
+        )
 
         intensity_s1s2 = company_ag.ghg_s1s2 / company_ag.base_year_production
         intensity_s3 = company_ag.ghg_s3 / company_ag.base_year_production
@@ -1504,7 +1605,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ag.target_data = [target_ag_0, target_ag_1]
-        company_ag.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ag.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ag,
             bm_production_data.loc[(company_ag.company_id, EScope.AnyScope)],
             ei_df_t=ei_df_t,
@@ -1541,7 +1644,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ah.target_data = [target_ah_0, target_ah_1]
-        company_ah.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ah.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ah,
             bm_production_data.loc[(company_ah.company_id, EScope.AnyScope)],
             ei_df_t=ei_df_t,
@@ -1574,7 +1679,9 @@ class TestTargets(unittest.TestCase):
             }
         )
         company_ai.target_data = [target_ai_0, target_ai_1]
-        company_ai.projected_targets = EITargetProjector(self.projector.projection_controls).project_ei_targets(
+        company_ai.projected_targets = EITargetProjector(
+            self.projector.projection_controls
+        ).project_ei_targets(
             company_ai,
             bm_production_data.loc[(company_ai.company_id, EScope.AnyScope)],
             ei_df_t=ei_df_t,
@@ -1582,7 +1689,9 @@ class TestTargets(unittest.TestCase):
 
         self.base_company_data = BaseCompanyDataProvider(company_data)
         # Since we are not using a Data Warehouse to compute our graphics, we have to do this projection manually, with the benchmark's internal dataframe.
-        self.base_company_data._validate_projected_trajectories(self.base_company_data._companies, self.OECM_EI_S3_bm)
+        self.base_company_data._validate_projected_trajectories(
+            self.base_company_data._companies, self.OECM_EI_S3_bm
+        )
 
         co_pp = bm_production_data.droplevel("scope")
 
@@ -1591,12 +1700,20 @@ class TestTargets(unittest.TestCase):
 
         cumsum_units = "Mt CO2e"
         target_dict = {
-            f"Target: {c.company_id} - {c.company_name}": compute_scope_targets(c, "projected_targets", co_pp.columns)
+            f"Target: {c.company_id} - {c.company_name}": compute_scope_targets(
+                c, "projected_targets", co_pp.columns
+            )
             for c in company_data
         }
         target_cumulative = {
-            f"TargetCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id]
-            .mul(target_dict[f"Target: {c.company_id} - {c.company_name}"].loc[co_pp.columns])
+            f"TargetCumulative: {c.company_id} - {c.company_name}": co_pp.loc[
+                c.company_id
+            ]
+            .mul(
+                target_dict[f"Target: {c.company_id} - {c.company_name}"].loc[
+                    co_pp.columns
+                ]
+            )
             .pint.m_as(cumsum_units)
             .cumsum()
             for c in company_data
@@ -1608,8 +1725,14 @@ class TestTargets(unittest.TestCase):
             for c in company_data
         }
         trajectory_cumulative = {
-            f"TrajectoryCumulative: {c.company_id} - {c.company_name}": co_pp.loc[c.company_id]
-            .mul(trajectory_dict[f"Trajectory: {c.company_id} - {c.company_name}"].loc[co_pp.columns])
+            f"TrajectoryCumulative: {c.company_id} - {c.company_name}": co_pp.loc[
+                c.company_id
+            ]
+            .mul(
+                trajectory_dict[f"Trajectory: {c.company_id} - {c.company_name}"].loc[
+                    co_pp.columns
+                ]
+            )
             .pint.m_as(cumsum_units)
             .cumsum()
             for c in company_data
@@ -1625,11 +1748,15 @@ class TestTargets(unittest.TestCase):
                 axis=1,
             )
         )
-        self.data_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_S3_bm)
+        self.data_warehouse = DataWarehouse(
+            self.base_company_data, self.base_production_bm, self.OECM_EI_S3_bm
+        )
         companies = self.data_warehouse.get_preprocessed_company_data(company_index)  # noqa: F841
 
         print_expected(
-            target_df.filter(regex="Target:").rename(columns=lambda x: re.sub("Target: ", "", x)),
+            target_df.filter(regex="Target:").rename(
+                columns=lambda x: re.sub("Target: ", "", x)
+            ),
             company_data,
         )
         expected_ag = pd.Series(

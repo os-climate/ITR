@@ -24,7 +24,9 @@ class TestTemperatureScore(unittest.TestCase):
         Create the provider and reporting instance which we'll use later on.
         :return:
         """
-        self.temperature_score = TemperatureScore(time_frames=[ETimeFrames.LONG], scopes=EScope.get_result_scopes())
+        self.temperature_score = TemperatureScore(
+            time_frames=[ETimeFrames.LONG], scopes=EScope.get_result_scopes()
+        )
         df = pd.read_csv(
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -41,16 +43,24 @@ class TestTemperatureScore(unittest.TestCase):
             df[ColumnsConfig.SCOPE] = EScope.S1S2
             df.loc[df.company_name.eq("Company E"), ColumnsConfig.SCOPE] = EScope.S3
             df.loc[df.company_name.eq("Company AA"), ColumnsConfig.SCOPE] = EScope.S1S2
-            df[ColumnsConfig.GHG_SCOPE12] = df[ColumnsConfig.GHG_SCOPE3].astype("pint[t CO2]")
-            df[ColumnsConfig.GHG_SCOPE3] = df[ColumnsConfig.GHG_SCOPE3].astype("pint[t CO2]")
+            df[ColumnsConfig.GHG_SCOPE12] = df[ColumnsConfig.GHG_SCOPE3].astype(
+                "pint[t CO2]"
+            )
+            df[ColumnsConfig.GHG_SCOPE3] = df[ColumnsConfig.GHG_SCOPE3].astype(
+                "pint[t CO2]"
+            )
             for cumulative in [
                 ColumnsConfig.CUMULATIVE_BUDGET,
                 ColumnsConfig.CUMULATIVE_TARGET,
                 ColumnsConfig.CUMULATIVE_TRAJECTORY,
             ]:
                 df[cumulative] = df[cumulative].astype("pint[Mt CO2]")
-            df[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET].astype("pint[Gt CO2]")
-            df[ColumnsConfig.BENCHMARK_TEMP] = df[ColumnsConfig.BENCHMARK_TEMP].astype("pint[delta_degC]")
+            df[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df[
+                ColumnsConfig.BENCHMARK_GLOBAL_BUDGET
+            ].astype("pint[Gt CO2]")
+            df[ColumnsConfig.BENCHMARK_TEMP] = df[ColumnsConfig.BENCHMARK_TEMP].astype(
+                "pint[delta_degC]"
+            )
             for col in [
                 ColumnsConfig.COMPANY_REVENUE,
                 ColumnsConfig.COMPANY_MARKET_CAP,
@@ -60,7 +70,9 @@ class TestTemperatureScore(unittest.TestCase):
                 ColumnsConfig.COMPANY_CASH_EQUIVALENTS,
             ]:
                 df[col] = df[col].astype("pint[USD]")
-            df[ColumnsConfig.INVESTMENT_VALUE] = df[ColumnsConfig.INVESTMENT_VALUE].astype("pint[USD]")
+            df[ColumnsConfig.INVESTMENT_VALUE] = df[
+                ColumnsConfig.INVESTMENT_VALUE
+            ].astype("pint[USD]")
         self.data = df.set_index(["company_id"])
 
     def test_temp_score(self) -> None:
@@ -76,13 +88,20 @@ class TestTemperatureScore(unittest.TestCase):
         exp_weight = 1.0
         exp_target_overshoot = 562.6345726 / 229.7868989
         exp_trajectory_overshoot = 528.250411 / 229.7868989
-        exp_target_score = 1.5 + (exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul)
-        exp_trajectory_score = 1.5 + (exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul)
-        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (1 - 0.428571429)
+        exp_target_score = 1.5 + (
+            exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul
+        )
+        exp_trajectory_score = 1.5 + (
+            exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul
+        )
+        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (
+            1 - 0.428571429
+        )
         self.assertAlmostEqual(
-            scores[(scores["company_name"] == "Company T") & (scores["scope"] == EScope.S1S2)][
-                "temperature_score"
-            ].iloc[0],
+            scores[
+                (scores["company_name"] == "Company T")
+                & (scores["scope"] == EScope.S1S2)
+            ]["temperature_score"].iloc[0],
             Q_(exp_score, ureg.delta_degC),
             places=2,
             msg="The temp score was incorrect",
@@ -91,13 +110,19 @@ class TestTemperatureScore(unittest.TestCase):
         exp_weight = 1.0
         exp_target_overshoot = 699.9763453 / 223.2543241
         exp_trajectory_overshoot = 417.115686 / 223.2543241
-        exp_target_score = 1.5 + (exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul)
-        exp_trajectory_score = 1.5 + (exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul)
-        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (1 - 0.428571429)
+        exp_target_score = 1.5 + (
+            exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul
+        )
+        exp_trajectory_score = 1.5 + (
+            exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul
+        )
+        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (
+            1 - 0.428571429
+        )
         self.assertAlmostEqual(
-            scores[(scores["company_name"] == "Company E") & (scores["scope"] == EScope.S3)]["temperature_score"].iloc[
-                0
-            ],
+            scores[
+                (scores["company_name"] == "Company E") & (scores["scope"] == EScope.S3)
+            ]["temperature_score"].iloc[0],
             Q_(exp_score, ureg.delta_degC),
             places=2,
             msg="The fallback temp score was incorrect",
@@ -132,9 +157,10 @@ class TestTemperatureScore(unittest.TestCase):
         overwritten_temp_score.c.CONTROLS_CONFIG.tcre = orig_tcre
 
         self.assertAlmostEqual(
-            scores[(scores["company_name"] == "Company T") & (scores["scope"] == EScope.S1S2)][
-                "temperature_score"
-            ].iloc[0],
+            scores[
+                (scores["company_name"] == "Company T")
+                & (scores["scope"] == EScope.S1S2)
+            ]["temperature_score"].iloc[0],
             Q_(1.65, ureg.delta_degC),
             places=2,
             msg="The temp score was incorrect",
@@ -143,13 +169,19 @@ class TestTemperatureScore(unittest.TestCase):
         exp_weight = 1.0
         exp_target_overshoot = 699.9763453 / 223.2543241
         exp_trajectory_overshoot = 417.115686 / 223.2543241
-        exp_target_score = 1.5 + (exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul)
-        exp_trajectory_score = 1.5 + (exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul)
-        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (1 - 0.428571429)
+        exp_target_score = 1.5 + (
+            exp_weight * 396.0 * (exp_target_overshoot - 1.0) * exp_trce_mul
+        )
+        exp_trajectory_score = 1.5 + (
+            exp_weight * 396.0 * (exp_trajectory_overshoot - 1.0) * exp_trce_mul
+        )
+        exp_score = exp_target_score * 0.428571429 + exp_trajectory_score * (
+            1 - 0.428571429
+        )
         self.assertAlmostEqual(
-            scores[(scores["company_name"] == "Company E") & (scores["scope"] == EScope.S3)]["temperature_score"].iloc[
-                0
-            ],
+            scores[
+                (scores["company_name"] == "Company E") & (scores["scope"] == EScope.S3)
+            ]["temperature_score"].iloc[0],
             Q_(exp_score, ureg.delta_degC),
             places=2,
             msg="The fallback temp score was incorrect",
@@ -250,10 +282,12 @@ class TestTemperatureScore(unittest.TestCase):
         if scope == EScope.S3:
             na_s3 = filtered_data[self.temperature_score.c.COLS.GHG_SCOPE3].isna()
             filtered_data = filtered_data[~na_s3]
-        filtered_data = filtered_data[filtered_data[self.temperature_score.c.COLS.TIME_FRAME].eq(time_frame)].copy()
-        filtered_data[self.temperature_score.grouping] = filtered_data[self.temperature_score.grouping].fillna(
-            "unknown"
-        )
+        filtered_data = filtered_data[
+            filtered_data[self.temperature_score.c.COLS.TIME_FRAME].eq(time_frame)
+        ].copy()
+        filtered_data[self.temperature_score.grouping] = filtered_data[
+            self.temperature_score.grouping
+        ].fillna("unknown")
 
         for col in filtered_data.columns:
             if isinstance(filtered_data[col], object):
