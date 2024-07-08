@@ -1,9 +1,6 @@
 ---
 ci:
   autofix_commit_msg: "Chore: pre-commit autoupdate"
-  skip:
-    # pre-commit.ci cannot install WGET, so tomlint must be disabled
-    - tomllint
 
 exclude: |
   (?x)^(
@@ -13,21 +10,10 @@ exclude: |
 
 repos:
 
-  - repo: local
-    hooks:
-      - id: tomllint
-        name: "Script: scripts/tomllint.sh"
-        language: script
-        # pass_filenames: false
-        files: \^*.toml
-        types: [file]
-        entry: scripts/tomllint.sh .
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: check-added-large-files
-      - id: check-ast
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: check-json
@@ -38,7 +24,6 @@ repos:
       # - id: detect-aws-credentials
       - id: check-xml
       - id: check-yaml
-      - id: debug-statements
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: mixed-line-ending
@@ -48,7 +33,6 @@ repos:
       - id: no-commit-to-branch
       # - id: pretty-format-json
       - id: requirements-txt-fixer
-      - id: trailing-whitespace
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
@@ -78,24 +62,12 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-
-  - repo: https://github.com/pycqa/pydocstyle.git
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        additional_dependencies: ["tomli"]
+        args: ["-x"]  # Check external files
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
     rev: v1.7.1.15
     hooks:
       - id: actionlint
-
-  - repo: https://github.com/pycqa/flake8
-    rev: "7.1.0"
-    hooks:
-      - id: flake8
-        additional_dependencies:
-        - pep8-naming
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
@@ -104,13 +76,11 @@ repos:
         args: [ "-d", "{rules: {line-length: {max: 120}}, ignore-from-file: [.gitignore],}", ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.10
+    rev: v0.5.0
     hooks:
       - id: ruff
-        files: ^(scripts|tests|custom_components)/.+\.py$
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [--fix, --exit-non-zero-on-fix, --config=ruff.toml]
       - id: ruff-format
-        files: ^(scripts|tests|custom_components)/.+\.py$
 
   - repo: local
     hooks:
@@ -121,7 +91,7 @@ repos:
         entry: bash -c 'if [ ! -d .mypy_cache ]; then /bin/mkdir .mypy_cache; fi; exit 0'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.10.0"
+    rev: "v1.10.1"
     hooks:
       - id: mypy
         verbose: true
@@ -133,13 +103,6 @@ repos:
   #   rev: v2.2.2
   #   hooks:
   #   - id: codespell
-
-  # To embrace black styles, even in docs
-  # - repo: https://github.com/asottile/blacken-docs
-  #   rev: v1.13.0
-  #   hooks:
-  #   - id: blacken-docs
-  #     additional_dependencies: [black]
 
   # Automatically upgrade Python syntax for newer versions
   # - repo: https://github.com/asottile/pyupgrade

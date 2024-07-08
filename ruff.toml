@@ -1,0 +1,28 @@
+[lint]
+extend-fixable = [
+    #Instead of trailing-whitespace
+    "W291", "W293"
+    ]
+
+extend-select = [
+    # Instead of pydocstyle
+    "D",
+    #Instead of flake8
+    "E", "F","B",
+    # Instead of pep8-naming
+    "N",
+    # Instead of flake8-debugger or debug-statements
+    "T10",
+]
+
+ignore = [
+    "E203",
+    "E501",
+
+    # Avoid incompatible rules
+    "D203",
+    "D213",
+]
+
+[lint.pycodestyle]
+max-line-length = 160
