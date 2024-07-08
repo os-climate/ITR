@@ -11,9 +11,7 @@ from ITR.portfolio_aggregation import PortfolioAggregation, PortfolioAggregation
 
 
 class TestPortfolioAggregation(unittest.TestCase):
-    """
-    Test the interfaces.
-    """
+    """Test the interfaces."""
 
     def setUp(self) -> None:
         """ """
@@ -23,64 +21,128 @@ class TestPortfolioAggregation(unittest.TestCase):
             "Company B",
             "Company C",
         ]
-        self.data.loc[:, ColumnsConfig.COMPANY_REVENUE] = pd.Series([1.0, 2.0, 3.0], dtype="pint[USD]")
-        self.data.loc[:, ColumnsConfig.COMPANY_MARKET_CAP] = pd.Series([1.0, 2.0, 3.0], dtype="pint[USD]")
-        self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = pd.Series([1.0, 2.0, 3.0], dtype="pint[USD]")
+        self.data.loc[:, ColumnsConfig.COMPANY_REVENUE] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[USD]"
+        )
+        self.data.loc[:, ColumnsConfig.COMPANY_MARKET_CAP] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[USD]"
+        )
+        self.data.loc[:, ColumnsConfig.INVESTMENT_VALUE] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[USD]"
+        )
         self.data.loc[:, ColumnsConfig.SCOPE] = [
             EScope.S1S2,
             EScope.S1S2,
             EScope.S1S2S3,
         ]
-        self.data.loc[:, ColumnsConfig.GHG_SCOPE12] = pd.Series([1.0, 2.0, 3.0], dtype="pint[t CO2]")
-        self.data.loc[:, ColumnsConfig.GHG_SCOPE3] = pd.Series([1.0, 2.0, 3.0], dtype="pint[t CO2]")
-        self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = pd.Series([1.0, 2.0, 3.0], dtype="pint[USD]")
-        self.data.loc[:, ColumnsConfig.COMPANY_CASH_EQUIVALENTS] = pd.Series([1.0, 2.0, 3.0], dtype="pint[USD]")
-        self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = pd.Series([1.0, 2.0, 3.0], dtype="pint[USD]")
-        self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = pd.Series([1.0, 2.0, 3.0], dtype="pint[USD]")
-        self.data.loc[:, ColumnsConfig.TEMPERATURE_SCORE] = pd.Series([1.0, 2.0, 3.0], dtype="pint[delta_degC]")
+        self.data.loc[:, ColumnsConfig.GHG_SCOPE12] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[t CO2]"
+        )
+        self.data.loc[:, ColumnsConfig.GHG_SCOPE3] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[t CO2]"
+        )
+        self.data.loc[:, ColumnsConfig.COMPANY_ENTERPRISE_VALUE] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[USD]"
+        )
+        self.data.loc[:, ColumnsConfig.COMPANY_CASH_EQUIVALENTS] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[USD]"
+        )
+        self.data.loc[:, ColumnsConfig.COMPANY_EV_PLUS_CASH] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[USD]"
+        )
+        self.data.loc[:, ColumnsConfig.COMPANY_TOTAL_ASSETS] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[USD]"
+        )
+        self.data.loc[:, ColumnsConfig.TEMPERATURE_SCORE] = pd.Series(
+            [1.0, 2.0, 3.0], dtype="pint[delta_degC]"
+        )
 
     def test_is_emissions_based(self):
-        self.assertTrue(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.MOTS))
-        self.assertTrue(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.EOTS))
-        self.assertTrue(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.ECOTS))
-        self.assertTrue(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.AOTS))
-        self.assertTrue(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.ROTS))
+        self.assertTrue(
+            PortfolioAggregationMethod.is_emissions_based(
+                PortfolioAggregationMethod.MOTS
+            )
+        )
+        self.assertTrue(
+            PortfolioAggregationMethod.is_emissions_based(
+                PortfolioAggregationMethod.EOTS
+            )
+        )
+        self.assertTrue(
+            PortfolioAggregationMethod.is_emissions_based(
+                PortfolioAggregationMethod.ECOTS
+            )
+        )
+        self.assertTrue(
+            PortfolioAggregationMethod.is_emissions_based(
+                PortfolioAggregationMethod.AOTS
+            )
+        )
+        self.assertTrue(
+            PortfolioAggregationMethod.is_emissions_based(
+                PortfolioAggregationMethod.ROTS
+            )
+        )
 
-        self.assertFalse(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.WATS))
-        self.assertFalse(PortfolioAggregationMethod.is_emissions_based(PortfolioAggregationMethod.TETS))
+        self.assertFalse(
+            PortfolioAggregationMethod.is_emissions_based(
+                PortfolioAggregationMethod.WATS
+            )
+        )
+        self.assertFalse(
+            PortfolioAggregationMethod.is_emissions_based(
+                PortfolioAggregationMethod.TETS
+            )
+        )
 
     def test_get_value_column(self):
         self.assertEqual(
-            PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.MOTS, ColumnsConfig),
+            PortfolioAggregationMethod.get_value_column(
+                PortfolioAggregationMethod.MOTS, ColumnsConfig
+            ),
             ColumnsConfig.COMPANY_MARKET_CAP,
         )
         self.assertEqual(
-            PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.EOTS, ColumnsConfig),
+            PortfolioAggregationMethod.get_value_column(
+                PortfolioAggregationMethod.EOTS, ColumnsConfig
+            ),
             ColumnsConfig.COMPANY_ENTERPRISE_VALUE,
         )
         self.assertEqual(
-            PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.ECOTS, ColumnsConfig),
+            PortfolioAggregationMethod.get_value_column(
+                PortfolioAggregationMethod.ECOTS, ColumnsConfig
+            ),
             ColumnsConfig.COMPANY_EV_PLUS_CASH,
         )
         self.assertEqual(
-            PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.AOTS, ColumnsConfig),
+            PortfolioAggregationMethod.get_value_column(
+                PortfolioAggregationMethod.AOTS, ColumnsConfig
+            ),
             ColumnsConfig.COMPANY_TOTAL_ASSETS,
         )
         self.assertEqual(
-            PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.ROTS, ColumnsConfig),
+            PortfolioAggregationMethod.get_value_column(
+                PortfolioAggregationMethod.ROTS, ColumnsConfig
+            ),
             ColumnsConfig.COMPANY_REVENUE,
         )
         self.assertEqual(
-            PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.WATS, ColumnsConfig),
+            PortfolioAggregationMethod.get_value_column(
+                PortfolioAggregationMethod.WATS, ColumnsConfig
+            ),
             ColumnsConfig.COMPANY_MARKET_CAP,
         )
         self.assertEqual(
-            PortfolioAggregationMethod.get_value_column(PortfolioAggregationMethod.TETS, ColumnsConfig),
+            PortfolioAggregationMethod.get_value_column(
+                PortfolioAggregationMethod.TETS, ColumnsConfig
+            ),
             ColumnsConfig.COMPANY_MARKET_CAP,
         )
 
     def test_check_column(self):
-        PortfolioAggregation()._check_column(data=self.data, column=ColumnsConfig.COMPANY_REVENUE)
+        PortfolioAggregation()._check_column(
+            data=self.data, column=ColumnsConfig.COMPANY_REVENUE
+        )
 
         self.data.loc[0, ColumnsConfig.TEMPERATURE_SCORE] = np.nan
         # _check_column no longer raises an exceptiong for null or missing data, because

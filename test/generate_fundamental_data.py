@@ -147,15 +147,19 @@ company_ai = gen_company_variation(
 
 
 class TestEIBenchmarks(unittest.TestCase):
-    """
-    Testdifferent flavours of emission intensity benchmarks
-    """
+    """Testdifferent flavours of emission intensity benchmarks"""
 
     def setUp(self) -> None:
-        self.benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
+        self.benchmark_prod_json = os.path.join(
+            data_dir, "benchmark_production_OECM.json"
+        )
         self.benchmark_EI_OECM_PC = os.path.join(data_dir, "benchmark_EI_OECM_PC.json")
-        self.benchmark_EI_TPI = os.path.join(data_dir, "benchmark_EI_TPI_2_degrees.json")
-        self.benchmark_EI_TPI_below_2 = os.path.join(data_dir, "benchmark_EI_TPI_below_2_degrees.json")
+        self.benchmark_EI_TPI = os.path.join(
+            data_dir, "benchmark_EI_TPI_2_degrees.json"
+        )
+        self.benchmark_EI_TPI_below_2 = os.path.join(
+            data_dir, "benchmark_EI_TPI_below_2_degrees.json"
+        )
 
         # load company data
         self.companies = [company_ag, company_ah, company_ai]
@@ -165,7 +169,9 @@ class TestEIBenchmarks(unittest.TestCase):
         with open(self.benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
-        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
+        self.base_production_bm = BaseProviderProductionBenchmark(
+            production_benchmarks=prod_bms
+        )
 
         # load intensity benchmarks
 
@@ -187,8 +193,12 @@ class TestEIBenchmarks(unittest.TestCase):
         ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
         self.TPI_below_2_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
-        self.OECM_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.OECM_EI_bm)
-        self.TPI_warehouse = DataWarehouse(self.base_company_data, self.base_production_bm, self.TPI_EI_bm)
+        self.OECM_warehouse = DataWarehouse(
+            self.base_company_data, self.base_production_bm, self.OECM_EI_bm
+        )
+        self.TPI_warehouse = DataWarehouse(
+            self.base_company_data, self.base_production_bm, self.TPI_EI_bm
+        )
         self.TPI_below_2_warehouse = DataWarehouse(
             self.base_company_data, self.base_production_bm, self.TPI_below_2_EI_bm
         )
@@ -237,7 +247,9 @@ class TestEIBenchmarks(unittest.TestCase):
         expected = pd.Series([1.76, 1.55, 1.52], dtype="pint[delta_degC]")
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.61, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(
+            agg_scores.long.S1S2.all.score, Q_(1.61, ureg.delta_degC), places=2
+        )
 
         # TPI
         # portfolio data
@@ -263,7 +275,9 @@ class TestEIBenchmarks(unittest.TestCase):
         expected = pd.Series([1.85, 1.76, 1.76], dtype="pint[delta_degC]")
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.79, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(
+            agg_scores.long.S1S2.all.score, Q_(1.79, ureg.delta_degC), places=2
+        )
 
         # TPI below 2
         # portfolio data
@@ -289,7 +303,9 @@ class TestEIBenchmarks(unittest.TestCase):
         expected = pd.Series([1.65, 1.54, 1.53], dtype="pint[delta_degC]")
         assert_array_equal(scores.temperature_score.values, expected)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(1.57, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(
+            agg_scores.long.S1S2.all.score, Q_(1.57, ureg.delta_degC), places=2
+        )
 
 
 if __name__ == "__main__":

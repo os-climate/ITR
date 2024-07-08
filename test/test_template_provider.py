@@ -22,17 +22,27 @@ from ITR.temperature_score import TemperatureScore
 class TemplateV1:
     def __init__(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
-        self.company_data_path = os.path.join(self.root, "inputs", "20220215 ITR Tool Sample Data.xlsx")
-        self.sector_data_path = os.path.join(self.root, "inputs", "benchmark_OECM_PC.xlsx")
-        self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
+        self.company_data_path = os.path.join(
+            self.root, "inputs", "20220215 ITR Tool Sample Data.xlsx"
+        )
+        self.sector_data_path = os.path.join(
+            self.root, "inputs", "benchmark_OECM_PC.xlsx"
+        )
+        self.excel_production_bm = ExcelProviderProductionBenchmark(
+            excel_path=self.sector_data_path
+        )
         self.excel_EI_bm = ExcelProviderIntensityBenchmark(
             excel_path=self.sector_data_path,
             benchmark_temperature=Q_(1.5, ureg.delta_degC),
             benchmark_global_budget=Q_(396, ureg("Gt CO2")),
             is_AFOLU_included=False,
         )
-        self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
-        self.data_warehouse = DataWarehouse(self.template_company_data, self.excel_production_bm, self.excel_EI_bm)
+        self.template_company_data = TemplateProviderCompany(
+            excel_path=self.company_data_path
+        )
+        self.data_warehouse = DataWarehouse(
+            self.template_company_data, self.excel_production_bm, self.excel_EI_bm
+        )
         self.company_ids = ["US00130H1059", "US26441C2044", "KR7005490008"]
         self.company_info_at_base_year = pd.DataFrame(
             [
@@ -71,8 +81,10 @@ class TemplateV1:
                 ColumnsConfig.PRODUCTION_METRIC,
             ],
         )
-        self.company_info_at_base_year["ghg_s1s2"] = self.company_info_at_base_year.base_year_production.mul(
-            self.company_info_at_base_year.ei_at_base_year
+        self.company_info_at_base_year["ghg_s1s2"] = (
+            self.company_info_at_base_year.base_year_production.mul(
+                self.company_info_at_base_year.ei_at_base_year
+            )
         )
 
 
@@ -80,9 +92,7 @@ template_V1 = TemplateV1()
 
 
 class TestTemplateProvider(unittest.TestCase):
-    """
-    Test the excel template provider
-    """
+    """Test the excel template provider"""
 
     def setUp(self) -> None:
         self.company_data_path = template_V1.company_data_path
@@ -144,8 +154,12 @@ class TestTemplateProvider(unittest.TestCase):
         }
         company_dict[ColumnsConfig.SCOPE] = [EScope.S1S2] * len(company_data)
         company_index = [c.company_id for c in company_data]
-        company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-        bm_production_data = self.excel_production_bm.get_company_projected_production(company_sector_region_info)
+        company_sector_region_info = pd.DataFrame(
+            company_dict, pd.Index(company_index, name="company_id")
+        )
+        bm_production_data = self.excel_production_bm.get_company_projected_production(
+            company_sector_region_info
+        )
         # FIXME: We should pre-compute some of these target projections and make them reference data
         for c in company_data:
             # This equality test does not work for scopes that have NaN values
@@ -160,13 +174,17 @@ class TestTemplateProvider(unittest.TestCase):
                 )
             temp = (
                 EITargetProjector(self.template_company_data.projection_controls)
-                .project_ei_targets(c, bm_production_data.loc[(c.company_id, EScope.S1S2)], ei_df_t)
+                .project_ei_targets(
+                    c, bm_production_data.loc[(c.company_id, EScope.S1S2)], ei_df_t
+                )
                 .S1S2
             )
             if c.projected_targets.S1S2 is None and temp is None:
                 continue
             if isinstance(c.projected_targets.S1S2.projections, pd.Series):
-                assert_pint_series_equal(self, c.projected_targets.S1S2.projections, temp.projections)
+                assert_pint_series_equal(
+                    self, c.projected_targets.S1S2.projections, temp.projections
+                )
             else:
                 assert c.projected_targets.S1S2 == temp
 
@@ -189,7 +207,11 @@ class TestTemplateProvider(unittest.TestCase):
         )
         print(temperature_score.c.__dict__)
         print(amended_portfolio.iloc[0])
-        print(amended_portfolio[["company_name", "time_frame", "scope", "temperature_score"]])
+        print(
+            amended_portfolio[
+                ["company_name", "time_frame", "scope", "temperature_score"]
+            ]
+        )
 
     def test_temp_score_from_excel_data(self):
         comids = [
@@ -244,7 +266,9 @@ class TestTemplateProvider(unittest.TestCase):
             places=2,
         )
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.44905799, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(
+            agg_scores.long.S1S2.all.score, Q_(2.44905799, ureg.delta_degC), places=2
+        )
 
         # Calculate Temp Scores
         temp_score_s1 = TemperatureScore(
@@ -273,7 +297,9 @@ class TestTemplateProvider(unittest.TestCase):
         # verify that results exist
 
         # If we treat missing S1 as default 3.2C, we get 2.56339852˚C
-        self.assertAlmostEqual(agg_scores_s1.long.S1.all.score, Q_(2.16716222, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(
+            agg_scores_s1.long.S1.all.score, Q_(2.16716222, ureg.delta_degC), places=2
+        )
 
     def test_get_projected_value(self):
         company_ids = ["US00130H1059", "KR7005490008"]
@@ -362,8 +388,12 @@ class TestTemplateProvider(unittest.TestCase):
             TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
             TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
         )
-        trajectories = self.template_company_data.get_company_projected_trajectories(company_ids)
-        assert_pint_frame_equal(self, trajectories.loc[:, EScope.S1S2, :], expected_data, places=2)
+        trajectories = self.template_company_data.get_company_projected_trajectories(
+            company_ids
+        )
+        assert_pint_frame_equal(
+            self, trajectories.loc[:, EScope.S1S2, :], expected_data, places=2
+        )
 
     def test_get_benchmark(self):
         # This test is a hot mess: the data are series of corp EI trajectories, which are company-specific
@@ -495,7 +525,9 @@ class TestTemplateProvider(unittest.TestCase):
                 TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
             )
         )
-        benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
+        benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(
+            self.company_info_at_base_year
+        )
         # FIXME: this test is broken until we fix data for POSCO
         return
         assert_pint_frame_equal(self, benchmarks, expected_data)
@@ -510,11 +542,15 @@ class TestTemplateProvider(unittest.TestCase):
             index=self.company_ids,
             name=2025,
         )
-        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        production = self.excel_production_bm.get_company_projected_production(
+            self.company_info_at_base_year
+        )[2025]
         assert_pint_series_equal(self, production, expected_data_2025, places=4)
 
     def test_get_cumulative_value(self):
-        projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype="pint[t CO2/GJ]")
+        projected_emission = pd.DataFrame(
+            [[1.0, 2.0], [3.0, 4.0]], dtype="pint[t CO2/GJ]"
+        )
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]], dtype="pint[GJ]")
         expected_data = pd.Series([10.0, 50.0], dtype="pint[t CO2]")
         emissions = self.data_warehouse._get_cumulative_emissions(
@@ -525,7 +561,9 @@ class TestTemplateProvider(unittest.TestCase):
     def test_get_company_data(self):
         # "US0079031078" and "US00724F1012" are both Electricity Utilities
         companies = [
-            c for c in self.data_warehouse.get_preprocessed_company_data(self.company_ids) if c.scope == EScope.S1S2
+            c
+            for c in self.data_warehouse.get_preprocessed_company_data(self.company_ids)
+            if c.scope == EScope.S1S2
         ]
         company_1 = companies[0]
         company_2 = companies[2]
@@ -533,14 +571,18 @@ class TestTemplateProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "POSCO")
         self.assertEqual(company_1.company_id, "US00130H1059")
         self.assertEqual(company_2.company_id, "KR7005490008")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(45935.0, ureg("kt CO2")), places=4)
+        self.assertAlmostEqual(
+            company_1.ghg_s1s2, Q_(45935.0, ureg("kt CO2")), places=4
+        )
         self.assertAlmostEqual(company_2.ghg_s1s2, Q_(78.8, ureg("Mt CO2")), places=4)
         self.assertAlmostEqual(
             company_1.cumulative_budget,
             Q_(247.098007132110327, ureg("Mt CO2")),
             places=4,
         )
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(759.2723660499346, ureg("Mt CO2")), places=4)
+        self.assertAlmostEqual(
+            company_2.cumulative_budget, Q_(759.2723660499346, ureg("Mt CO2")), places=4
+        )
         self.assertAlmostEqual(
             company_1.cumulative_target,
             Q_(478.351516647167385, ureg("Mt CO2")),

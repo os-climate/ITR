@@ -1,5 +1,4 @@
-"""
-This package helps companies and financial institutions to assess the temperature alignment of investment and lending
+"""This package helps companies and financial institutions to assess the temperature alignment of investment and lending
 portfolios.
 """
 
@@ -35,7 +34,9 @@ def _Variable__hash__(self):
     # that as a hash (uniqueness of self), which allows us to also
     # preserve the invariance that x == y implies hash(x) == hash(y)
     if hasattr(self, "_linear_part"):
-        if hasattr(self._linear_part, "linear_combo") and self in iter(self._linear_part.linear_combo.keys()):
+        if hasattr(self._linear_part, "linear_combo") and self in iter(
+            self._linear_part.linear_combo.keys()
+        ):
             return id(tuple(iter(self._linear_part.linear_combo.keys()))[0])
         return hash(self._linear_part)
     else:
@@ -81,9 +82,7 @@ except (ImportError, ModuleNotFoundError, AttributeError) as exc:  # noqa F841
 
 
 def isna(x):
-    """
-    True if X is either a NaN-like Quantity or otherwise NA-like
-    """
+    """True if X is either a NaN-like Quantity or otherwise NA-like"""
     # This function simplifies dealing with NA vs. NaN quantities and magnitudes inside and outside of PintArrays
     if isinstance(x, pint.Quantity):
         x = x.m
@@ -93,8 +92,7 @@ def isna(x):
 
 
 def Q_m_as(value, units, inplace=False):
-    """
-    Convert VALUE from a string to a Quantity.
+    """Convert VALUE from a string to a Quantity.
     If the Quanity is not already in UNITS, then convert in place.
     Returns the MAGNITUDE of the (possibly) converted value.
     """
@@ -110,9 +108,7 @@ def Q_m_as(value, units, inplace=False):
 
 
 def recombine_nom_and_std(nom: pd.Series, std: pd.Series) -> pd.Series:
-    """
-    A Pandas-friendly way to combine nominal and error terms for uncertainties
-    """
+    """A Pandas-friendly way to combine nominal and error terms for uncertainties"""
     assert HAS_UNCERTAINTIES
     if std.sum() == 0:
         return nom
@@ -136,7 +132,9 @@ def JSONEncoder(q):
     elif isinstance(q, pd.Series):
         # Inside the map function NA values become float64 nans and lose their units
         ser = q.map(lambda x: f"nan {q.pint.u}" if isna(x) else f"{x:.5f}")
-        res = pd.DataFrame(data={"year": ser.index, "value": ser.values}).to_dict("records")
+        res = pd.DataFrame(data={"year": ser.index, "value": ser.values}).to_dict(
+            "records"
+        )
         return res
     else:
         return str(q)

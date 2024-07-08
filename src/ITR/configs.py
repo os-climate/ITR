@@ -1,5 +1,4 @@
-"""
-This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
+"""This file defines the constants used throughout the different classes. In order to redefine these settings whilst using
 the module, extend the respective config class and pass it to the class as the "constants" parameter.
 """
 
@@ -16,12 +15,12 @@ from .data.osc_units import EmissionsQuantity, Quantity, delta_degC_Quantity
 
 
 def ITR_median(*args, **kwargs):
-    method = getattr(pd.DataFrame, "median")
+    method = pd.DataFrame.median
     return method(*args, **kwargs)
 
 
 def ITR_mean(*args, **kwargs):
-    method = getattr(pd.DataFrame, "mean")
+    method = pd.DataFrame.mean
     return method(*args, **kwargs)
 
 
@@ -127,8 +126,7 @@ class SectorsConfig:
 
     @classmethod
     def get_configured_sectors(cls) -> List[str]:
-        """
-        Get a list of sectors configured in the tool.
+        """Get a list of sectors configured in the tool.
         :return: A list of sectors string values
         """
         return [
@@ -207,7 +205,9 @@ class ProjectionControls:
 
     BASE_YEAR: int = 2019
     TARGET_YEAR: int = 2050
-    TREND_CALC_METHOD: Callable[[pd.DataFrame, Optional[str], Optional[bool]], pd.DataFrame] = ITR_median
+    TREND_CALC_METHOD: Callable[
+        [pd.DataFrame, Optional[str], Optional[bool]], pd.DataFrame
+    ] = ITR_median
 
 
 class TemperatureScoreControls(BaseModel):

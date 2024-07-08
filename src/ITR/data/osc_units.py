@@ -1,6 +1,4 @@
-"""
-This module handles initialization of pint functionality
-"""
+"""This module handles initialization of pint functionality"""
 
 import re
 from typing import Annotated, Any, List, Union
@@ -124,15 +122,23 @@ ng.add_transformation(
     lambda ureg, x: x / (NG_DENS * NG_SE),
 )
 
-ng.add_transformation("Mscf CH4", "kg CO2e", lambda ureg, x: x * ureg("54.87 kg CO2e / (Mscf CH4)"))
-ng.add_transformation("g CH4", "g CO2e", lambda ureg, x: x * ureg("44 g CO2e / (16 g CH4)"))
+ng.add_transformation(
+    "Mscf CH4", "kg CO2e", lambda ureg, x: x * ureg("54.87 kg CO2e / (Mscf CH4)")
+)
+ng.add_transformation(
+    "g CH4", "g CO2e", lambda ureg, x: x * ureg("44 g CO2e / (16 g CH4)")
+)
 ureg.add_context(ng)
 
-COAL_SE = 29307.6 * ureg("MJ/(t Coal)")  # specific energy (energy per mass); range is 50-55
+COAL_SE = 29307.6 * ureg(
+    "MJ/(t Coal)"
+)  # specific energy (energy per mass); range is 50-55
 coal = Context("coal")
 coal.add_transformation("[mass] Coal", "[energy]", lambda ureg, x: x * COAL_SE)
 coal.add_transformation("[energy]", "[mass] Coal", lambda ureg, x: x / COAL_SE)
-coal.add_transformation("g Coal", "g CO2e", lambda ureg, x: x * ureg("1.992 g CO2e / (1 g Coal)"))
+coal.add_transformation(
+    "g Coal", "g CO2e", lambda ureg, x: x * ureg("1.992 g CO2e / (1 g Coal)")
+)
 ureg.add_context(coal)
 
 ureg.enable_contexts("ngas", "coal")
@@ -140,8 +146,7 @@ ureg.enable_contexts("ngas", "coal")
 
 # from https://github.com/hgrecco/pint/discussions/1697
 def direct_conversions(ureg, unit) -> List[str]:
-    """
-    Return a LIST of unit names that Pint can convert implicitly from/to UNIT.
+    """Return a LIST of unit names that Pint can convert implicitly from/to UNIT.
     This does not include the list of additional unit names that can be explicitly
     converted by using the `Quantity.to` method.
     """
@@ -157,7 +162,11 @@ def direct_conversions(ureg, unit) -> List[str]:
     if isinstance(unit, str):
         unit = ureg.parse_units(unit)
 
-    return [name for name in ureg if name != "%" and unit.dimensionality == unit_dimensionality(ureg, name)]
+    return [
+        name
+        for name in ureg
+        if name != "%" and unit.dimensionality == unit_dimensionality(ureg, name)
+    ]
 
 
 # conversions = direct_conversions(ureg, "m / s ** 2")
@@ -165,15 +174,12 @@ def direct_conversions(ureg, unit) -> List[str]:
 
 
 def time_dimension(unit, exp) -> bool:
-    """
-    True if UNIT can be converted to something related only to time.
-    """
+    """True if UNIT can be converted to something related only to time."""
     return ureg(unit).is_compatible_with("s")  # and exp == -1
 
 
 def convert_to_annual(x, errors="ignore"):
-    """
-    For a quantity X that has units of [time], reduce the time dimension, leaving an "implictly annual" metric.
+    """For a quantity X that has units of [time], reduce the time dimension, leaving an "implictly annual" metric.
     If X has no time dimension, or if it cannot be reduced to zero in a single step, raise a DimensionalityError.
     If ERRORS=='ignore', allow time dimension to be reduced one step towards zero rather than only to zero.
     Returns the reduced quantity, or the original quantity if reduction would result in an error being raised.
@@ -183,12 +189,20 @@ def convert_to_annual(x, errors="ignore"):
     # <UnitsContainer({'day': -1, 'kilogram': 1})>
     x_implied_annual = x
     try:
-        time_unit, exp = next((pint.Unit(unit), exp) for unit, exp in unit_ct.items() if time_dimension(unit, exp))
+        time_unit, exp = next(
+            (pint.Unit(unit), exp)
+            for unit, exp in unit_ct.items()
+            if time_dimension(unit, exp)
+        )
         time_unit_str = str(time_unit)
         if exp == -1:
-            x_implied_annual = Q_(x * ureg("a").to(time_unit), unit_ct.remove([time_unit_str]))
+            x_implied_annual = Q_(
+                x * ureg("a").to(time_unit), unit_ct.remove([time_unit_str])
+            )
         elif exp == 1:
-            x_implied_annual = Q_(x / ureg(time_unit_str).to("a"), unit_ct.remove([time_unit_str]))
+            x_implied_annual = Q_(
+                x / ureg(time_unit_str).to("a"), unit_ct.remove([time_unit_str])
+            )
         else:
             if errors == "ignore":
                 if exp < 0:
@@ -208,7 +222,9 @@ def convert_to_annual(x, errors="ignore"):
             )
     except StopIteration:
         if errors != "ignore":
-            raise DimensionalityError(x, "", extra_msg="; dimensionality must contain [time] or 1/[time]")
+            raise DimensionalityError(
+                x, "", extra_msg="; dimensionality must contain [time] or 1/[time]"
+            )
     return x_implied_annual
 
 
@@ -218,17 +234,20 @@ def dimension_as(x, dim_unit):
     # <UnitsContainer({'day': -1, 'kilogram': 1})>
     try:
         unit, exp = next(
-            (pint.Unit(unit), exp) for unit, exp in unit_ct.items() if ureg(unit).is_compatible_with(dim_unit)
+            (pint.Unit(unit), exp)
+            for unit, exp in unit_ct.items()
+            if ureg(unit).is_compatible_with(dim_unit)
         )
         orig_dim_unit = ureg(str(unit))
         return (x * orig_dim_unit.to(dim_unit) / orig_dim_unit).to_reduced_units()
     except StopIteration:
-        raise DimensionalityError(x, dim_unit, extra_msg="; no compatible dimension not found")
+        raise DimensionalityError(
+            x, dim_unit, extra_msg="; no compatible dimension not found"
+        )
 
 
 def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Series:
-    """
-    A timeseries of production unit values can be aligned with a timeseries of Emissions Intensity (EI)
+    """A timeseries of production unit values can be aligned with a timeseries of Emissions Intensity (EI)
     metrics that uses different units of production.  For example, the production timeseries might be
     `bbl` (`Blue Barrels of Oil`) but the EI might be `t CO2e/GJ` (`CO2e * metric_ton / gigajoule`).
     By converting the production series to gigajoules up front, there are no complex conversions
@@ -250,7 +269,9 @@ def align_production_to_bm(prod_series: pd.Series, ei_bm: pd.Series) -> pd.Serie
         try:
             mass_unit = [
                 unit
-                for unit, exp in pint.util.to_units_container(prod_series.iloc[0].to_base_units()).items()
+                for unit, exp in pint.util.to_units_container(
+                    prod_series.iloc[0].to_base_units()
+                ).items()
                 if exp == 1 and ureg(unit).is_compatible_with("kg")
             ][0]
             ei_unit_bottom = f"{mass_unit} {ei_unit_bottom}"
@@ -346,7 +367,9 @@ _production_units = [
     "t Petrochemicals",
     "t Petroleum",
 ]
-_ei_units = [f"t CO2e/({pu})" if " " in pu else f"t CO2e/{pu}" for pu in _production_units]
+_ei_units = [
+    f"t CO2e/({pu})" if " " in pu else f"t CO2e/{pu}" for pu in _production_units
+]
 
 
 def check_ProductionMetric(units: str) -> str:
@@ -424,7 +447,9 @@ def check_EmissionsQuantity(quantity: Quantity) -> Quantity:
     )
 
 
-EmissionsQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EmissionsQuantity)]
+EmissionsQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EmissionsQuantity)
+]
 
 
 def check_ProductionQuantity(quantity: Quantity) -> Quantity:
@@ -447,7 +472,9 @@ def check_ProductionQuantity(quantity: Quantity) -> Quantity:
     )
 
 
-ProductionQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_ProductionQuantity)]
+ProductionQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_ProductionQuantity)
+]
 
 
 def check_EI_Quantity(quantity: Quantity) -> Quantity:
@@ -470,7 +497,9 @@ def check_EI_Quantity(quantity: Quantity) -> Quantity:
     )
 
 
-EI_Quantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EI_Quantity)]
+EI_Quantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_EI_Quantity)
+]
 
 
 def check_BenchmarkQuantity(quantity: Quantity) -> Quantity:
@@ -488,7 +517,9 @@ def check_BenchmarkQuantity(quantity: Quantity) -> Quantity:
     )
 
 
-BenchmarkQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_BenchmarkQuantity)]
+BenchmarkQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_BenchmarkQuantity)
+]
 
 
 def check_MonetaryQuantity(quantity: Quantity) -> Quantity:
@@ -510,7 +541,9 @@ def check_MonetaryQuantity(quantity: Quantity) -> Quantity:
     )
 
 
-MonetaryQuantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_MonetaryQuantity)]
+MonetaryQuantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_MonetaryQuantity)
+]
 
 
 def check_delta_degC_Quantity(quantity: Quantity) -> Quantity:
@@ -529,7 +562,9 @@ def check_delta_degC_Quantity(quantity: Quantity) -> Quantity:
     )
 
 
-delta_degC_Quantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_delta_degC_Quantity)]
+delta_degC_Quantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_delta_degC_Quantity)
+]
 
 
 def check_percent_Quantity(quantity: Quantity) -> Quantity:
@@ -548,7 +583,9 @@ def check_percent_Quantity(quantity: Quantity) -> Quantity:
     )
 
 
-percent_Quantity = Annotated[Quantity, BeforeValidator(to_Quantity), AfterValidator(check_percent_Quantity)]
+percent_Quantity = Annotated[
+    Quantity, BeforeValidator(to_Quantity), AfterValidator(check_percent_Quantity)
+]
 
 
 def Quantity_type(units: str) -> type:
@@ -556,13 +593,19 @@ def Quantity_type(units: str) -> type:
 
     def validate(value, units, info):
         quantity = to_Quantity(value)
-        assert quantity.is_compatible_with(units), f"Units of {value} incompatible with {units}"
+        assert quantity.is_compatible_with(
+            units
+        ), f"Units of {value} incompatible with {units}"
         return quantity
 
     def __get_pydantic_core_schema__(source_type: Any) -> CoreSchema:
-        return core_schema.with_info_plain_validator_function(lambda value, info: validate(value, units, info))
+        return core_schema.with_info_plain_validator_function(
+            lambda value, info: validate(value, units, info)
+        )
 
-    def __get_pydantic_json_schema__(cls, core_schema: CoreSchema, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
+    def __get_pydantic_json_schema__(
+        cls, core_schema: CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
         json_schema = handler(core_schema)
         json_schema = handler.resolve_ref_schema(json_schema)
         json_schema["$ref"] = "#/definitions/Quantity"
@@ -578,9 +621,10 @@ def Quantity_type(units: str) -> type:
     )
 
 
-def asPintSeries(series: pd.Series, name=None, errors="ignore", inplace=False) -> pd.Series:
-    """
-    :param series : pd.Series possibly containing Quantity values, not already in a PintArray.
+def asPintSeries(
+    series: pd.Series, name=None, errors="ignore", inplace=False
+) -> pd.Series:
+    """:param series : pd.Series possibly containing Quantity values, not already in a PintArray.
     :param name : the name to give to the resulting series
     :param errors : { 'raise', 'ignore' }, default 'ignore'
     :param inplace : bool, default False.  If True, perform operation in-place.
@@ -590,7 +634,6 @@ def asPintSeries(series: pd.Series, name=None, errors="ignore", inplace=False) -
     Raises ValueError if there are more than one type of units in the series.
     Silently returns series if no conversion needed to be done.
     """
-
     # FIXME: Errors in the imput template can trigger this assertion
     if isinstance(series, pd.DataFrame):
         assert len(series) == 1
@@ -623,13 +666,14 @@ def asPintSeries(series: pd.Series, name=None, errors="ignore", inplace=False) -
         new_series.name = name
     na_index = na_values[na_values].index
     if len(na_index) > 0:
-        new_series.loc[na_index] = new_series.loc[na_index].map(lambda x: PintType(unit).na_value)
+        new_series.loc[na_index] = new_series.loc[na_index].map(
+            lambda x: PintType(unit).na_value
+        )
     return new_series.astype(f"pint[{unit}]")
 
 
 def asPintDataFrame(df: pd.DataFrame, errors="ignore", inplace=False) -> pd.DataFrame:
-    """
-    :param df : pd.DataFrame with columns to be converted into PintArrays where possible.
+    """:param df : pd.DataFrame with columns to be converted into PintArrays where possible.
     :param errors : { 'raise', 'ignore' }, default 'ignore'
     :param inplace : bool, default False.  If True, perform operation in-place.
 
@@ -652,8 +696,7 @@ def asPintDataFrame(df: pd.DataFrame, errors="ignore", inplace=False) -> pd.Data
 
 
 def requantify_df_from_columns(df: pd.DataFrame, inplace=False) -> pd.DataFrame:
-    """
-    :param df: pd.DataFrame
+    """:param df: pd.DataFrame
     :param inplace: bool, default False.  If True, perform operation in-place.
 
     :return: A pd.DataFrame with columns originally matching the pattern

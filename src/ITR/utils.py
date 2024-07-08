@@ -32,8 +32,7 @@ def get_project_root() -> Path:
 
 
 def _flatten_user_fields(record: PortfolioCompany):
-    """
-    Flatten the user fields in a portfolio company and return it as a dictionary.
+    """Flatten the user fields in a portfolio company and return it as a dictionary.
 
     :param record: The record to flatten
     :return:
@@ -48,15 +47,16 @@ def _flatten_user_fields(record: PortfolioCompany):
 
 
 def _make_isin_map(df_portfolio: pd.DataFrame) -> dict:
-    """
-    Create a mapping from company_id to ISIN
+    """Create a mapping from company_id to ISIN
 
     :param df_portfolio: The complete portfolio
     :return: A mapping from company_id to ISIN
     """
     return {
         company_id: company[ColumnsConfig.COMPANY_ISIN]
-        for company_id, company in df_portfolio[[ColumnsConfig.COMPANY_ID, ColumnsConfig.COMPANY_ISIN]]
+        for company_id, company in df_portfolio[
+            [ColumnsConfig.COMPANY_ID, ColumnsConfig.COMPANY_ISIN]
+        ]
         .set_index(ColumnsConfig.COMPANY_ID)
         .to_dict(orient="index")
         .items()
@@ -64,32 +64,41 @@ def _make_isin_map(df_portfolio: pd.DataFrame) -> dict:
 
 
 def dataframe_to_portfolio(df_portfolio: pd.DataFrame) -> List[PortfolioCompany]:
-    """
-    Convert a data frame to a list of portfolio company objects.
+    """Convert a data frame to a list of portfolio company objects.
 
     :param df_portfolio: The data frame to parse. The column names should align with the attribute names of the PortfolioCompany model.
     :return: A list of portfolio companies
     """
     # Adding some non-empty checks for portfolio upload
     if df_portfolio[ColumnsConfig.INVESTMENT_VALUE].isnull().any():
-        error_message = "Investment values are missing for one or more companies in the input file."
+        error_message = (
+            "Investment values are missing for one or more companies in the input file."
+        )
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ISIN].isnull().any():
-        error_message = "Company ISINs are missing for one or more companies in the input file."
+        error_message = (
+            "Company ISINs are missing for one or more companies in the input file."
+        )
         logger.error(error_message)
         raise ValueError(error_message)
     if df_portfolio[ColumnsConfig.COMPANY_ID].isnull().any():
-        error_message = "Company IDs are missing for one or more companies in the input file."
+        error_message = (
+            "Company IDs are missing for one or more companies in the input file."
+        )
         logger.error(error_message)
         raise ValueError(error_message)
 
-    return [PortfolioCompany.model_validate(company) for company in df_portfolio.to_dict(orient="records")]
+    return [
+        PortfolioCompany.model_validate(company)
+        for company in df_portfolio.to_dict(orient="records")
+    ]
 
 
-def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -> pd.DataFrame:
-    """
-    Get the required data from the data provider(s) and return a 9-box grid for each company.
+def get_data(
+    data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]
+) -> pd.DataFrame:
+    """Get the required data from the data provider(s) and return a 9-box grid for each company.
 
     :param data_warehouse: DataWarehouse instances
     :param portfolio: A list of PortfolioCompany models
@@ -99,26 +108,34 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
     df_portfolio = pd.DataFrame.from_records(
         [_flatten_user_fields(c) for c in portfolio if c.company_id in company_ids]
     )
-    df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(df_portfolio[ColumnsConfig.INVESTMENT_VALUE])
+    df_portfolio[ColumnsConfig.INVESTMENT_VALUE] = asPintSeries(
+        df_portfolio[ColumnsConfig.INVESTMENT_VALUE]
+    )
 
     if ColumnsConfig.COMPANY_ID not in df_portfolio.columns:
         raise ValueError("Portfolio contains no company_id data")
 
     # This transforms a dataframe of portfolio data into model data just so we can transform that back into a dataframe?!
     # It does this for all scopes, not only the scopes of interest
-    company_data = data_warehouse.get_preprocessed_company_data(df_portfolio[ColumnsConfig.COMPANY_ID].to_list())
+    company_data = data_warehouse.get_preprocessed_company_data(
+        df_portfolio[ColumnsConfig.COMPANY_ID].to_list()
+    )
 
     if len(company_data) == 0:
-        raise ValueError("None of the companies in your portfolio could be found by the data providers")
+        raise ValueError(
+            "None of the companies in your portfolio could be found by the data providers"
+        )
 
     df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data])
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
     df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype("pint[Mt CO2e]")
     s3_data_invalid = df_company_data[ColumnsConfig.GHG_SCOPE3].isna()
     if len(s3_data_invalid[s3_data_invalid].index) > 0:
-        df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = df_company_data.loc[
-            s3_data_invalid, ColumnsConfig.GHG_SCOPE3
-        ].map(lambda x: Q_(np.nan, "Mt CO2e"))
+        df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = (
+            df_company_data.loc[
+                s3_data_invalid, ColumnsConfig.GHG_SCOPE3
+            ].map(lambda x: Q_(np.nan, "Mt CO2e"))
+        )
     for col in [
         ColumnsConfig.GHG_SCOPE3,
         ColumnsConfig.CUMULATIVE_BUDGET,
@@ -136,9 +153,9 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
         ColumnsConfig.COMPANY_CASH_EQUIVALENTS,
     ]:
         df_company_data[col] = asPintSeries(df_company_data[col])
-    df_company_data[ColumnsConfig.BENCHMARK_TEMP] = df_company_data[ColumnsConfig.BENCHMARK_TEMP].astype(
-        "pint[delta_degC]"
-    )
+    df_company_data[ColumnsConfig.BENCHMARK_TEMP] = df_company_data[
+        ColumnsConfig.BENCHMARK_TEMP
+    ].astype("pint[delta_degC]")
     df_company_data[ColumnsConfig.BENCHMARK_GLOBAL_BUDGET] = df_company_data[
         ColumnsConfig.BENCHMARK_GLOBAL_BUDGET
     ].astype("pint[Gt CO2e]")
@@ -152,16 +169,16 @@ def get_data(data_warehouse: DataWarehouse, portfolio: List[PortfolioCompany]) -
 
 
 def get_benchmark_projections(
-    prod_df: pd.DataFrame, company_sector_region_scope: Optional[pd.DataFrame] = None, scope: EScope = EScope.AnyScope
+    prod_df: pd.DataFrame,
+    company_sector_region_scope: Optional[pd.DataFrame] = None,
+    scope: EScope = EScope.AnyScope,
 ) -> pd.DataFrame:
-    """
-    :param prod_df: DataFrame of production statistics by sector, region, scope (and year)
+    """:param prod_df: DataFrame of production statistics by sector, region, scope (and year)
     :param company_sector_region_scope: DataFrame indexed by ColumnsConfig.COMPANY_ID
     with at least the following columns: ColumnsConfig.SECTOR, ColumnsConfig.REGION, and ColumnsConfig.SCOPE
     :param scope: a scope
     :return: A pint[dimensionless] DataFrame with partial production benchmark data per calendar year per row, indexed by company.
     """
-
     if company_sector_region_scope is None:
         return prod_df
 
@@ -217,8 +234,7 @@ def calculate(
     aggregate: bool = True,
     controls: Optional[TemperatureScoreControls] = None,
 ) -> Tuple[pd.DataFrame, Optional[ScoreAggregations]]:
-    """
-    Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).
+    """Calculate the different parts of the temperature score (actual scores, aggregations, column distribution).
 
     :param portfolio_data: The portfolio data, already processed by the target validation module
     :param fallback_score: The fallback score to use while calculating the temperature score
@@ -230,7 +246,6 @@ def calculate(
     :param aggregate: Whether to aggregate the scores or not
     :return: The scores, the aggregations and the column distribution (if a
     """
-
     config = TemperatureScoreConfig
     if controls:
         TemperatureScoreConfig.CONTROLS_CONFIG = controls
@@ -256,8 +271,7 @@ def calculate(
 
 # https://stackoverflow.com/a/74137209/1291237
 def umean(unquantified_data):
-    """
-    Assuming Gaussian statistics, uncertainties stem from Gaussian parent distributions. In such a case,
+    """Assuming Gaussian statistics, uncertainties stem from Gaussian parent distributions. In such a case,
     it is standard to weight the measurements (nominal values) by the inverse variance.
 
     Following the pattern of np.mean, this function is really nan_mean, meaning it calculates based on non-NaN values.
@@ -268,7 +282,11 @@ def umean(unquantified_data):
     :return: The weighted mean of the values, with a freshly calculated error term
     """
     arr = np.array(
-        [v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0) for v in unquantified_data if not ITR.isnan(v)]
+        [
+            v if isinstance(v, ITR.UFloat) else ITR.ufloat(v, 0)
+            for v in unquantified_data
+            if not ITR.isnan(v)
+        ]
     )
     N = len(arr)
     if N == 0:
@@ -295,9 +313,7 @@ def umean(unquantified_data):
 
 
 def uround(u, ndigits):
-    """
-    Round an uncertainty to ndigits.
-    """
+    """Round an uncertainty to ndigits."""
     if np.isnan(u.n):
         return ITR._ufloat_nan
     if np.isnan(u.s):

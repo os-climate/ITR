@@ -36,15 +36,21 @@ pd.options.display.min_rows = 30
 class TemplateV2:
     def __init__(self, ei_filename: str, company_ids: List[str]) -> None:
         root = os.path.dirname(os.path.abspath(__file__))
-        self.company_data_path = os.path.join(root, "inputs", "20220927 ITR V2 Sample Data.xlsx")
+        self.company_data_path = os.path.join(
+            root, "inputs", "20220927 ITR V2 Sample Data.xlsx"
+        )
         # self.company_data_path = os.path.join(root, "inputs", "20230106 ITR V2 Sample Data.xlsx")
-        self.template_company_data = TemplateProviderCompany(excel_path=self.company_data_path)
+        self.template_company_data = TemplateProviderCompany(
+            excel_path=self.company_data_path
+        )
         # load production benchmarks
         benchmark_prod_json = os.path.join(data_dir, "benchmark_production_OECM.json")
         with open(benchmark_prod_json) as json_file:
             parsed_json = json.load(json_file)
         prod_bms = IProductionBenchmarkScopes.model_validate(parsed_json)
-        self.base_production_bm = BaseProviderProductionBenchmark(production_benchmarks=prod_bms)
+        self.base_production_bm = BaseProviderProductionBenchmark(
+            production_benchmarks=prod_bms
+        )
 
         # load intensity benchmarks
         benchmark_EI_json = os.path.join(data_dir, ei_filename)
@@ -53,7 +59,9 @@ class TemplateV2:
         ei_bms = IEIBenchmarkScopes.model_validate(parsed_json)
         self.base_EI_bm = BaseProviderIntensityBenchmark(EI_benchmarks=ei_bms)
 
-        self.data_warehouse = DataWarehouse(self.template_company_data, self.base_production_bm, self.base_EI_bm)
+        self.data_warehouse = DataWarehouse(
+            self.template_company_data, self.base_production_bm, self.base_EI_bm
+        )
         self.company_ids = company_ids
         self.company_info_at_base_year = self.template_company_data.get_company_intensity_and_production_at_base_year(
             self.company_ids
@@ -62,12 +70,17 @@ class TemplateV2:
 
 @pytest.fixture(scope="session")
 def template_V2_PC() -> TemplateV2:
-    return TemplateV2("benchmark_EI_OECM_PC.json", ["US00130H1059", "US26441C2044", "KR7005490008"])
+    return TemplateV2(
+        "benchmark_EI_OECM_PC.json", ["US00130H1059", "US26441C2044", "KR7005490008"]
+    )
 
 
 @pytest.fixture(scope="session")
 def template_V2_S3() -> TemplateV2:
-    return TemplateV2("benchmark_EI_OECM_S3.json", ["US0921131092+Electricity Utilities", "US0921131092+Gas Utilities"])
+    return TemplateV2(
+        "benchmark_EI_OECM_S3.json",
+        ["US0921131092+Electricity Utilities", "US0921131092+Gas Utilities"],
+    )
 
 
 tc = TestCase()
@@ -123,9 +136,13 @@ def test_target_projections(template_V2_PC: TemplateV2):
     }
     company_dict[ColumnsConfig.SCOPE] = [EScope.AnyScope] * len(company_data)
     company_index = [c.company_id for c in company_data]
-    company_sector_region_info = pd.DataFrame(company_dict, pd.Index(company_index, name="company_id"))
-    bm_production_data = template_V2_PC.base_production_bm.get_company_projected_production(  # noqa: F841
-        company_sector_region_info
+    company_sector_region_info = pd.DataFrame(
+        company_dict, pd.Index(company_index, name="company_id")
+    )
+    bm_production_data = (
+        template_V2_PC.base_production_bm.get_company_projected_production(  # noqa: F841
+            company_sector_region_info
+        )
     )
     # FIXME: We should pre-compute some of these target projections and make them reference data
 
@@ -256,12 +273,17 @@ def test_target_projections(template_V2_PC: TemplateV2):
                 # c_proj_targets is a list of nasty BaseModel types so we cannot use Pandas asserters
                 c_proj_targets = c_proj_targets[1:]
                 assert [
-                    ITR.nominal_values(round(x.value.m_as(expected_projection.dtype.units), 4)) for x in c_proj_targets
+                    ITR.nominal_values(
+                        round(x.value.m_as(expected_projection.dtype.units), 4)
+                    )
+                    for x in c_proj_targets
                 ] == expected_projection.pint.m.tolist()
 
 
 def test_temp_score(template_V2_PC: TemplateV2):
-    df_portfolio = pd.read_excel(template_V2_PC.company_data_path, sheet_name="Portfolio")
+    df_portfolio = pd.read_excel(
+        template_V2_PC.company_data_path, sheet_name="Portfolio"
+    )
     requantify_df_from_columns(df_portfolio, inplace=True)
     # df_portfolio = df_portfolio[df_portfolio.company_id=='US00130H1059']
     portfolio = ITR.utils.dataframe_to_portfolio(df_portfolio)
@@ -278,9 +300,13 @@ def test_temp_score(template_V2_PC: TemplateV2):
         assert False
 
     amended_portfolio = temperature_score.calculate(
-        data_warehouse=template_V2_PC.data_warehouse, data=portfolio_data, portfolio=portfolio
+        data_warehouse=template_V2_PC.data_warehouse,
+        data=portfolio_data,
+        portfolio=portfolio,
     )
-    print(amended_portfolio[["company_name", "time_frame", "scope", "temperature_score"]])
+    print(
+        amended_portfolio[["company_name", "time_frame", "scope", "temperature_score"]]
+    )
 
 
 def test_get_projected_value(template_V2_PC: TemplateV2):
@@ -370,8 +396,14 @@ def test_get_projected_value(template_V2_PC: TemplateV2):
         TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
         TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
     )
-    trajectories = template_V2_PC.template_company_data.get_company_projected_trajectories(company_ids)
-    assert_pint_frame_equal(tc, trajectories.loc[:, EScope.S1S2, :], expected_data, places=4)
+    trajectories = (
+        template_V2_PC.template_company_data.get_company_projected_trajectories(
+            company_ids
+        )
+    )
+    assert_pint_frame_equal(
+        tc, trajectories.loc[:, EScope.S1S2, :], expected_data, places=4
+    )
 
 
 def test_get_benchmark(template_V2_PC: TemplateV2):
@@ -504,7 +536,9 @@ def test_get_benchmark(template_V2_PC: TemplateV2):
             TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
         )
     )
-    benchmarks = template_V2_PC.base_EI_bm.get_SDA_intensity_benchmarks(template_V2_PC.company_info_at_base_year)
+    benchmarks = template_V2_PC.base_EI_bm.get_SDA_intensity_benchmarks(
+        template_V2_PC.company_info_at_base_year
+    )
     assert_pint_frame_equal(tc, benchmarks.loc[:, EScope.S1S2, :], expected_data)
 
 
@@ -543,7 +577,9 @@ def test_get_cumulative_value(template_V2_PC: TemplateV2):
 
 def test_get_company_data(template_V2_PC: TemplateV2):
     # "US0079031078" and "US00724F1012" are both Electricity Utilities
-    companies = template_V2_PC.data_warehouse.get_preprocessed_company_data(template_V2_PC.company_ids)
+    companies = template_V2_PC.data_warehouse.get_preprocessed_company_data(
+        template_V2_PC.company_ids
+    )
     company_1 = companies[2]
     company_2 = companies[6]
     tc.assertEqual(company_1.company_name, "AES Corp.")

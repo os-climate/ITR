@@ -30,14 +30,15 @@ class e2e_DataWarehouse(DataWarehouse):
         # super().__init__(company_data, ProductionBenchmarkDataProvider(), IntensityBenchmarkDataProvider())
         self.company_data = company_data  # type: ignore
 
-    def get_preprocessed_company_data(self, company_ids: List[str]) -> List[ICompanyAggregates]:
+    def get_preprocessed_company_data(
+        self, company_ids: List[str]
+    ) -> List[ICompanyAggregates]:
         assert isinstance(self.company_data, e2e_DataProvider)
         return self.company_data._companies
 
 
 class EndToEndTest(unittest.TestCase):
-    """
-    This class is containing a set of end to end tests:
+    """This class is containing a set of end to end tests:
     - basic flow from creating companies/targets up to calculating aggregated values
     - edge cases for grouping
     - high load tests (>1000 targets)
@@ -125,10 +126,7 @@ class EndToEndTest(unittest.TestCase):
         )
 
     def test_basic(self):
-        """
-        This test is just a very basic workflow going thru all calculations up to temp score
-        """
-
+        """This test is just a very basic workflow going thru all calculations up to temp score"""
         # Setup test provider
         company = copy.deepcopy(self.company_base)
         data_provider = e2e_DataProvider([company])
@@ -155,10 +153,7 @@ class EndToEndTest(unittest.TestCase):
         pass
 
     def test_basic_flow(self):
-        """
-        This test is going all the way to the aggregated calculations
-        """
-
+        """This test is going all the way to the aggregated calculations"""
         companies, pf_companies = self.create_base_companies(["A", "B"])
 
         data_provider = e2e_DataProvider(companies)
@@ -176,7 +171,9 @@ class EndToEndTest(unittest.TestCase):
         agg_scores = temp_score.aggregate_scores(scores)
 
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2)
+        self.assertAlmostEqual(
+            agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2
+        )
 
     # Run some regression tests
     # @unittest.skip("only run for longer test runs")
@@ -217,12 +214,12 @@ class EndToEndTest(unittest.TestCase):
         scores = temp_score.calculate(portfolio_data)
         agg_scores = temp_score.aggregate_scores(scores)
 
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2)
+        self.assertAlmostEqual(
+            agg_scores.long.S1S2.all.score, self.BASE_COMP_SCORE, places=2
+        )
 
     def test_grouping(self) -> None:
-        """
-        Testing the grouping feature with two different industry levels and making sure the results are present
-        """
+        """Testing the grouping feature with two different industry levels and making sure the results are present"""
         # make 2+ companies and group them together
         industry_levels = ["Manufacturer", "Energy"]
         company_ids = ["A", "B"]
@@ -230,7 +227,9 @@ class EndToEndTest(unittest.TestCase):
         pf_companies_all: List[PortfolioCompany] = []
 
         for ind_level in industry_levels:
-            company_ids_with_level = [f"{ind_level}_{company_id}" for company_id in company_ids]
+            company_ids_with_level = [
+                f"{ind_level}_{company_id}" for company_id in company_ids
+            ]
 
             companies, pf_companies = self.create_base_companies(company_ids_with_level)
             for company in companies:
@@ -278,9 +277,7 @@ class EndToEndTest(unittest.TestCase):
         # add verification
 
     def create_base_companies(self, company_ids: List[str]):
-        """
-        This is a helper method to create base companies that can be used for the test cases
-        """
+        """This is a helper method to create base companies that can be used for the test cases"""
         companies: List[ICompanyAggregates] = []
         pf_companies: List[PortfolioCompany] = []
         for company_id in company_ids:

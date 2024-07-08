@@ -19,23 +19,31 @@ from ITR.temperature_score import TemperatureScore
 
 
 class TestExcelProvider(unittest.TestCase):
-    """
-    Test the excel provider
-    """
+    """Test the excel provider"""
 
     def setUp(self) -> None:
         self.root = os.path.dirname(os.path.abspath(__file__))
-        self.company_data_path = os.path.join(self.root, "inputs", "test_data_company.xlsx")
-        self.sector_data_path = os.path.join(self.root, "inputs", "benchmark_OECM_S3.xlsx")
-        self.excel_company_data = ExcelProviderCompany(excel_path=self.company_data_path)
-        self.excel_production_bm = ExcelProviderProductionBenchmark(excel_path=self.sector_data_path)
+        self.company_data_path = os.path.join(
+            self.root, "inputs", "test_data_company.xlsx"
+        )
+        self.sector_data_path = os.path.join(
+            self.root, "inputs", "benchmark_OECM_S3.xlsx"
+        )
+        self.excel_company_data = ExcelProviderCompany(
+            excel_path=self.company_data_path
+        )
+        self.excel_production_bm = ExcelProviderProductionBenchmark(
+            excel_path=self.sector_data_path
+        )
         self.excel_EI_bm = ExcelProviderIntensityBenchmark(
             excel_path=self.sector_data_path,
             benchmark_temperature=Q_(1.5, ureg.delta_degC),
             benchmark_global_budget=Q_(396, ureg("Gt CO2")),
             is_AFOLU_included=False,
         )
-        self.excel_provider = DataWarehouse(self.excel_company_data, self.excel_production_bm, self.excel_EI_bm)
+        self.excel_provider = DataWarehouse(
+            self.excel_company_data, self.excel_production_bm, self.excel_EI_bm
+        )
         # "US0079031078","US00724F1012","FR0000125338" are all Electricity Utilities
         self.company_ids = ["US0079031078", "US00724F1012", "FR0000125338"]
         self.company_info_at_base_year = pd.DataFrame(
@@ -158,7 +166,9 @@ class TestExcelProvider(unittest.TestCase):
         # We no longer internally round to 2 digits, so take care of that here.
         assert_pint_series_equal(self, scores.temperature_score, expected, places=2)
         # verify that results exist
-        self.assertAlmostEqual(agg_scores.long.S1S2.all.score, Q_(2.407, ureg.delta_degC), places=2)
+        self.assertAlmostEqual(
+            agg_scores.long.S1S2.all.score, Q_(2.407, ureg.delta_degC), places=2
+        )
 
     def test_get_projected_value(self):
         expected_data = pd.DataFrame(
@@ -273,7 +283,9 @@ class TestExcelProvider(unittest.TestCase):
             TemperatureScoreConfig.CONTROLS_CONFIG.base_year,
             TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
         )
-        trajectories = self.excel_company_data.get_company_projected_trajectories(self.company_ids)
+        trajectories = self.excel_company_data.get_company_projected_trajectories(
+            self.company_ids
+        )
         assert_pint_frame_equal(self, trajectories, expected_data)
 
     def test_get_benchmark(self):
@@ -407,7 +419,9 @@ class TestExcelProvider(unittest.TestCase):
                 TemperatureScoreConfig.CONTROLS_CONFIG.target_end_year + 1,
             )
         )
-        benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(self.company_info_at_base_year)
+        benchmarks = self.excel_EI_bm.get_SDA_intensity_benchmarks(
+            self.company_info_at_base_year
+        )
         assert_pint_frame_equal(self, benchmarks, expected_data)
 
     def test_get_projected_production(self):
@@ -417,11 +431,15 @@ class TestExcelProvider(unittest.TestCase):
             name=2025,
             dtype="pint[MWh]",
         ).astype("object")
-        production = self.excel_production_bm.get_company_projected_production(self.company_info_at_base_year)[2025]
+        production = self.excel_production_bm.get_company_projected_production(
+            self.company_info_at_base_year
+        )[2025]
         assert_pint_series_equal(self, production, expected_data_2025, places=4)
 
     def test_get_cumulative_value(self):
-        projected_emission = pd.DataFrame([[1.0, 2.0], [3.0, 4.0]], dtype="pint[t CO2/GJ]")
+        projected_emission = pd.DataFrame(
+            [[1.0, 2.0], [3.0, 4.0]], dtype="pint[t CO2/GJ]"
+        )
         projected_production = pd.DataFrame([[2.0, 4.0], [6.0, 8.0]], dtype="pint[GJ]")
         expected_data = pd.Series([10.0, 50.0], dtype="pint[t CO2]")
         emissions = self.excel_provider._get_cumulative_emissions(
@@ -438,14 +456,30 @@ class TestExcelProvider(unittest.TestCase):
         self.assertEqual(company_2.company_name, "Company AH")
         self.assertEqual(company_1.company_id, "US0079031078")
         self.assertEqual(company_2.company_id, "US00724F1012")
-        self.assertAlmostEqual(company_1.ghg_s1s2, Q_(640.885111270135, "Mt CO2"), places=4)
-        self.assertAlmostEqual(company_2.ghg_s1s2, Q_(1027.6039725941699, "Mt CO2"), places=4)
-        self.assertAlmostEqual(company_1.cumulative_budget, Q_(1242.6106955122796, "Mt CO2"), places=4)
-        self.assertAlmostEqual(company_2.cumulative_budget, Q_(7099.692144558048, "Mt CO2"), places=4)
-        self.assertAlmostEqual(company_1.cumulative_target, Q_(17336.399281836505, "Mt CO2"), places=4)
-        self.assertAlmostEqual(company_2.cumulative_target, Q_(27182.47121883381, "Mt CO2"), places=4)
-        self.assertAlmostEqual(company_1.cumulative_trajectory, Q_(17216.9854230987, "Mt CO2"), places=4)
-        self.assertAlmostEqual(company_2.cumulative_trajectory, Q_(40328.21470703568, "Mt CO2"), places=4)
+        self.assertAlmostEqual(
+            company_1.ghg_s1s2, Q_(640.885111270135, "Mt CO2"), places=4
+        )
+        self.assertAlmostEqual(
+            company_2.ghg_s1s2, Q_(1027.6039725941699, "Mt CO2"), places=4
+        )
+        self.assertAlmostEqual(
+            company_1.cumulative_budget, Q_(1242.6106955122796, "Mt CO2"), places=4
+        )
+        self.assertAlmostEqual(
+            company_2.cumulative_budget, Q_(7099.692144558048, "Mt CO2"), places=4
+        )
+        self.assertAlmostEqual(
+            company_1.cumulative_target, Q_(17336.399281836505, "Mt CO2"), places=4
+        )
+        self.assertAlmostEqual(
+            company_2.cumulative_target, Q_(27182.47121883381, "Mt CO2"), places=4
+        )
+        self.assertAlmostEqual(
+            company_1.cumulative_trajectory, Q_(17216.9854230987, "Mt CO2"), places=4
+        )
+        self.assertAlmostEqual(
+            company_2.cumulative_trajectory, Q_(40328.21470703568, "Mt CO2"), places=4
+        )
 
     def test_get_value(self):
         expected_data = pd.Series(
