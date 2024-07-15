@@ -21,7 +21,7 @@ jobs:
 
   build:
     name: "🐍 Build packages"
-    if: github.ref_type == 'tag'
+    # if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory for Sigstore
@@ -47,6 +47,7 @@ jobs:
 
       - name: "Build with PDM backend"
         run: |
+          # LATEST_TAG=$(git tag -l --sort=committerdate | grep -o 'v.*' | sort -r | head -1)
           pdm build
 
       ### SIGNING ###
@@ -68,7 +69,7 @@ jobs:
 
   github:
     name: "📦 Publish to GitHub"
-    if: github.ref_type == 'tag'
+    # if: github.ref_type == 'tag'
     needs:
       - build
     runs-on: ubuntu-latest
@@ -101,7 +102,7 @@ jobs:
 
   testpypi:
     name: "📦 Publish to PyPi Test"
-    if: github.ref_type == 'tag'
+    # if: github.ref_type == 'tag'
     needs:
       - build
     runs-on: ubuntu-latest
@@ -134,7 +135,7 @@ jobs:
 
   pypi:
     name: "📦 Publish to PyPi"
-    if: github.ref_type == 'tag'
+    # if: github.ref_type == 'tag'
     needs:
       - testpypi
     runs-on: ubuntu-latest
