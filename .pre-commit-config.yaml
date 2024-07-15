@@ -79,7 +79,7 @@ repos:
     rev: v0.5.1
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix, --config=ruff.toml]
+        args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
       - id: ruff-format
 
   - repo: local

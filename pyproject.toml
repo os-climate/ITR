@@ -123,3 +123,59 @@ ignore_missing_imports = true
 source = ["src"]
 omit = ["test/*"]
 # relative_files = true
+
+[tool.ruff.lint]
+extend-fixable = [
+    # Instead of trailing-whitespace
+    "W291", "W293"
+    ]
+
+extend-select = [
+    # Instead of pydocstyle
+    "D",
+    #Instead of flake8
+    "E", "F","B",
+    # Instead of pep8-naming
+    "N",
+    # Instead of flake8-debugger or debug-statements
+    "T10",
+]
+
+ignore = [
+    "B006",
+    "B007",
+    "B008",
+    "B011",
+    "B023",
+    "B024",
+    "B026",
+    "B027",
+    "B028",
+    "B904",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D105",
+    "D107",
+    "D205",
+    "D400",
+    "D401",
+    "D404",
+    "D415",
+    "D419",
+    "E501",
+    "E721",
+    "F841",
+    "N801",
+    "N802",
+    "N803",
+    "N804",
+    "N805",
+    "N806",
+    "N807",
+    "N814",
+    "N815",
+    "N816",
+    "N999",
+]
