@@ -26,8 +26,8 @@ repos:
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
-      - id: mixed-line-ending
-        args: ["--fix=lf"]
+      # - id: mixed-line-ending
+      #  args: ["--fix=lf"]
       - id: name-tests-test
         args: ["--pytest-test-first"]
       - id: no-commit-to-branch
