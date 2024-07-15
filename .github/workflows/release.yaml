@@ -8,10 +8,6 @@ name: "🐍📦 Production build and release"
 on:
   # workflow_dispatch:
   push:
-    # Only invoked on release tag pushes
-    branches:
-      - 'main'
-      - 'master'
     tags:
       - 'v*.*.*'
 
