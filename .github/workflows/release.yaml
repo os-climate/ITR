@@ -20,8 +20,6 @@ jobs:
 
   build:
     name: "🐍 Build packages"
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory for Sigstore
@@ -40,10 +38,10 @@ jobs:
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v4
 
-      - name: "Update version from tags for production release"
-        run: |
-          echo "Github versioning: ${{ github.ref_name }}"
-          scripts/release-versioning.sh
+      #- name: "Update version from tags for production release"
+      #  run: |
+      #    echo "Github versioning: ${{ github.ref_name }}"
+      #    scripts/release-versioning.sh
 
       - name: "Build with PDM backend"
         run: |
@@ -68,8 +66,6 @@ jobs:
 
   github:
     name: "📦 Publish to GitHub"
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
     runs-on: ubuntu-latest
@@ -102,8 +98,6 @@ jobs:
 
   testpypi:
     name: "📦 Publish to PyPi Test"
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
     runs-on: ubuntu-latest
@@ -136,8 +130,6 @@ jobs:
 
   pypi:
     name: "📦 Publish to PyPi"
-    # Only publish on tag pushes
-    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - testpypi
     runs-on: ubuntu-latest
