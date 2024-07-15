@@ -32,10 +32,9 @@ classifiers = [
 dependencies = [
     "autoapi>=2.0.1",
     "fastparquet>=2024.2.0",
-    "iam-units==2023.9.12",
     "numpy==1.26.2",
     "openpyxl==3.1.2",
-    "openscm-units==0.5.2",
+    "openscm-units==0.6.1",
     "orca==1.8",
     "osc-ingest-tools>=0.5.2",
     "pandas==2.2.1",
