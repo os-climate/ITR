@@ -7,13 +7,15 @@ name: "🐍📦 Production build and release"
 # yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
-    tags:
-      - 'v*.*.*'
+#    pull_request:
+#      branches: [ main, master ]
+#      types: [closed]
+    push:
+      branches: [ main, master ]
 
 env:
   python-version: "3.10"
+  package-path: "dist/"
 
 ### BUILD ###
 
@@ -21,10 +23,9 @@ jobs:
 
   build:
     name: "🐍 Build packages"
-    # if: github.ref_type == 'tag'
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
-      # IMPORTANT: mandatory for Sigstore
       id-token: write
     steps:
       ### BUILDING ###
@@ -40,36 +41,45 @@ jobs:
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v4
 
-      #- name: "Update version from tags for production release"
-      #  run: |
-      #    echo "Github versioning: ${{ github.ref_name }}"
-      #    scripts/release-versioning.sh
+      - name: "Report workflow/release metadata"
+        id: release-metadata
+        # yamllint disable-line rule:line-length
+        uses: os-climate/devops-reusable-workflows/.github/actions/latest-semantic-tag@main
 
       - name: "Build with PDM backend"
         run: |
-          # LATEST_TAG=$(git tag -l --sort=committerdate | grep -o 'v.*' | sort -r | head -1)
           pdm build
 
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
         uses: sigstore/gh-action-sigstore-python@v2.1.1
+        env:
+          package-path: ${{ env.package-path }}
         with:
           inputs: >-
-            ./dist/*.tar.gz
-            ./dist/*.whl
+            ./${{ env.package-path }}*.tar.gz
+            ./${{ env.package-path }}*.whl
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
+        env:
+          package-path: ${{ env.package-path }}
         with:
           name: ${{ github.ref_name }}
-          path: dist/
+          path: ${{ env.package-path }}
+
+      - name: "Build with PDM backend"
+        run: |
+          echo "Exit early to allow more testing of release workflow"
+          exit 1
 
   ### PUBLISH GITHUB ###
 
   github:
     name: "📦 Publish to GitHub"
-    # if: github.ref_type == 'tag'
+    # Only publish on tag pushes
+    # if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
     runs-on: ubuntu-latest
@@ -102,7 +112,8 @@ jobs:
 
   testpypi:
     name: "📦 Publish to PyPi Test"
-    # if: github.ref_type == 'tag'
+    # Only publish on tag pushes
+    # if: startsWith(github.ref, 'refs/tags/')
     needs:
       - build
     runs-on: ubuntu-latest
@@ -135,7 +146,8 @@ jobs:
 
   pypi:
     name: "📦 Publish to PyPi"
-    # if: github.ref_type == 'tag'
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
     needs:
       - testpypi
     runs-on: ubuntu-latest
