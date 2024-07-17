@@ -2327,9 +2327,7 @@ class EITargetProjector(EIProjector):
                     ic_eiproj = ei_projection_scopes[scope_name]
                     assert ic_eiproj is not None
                     assert ic_eiproj.projections is not None
-                    ic_eiproj.projections.extend(
-                        model_ei_projections
-                    )  # type: ignore
+                    ic_eiproj.projections.extend(model_ei_projections)  # type: ignore
                 else:
                     while (
                         model_ei_projections[0].year
