@@ -169,6 +169,16 @@ class ProductionBenchmarkDataProvider(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def _get_projected_production(
+        self, scope: EScope = EScope.AnyScope
+    ) -> pd.DataFrame:
+        """Converts IProductionBenchmarkScopes into dataframe for a scope
+        :param scope: a scope
+        :return: a pint[dimensionless] pd.DataFrame
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def get_company_projected_production(
         self, ghg_scope12: pd.DataFrame
     ) -> pd.DataFrame:
