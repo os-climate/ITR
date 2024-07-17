@@ -1,2 +1,4 @@
 .github/workflows/linting.yaml
 .github/workflows/notebooks.yaml
+.github/workflows/release.yaml
+.github/workflows/builds.yaml
