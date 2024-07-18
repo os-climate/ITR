@@ -45,8 +45,13 @@ jobs:
 
       - name: "Update version from tags for production release"
         run: |
-          echo "Github versioning: ${{ github.ref_name }}"
-          scripts/release-versioning.sh
+          echo "Github tag/versioning: ${{ github.ref_name }}"
+          if (grep 'dynamic = \[\"version\"\]' pyproject.toml > /dev/null); then
+            echo "Proceeding build with dynamic versioning"
+          else
+            echo "Using legacy script to bump release version"
+            scripts/release-versioning.sh
+          fi
 
       - name: "Build with PDM backend"
         run: |
