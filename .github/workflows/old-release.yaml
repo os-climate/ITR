@@ -60,7 +60,7 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v2
+        uses: sigstore/gh-action-sigstore-python@v3.0.0
         with:
           inputs: >-
             ./dist/*.tar.gz
@@ -104,7 +104,7 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.whl
-            dist/*.sigstore
+            dist/*.sigstore*
 
   ### PUBLISH PYPI TEST ###
 
@@ -132,7 +132,7 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.sigstore
+          rm dist/*.sigstore*
 
       - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -166,7 +166,7 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.sigstore
+          rm dist/*.sigstore*
 
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v4
