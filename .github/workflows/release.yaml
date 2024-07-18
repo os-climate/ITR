@@ -81,7 +81,7 @@ jobs:
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v3
+        uses: sigstore/gh-action-sigstore-python@v3.0.0
         env:
           package-path: ${{ env.package-path }}
         with:
