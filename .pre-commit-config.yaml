@@ -73,7 +73,9 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
-        args: [ "-d", "{rules: {line-length: {max: 120}}, ignore-from-file: [.gitignore],}", ]
+        args:
+          ["-d", "{rules: {line-length: {max: 120}},
+          ignore-from-file: [.gitignore],}"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.2
@@ -88,7 +90,8 @@ repos:
         name: "create mypy cache"
         language: system
         pass_filenames: false
-        entry: bash -c 'if [ ! -d .mypy_cache ]; then /bin/mkdir .mypy_cache; fi; exit 0'
+        entry: bash -c 'if [ ! -d .mypy_cache ];
+          then /bin/mkdir .mypy_cache; fi; exit 0'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: "v1.10.1"
@@ -98,11 +101,12 @@ repos:
         args: ["--show-error-codes", "--install-types", "--non-interactive"]
         additional_dependencies: ["pytest", "types-requests"]
 
+# yamllint disable rule:comments-indentation
   # Check for misspellings in documentation files
   # - repo: https://github.com/codespell-project/codespell
   #   rev: v2.2.2
   #   hooks:
-  #   - id: codespell
+  #     - id: codespell
 
   # Automatically upgrade Python syntax for newer versions
   # - repo: https://github.com/asottile/pyupgrade
@@ -110,3 +114,4 @@ repos:
   #   hooks:
   #     - id: pyupgrade
   #       args: ['--py37-plus']
+# yamllint enable rule:comments-indentation
