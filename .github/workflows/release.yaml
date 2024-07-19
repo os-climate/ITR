@@ -1,40 +1,34 @@
 ---
-name: "📦 Release and Publish"
+name: "🐍📦 Old Production build and release"
 
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 
 # yamllint disable-line rule:truthy
 on:
-  workflow_dispatch:
-  #pull_request:
-  #  branches: [ main, master ]
-  #  types: [closed]
-  #push:
-  #  branches: [ main, master ]
-  #  tags:
-  #    - 'v*.*.*'
+  push:
+    # Only invoked on release tag pushes
+    branches:
+      - 'main'
+      - 'master'
+    tags:
+      - 'v*.*.*'
 
 env:
   python-version: "3.10"
-  package-path: "dist"
 
 ### BUILD ###
 
 jobs:
 
   build:
-    name: "🐍 Build Project"
-    if:
-      github.event.pull_request.merged == true ||
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch'
+    name: "🐍 Build packages"
+    # Only publish on tag pushes
+    # if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
-    outputs:
-      publish: ${{ steps.build.outputs.publish }}
 
     steps:
       ### BUILDING ###
@@ -49,58 +43,50 @@ jobs:
 
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v4
-        with:
-          python-version: ${{ env.python-version }}
 
       - name: "Fetch current semantic tag"
         id: fetch-tags
         # yamllint disable-line rule:line-length
         uses: os-climate/devops-reusable-workflows/.github/actions/latest-semantic-tag@main
 
-      - name: "🏷️ Create initial tag"
-        id: set-initial-tag
-        if: steps.fetch-tags.outputs.missing == 'true'
-        # https://github.com/softprops/action-gh-release
-        uses: softprops/action-gh-release@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: true
-          tag_name: v0.0.1
+      - name: "Update version from tags for production release"
+        run: |
+          echo "Github tag/versioning: ${{ github.ref_name }}"
+          if (grep 'dynamic = \[\"version\"\]' pyproject.toml > /dev/null); then
+            echo "Proceeding build with dynamic versioning"
+          else
+            echo "Using legacy script to bump release version"
+            scripts/release-versioning.sh
+          fi
 
       - name: "Build with PDM backend"
-        id: build
-        # if: steps.fetch-tags.outputs.missing == 'false'
         run: |
-          echo "Current semantic tag: ${{ steps.fetch-tags.outputs.tag }}"
-          echo "Github versioning: ${{ github.ref_name }}"
           pdm build
-          if ! (ls ${{ env.package-path }}/*.dev*.*); then
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-          fi
 
       ### SIGNING ###
 
       - name: "Sign packages with Sigstore"
+        # Use new action
         uses: sigstore/gh-action-sigstore-python@v3.0.0
-        env:
-          package-path: ${{ env.package-path }}
         with:
           inputs: >-
-            ./${{ env.package-path }}/*.tar.gz
-            ./${{ env.package-path }}/*.whl
+            ./dist/*.tar.gz
+            ./dist/*.whl
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
           name: ${{ github.ref_name }}
-          path: ${{ env.package-path }}
+          path: dist/
 
   ### PUBLISH GITHUB ###
 
   github:
     name: "📦 Publish to GitHub"
     # Only publish on tag pushes
-    needs: build
+    # if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory to publish artefacts
@@ -110,52 +96,31 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ github.ref_name }}
-          path: ${{ env.package-path }}
+          path: dist/
 
-      - name: "🌥️ Set environment variables"
-        id: setenv
-        run: |
-          # vernum="${{ env.python-version }}.$(date +'%Y%m%d%H%M')"
-          datetime="$(date +'%Y%m%d%H%M')"
-          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
-
-      - name: "📦 Publish DEVELOPMENT artefacts to GitHub"
-        if: startsWith(github.ref, 'refs/tags/') != true
-        # https://github.com/softprops/action-gh-release
-        uses: softprops/action-gh-release@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: true
-          tag_name: ${{ github.ref_name }}-dev
-          name: "Test/Development Build: ${{ github.ref_name }}"
-          # body_path: ${{ github.workspace }}/CHANGELOG.rst
-          files: |
-            ${{ env.package-path }}/*.tar.gz
-            ${{ env.package-path }}/*.whl
-            ${{ env.package-path }}/*.sigstore*
-
-      - name: "📦 Publish PRODUCTION artefacts to GitHub"
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: "📦 Publish artefacts to GitHub"
         # https://github.com/softprops/action-gh-release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
           tag_name: ${{ github.ref_name }}
-          name: "Test/Development Build: ${{ github.ref_name }}"
+          name: "Test/Development Build \
+            ${{ github.ref_name }}"
           # body_path: ${{ github.workspace }}/CHANGELOG.rst
           files: |
-            ${{ env.package-path }}/*.tar.gz
-            ${{ env.package-path }}/*.whl
-            ${{ env.package-path }}/*.sigstore*
+            dist/*.tar.gz
+            dist/*.whl
+            dist/*.sigstore*
 
   ### PUBLISH PYPI TEST ###
 
   testpypi:
-    name: "📦 Test PyPI publishing"
+    name: "📦 Publish to PyPi Test"
     # Only publish on tag pushes
     # if: startsWith(github.ref, 'refs/tags/')
-    needs: build
+    needs:
+      - build
     runs-on: ubuntu-latest
     environment:
       name: testpypi
@@ -167,36 +132,29 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ github.ref_name }}
-          path: ${{ env.package-path }}
+          path: dist/
 
-      - name: "Validate build artefacts"
-        id: files
+      - name: "Remove files unsupported by PyPi"
         run: |
-          if [ -f ${{ env.package-path }}/buildvars.txt ]; then
-            rm ${{ env.package-path }}/buildvars.txt
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
           fi
-          if (ls ${{ env.package-path }}/*.sigstore*); then
-            rm ${{ env.package-path }}/*.sigstore*
-          fi
+          rm dist/*.sigstore*
 
-      - name: "Publish to test PyPI"
+      - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
-          packages-dir: ${{ env.package-path }}
-
 
   ### PUBLISH PYPI ###
 
   pypi:
-    name: "📦 Publish to PyPI"
+    name: "📦 Publish to PyPi"
     # Only publish on tag pushes
-    if:
-      startsWith(github.ref, 'refs/tags/') &&
-      needs.build.outputs.publish == 'true'
-      # contains(github.event.head_commit.message, '[release]')
-    needs: [ build, testpypi ]
+    # if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - testpypi
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -208,16 +166,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ github.ref_name }}
-          path: ${{ env.package-path }}
+          path: dist/
 
       - name: "Remove files unsupported by PyPi"
         run: |
-          if (ls ${{ env.package-path }}/*.sigstore*); then
-            rm ${{ env.package-path }}/*.sigstore*
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
           fi
+          rm dist/*.sigstore*
 
-#      - name: "📦 Publish to PyPI"
-#        uses: pypa/gh-action-pypi-publish@release/v1
-#        with:
-#          verbose: true
-#          packages-dir: ${{ env.package-path }}
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v4
+
+      - name: "Publish release to PyPI"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
