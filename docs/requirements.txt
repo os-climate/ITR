@@ -1,4 +1,4 @@
-sphinx<8,>=6
+sphinx>=6,<9
 sphinx-autoapi==3.2.1
 sphinx-autodoc-typehints
 sphinx-rtd-theme==2.0.0
