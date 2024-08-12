@@ -65,4 +65,4 @@ jobs:
           pdm list --graph
 
       - name: "Run: pip-audit"
-        uses: pypa/gh-action-pip-audit@v1.0.8
+        uses: pypa/gh-action-pip-audit@v1.1.0
