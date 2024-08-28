@@ -460,14 +460,26 @@ def test_temp_scores(vault_warehouse) -> None:
                 df_portfolio["investment_value"] = df_portfolio[
                     "investment_value"
                 ].astype(f"pint[{match.group(1)}]")
-    df_portfolio["pa_score"] = (
-        vault_warehouse.get_pa_temp_scores(
-            probability=0.5,
-            company_ids=df_portfolio.index.values,
-            scope=EScope.S1S2,
-            year=2050,
+    try:
+        df_portfolio["pa_score"] = (
+            vault_warehouse.get_pa_temp_scores(
+                probability=0.5,
+                company_ids=df_portfolio.index.values,
+                scope=EScope.S1S2,
+                year=2050,
+            )
+            .droplevel("scope")
+            .astype("pint[delta_degC]")
         )
-        .droplevel("scope")
-        .astype("pint[delta_degC]")
-    )
+    except TypeError:
+        df_portfolio["pa_score"] = (
+            vault_warehouse.get_pa_temp_scores(
+                probability=0.5,
+                company_ids=df_portfolio.index.values,
+                scope=EScope.S1S2,
+                year=2050,
+            )
+            .droplevel("scope")
+            .astype("pint[delta_degC][object]")
+        )
     assert df_portfolio.loc["US00130H1059"].pa_score.m.round(2).item() == 2.41

@@ -282,9 +282,17 @@ class TemperatureScore(PortfolioAggregation):
             self.c.COLS.TRAJECTORY_SCORE,
             self.c.COLS.TARGET_SCORE,
         ]:
-            scoring_data[col] = scoring_data[col].astype("pint[delta_degC]")
+            try:
+                scoring_data[col] = scoring_data[col].astype("pint[delta_degC]")
+            except TypeError:
+                scoring_data[col] = scoring_data[col].astype("pint[delta_degC][object]")
         for col in [self.c.COLS.TARGET_OVERSHOOT, self.c.COLS.TRAJECTORY_OVERSHOOT]:
-            scoring_data[col] = scoring_data[col].astype("pint[dimensionless]")
+            try:
+                scoring_data[col] = scoring_data[col].astype("pint[dimensionless]")
+            except TypeError:
+                scoring_data[col] = scoring_data[col].astype(
+                    "pint[dimensionless][object]"
+                )
 
         scoring_data = self.cap_scores(scoring_data)
         return scoring_data
@@ -326,10 +334,16 @@ class TemperatureScore(PortfolioAggregation):
         # FIXME: from here to the end of the function, why not replace `data` with `company_timeframe_data`?
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            data[self.c.COLS.TEMPERATURE_SCORE] = data.apply(
-                lambda row: self.get_ghc_temperature_score(row, data),
-                axis=1,  # used to iterate over company_timeframe_data
-            ).astype("pint[delta_degC]")
+            try:
+                data[self.c.COLS.TEMPERATURE_SCORE] = data.apply(
+                    lambda row: self.get_ghc_temperature_score(row, data),
+                    axis=1,  # used to iterate over company_timeframe_data
+                ).astype("pint[delta_degC]")
+            except TypeError:
+                data[self.c.COLS.TEMPERATURE_SCORE] = data.apply(
+                    lambda row: self.get_ghc_temperature_score(row, data),
+                    axis=1,  # used to iterate over company_timeframe_data
+                ).astype("pint[delta_degC][object]")
         return data
 
     def calculate(
@@ -400,9 +414,14 @@ class TemperatureScore(PortfolioAggregation):
             data, self.c.COLS.TEMPERATURE_SCORE, self.aggregation_method
         )  # .astype('pint[delta_degC]')
         # https://github.com/pandas-dev/pandas/issues/50564 explains why we need fillna(1.0) to make sum work
-        data[self.c.COLS.CONTRIBUTION_RELATIVE] = (
-            weighted_scores / weighted_scores.fillna(1.0).sum()
-        ).astype("pint[percent]")
+        try:
+            data[self.c.COLS.CONTRIBUTION_RELATIVE] = (
+                weighted_scores / weighted_scores.fillna(1.0).sum()
+            ).astype("pint[percent]")
+        except TypeError:
+            data[self.c.COLS.CONTRIBUTION_RELATIVE] = (
+                weighted_scores / weighted_scores.fillna(1.0).sum()
+            ).astype("pint[percent][object]")
         data[self.c.COLS.CONTRIBUTION] = weighted_scores
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

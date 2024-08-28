@@ -56,8 +56,8 @@ try:
     pint.pint_eval.tokenizer = pint.pint_eval.uncertainty_tokenizer
     from .utils import umean  # noqa F401
 
-    uncertainties.AffineScalarFunc.__hash__ = _AffineScalarFunc__hash__
-    uncertainties.Variable.__hash__ = _Variable__hash__
+    uncertainties.core.AffineScalarFunc.__hash__ = _AffineScalarFunc__hash__
+    uncertainties.core.Variable.__hash__ = _Variable__hash__
 
     HAS_UNCERTAINTIES = True
 except (ImportError, ModuleNotFoundError, AttributeError) as exc:  # noqa F841

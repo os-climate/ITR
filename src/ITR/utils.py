@@ -128,7 +128,12 @@ def get_data(
 
     df_company_data = pd.DataFrame.from_records([dict(c) for c in company_data])
     # Until we have https://github.com/hgrecco/pint-pandas/pull/58...
-    df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype("pint[Mt CO2e]")
+    try:
+        df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype("pint[Mt CO2e]")
+    except TypeError:
+        df_company_data.ghg_s1s2 = df_company_data.ghg_s1s2.astype(
+            "pint[Mt CO2e][object]"
+        )
     s3_data_invalid = df_company_data[ColumnsConfig.GHG_SCOPE3].isna()
     if len(s3_data_invalid[s3_data_invalid].index) > 0:
         df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = (
@@ -143,7 +148,10 @@ def get_data(
         ColumnsConfig.CUMULATIVE_TARGET,
         ColumnsConfig.CUMULATIVE_TRAJECTORY,
     ]:
-        df_company_data[col] = df_company_data[col].astype("pint[Mt CO2e]")
+        try:
+            df_company_data[col] = df_company_data[col].astype("pint[Mt CO2e]")
+        except TypeError:
+            df_company_data[col] = df_company_data[col].astype("pint[Mt CO2e][object]")
     for col in [
         ColumnsConfig.COMPANY_REVENUE,
         ColumnsConfig.COMPANY_MARKET_CAP,

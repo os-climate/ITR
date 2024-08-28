@@ -1094,7 +1094,7 @@ select C.company_name, C.company_id, '{self._v.schema}' as source, P.year,  -- F
 from {self._v.schema}.{self._company_table} C
      join P_BY on P_BY.company_id=C.company_id
      join {self._v.schema}.{self._production_table} P on P.company_id=C.company_id
-     join {self._v.schema}.{self._benchmarks_ei_name} B on P.year=B.year and C.sector=B.sector and B.region=if(C.region in ('North America', 'Europe'), C.region, 'Global')  # noqa: E501
+     join {self._v.schema}.{self._benchmarks_ei_name} B on P.year=B.year and C.sector=B.sector and B.region=if(C.region in ('North America', 'Europe'), C.region, 'Global')
      join {self._v.schema}.{self._emissions_table} CE on CE.company_id=C.company_id and B.scope=CE.scope and CE.year=P.year
      join {self._v.schema}.{self._emissions_table} CE_BY on CE_BY.company_id=C.company_id and CE_BY.scope=B.scope and CE_BY.year=P_BY.base_year
      join {self._v.schema}.{self._benchmarks_ei_name} B_BY on B.scope=B_BY.scope and B.region=B_BY.region and B.sector=B_BY.sector and B_BY.year=P_BY.base_year

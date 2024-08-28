@@ -29,7 +29,10 @@ class ITR_Encoder(json.JSONEncoder):
         elif isinstance(q, EScope):
             return q.value
         elif isinstance(q, pd.Series):
-            units = q.dtype.units
+            units = q.dtype._parse_dtype_strict(str(q.dtype.units))
+            if isinstance(units, tuple):
+                # Accommodate SUBDTYPE as a part of PintType
+                units = units[0]
             res = (
                 pd.DataFrame(
                     {

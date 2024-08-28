@@ -534,6 +534,15 @@ class DataWarehouse(ABC):
                             f"pint[{ei_metric}]"
                         ),
                     )
+                except TypeError:
+                    company.projected_intensities.S1S2S3 = DF_ICompanyEIProjections(
+                        ei_metric=ei_metric,
+                        # Mismatched dimensionalities are not automatically converted
+                        projections=s3_projections
+                        + company.projected_intensities.S1S2.projections.astype(
+                            f"pint[{ei_metric}][object]"
+                        ),
+                    )
                 except DimensionalityError:
                     logger.error(
                         f"Company {company.company_id}'s S1+S2 intensity units "
@@ -800,7 +809,10 @@ class DataWarehouse(ABC):
                 )
             else:
                 cumulative_emissions_m_t = proj_CO2e_m_t.cumsum()
-            return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}]")
+            try:
+                return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}]")
+            except TypeError:
+                return cumulative_emissions_m_t.T.astype(f"pint[{units_CO2e}][object]")
 
     @classmethod
     def _get_exceedance_year(

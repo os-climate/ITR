@@ -611,11 +611,18 @@ class TestTemplateProvider(unittest.TestCase):
         )
 
     def test_get_value(self):
-        expected_data = pd.Series(
-            [10189000000.0, 25079000000.0, 55955872344.10088],
-            index=pd.Index(self.company_ids, name="company_id"),
-            name="company_revenue",
-        ).astype("pint[USD]")
+        try:
+            expected_data = pd.Series(
+                [10189000000.0, 25079000000.0, 55955872344.10088],
+                index=pd.Index(self.company_ids, name="company_id"),
+                name="company_revenue",
+            ).astype("pint[USD]")
+        except TypeError:
+            expected_data = pd.Series(
+                [10189000000.0, 25079000000.0, 55955872344.10088],
+                index=pd.Index(self.company_ids, name="company_id"),
+                name="company_revenue",
+            ).astype("pint[USD][object[")
         pd.testing.assert_series_equal(
             asPintSeries(
                 self.template_company_data.get_value(

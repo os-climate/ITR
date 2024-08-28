@@ -447,16 +447,28 @@ class TestBaseProvider(unittest.TestCase):
         self.assertAlmostEqual(company_2.ghg_s3, Q_(100080009.401725, "t CO2"))
 
     def test_get_value(self):
-        expected_data = pd.Series(
-            [
-                20248547996.8143,
-                276185899.614351,
-                10283015131.798985,
-                1860376238.2982879,
-            ],
-            index=pd.Index(self.company_ids, name="company_id"),
-            name="company_revenue",
-        ).astype("pint[EUR]")
+        try:
+            expected_data = pd.Series(
+                [
+                    20248547996.8143,
+                    276185899.614351,
+                    10283015131.798985,
+                    1860376238.2982879,
+                ],
+                index=pd.Index(self.company_ids, name="company_id"),
+                name="company_revenue",
+            ).astype("pint[EUR]")
+        except TypeError:
+            expected_data = pd.Series(
+                [
+                    20248547996.8143,
+                    276185899.614351,
+                    10283015131.798985,
+                    1860376238.2982879,
+                ],
+                index=pd.Index(self.company_ids, name="company_id"),
+                name="company_revenue",
+            ).astype("pint[EUR][object]")
         pd.testing.assert_series_equal(
             asPintSeries(
                 self.base_company_data.get_value(
