@@ -629,11 +629,18 @@ def test_get_company_data(template_V2_PC: TemplateV2):
 
 
 def test_get_value(template_V2_PC: TemplateV2):
-    expected_data = pd.Series(
-        [10189000000.0, 25079000000.0, 55955872344.1009],
-        index=pd.Index(template_V2_PC.company_ids, name="company_id"),
-        name="company_revenue",
-    ).astype("pint[USD]")
+    try:
+        expected_data = pd.Series(
+            [10189000000.0, 25079000000.0, 55955872344.1009],
+            index=pd.Index(template_V2_PC.company_ids, name="company_id"),
+            name="company_revenue",
+        ).astype("pint[USD]")
+    except TypeError:
+        expected_data = pd.Series(
+            [10189000000.0, 25079000000.0, 55955872344.1009],
+            index=pd.Index(template_V2_PC.company_ids, name="company_id"),
+            name="company_revenue",
+        ).astype("pint[USD][object]")
     pd.testing.assert_series_equal(
         asPintSeries(
             template_V2_PC.template_company_data.get_value(

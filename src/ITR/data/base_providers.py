@@ -1137,6 +1137,10 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                 sector_em_df = sector_em_df.loc[
                     sector_em_df.index.intersection(to_allocate_idx)
                 ].astype("pint[Mt CO2e]")
+            except TypeError:
+                sector_em_df = sector_em_df.loc[
+                    sector_em_df.index.intersection(to_allocate_idx)
+                ].astype("pint[Mt CO2e][object]")
             except DimensionalityError:
                 # breakpoint()
                 assert False
@@ -2289,9 +2293,14 @@ class EITargetProjector(EIProjector):
                     model_emissions_projections = CAGR.loc[
                         (last_ei_year + skip_first_year) : target_year
                     ]  # noqa: E203
-                    emissions_projections = model_emissions_projections.astype(
-                        f"pint[{target_base_year_unit}]"
-                    )
+                    try:
+                        emissions_projections = model_emissions_projections.astype(
+                            f"pint[{target_base_year_unit}]"
+                        )
+                    except TypeError:
+                        emissions_projections = model_emissions_projections.astype(
+                            f"pint[{target_base_year_unit}][object]"
+                        )
                     idx = production_proj.index.intersection(
                         emissions_projections.index
                     )

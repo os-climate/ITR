@@ -459,7 +459,10 @@ class DF_ICompanyEIProjections(BaseModel):
                 name="value",
             )
         else:
-            projections = projections.astype(f"pint[{str(ei_metric)}]")
+            try:
+                projections = projections.astype(f"pint[{str(ei_metric)}]")
+            except TypeError:
+                projections = projections.astype(f"pint[{str(ei_metric)}][object]")
         super().__init__(ei_metric=str(ei_metric), projections=projections)
 
 
@@ -490,7 +493,10 @@ class ICompanyEIProjectionsScopes(BaseModel):
             elif isinstance(v, pd.Series):
                 ei_metric = EI_Metric(str(v.dtype))
                 if ei_metric.startswith("pint["):
-                    ei_metric = ei_metric[5:-1]
+                    ei_metric = v.dtype._parse_dtype_strict(ei_metric)
+                    # Accommodate SUBDTYPE as a part of PintType
+                    if isinstance(ei_metric, tuple):
+                        ei_metric = ei_metric[0]
                 setattr(
                     self,
                     k,

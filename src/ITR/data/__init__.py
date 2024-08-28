@@ -117,7 +117,10 @@ pint.Measurement = ureg.Measurement
 pint.Context = ureg.Context
 
 # FIXME: delay loading of pint_pandas until after we've initialized ourselves
+import pint_pandas  # noqa E402
 from pint_pandas import PintArray, PintType  # noqa E402
+
+pint_pandas.pint_array.DEFAULT_SUBDTYPE = "float64"
 
 Q_ = ureg.Quantity
 M_ = ureg.Measurement

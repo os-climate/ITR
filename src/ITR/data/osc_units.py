@@ -669,7 +669,10 @@ def asPintSeries(
         new_series.loc[na_index] = new_series.loc[na_index].map(
             lambda x: PintType(unit).na_value
         )
-    return new_series.astype(f"pint[{unit}]")
+    try:
+        return new_series.astype(f"pint[{unit}]")
+    except TypeError:
+        return new_series.astype(f"pint[{unit}][object]")
 
 
 def asPintDataFrame(df: pd.DataFrame, errors="ignore", inplace=False) -> pd.DataFrame:

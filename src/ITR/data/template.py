@@ -455,9 +455,14 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 if ITR.HAS_UNCERTAINTIES:
-                    df4 = df3_t.astype(
-                        "pint[t CO2e]"
-                    ).T  # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
+                    try:
+                        df4 = df3_t.astype(
+                            "pint[t CO2e]"
+                        ).T  # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
+                    except TypeError:
+                        df4 = df3_t.astype(
+                            "pint[t CO2e][object]"
+                        ).T  # .drop_duplicates() # When we have uncertainties, multiple observations influence the observed error term
                     # Also https://github.com/pandas-dev/pandas/issues/12693
                 else:
                     df4 = df3_t.astype("pint[t CO2e]").T.drop_duplicates()
@@ -787,12 +792,16 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
             df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP]
             / df_fundamentals[ColumnsConfig.COMPANY_TOTAL_ASSETS]
         )  # new temp column with ratio
-        df_fundamentals["AVG_MCap_to_Reven"] = df_fundamentals.groupby(
-            ColumnsConfig.SECTOR
-        )["MCap_to_Reven"].transform("mean")
-        df_fundamentals["AVG_MCap_to_Assets"] = df_fundamentals.groupby(
-            ColumnsConfig.SECTOR
-        )["MCap_to_Assets"].transform("mean")
+        df_fundamentals["AVG_MCap_to_Reven"] = (
+            df_fundamentals.groupby(ColumnsConfig.SECTOR)["MCap_to_Reven"]
+            .transform("mean")
+            .astype("float64")
+        )
+        df_fundamentals["AVG_MCap_to_Assets"] = (
+            df_fundamentals.groupby(ColumnsConfig.SECTOR)["MCap_to_Assets"]
+            .transform("mean")
+            .astype("float64")
+        )
         # FIXME: Add uncertainty here!
         df_fundamentals[ColumnsConfig.COMPANY_MARKET_CAP] = df_fundamentals[
             ColumnsConfig.COMPANY_MARKET_CAP
