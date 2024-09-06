@@ -1,0 +1,421 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024 The Linux Foundation <https://linuxfoundation.org>
+
+name: "🤖 DevOps Automation"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "**"
+      - "!.github/**"
+
+env:
+  DEFAULT_PYTHON: "3.10"
+  BUILD_ARTEFACTS: "dist"
+  # Configures publishing to PyPI
+  PYPI_PUBLISHING: "true"
+  # Create GitHub releases for all builds, not just production builds
+  GITHUB_RELEASE_ALWAYS: "true"
+  # Create an initial tag, if missing
+  CREATE_MISSING_TAG: "true"
+
+jobs:
+  one-password-verify:
+    name: "Verify 1Password Access"
+    uses: os-climate/osc-github-devops/.github/workflows/one-password-credentials.yaml@main
+    # Do NOT run until change is merged; secrets will NOT be available and workflow WILL fail
+    if: github.event_name != 'pull_request'
+    with:
+      VAULT_ITEM: "op://67hdehutbpddhfbgm6ffjvdsbu/Test Secure Note/notesPlain"
+      EXPORT: false
+    secrets:
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.ONE_PASSWORD_DEVELOPMENT }}
+
+  classify-content:
+    name: "Inspect Repository"
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.classify.outputs.python }}
+      notebooks: ${{ steps.classify.outputs.notebooks }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Classify content"
+        id: classify
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/repository-content-classify@main
+
+  github-workflow-metadata:
+    name: "Gather Workflow Metadata"
+    runs-on: ubuntu-latest
+    outputs:
+      owner: ${{ steps.set.outputs.owner }}
+      repository: ${{ steps.set.outputs.repository }}
+      tagged: ${{ steps.set.outputs.tagged }}
+
+    steps:
+      - name: "Capture workflow metadata"
+        id: set
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/github-workflow-metadata@main
+
+  tagging:
+    name: "Retrieve/Verify GIT Tags"
+    runs-on: ubuntu-latest
+    outputs:
+      current: ${{ steps.repository-tags-fetch.outputs.tag }}
+      invalid: ${{ steps.repository-tags-fetch.outputs.invalid }}
+
+    steps:
+      - name: "Retrieve/verify tags"
+        id: repository-tags-fetch
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/repository-tags-fetch@main
+
+      # Only runs if no tags are found, pushes an initial v0.0.0
+      - name: "Create initial v0.0.0 tag [conditional]"
+        id: set-initial-tag
+        if: steps.repository-tags-fetch.outputs.invalid == 'true' && env.CREATE_MISSING_TAG
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: true
+          tag_name: v0.0.0
+
+  verify-github-environment:
+    name: "Verify GitHub Environment"
+    runs-on: ubuntu-latest
+    outputs:
+      present: ${{ steps.labelling.outputs.present }}
+      created: ${{ steps.labelling.outputs.created }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Verify/create release labels"
+        id: labelling
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/github-mandatory-labels@main
+
+      - name: "Check for required secrets/API keys/tokens"
+        uses: os-climate/osc-github-devops/.github/actions/github-mandatory-secrets@main
+        with:
+          # Mandatory secrets/variables to check
+          pypi_development: ${{ secrets.PYPI_DEVELOPMENT }}
+          pypi_production: ${{ secrets.PYPI_PRODUCTION }}
+
+  python-project:
+    name: "Python Content"
+    needs:
+      - classify-content
+    if: needs.classify-content.outputs.python  == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.python.outputs.matrixjson }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Extract Python versioning"
+        id: python
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/python-versions-matrix@main
+
+  python-build:
+    name: "Build Project"
+    uses: os-climate/osc-github-devops/.github/workflows/python-build-matrix.yaml@main
+    needs:
+      - github-workflow-metadata
+      - python-project
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-project.outputs.matrix) }}
+    permissions:
+      contents: write
+      # Required by SigStore signing action
+      id-token: write
+    with:
+      python-version: ${{ matrix.python-version }}
+
+  github-release:
+    name: "Create GitHub Release"
+    uses: os-climate/osc-github-devops/.github/workflows/github-release.yaml@main
+
+  testpypi:
+    name: "Test Package Publishing"
+    needs:
+      - tagging
+      - github-workflow-metadata
+      - python-build
+    # Only test publishing on merge of pull requests or tag pushes
+    if: github.event.pull_request.merged == true || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: "Download build artefacts"
+        uses: actions/download-artifact@v4
+        if: env.PYPI_PUBLISHING == 'true'
+        with:
+          name: ${{ github.ref_name }}
+          path: ${{ env.BUILD_ARTEFACTS }}
+
+      - name: "Manicure artefacts directory"
+        id: files
+        run: |
+          # Remove file types unsupported by the Python Package Index
+          if [ ! -d ${{ env.BUILD_ARTEFACTS }} ]; then
+            echo "Early exit; build artefacts path NOT found: ${{ env.BUILD_ARTEFACTS }}"
+            exit 0
+          fi
+          if [ -f ${{ env.BUILD_ARTEFACTS }}/buildvars.txt ]; then
+            rm ${{ env.BUILD_ARTEFACTS }}/buildvars.txt
+          else
+            echo "No buildvars.txt file to purge"
+          fi
+          # Remove outputs related to SigStore signing
+          if test -n "$(find ${{ env.BUILD_ARTEFACTS }} -maxdepth 1 -name '**.sigstore*' -print -quit)"
+          then
+            echo "Found SigStore signing artefacts to purge"
+            rm ${{ env.BUILD_ARTEFACTS }}/*.sigstore*
+          else
+            echo "No SigStore signing artefacts to purge"
+          fi
+
+      - name: "Check PROJECT in Test PyPI"
+        id: testpypi-project-url-check
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/url-validity-check@main
+        with:
+          prefix: "https://test.pypi.org/project"
+          # Use project name, e.g. "/ITR"
+          string: "/${{ needs.github-workflow-metadata.outputs.repository }}"
+          suffix: "/"
+
+      - name: "Check RELEASE in Test PyPI"
+        id: testpypi-release-url-check
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/url-validity-check@main
+        with:
+          prefix: "https://test.pypi.org/project"
+          # Use project name, e.g. "/ITR"
+          string: "/${{ needs.github-workflow-metadata.outputs.repository }}"
+          suffix: "/${{ needs.tagging.outputs.current }}/"
+
+      - name: "Publish to Test PyPI [Trusted Publishing]"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Primary/default method uses trusted publishing
+        # yamllint disable-line rule:line-length
+        if: steps.testpypi-project-url-check.outputs.valid == 'true' && steps.testpypi-release-url-check.outputs.valid == 'false'
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # Show checksum values
+          print-hash: true
+          packages-dir: ${{ env.BUILD_ARTEFACTS }}
+          # We already validate earlier in the pipeline
+          verify-metadata: false
+          # Test releases are always debugged
+          verbose: true
+
+      - name: "Publish to Test PyPI [Fallback: API Key]"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Fallback method uses static organisation credentials
+        # Used initially when trusted publishing is unavailable
+        if: steps.testpypi-project-url-check.outputs.valid == 'false'
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # Show checksum values
+          print-hash: true
+          packages-dir: ${{ env.BUILD_ARTEFACTS }}
+          # We already validate earlier in the pipeline
+          verify-metadata: false
+          # Test releases are always debugged
+          verbose: true
+          # Organisation secret/variable
+          # Defined/stored in 1Password
+          password: ${{ secrets.PYPI_DEVELOPMENT }}
+
+  pypi:
+    name: "Publish Package"
+    if:
+      # Only publish on tag pushes or when a release is explicitly requested
+      startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[release]')
+      # github.ref_name != 'main' &&
+      # github.ref_name != 'master'
+    needs: [tagging, python-build, github-workflow-metadata, testpypi]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: "Download build artefacts"
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.ref_name }}
+          path: ${{ env.BUILD_ARTEFACTS }}
+
+      - name: "Remove unsupported artefacts/files"
+        run: |
+          # Remove unsupported artefacts/files
+          if (ls ${{ env.BUILD_ARTEFACTS }}/*.sigstore*); then
+            rm ${{ env.BUILD_ARTEFACTS }}/*.sigstore*
+          fi
+
+      - name: "Check if PROJECT in PyPI"
+        id: pypi-project-url-check
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/url-validity-check@main
+        with:
+          prefix: "https://pypi.org/project"
+          # Use project name, e.g. "/ITR"
+          string: "/${{ needs.github-workflow-metadata.outputs.repository }}"
+          suffix: "/"
+
+      - name: "Check for RELEASE in PyPI"
+        id: pypi-release-url-check
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/url-validity-check@main
+        with:
+          prefix: "https://pypi.org/project"
+          # Use project name, e.g. "/ITR"
+          string: "/${{ needs.github-workflow-metadata.outputs.repository }}"
+          suffix: "/${{ needs.tagging.outputs.current }}/"
+
+      - name: "Publish to PyPI [Trusted Publishing]"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Primary/default method uses trusted publishing
+        # yamllint disable-line rule:line-length
+        if: steps.pypi-project-url-check.outputs.valid == 'true' && steps.pypi-release-url-check.outputs.valid == 'false'
+        with:
+          # Show checksum values
+          print-hash: true
+          packages-dir: ${{ env.BUILD_ARTEFACTS }}
+          # We already validate earlier in the pipeline
+          verify-metadata: false
+
+      - name: "Publish to PyPI [Fallback: API Key]"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Fallback method uses static organisation credentials
+        # Used initially when trusted publishing is unavailable
+        if: steps.pypi-project-url-check.outputs.valid == 'false'
+        with:
+          # Show checksum values
+          print-hash: true
+          packages-dir: ${{ env.BUILD_ARTEFACTS }}
+          # We already validate earlier in the pipeline
+          verify-metadata: false
+          # Organisation secret/variable
+          # Defined/stored in 1Password
+          password: ${{ secrets.PYPI_PRODUCTION }}
+
+  notebooks:
+    name: "Jupyter Notebooks"
+    needs:
+      - classify-content
+      - python-project
+    runs-on: "ubuntu-latest"
+    continue-on-error: false
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-project.outputs.matrix) }}
+    # Don't run when pull request is merged, only if Jupyter Notebooks are present
+    if: needs.classify-content.outputs.notebooks  == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Install PDM tooling"
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Install package dependencies"
+        run: |
+          # Install build dependencies
+          python -m pip install -q --upgrade pip
+          pdm export -o requirements.txt
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          pip install -q .
+          pip install -q pytest nbmake
+
+      - name: "Testing Jupyter notebooks"
+        run: |
+          # Testing Jupyter notebooks
+          echo "Installing required dependencies"
+          pip install --upgrade -q pytest nbmake
+          # Consider enabling the line below when debugging/testing
+          # find . -name '*.ipynb'
+          echo "Running command: pytest --nbmake -- **/*.ipynb"
+          pytest --nbmake src/*/*.ipynb --cov=src/devops_reusable_workflows
+          # Might need an __init__.py file in tests folder for notebooks there to be tested?
+          # https://stackoverflow.com/questions/47287721/coverage-py-warning-no-data-was-collected-no-data-collected
+          # pytest --nbmake tests/test_*.ipynb --cov=tests
+
+      # TEMP DISABLED - NEED TO CHECK - WHERE ARE THESE LOGS GENERATED???
+      # - name: "Upload Logs"
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: debug-logs
+      #     path: /tmp/*.log
+      #     retention-days: 14
+
+  security:
+    name: "Security Audit"
+    needs:
+      - classify-content
+      - python-project
+    if: needs.classify-content.outputs.python  == 'true'
+    runs-on: "ubuntu-latest"
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-project.outputs.matrix) }}
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Install PDM tooling"
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: "Install dependencies"
+        run: |
+          pip install -q --upgrade pip
+          pdm lock
+          pdm export -o requirements.txt
+          python -m pip install -q -r requirements.txt
+          python -m pip install -q .
+          pip install --upgrade -q setuptools
+          pdm list --graph
+
+      - name: "Perform package auditing"
+        uses: pypa/gh-action-pip-audit@v1.1.0
