@@ -18,13 +18,13 @@ env:
   # Configures publishing to PyPI
   PYPI_PUBLISHING: "true"
   # Create GitHub releases for all builds, not just production builds
-  GITHUB_RELEASE_ALWAYS: "true"
+  GITHUB_PRERELEASE: "true"
   # Create an initial tag, if missing
   CREATE_MISSING_TAG: "true"
 
 jobs:
   one-password-verify:
-    name: "Verify 1Password Access"
+    name: "1Password"
     uses: os-climate/osc-github-devops/.github/workflows/one-password-credentials.yaml@main
     # Do NOT run until change is merged; secrets will NOT be available and workflow WILL fail
     if: github.event_name != 'pull_request'
@@ -40,6 +40,7 @@ jobs:
     outputs:
       python: ${{ steps.classify.outputs.python }}
       notebooks: ${{ steps.classify.outputs.notebooks }}
+      tox: ${{ steps.classify.outputs.tox }}
 
     steps:
       - uses: actions/checkout@v4
@@ -67,24 +68,31 @@ jobs:
     name: "Retrieve/Verify GIT Tags"
     runs-on: ubuntu-latest
     outputs:
-      current: ${{ steps.repository-tags-fetch.outputs.tag }}
-      invalid: ${{ steps.repository-tags-fetch.outputs.invalid }}
+      current: ${{ steps.repository-tags.outputs.tag }}
+      invalid: ${{ steps.repository-tags.outputs.invalid }}
+      dev_tag: ${{ steps.get-development.outputs.tag }}
 
     steps:
       - name: "Retrieve/verify tags"
-        id: repository-tags-fetch
+        id: repository-tags
         # yamllint disable-line rule:line-length
         uses: os-climate/osc-github-devops/.github/actions/repository-tags-fetch@main
 
-      # Only runs if no tags are found, pushes an initial v0.0.0
-      - name: "Create initial v0.0.0 tag [conditional]"
+      - name: "Create initial v0.0.0 tag"
         id: set-initial-tag
-        if: steps.repository-tags-fetch.outputs.invalid == 'true' && env.CREATE_MISSING_TAG
+        # Only runs if no tags are found, pushes an initial v0.0.0
+        if: steps.repository-tags.outputs.invalid == 'true' && env.CREATE_MISSING_TAG
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
           tag_name: v0.0.0
+
+      - name: "Generate a DEVELOPMENT tag"
+        id: get-development
+        uses: os-climate/osc-github-devops/.github/actions/semantic-tag-development@main
+        with:
+          tag: ${{ steps.repository-tags.outputs.tag }}
 
   verify-github-environment:
     name: "Verify GitHub Environment"
@@ -94,6 +102,10 @@ jobs:
       created: ${{ steps.labelling.outputs.created }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    permissions:
+      # Required for action to create labels: github-mandatory-labels
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -108,6 +120,14 @@ jobs:
           # Mandatory secrets/variables to check
           pypi_development: ${{ secrets.PYPI_DEVELOPMENT }}
           pypi_production: ${{ secrets.PYPI_PRODUCTION }}
+          one_password_development: ${{ secrets.ONE_PASSWORD_DEVELOPMENT }}
+
+  parse-tox-configuration:
+    name: "TOX Environment"
+    needs:
+      - classify-content
+    if: needs.classify-content.outputs.tox  == 'true'
+    uses: os-climate/osc-github-devops/.github/workflows/tox.yaml@main
 
   python-project:
     name: "Python Content"
@@ -127,7 +147,7 @@ jobs:
         uses: os-climate/osc-github-devops/.github/actions/python-versions-matrix@main
 
   python-build:
-    name: "Build Project"
+    name: "Build"
     uses: os-climate/osc-github-devops/.github/workflows/python-build-matrix.yaml@main
     needs:
       - github-workflow-metadata
@@ -140,11 +160,33 @@ jobs:
       # Required by SigStore signing action
       id-token: write
     with:
-      python-version: ${{ matrix.python-version }}
+      python_version: ${{ matrix.python-version }}
+
+  python-test:
+    name: "Test"
+    uses: os-climate/osc-github-devops/.github/workflows/python-test-matrix.yaml@main
+    needs:
+      - github-workflow-metadata
+      - python-project
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-project.outputs.matrix) }}
+    with:
+      python_version: ${{ matrix.python-version }}
 
   github-release:
-    name: "Create GitHub Release"
+    name: "Publish GitHub Release"
     uses: os-climate/osc-github-devops/.github/workflows/github-release.yaml@main
+    needs:
+      - python-build
+      - tagging
+    # ToDo: Implement explicit development release and build naming
+    # with:
+    #   prerelease: true
+    #   devtag: ${{ needs.tagging.outputs.dev_tag }}
+    permissions:
+      # Needed both here and in the called workflow
+      contents: write
 
   testpypi:
     name: "Test Package Publishing"
@@ -319,7 +361,7 @@ jobs:
           password: ${{ secrets.PYPI_PRODUCTION }}
 
   notebooks:
-    name: "Jupyter Notebooks"
+    name: "Jupyter/Notebooks"
     needs:
       - classify-content
       - python-project
@@ -349,9 +391,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: "Install package dependencies"
+      - name: "Install notebook/test dependencies"
         run: |
-          # Install build dependencies
+          # Install notebook/test dependencies
           python -m pip install -q --upgrade pip
           pdm export -o requirements.txt
           if [ -f requirements.txt ]; then
@@ -363,8 +405,6 @@ jobs:
       - name: "Testing Jupyter notebooks"
         run: |
           # Testing Jupyter notebooks
-          echo "Installing required dependencies"
-          pip install --upgrade -q pytest nbmake
           # Consider enabling the line below when debugging/testing
           # find . -name '*.ipynb'
           echo "Running command: pytest --nbmake -- **/*.ipynb"
@@ -383,7 +423,7 @@ jobs:
       #     retention-days: 14
 
   security:
-    name: "Security Audit"
+    name: "Security/Audit"
     needs:
       - classify-content
       - python-project
