@@ -593,9 +593,9 @@ def Quantity_type(units: str) -> type:
 
     def validate(value, units, info):
         quantity = to_Quantity(value)
-        assert quantity.is_compatible_with(
-            units
-        ), f"Units of {value} incompatible with {units}"
+        assert quantity.is_compatible_with(units), (
+            f"Units of {value} incompatible with {units}"
+        )
         return quantity
 
     def __get_pydantic_core_schema__(source_type: Any) -> CoreSchema:

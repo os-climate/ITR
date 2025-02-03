@@ -187,7 +187,7 @@ class DataWarehouse(ABC):
             logger.info(
                 f"new_production_bm calculating trajectories for {len(self.company_data.get_company_data())}"
                 f"companies (times {len(EScope.get_scopes())} scopes times "
-                f"{cd_pc.TARGET_YEAR-cd_pc.BASE_YEAR} years)"
+                f"{cd_pc.TARGET_YEAR - cd_pc.BASE_YEAR} years)"
             )
             self.company_data._validate_projected_trajectories(
                 self.company_data.get_company_data(), self.benchmarks_projected_ei
@@ -215,7 +215,7 @@ class DataWarehouse(ABC):
             cd_pc = self.company_data.get_projection_controls()
             logger.info(
                 f"projecting targets for {len(self.company_data.get_company_data())} companies "
-                f"(times {len(EScope.get_scopes())} scopes times {cd_pc.TARGET_YEAR-cd_pc.BASE_YEAR} years)"
+                f"(times {len(EScope.get_scopes())} scopes times {cd_pc.TARGET_YEAR - cd_pc.BASE_YEAR} years)"
             )
             self.company_data._calculate_target_projections(
                 benchmark_projected_production, benchmarks_projected_ei
@@ -418,7 +418,7 @@ class DataWarehouse(ABC):
         logger.info(
             f"re-calculating trajectories for {len(self.company_data._companies)} companies"
             f"\n    (times {len(EScope.get_scopes())} scopes times "
-            f"{self.company_data.projection_controls.TARGET_YEAR-self.company_data.projection_controls.BASE_YEAR} years)"
+            f"{self.company_data.projection_controls.TARGET_YEAR - self.company_data.projection_controls.BASE_YEAR} years)"
         )
         for company in self.company_data._companies:
             company.projected_intensities = None

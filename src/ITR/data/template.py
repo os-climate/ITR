@@ -692,7 +692,7 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         )
                         if x.currency_tuple[0] != "USD"
                         else fx_ctx.redefine(
-                            f"{x.fx_quote_tuple[0]} = {x.currency_tuple[1]/(x.fx_rate * x.fx_quote_tuple[1])} {x.currency_tuple[0]}"
+                            f"{x.fx_quote_tuple[0]} = {x.currency_tuple[1] / (x.fx_rate * x.fx_quote_tuple[1])} {x.currency_tuple[0]}"
                         )
                     ),
                     axis=1,
@@ -1830,9 +1830,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                     # FIXME: Is this the best place to finalize base_year_production, ghg_s1s2, and ghg_s3 data?
                     # Something tells me these parameters should be removed in favor of querying historical data directly
                     company_data[ColumnsConfig.BASE_YEAR_PRODUCTION] = (
-                        df_historic_data.loc[
-                            company_id, "Productions", "production"
-                        ][base_year]
+                        df_historic_data.loc[company_id, "Productions", "production"][
+                            base_year
+                        ]
                     )
                     try:
                         company_data[ColumnsConfig.GHG_SCOPE12] = df_historic_data.loc[

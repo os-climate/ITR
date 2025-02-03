@@ -254,7 +254,7 @@ def read_quantified_sql(
             ]
             for col_tuple in extra_unit_columns_positions:
                 logger.error(
-                    f"Missing units column '{col_tuple[2]}' after original column '{sql_df.columns[col_tuple[1]]}' (should be column #{col_tuple[0]+col_tuple[1]+1} in new query)"  # noqa: E501
+                    f"Missing units column '{col_tuple[2]}' after original column '{sql_df.columns[col_tuple[1]]}' (should be column #{col_tuple[0] + col_tuple[1] + 1} in new query)"  # noqa: E501
                 )
             raise ValueError
     return requantify_df(sql_df).convert_dtypes()
@@ -1058,7 +1058,7 @@ select C.company_name, C.company_id, '{self._v.schema}' as source, P.year,
            regexp_replace(regexp_replace(concat(ET.ei_{scope}_by_year_units, ' * ', P.production_by_year_units),
                           '{re_simplify_units_both}', ''), '{re_simplify_units_one}', '')) as cumulative_target_units,
        '{scope.upper()}' as scope
-from {emissions_from_tables.replace('SCOPE', scope)}
+from {emissions_from_tables.replace("SCOPE", scope)}
 """
                 for scope in map(str.lower, EScope.get_scopes())
             ]
