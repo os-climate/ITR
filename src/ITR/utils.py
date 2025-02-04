@@ -132,9 +132,9 @@ def get_data(
     s3_data_invalid = df_company_data[ColumnsConfig.GHG_SCOPE3].isna()
     if len(s3_data_invalid[s3_data_invalid].index) > 0:
         df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3] = (
-            df_company_data.loc[
-                s3_data_invalid, ColumnsConfig.GHG_SCOPE3
-            ].map(lambda x: Q_(np.nan, "Mt CO2e"))
+            df_company_data.loc[s3_data_invalid, ColumnsConfig.GHG_SCOPE3].map(
+                lambda x: Q_(np.nan, "Mt CO2e")
+            )
         )
     for col in [
         ColumnsConfig.GHG_SCOPE3,

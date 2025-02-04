@@ -2252,7 +2252,7 @@ class EITargetProjector(EIProjector):
                                 last_prod_value = production_proj.loc[last_ei_year]
                                 ei_projection_scopes[scope_name] = (
                                     ICompanyEIProjections(
-                                        ei_metric=f"{(last_em_value/last_prod_value).u:~P}",
+                                        ei_metric=f"{(last_em_value / last_prod_value).u:~P}",
                                         projections=self._get_bounded_projections(
                                             model_ei_projections
                                         ),

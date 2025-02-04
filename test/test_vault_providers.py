@@ -111,9 +111,9 @@ def _get_base_ei(filename: str) -> BaseProviderIntensityBenchmark:
 
 
 @pytest.fixture(scope="session")
-def base_benchmarks() -> (
-    Tuple[BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark]
-):
+def base_benchmarks() -> Tuple[
+    BaseProviderProductionBenchmark, BaseProviderIntensityBenchmark
+]:
     benchmark_dict: Dict[str, Future] = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future_to_benchmark = {
