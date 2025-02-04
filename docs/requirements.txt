@@ -1,5 +1,5 @@
 sphinx>=6,<9
-sphinx-autoapi==3.3.2
+sphinx-autoapi==3.4.0
 sphinx-autodoc-typehints
 sphinx-rtd-theme==3.0.1
 tox
