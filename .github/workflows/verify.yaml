@@ -1,0 +1,97 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024 The Linux Foundation
+
+# Runs on a new pull request, performs build and runs tests
+name: "🤖 Verify [Pull Request]"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - main
+      - master
+    paths:
+      - "**"
+      - "!.github/**"
+      - "!.*"
+      - "!tox.ini"
+
+permissions: {}
+
+jobs:
+  repository:
+    name: "Repository"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-inspect-repository.yaml@5f911525b6bac26e4bc57c1a27349bf98d40c35c # 2024-02-25
+    permissions:
+      contents: read
+
+  python-build:
+    name: "Python build"
+    needs: repository
+    if: needs.repository.outputs.python_project  == 'true'
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix_json: ${{ steps.python-build.outputs.matrix_json }}
+      artefact_path: ${{ steps.python-build.outputs.artefact_path }}
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: "Build Python project"
+        id: python-build
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/python-build-action@e40c93a51cc32cbddd4767a75e2209af971df9e0 # 2025-02-25
+        with:
+          tag: ${{ needs.repository.outputs.build_tag }}
+
+  python-test:
+    name: "Test"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@e40c93a51cc32cbddd4767a75e2209af971df9e0 # 2025-02-25
+    needs:
+      - python-build
+    # Matrix job
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-build.outputs.matrix_json) }}
+    with:
+      python_version: ${{ matrix.python-version }}
+    permissions:
+      contents: read
+
+  python-audit:
+    name: "Audit"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-audit.yaml@e40c93a51cc32cbddd4767a75e2209af971df9e0 # 2025-02-25
+    needs:
+      - python-build
+    # Matrix job
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-build.outputs.matrix_json) }}
+    with:
+      python_version: ${{ matrix.python-version }}
+    permissions:
+      contents: read
+
+  notebooks:
+    name: "Jupyter notebooks"
+    if: needs.repository.outputs.jupyter_notebooks  == 'true'
+    # yamllint disable-line rule:line-length
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-notebook-tests.yaml@e40c93a51cc32cbddd4767a75e2209af971df9e0 # 2025-02-25
+    needs:
+      - repository
+      - python-build
+    # Matrix job
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-build.outputs.matrix_json) }}
+    with:
+      python_version: ${{ matrix.python-version }}
+    permissions:
+      contents: read
