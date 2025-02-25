@@ -1,0 +1,263 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024 The Linux Foundation
+
+# pypi-publish-action
+name: "📦 PyPI Publish Package"
+description: "Publishes a Python package to PyPI"
+
+inputs:
+  ENVIRONMENT:
+    # Environment MUST match the trusted publishing setup in PyPI, if defined
+    description: "Mandatory environment, e.g. development, production"
+    type: string
+    required: false
+    default: "production"
+  TAG:
+    description: "Semantic tag for this release/build"
+    type: string
+    required: true
+  ARTEFACT_PATH:
+    description: "Path/location for build artefacts"
+    type: string
+    required: false
+    default: "dist"
+  ONE_PASSWORD_ITEM:
+    description: "Path to 1Password vault credential for PyPI"
+    type: string
+    required: false
+  OP_SERVICE_ACCOUNT_TOKEN:
+    description: "1Password service account credential to access vault"
+    required: false
+  PYPI_CREDENTIAL:
+    description: "PyPI API credential from GitHub secrets"
+    required: false
+  PUBLISH_DISABLE:
+    description: "Disables the final publishing step that uploads packages"
+    type: string
+    required: false
+    default: "false"
+  ATTESTATIONS:
+    description: "Enables upload/publishing support for attestations"
+    type: string
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    # Need repository content to extract project name
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+    - name: "Extract project/repository naming"
+      id: naming
+      # yamllint disable-line rule:line-length
+      uses: lfit/releng-reusable-workflows/.github/actions/python-project-name-action@431c4e424c15544f98ec1321f6668f655c238d3a # 2025-02-10
+
+    - name: "⬇ Download build artefacts"
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      with:
+        name: ${{ steps.naming.outputs.python_project_name }}
+        path: ${{ inputs.artefact_path }}
+
+    - name: "Derive publishing parameters"
+      id: parameters
+      shell: bash
+      run: |
+        # Derive publishing parameters
+        if [ -z ${{ inputs.ENVIRONMENT }} ]; then
+          echo "Environment was NOT set explicitly ⚠️"
+          echo "Using production publishing settings"
+          ENVIRONMENT="production"
+        else
+          ENVIRONMENT=$(echo ${{ inputs.ENVIRONMENT }} | tr '[:upper:]' '[:lower:]')
+        fi
+        if [ ${{ inputs.ENVIRONMENT }} != "production" ]; then
+          echo "base_url=https://test.pypi.org" >> "$GITHUB_ENV"
+          echo "publish_url=https://test.pypi.org/legacy/" >> "$GITHUB_ENV"
+        else
+          echo "base_url=https://pypi.org" >> "$GITHUB_ENV"
+          echo "publish_url=https://upload.pypi.org/legacy/" >> "$GITHUB_ENV"
+        fi
+        echo "ENVIRONMENT=$ENVIRONMENT" >> "$GITHUB_ENV"
+
+    - name: "Remove unsupported artefact file types"
+      id: files
+      shell: bash
+      run: |
+        # Remove unsupported artefact file types
+        if [ ! -d  ${{ inputs.artefact_path }} ]; then
+          echo "Early exit; build artefacts path NOT found:  ${{ inputs.artefact_path }}"
+          exit 0
+        fi
+        if [ -f  ${{ inputs.artefact_path }}/buildvars.txt ]; then
+          rm ${{ inputs.artefact_path }}/buildvars.txt
+        else
+          echo "No buildvars.txt file to purge"
+        fi
+        # Remove outputs related to SigStore signing
+        if test -n "$(find ${{ inputs.artefact_path }} \
+          -maxdepth 1 -name '*.sigstore*' -print -quit)"
+        then
+          echo "Found SigStore signing artefacts to purge"
+          rm  ${{ inputs.artefact_path }}/*.sigstore*
+        else
+          echo "No SigStore signing artefacts to purge"
+        fi
+
+    - name: "Checking package index for build/release"
+      id: check-remote
+      # yamllint disable-line rule:line-length
+      uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@main
+      with:
+        index_url: ${{ env.base_url }}/simple
+        package_name: ${{ steps.naming.outputs.python_project_name }}
+        package_version: ${{ inputs.tag }}
+        environment: ${{ env.ENVIRONMENT }}
+
+    - name: "Determine publishing method"
+      id: conditions
+      shell: bash
+      run: |
+        # Determine publishing method
+        if [ "${{ steps.check-remote.outputs.package_match }}" = "true" ]; then
+          publish_method="Trusted Publishing"
+          echo "Project previously published; using Trusted Publishing ✅"
+        fi
+
+        if [ "${{ steps.check-remote.outputs.version_match }}" != 'true' ]; then
+          echo "This build/release has NOT previously been published ✅"
+        else
+          echo "This build/release has already been published ❌"
+          if [ "${{ env.ENVIRONMENT }}" = "production" ]; then
+            # This is an error for production/tagged releases
+            echo "This build/release has already been published ❌" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          else
+            # Publishing is skipped for non-production workflow runs
+            publish_method="Skipped"
+            exit 0
+          fi
+        fi
+
+        if [ "$publish_method" != "Trusted Publishing" ]; then
+          echo "Trusted publishing NOT available, using fallback methods 👇🏻"
+
+          ### 1Password Vault Credential ###
+
+          if [ -z "${{ inputs.OP_SERVICE_ACCOUNT_TOKEN }}" ] || \
+            [ -z "${{ inputs.ONE_PASSWORD_ITEM }}" ]; then
+            echo "Unable to use 1Password to retrieve publishing key ❌"
+            echo "Two required parameters MUST be set/available"
+            echo "Secret:   OP_SERVICE_ACCOUNT_TOKEN"
+            echo "Variable: ONE_PASSWORD_ITEM"
+          else
+            echo "Publishing will use 1Password vault ✅"
+            publish_method="1Password Vault"
+          fi
+
+          ### GitHub Secret ###
+
+          if [ -z "${{ inputs.PYPI_CREDENTIAL }}" ]; then
+            echo "GitHub credential NOT set/available: PYPI_CREDENTIAL"
+            echo "Publishing cannot continue without a valid method ❌"
+            echo "Publishing cannot continue without a valid method ❌" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          elif [ "$publish_method" != "1Password Vault" ]; then
+            echo "Publishing will use GitHub secret ✅"
+            publish_method="GitHub Secret"
+          fi
+
+        fi
+
+        echo "Publishing to: ${{ env.base_url }} [environment: ${{ env.ENVIRONMENT }}]"
+        echo "publish_method=$publish_method" >> "$GITHUB_ENV"
+        echo "publish_method=$publish_method" >> "$GITHUB_OUTPUT"
+
+    - name: "Publish PyPI [Trusted Publishing]"
+      # v1.12.x has changed the docker container setup/creation process
+      # Currently it causes failures, and will need careful testing
+      # Also, be cautious pinning v1.12.x to a SHA commit value:
+      # https://github.com/pypa/gh-action-pypi-publish/discussions/287
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+      # yamllint disable-line rule:line-length
+      if: env.publish_method == 'Trusted Publishing' && inputs.publish_disable == 'false'
+      with:
+        repository-url: ${{ env.publish_url }}
+        packages-dir: ${{ inputs.artefact_path }}
+        # We already validated earlier in the pipeline (twine)
+        verify-metadata: false
+        attestations: ${{ inputs.attestations }}
+        # Show checksum values
+        print-hash: true
+        # Optional debugging, pretty much essential for information on failures
+        verbose: true
+
+    - name: "Retrieve Credential [1Password]"
+      id: one-password-pypi-test
+      if: env.publish_method == '1Password Vault'
+      uses: 1password/load-secrets-action@581a835fb51b8e7ec56b71cf2ffddd7e68bb25e0 # v2.0.0
+      with:
+        # Export loaded secrets as environment variables
+        export-env: true
+      env:
+        PYPI_CREDENTIAL: ${{ inputs.ONE_PASSWORD_ITEM}}
+        OP_SERVICE_ACCOUNT_TOKEN: ${{ inputs.OP_SERVICE_ACCOUNT_TOKEN }}
+
+    # Used only once prior to trusted publishing being configured
+    - name: "Publish PyPI [1Password Credential]"
+      # v1.12.x has changed the docker container setup/creation process
+      # Currently it causes failures, and will need careful testing
+      # Also, be cautious pinning v1.12.x to a SHA commit value:
+      # https://github.com/pypa/gh-action-pypi-publish/discussions/287
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+      # yamllint disable-line rule:line-length
+      if: env.publish_method == '1Password Vault' && inputs.publish_disable == 'false'
+      with:
+        repository-url: ${{ env.publish_url }}
+        packages-dir: ${{ inputs.artefact_path }}
+        verify-metadata: false
+        # Credential retrieved from 1Password using service account
+        password: ${{ env.PYPI_CREDENTIAL}}
+        attestations: ${{ inputs.attestations }}
+        print-hash: true
+        verbose: true
+
+    # Fallback method using credential stored as GitHub secret
+    - name: "Publish PyPI [GitHub Secret]"
+      # v1.12.x has changed the docker container setup/creation process
+      # Currently it causes failures, and will need careful testing
+      # Also, be cautious pinning v1.12.x to a SHA commit value:
+      # https://github.com/pypa/gh-action-pypi-publish/discussions/287
+      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+      if:
+        # yamllint disable-line rule:line-length
+        env.publish_method == 'GitHub Secret' && inputs.publish_disable == 'false'
+      with:
+        repository-url: ${{ env.publish_url }}
+        packages-dir: ${{ inputs.artefact_path }}
+        verify-metadata: false
+        # Publishing API key stored as secret/variable in GitHub
+        password: ${{ inputs.PYPI_CREDENTIAL }}
+        attestations: ${{ inputs.attestations }}
+        print-hash: true
+        verbose: true
+
+    - name: "Print summary/job output"
+      shell: bash
+      # yamllint disable rule:line-length
+      run: |
+        # Print summary/job output
+        if [ "${{ env.publish_disable }}" = "true" ]; then
+          echo "### Publishing Disabled: Dry Run 🛑" >> "$GITHUB_STEP_SUMMARY"
+        elif [ "${{ env.publish_method }}" = "Skipped" ]; then
+          echo "### Publishing Skipped: Previously Released ⛔️" >> "$GITHUB_STEP_SUMMARY"
+        elif [ ${{ env.base_url }} != "https://pypi.org" ]; then
+          echo "# 🧪 Test PyPI Release" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "# 🚀 PyPI Release" >> "$GITHUB_STEP_SUMMARY"
+        fi
+        echo "Authenticated using: ${{ env.publish_method }}" >> "$GITHUB_STEP_SUMMARY"
+        if [ "${{ env.publish_disable }}" != "true" ]; then
+          echo "🔗 ${{ env.base_url }}/project/${{ steps.naming.outputs.python_project_name }}/${{ inputs.tag }}/" >> "$GITHUB_STEP_SUMMARY"
+        fi

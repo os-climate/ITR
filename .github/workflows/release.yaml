@@ -114,9 +114,11 @@ jobs:
     # Note: environment must be specified at BOTH job level, and input to publish action
     environment: development
     steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
       - name: "Test Package Publishing"
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/pypi-publish-action@e40c93a51cc32cbddd4767a75e2209af971df9e0 # 2025-02-25
+        uses: ./.github/actions/pypi-publish-action # Local copy of upstream 2025-02-25
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -145,10 +147,11 @@ jobs:
           # Note: environment must be specified at BOTH job level, and input to publish action
           environment: production
           steps:
-            # Need repository content to extract project name
+            - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
             - name: "Release to PyPI"
               # yamllint disable-line rule:line-length
-              uses: os-climate/osc-github-devops/.github/actions/pypi-publish-action@e40c93a51cc32cbddd4767a75e2209af971df9e0 # 2025-02-25
+              uses: ./.github/actions/pypi-publish-action # Local copy of upstream 2025-02-25
               env:
                 GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
