@@ -1,0 +1,83 @@
+---
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2024 The Linux Foundation <https://linuxfoundation.org>
+
+name: "📰 Publish Documentation"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches:
+      - "main"
+      - "master"
+      - "!update-devops-tooling"
+    paths:
+      - "!.github"
+
+permissions: {}
+
+jobs:
+  build_and_deploy:
+    name: "Rebuild documentation"
+    runs-on: "ubuntu-24.04"
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    permissions:
+      # IMPORTANT: mandatory for documentation updates; used in final step
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: "Checkout Repository"
+        # yamllint disable-line rule:line-length
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: "Set up Python"
+      # yamllint disable-line rule:line-length
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.11"
+
+      - name: "Check documentation dependencies"
+        id: docs-requirements
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/path-check-action@24097e8d73176a7eeb512dd1654726edbb3fc5f6 # 2024-12-31
+        with:
+          path: "docs/requirements.txt"
+
+      - name: "Check for TOX configuration"
+        id: tox-ini
+        # yamllint disable-line rule:line-length
+        uses: os-climate/osc-github-devops/.github/actions/path-check-action@24097e8d73176a7eeb512dd1654726edbb3fc5f6 # 2024-12-31
+        with:
+          path: "tox.ini"
+
+      - name: "Install documentation dependencies"
+        if: steps.docs-requirements.outputs.type == 'file'
+        run: |
+          # Install documentation dependencies
+          echo "Installing documentation dependencies"
+          pip --disable-pip-version-check install -r docs/requirements.txt
+          echo "Documentation dependencies installed ✅"
+
+      - name: "Build documentation (tox/sphinx)"
+        if: steps.tox-ini.outputs.type == 'file'
+        run: |
+          # Build documentation (tox/sphinx)
+          pip --disable-pip-version-check install --upgrade tox
+          tox -e docs
+          echo "Tox documentation build ✅"
+
+      - name: "Publish documentation"
+        if: success()
+        # yamllint disable-line rule:line-length
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        with:
+          publish_branch: gh-pages
+          # github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ github.token }}
+          publish_dir: docs/_build/html/
+          keep_files: true

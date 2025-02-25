@@ -1,75 +1,34 @@
 ---
 # SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2024 The Linux Foundation <https://linuxfoundation.org>
+# SPDX-FileCopyrightText: 2024 The Linux Foundation
 
-name: "♻️ Update Dependencies"
+name: "🐍 Update Dependencies"
 
-# yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
   schedule:
     - cron: "0 8 1 * *"
-  pull_request:
-    types: [opened, reopened, edited, synchronize, closed]
+  push:
     branches:
-      - "**/**"
-      - "!update-devops-tooling"
-      - "!**/update-pdm-lock"
+      - "main"
+      - "master"
+    paths:
+      - "!pdm.lock"
+      - "!.github/**"
 
 env:
-  DEFAULT-PYTHON: "3.11"
+  python-version: 3.11
+
+permissions: {}
 
 jobs:
-  classify-content:
-    name: "Inspect Repository"
-    runs-on: ubuntu-latest
-    outputs:
-      python: ${{ steps.classify.outputs.python }}
-      notebooks: ${{ steps.classify.outputs.notebooks }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: "Classify content"
-        id: classify
-        # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/repository-content-classify@main
-
-  update-dependencies:
-    name: "Update Python Modules"
-    needs:
-      - classify-content
-    # Only run if Python code is present in repository
-    if: needs.classify-content.outputs.python  == 'true'
-    runs-on: ubuntu-latest
+  python-dependencies:
+    name: "Update Dependencies"
+    # yamllint disable-line rule:line-length
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-dependencies.yaml@5f911525b6bac26e4bc57c1a27349bf98d40c35c # 2025-02-25
     permissions:
       # IMPORTANT: mandatory to raise the PR
       id-token: write
       pull-requests: write
       repository-projects: write
       contents: write
-
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    steps:
-      - name: "Checkout repository"
-        uses: actions/checkout@v4
-
-      - name: "Set up Python"
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.default-python }}
-
-      - name: "Update Python dependencies"
-        uses: pdm-project/update-deps-action@v1.11
-        env:
-          python-version: ${{ env.default-python }}
-        with:
-          sign-off-commit: "true"
-          token: ${{ github.token }}
-          commit-message: "Chore: Update dependencies and pdm.lock [skip ci]"
-          pr-title: "Update Python module dependencies"
-          update-strategy: eager
-          # Whether to install PDM plugins before update
-          install-plugins: "false"
