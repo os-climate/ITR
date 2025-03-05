@@ -5,7 +5,7 @@ description = "Assess the temperature alignment of current targets, commitments,
 authors = [
   { name = "Michael Tiemann", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" },
 ]
-requires-python = ">=3.10"
+requires-python = "<3.13,>=3.10"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 keywords = ["Climate", "ITR", "Finance"]
