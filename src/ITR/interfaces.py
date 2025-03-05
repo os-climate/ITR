@@ -401,7 +401,8 @@ class ICompanyEIProjections(BaseModel):
                     *[
                         (x.year, round(ITR.Q_m_as(x.value, ei_metric), 4))
                         for x in self.projections
-                    ]
+                    ],
+                    strict=False,
                 )
             )
         )
@@ -449,7 +450,8 @@ class DF_ICompanyEIProjections(BaseModel):
                                 else ITR.Q_m_as(x["value"], ei_metric, inplace=True),
                             )
                             for x in projections_gen
-                        ]
+                        ],
+                        strict=False,
                     ),
                 )
             )
@@ -629,7 +631,8 @@ class IHistoricEmissionsScopes(BaseModel):
                         *[
                             (x.year, round(x.value.to("Mt CO2e").m, 4))
                             for x in getattr(self, scope)
-                        ]
+                        ],
+                        strict=False,
                     )
                 )
             )
@@ -696,7 +699,8 @@ class IHistoricEIScopes(BaseModel):
                         *[
                             (x.year, round(x.value.to(ei_metric).m, 4))
                             for x in getattr(self, scope)
-                        ]
+                        ],
+                        strict=False,
                     )
                 )
             )

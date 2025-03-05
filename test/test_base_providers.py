@@ -359,7 +359,11 @@ class TestBaseProvider(unittest.TestCase):
                     Q_(0.04623233372785435, "t CO2 / GJ"),
                 ],
                 index=pd.MultiIndex.from_tuples(
-                    zip(self.company_ids, [EScope.S1S2] * len(self.company_ids))
+                    zip(
+                        self.company_ids,
+                        [EScope.S1S2] * len(self.company_ids),
+                        strict=False,
+                    )
                 ),
                 name=2025,
             )

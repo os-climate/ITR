@@ -63,7 +63,8 @@ def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
                         lambda x: (np.nan, "dimensionless")
                         if pd.isna(x)
                         else (x.m, str(x.u))
-                    )
+                    ),
+                    strict=False,
                 )
             )
             return pd.DataFrame(
@@ -911,7 +912,8 @@ class DataVaultWarehouse(DataWarehouse):
                 (c.company_id, c.sector, c.region, c.base_year_production)
                 for c in company_data._companies
                 if c.company_id in company_data.get_company_ids()
-            ]
+            ],
+            strict=False,
         )
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
