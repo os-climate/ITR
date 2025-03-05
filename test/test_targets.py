@@ -1422,7 +1422,9 @@ class TestTargets(unittest.TestCase):
                         "value": em_dict["value"] / prod_dict["value"],
                     }
                     for em_dict, prod_dict in zip(
-                        historic_emissions_s1s2_ag, historic_productions_ag
+                        historic_emissions_s1s2_ag,
+                        historic_productions_ag,
+                        strict=False,
                     )
                 ],
                 "S3": [
@@ -1431,7 +1433,7 @@ class TestTargets(unittest.TestCase):
                         "value": em_dict["value"] / prod_dict["value"],
                     }
                     for em_dict, prod_dict in zip(
-                        historic_emissions_s3_ag, historic_productions_ag
+                        historic_emissions_s3_ag, historic_productions_ag, strict=False
                     )
                 ],
                 "S1S2S3": [],
@@ -1478,7 +1480,9 @@ class TestTargets(unittest.TestCase):
                         "value": em_dict["value"] / prod_dict["value"],
                     }
                     for em_dict, prod_dict in zip(
-                        historic_emissions_s1s2_ah, historic_productions_ah
+                        historic_emissions_s1s2_ah,
+                        historic_productions_ah,
+                        strict=False,
                     )
                 ],
                 "S3": [
@@ -1487,7 +1491,7 @@ class TestTargets(unittest.TestCase):
                         "value": em_dict["value"] / prod_dict["value"],
                     }
                     for em_dict, prod_dict in zip(
-                        historic_emissions_s3_ah, historic_productions_ah
+                        historic_emissions_s3_ah, historic_productions_ah, strict=False
                     )
                 ],
                 "S1S2S3": [],
@@ -1534,7 +1538,9 @@ class TestTargets(unittest.TestCase):
                         "value": em_dict["value"] / prod_dict["value"],
                     }
                     for em_dict, prod_dict in zip(
-                        historic_emissions_s1s2_ai, historic_productions_ai
+                        historic_emissions_s1s2_ai,
+                        historic_productions_ai,
+                        strict=False,
                     )
                 ],
                 "S3": [
@@ -1543,7 +1549,7 @@ class TestTargets(unittest.TestCase):
                         "value": em_dict["value"] / prod_dict["value"],
                     }
                     for em_dict, prod_dict in zip(
-                        historic_emissions_s3_ai, historic_productions_ai
+                        historic_emissions_s3_ai, historic_productions_ai, strict=False
                     )
                 ],
                 "S1S2S3": [],

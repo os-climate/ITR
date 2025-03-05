@@ -65,7 +65,7 @@ def translate_currency_symbols_1(text):
         return text
     if len(split_text) & 1 and split_text[-1] != "":
         split_text.append("")
-    pairs = zip(split_text[::2], split_text[1::2])
+    pairs = zip(split_text[::2], split_text[1::2], strict=False)
     retval = "".join(
         map(
             lambda x: f"{x[0]}{'USD' if x[1] == '$' or x[1] == 'US$' else currency_dict.get(x[1], '')}",
@@ -82,7 +82,7 @@ def translate_currency_symbols(text):
         return translate_currency_symbols_1(text)
     if len(keep_text) & 1 and keep_text[-1] != "":
         keep_text.append("")
-    pairs = zip(keep_text[::2], keep_text[1::2])
+    pairs = zip(keep_text[::2], keep_text[1::2], strict=False)
     retval = "".join(
         [
             inner
