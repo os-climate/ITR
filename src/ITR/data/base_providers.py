@@ -155,7 +155,13 @@ class BaseProviderProductionBenchmark(ProductionBenchmarkDataProvider):
         # Benchmarks don't need work-around for https://github.com/hgrecco/pint/issues/1687, but if they did:
         # units = ureg.parse_units(benchmark.benchmark_metric)
         years, values = list(
-            map(list, zip(*{r.year: r.value.m for r in benchmark.projections}.items()))
+            map(
+                list,
+                zip(
+                    *{r.year: r.value.m for r in benchmark.projections}.items(),
+                    strict=False,
+                ),
+            )
         )
         return pd.Series(
             PA_(np.array(values), dtype="pint[dimensionless]"),
@@ -985,7 +991,7 @@ class BaseCompanyDataProvider(CompanyDataProvider):
         if len(projections) == 0:
             return pd.DataFrame()
         index = pd.MultiIndex.from_tuples(
-            zip(c_ids, scopes), names=["company_id", "scope"]
+            zip(c_ids, scopes, strict=False), names=["company_id", "scope"]
         )
         if year is not None:
             values = list(
@@ -1207,7 +1213,11 @@ class BaseCompanyDataProvider(CompanyDataProvider):
                                     else em_p[0].value / em_p[1].value
                                 ),
                             ),
-                            zip(historic_sector.emissions[scope.name], prod_list),
+                            zip(
+                                historic_sector.emissions[scope.name],
+                                prod_list,
+                                strict=False,
+                            ),
                         )
                     )
                     setattr(historic_sector.emissions_intensities, scope.name, ei_list)
@@ -1775,7 +1785,11 @@ class EITrajectoryProjector(EIProjector):
             .T.cumprod()
             .rename(
                 index=dict(
-                    zip(range(0, len(projection_years[1:])), projection_years[1:])
+                    zip(
+                        range(0, len(projection_years[1:])),
+                        projection_years[1:],
+                        strict=False,
+                    )
                 )
             )
             .mul(historic_ei_t.iloc[-1], axis=1)

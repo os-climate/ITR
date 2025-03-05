@@ -292,10 +292,13 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
         # https://stackoverflow.com/a/61021228/1291237
         compare_cols = ["company_id", "report_date"]
         has_reported_production_mask = pd.Series(
-            list(zip(*[df_esg[c] for c in compare_cols]))
+            list(zip(*[df_esg[c] for c in compare_cols], strict=False))
         ).isin(
             list(
-                zip(*[df_esg[df_esg.metric.eq("production")][c] for c in compare_cols])
+                zip(
+                    *[df_esg[df_esg.metric.eq("production")][c] for c in compare_cols],
+                    strict=False,
+                )
             )
         )
         df_esg_missing_production = df_esg[~has_reported_production_mask.values]

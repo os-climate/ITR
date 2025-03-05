@@ -274,7 +274,10 @@ class TemperatureScore(PortfolioAggregation):
                 scoring_data[self.c.COLS.TARGET_SCORE],
                 scoring_data[self.c.COLS.TARGET_OVERSHOOT],
                 scoring_data[self.c.SCORE_RESULT_TYPE],
-            ) = zip(*scoring_data.apply(lambda row: self.get_score(row), axis=1))
+            ) = zip(
+                *scoring_data.apply(lambda row: self.get_score(row), axis=1),
+                strict=False,
+            )
 
         # Fix up dtypes for the new columns we just added
         for col in [
