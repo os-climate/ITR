@@ -123,7 +123,7 @@ jobs:
         uses: lfit/releng-reusable-workflows/.github/actions/python-project-name-action@431c4e424c15544f98ec1321f6668f655c238d3a # 2025-02-10
 
       - name: "⬇ Download build artefacts"
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: ${{ steps.naming.outputs.python_project_name }}
           path: "dist"
@@ -183,7 +183,7 @@ jobs:
         uses: lfit/releng-reusable-workflows/.github/actions/python-project-name-action@431c4e424c15544f98ec1321f6668f655c238d3a # 2025-02-10
 
       - name: "⬇ Download build artefacts"
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: ${{ steps.naming.outputs.python_project_name }}
           path: "dist"
