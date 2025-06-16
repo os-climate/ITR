@@ -18,7 +18,7 @@ jobs:
   repository:
     name: "Repository"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-inspect-repository.yaml@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-inspect-repository.yaml@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-02-25
     permissions:
       contents: read
 
@@ -42,7 +42,7 @@ jobs:
         - name: "Build Python project"
           id: python-build
           # yamllint disable-line rule:line-length
-          uses: os-climate/osc-github-devops/.github/actions/python-build-action@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-02-25
+          uses: os-climate/osc-github-devops/.github/actions/python-build-action@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-02-25
           with:
             tag: ${{ needs.repository.outputs.build_tag }}
             attestations: "true"
@@ -51,7 +51,7 @@ jobs:
   python-test:
     name: "Test"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-02-25
     needs:
       - repository
       - python-build
@@ -67,7 +67,7 @@ jobs:
   python-audit:
     name: "Audit"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-audit.yaml@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-audit.yaml@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-02-25
     needs:
       - repository
       - python-build
@@ -84,7 +84,7 @@ jobs:
     name: "Notebooks"
     if: needs.repository.outputs.jupyter_notebooks  == 'true'
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-notebook-tests.yaml@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-notebook-tests.yaml@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-02-25
     needs:
       - repository
       - python-build
@@ -137,7 +137,7 @@ jobs:
       - name: "Checking package index for build/release"
         id: check-remote
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-03-03
+        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-03-03
         with:
           index_url: https://test.pypi.org/simple
           package_name: ${{ steps.naming.outputs.python_project_name }}
@@ -197,7 +197,7 @@ jobs:
       - name: "Checking package index for build/release"
         id: check-remote
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-03-03
+        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-03-03
         with:
           package_name: ${{ steps.naming.outputs.python_project_name }}
           package_version: ${{ needs.repository.outputs.build_tag }}
@@ -229,7 +229,7 @@ jobs:
     steps:
       - name: "GitHub Release"
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/github-release-action@fe65308a59354e89d782e707e2b6d640ca8fd415 # 2025-02-25
+        uses: os-climate/osc-github-devops/.github/actions/github-release-action@f3bd2a923b67192872c71b8953a7fd6a9239df80 # 2025-02-25
         with:
           project_name: ${{ env.python_project_name }}
           artefact_path: "dist"
