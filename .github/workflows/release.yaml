@@ -18,7 +18,7 @@ jobs:
   repository:
     name: "Repository"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-inspect-repository.yaml@9d24793b1bfef1032fa3205239725a976061c55e # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-inspect-repository.yaml@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-02-25
     permissions:
       contents: read
 
@@ -42,7 +42,7 @@ jobs:
         - name: "Build Python project"
           id: python-build
           # yamllint disable-line rule:line-length
-          uses: os-climate/osc-github-devops/.github/actions/python-build-action@9d24793b1bfef1032fa3205239725a976061c55e # 2025-02-25
+          uses: os-climate/osc-github-devops/.github/actions/python-build-action@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-02-25
           with:
             tag: ${{ needs.repository.outputs.build_tag }}
             attestations: "true"
@@ -51,7 +51,7 @@ jobs:
   python-test:
     name: "Test"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@9d24793b1bfef1032fa3205239725a976061c55e # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-02-25
     needs:
       - repository
       - python-build
@@ -67,7 +67,7 @@ jobs:
   python-audit:
     name: "Audit"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-audit.yaml@9d24793b1bfef1032fa3205239725a976061c55e # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-audit.yaml@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-02-25
     needs:
       - repository
       - python-build
@@ -84,7 +84,7 @@ jobs:
     name: "Notebooks"
     if: needs.repository.outputs.jupyter_notebooks  == 'true'
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-notebook-tests.yaml@9d24793b1bfef1032fa3205239725a976061c55e # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-notebook-tests.yaml@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-02-25
     needs:
       - repository
       - python-build
@@ -137,7 +137,7 @@ jobs:
       - name: "Checking package index for build/release"
         id: check-remote
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@9d24793b1bfef1032fa3205239725a976061c55e # 2025-03-03
+        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-03-03
         with:
           index_url: https://test.pypi.org/simple
           package_name: ${{ steps.naming.outputs.python_project_name }}
@@ -145,7 +145,7 @@ jobs:
           environment: "development"
 
       - name: "Publish PyPI [Trusted Publishing]"
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         # yamllint disable-line rule:line-length
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -197,14 +197,14 @@ jobs:
       - name: "Checking package index for build/release"
         id: check-remote
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@9d24793b1bfef1032fa3205239725a976061c55e # 2025-03-03
+        uses: os-climate/osc-github-devops/.github/actions/pypi-version-check-action@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-03-03
         with:
           package_name: ${{ steps.naming.outputs.python_project_name }}
           package_version: ${{ needs.repository.outputs.build_tag }}
           environment: "production"
 
       - name: "Publish PyPI [Trusted Publishing]"
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         # yamllint disable-line rule:line-length
         with:
           # We already validated earlier in the pipeline (twine)
@@ -229,7 +229,7 @@ jobs:
     steps:
       - name: "GitHub Release"
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/github-release-action@9d24793b1bfef1032fa3205239725a976061c55e # 2025-02-25
+        uses: os-climate/osc-github-devops/.github/actions/github-release-action@99bda8267c7e1a71fe02f79698ca1061a48e4c8e # 2025-02-25
         with:
           project_name: ${{ env.python_project_name }}
           artefact_path: "dist"
