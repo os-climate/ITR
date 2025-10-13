@@ -25,7 +25,7 @@ jobs:
   repository:
     name: "Repository"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-inspect-repository.yaml@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2024-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-inspect-repository.yaml@0bb7e31544caa99484a8fba03538d346d163a57c # 2024-02-25
     permissions:
       contents: read
 
@@ -45,14 +45,14 @@ jobs:
       - name: "Build Python project"
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/python-build-action@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2025-02-25
+        uses: os-climate/osc-github-devops/.github/actions/python-build-action@0bb7e31544caa99484a8fba03538d346d163a57c # 2025-02-25
         with:
           tag: ${{ needs.repository.outputs.build_tag }}
 
   python-test:
     name: "Test"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@0bb7e31544caa99484a8fba03538d346d163a57c # 2025-02-25
     needs:
       - python-build
     # Matrix job
@@ -67,7 +67,7 @@ jobs:
   python-audit:
     name: "Audit"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-audit.yaml@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-audit.yaml@0bb7e31544caa99484a8fba03538d346d163a57c # 2025-02-25
     needs:
       - python-build
     # Matrix job
@@ -83,7 +83,7 @@ jobs:
     name: "Jupyter notebooks"
     if: needs.repository.outputs.jupyter_notebooks  == 'true'
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-notebook-tests.yaml@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-notebook-tests.yaml@0bb7e31544caa99484a8fba03538d346d163a57c # 2025-02-25
     needs:
       - repository
       - python-build
