@@ -44,14 +44,14 @@ jobs:
       - name: "Check documentation dependencies"
         id: docs-requirements
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/path-check-action@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2024-12-31
+        uses: os-climate/osc-github-devops/.github/actions/path-check-action@1bac86bf786b48d03ce573f23e6f22361467d7f5 # 2024-12-31
         with:
           path: "docs/requirements.txt"
 
       - name: "Check for TOX configuration"
         id: tox-ini
         # yamllint disable-line rule:line-length
-        uses: os-climate/osc-github-devops/.github/actions/path-check-action@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2024-12-31
+        uses: os-climate/osc-github-devops/.github/actions/path-check-action@1bac86bf786b48d03ce573f23e6f22361467d7f5 # 2024-12-31
         with:
           path: "tox.ini"
 
