@@ -51,7 +51,7 @@ jobs:
   python-test:
     name: "Test"
     # yamllint disable-line rule:line-length
-    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@dc6d5fd1afe1b28253abaaf0496175c36ca261af # 2025-02-25
+    uses: os-climate/osc-github-devops/.github/workflows/reuse-python-tests.yaml@96045e9cffb27b0957c2fc9eaaae059b3e53cd6e # 2025-02-25
     needs:
       - repository
       - python-build
