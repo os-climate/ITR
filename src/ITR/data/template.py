@@ -523,9 +523,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                 raise exc
             # Change year column names to integers if they come in as strings
             df_esg.rename(
-                columns=lambda x: int(x)
-                if isinstance(x, str) and x >= "1000" and x <= "2999"
-                else x,
+                columns=lambda x: (
+                    int(x) if isinstance(x, str) and x >= "1000" and x <= "2999" else x
+                ),
                 inplace=True,
             )
             if "base_year" in df_esg.columns:
@@ -1006,9 +1006,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         .astype("float64")
                         .combine(
                             u_col,
-                            lambda m, u: PintType(u).na_value
-                            if ITR.isna(m)
-                            else Q_(m, u),
+                            lambda m, u: (
+                                PintType(u).na_value if ITR.isna(m) else Q_(m, u)
+                            ),
                         )
                     )
             # All emissions metrics across multiple sectors should all resolve to some form of [mass] CO2
@@ -1060,8 +1060,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
 
             # Validate that all our em_metrics are, in fact, some kind of emissions quantity
             em_invalid = df_esg.loc[em_metrics.index].unit.map(
-                lambda x: not isinstance(x, str)
-                or not ureg(x).is_compatible_with("t CO2")
+                lambda x: (
+                    not isinstance(x, str) or not ureg(x).is_compatible_with("t CO2")
+                )
             )
             em_invalid_idx = em_invalid[em_invalid].index
             if len(em_invalid_idx) > 0:
@@ -1689,9 +1690,9 @@ class TemplateProviderCompany(BaseCompanyDataProvider):
                         target_data,
                         f"target_{attr}",
                         getattr(target_data, f"target_{attr}").map(
-                            lambda x: int(x.year)
-                            if isinstance(x, datetime.datetime)
-                            else x
+                            lambda x: (
+                                int(x.year) if isinstance(x, datetime.datetime) else x
+                            )
                         ),
                     )
                 else:

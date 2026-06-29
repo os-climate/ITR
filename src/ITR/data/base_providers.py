@@ -1855,7 +1855,7 @@ class EITargetProjector(EIProjector):
                 for u in unique_target_years
             ]
         ]
-        unique_scope_targets.sort(key=lambda target: (target.target_end_year))
+        unique_scope_targets.sort(key=lambda target: target.target_end_year)
 
         # We only trust the most recently communicated netzero target, but prioritize the most recently communicated, most aggressive target
         netzero_scope_targets = [
