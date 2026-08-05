@@ -60,9 +60,9 @@ def dequantify_column(df_col: pd.Series) -> pd.DataFrame:
             m, u = list(
                 zip(
                     *df_col.map(
-                        lambda x: (np.nan, "dimensionless")
-                        if pd.isna(x)
-                        else (x.m, str(x.u))
+                        lambda x: (
+                            (np.nan, "dimensionless") if pd.isna(x) else (x.m, str(x.u))
+                        )
                     ),
                     strict=False,
                 )
@@ -118,9 +118,11 @@ def requantify_df(df: pd.DataFrame, typemap={}) -> pd.DataFrame:
                     raise
                 new_col = pd.Series(data=df[col], name=col) * pd.Series(
                     data=df[units_col].map(
-                        lambda x: typemap.get(col, ureg("dimensionless").u)
-                        if pd.isna(x)
-                        else ureg(x).u
+                        lambda x: (
+                            typemap.get(col, ureg("dimensionless").u)
+                            if pd.isna(x)
+                            else ureg(x).u
+                        )
                     ),
                     name=col,
                 )
